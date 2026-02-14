@@ -339,8 +339,26 @@ impl Card {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum AgentConfig {
-    Path(String),
     Spec(Box<AgentSpec>),
+    Path(String),
+}
+
+impl AgentConfig {
+    pub fn resolve(&self, root_path: &Path) -> Result<AgentSpec, TypeError> {
+        match self {
+            AgentConfig::Spec(spec) => Ok((**spec).clone()),
+            AgentConfig::Path(path) => {
+                let agent_path = if Path::new(path).is_absolute() {
+                    PathBuf::from(path)
+                } else {
+                    root_path.join(path)
+                };
+
+                let content = std::fs::read_to_string(&agent_path)?;
+                Ok(serde_yaml::from_str(&content)?)
+            }
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -358,42 +376,19 @@ pub struct ServiceConfig {
     #[pyo3(get)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mcp: Option<McpConfig>,
-
-    #[serde(skip)]
-    pub agent_config: Option<AgentConfig>,
-
-    #[serde(skip)]
-    #[pyo3(get)]
-    pub agent: Option<AgentSpec>,
+    //#[serde(skip)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub agent: Option<AgentConfig>,
+    //#[serde(skip)]
+    //#[pyo3(get)]
+    //pub agent: Option<AgentSpec>,
 }
 
 impl ServiceConfig {
-    pub fn load_agent_spec(&mut self, root_path: &Path) -> Result<(), TypeError> {
-        if let Some(agent_config) = &self.agent_config {
-            match agent_config {
-                AgentConfig::Path(path) => {
-                    let agent_path = if Path::new(path).is_absolute() {
-                        PathBuf::from(path)
-                    } else {
-                        root_path.join(path)
-                    };
-
-                    let content = std::fs::read_to_string(&agent_path)?;
-                    let spec: AgentSpec = serde_json::from_str(&content)?;
-                    self.agent = Some(spec);
-                }
-                AgentConfig::Spec(spec) => {
-                    self.agent = Some((**spec).clone());
-                }
-            }
-        }
-        Ok(())
-    }
     pub fn validate(
         &mut self,
         service_space: &str,
         service_type: &ServiceType,
-        root_path: Option<&Path>,
     ) -> Result<(), TypeError> {
         if let Some(cards) = &mut self.cards {
             for card in cards {
@@ -406,17 +401,18 @@ impl ServiceConfig {
             return Err(TypeError::MissingMCPConfig);
         }
 
-        if service_type == &ServiceType::Agent {
-            if let Some(root) = root_path {
-                self.load_agent_spec(root)?;
-            }
-
-            if self.agent.is_none() {
-                return Err(TypeError::MissingAgentConfig);
-            }
+        if service_type == &ServiceType::Agent && self.agent.is_none() {
+            return Err(TypeError::MissingAgentConfig);
         }
 
         Ok(())
+    }
+
+    pub fn get_agent_spec(&self, root_path: &Path) -> Result<AgentSpec, TypeError> {
+        self.agent
+            .as_ref()
+            .ok_or(TypeError::MissingAgentConfig)?
+            .resolve(root_path)
     }
 }
 
@@ -430,13 +426,14 @@ impl ServiceConfig {
         mcp: Option<McpConfig>,
         agent: Option<AgentSpec>,
     ) -> Result<Self, TypeError> {
+        let agent_config = agent.map(|spec| AgentConfig::Spec(Box::new(spec)));
+
         Ok(ServiceConfig {
             version,
             cards,
             write_dir,
             mcp,
-            agent_config: None,
-            agent,
+            agent: agent_config,
         })
     }
 }

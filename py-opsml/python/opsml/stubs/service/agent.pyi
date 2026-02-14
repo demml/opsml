@@ -313,6 +313,23 @@ class ApiKeySecurityScheme:
     query parameters, or cookies.
     """
 
+    def __init__(
+        self,
+        name: str,
+        location: str,
+        description: Optional[str] = None,
+    ) -> None:
+        """Initialize an ApiKeySecurityScheme.
+
+        Args:
+            name (str):
+                Name of the header, query parameter, or cookie where the API key is expected.
+            location (str):
+                Location of the API key (e.g., "header", "query", "cookie").
+            description (str | None):
+                Human-readable description of the security scheme. Defaults to empty string.
+        """
+
     @property
     def description(self) -> Optional[str]:
         """Human-readable description of the security scheme."""
@@ -331,6 +348,23 @@ class HttpAuthSecurityScheme:
     Defines HTTP-based authentication using schemes like Basic, Bearer, or Digest.
     Commonly used for JWT tokens and OAuth 2.0 Bearer tokens.
     """
+
+    def __init__(
+        self,
+        scheme: str,
+        bearer_format: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> None:
+        """Initialize an HttpAuthSecurityScheme.
+
+        Args:
+            scheme (str):
+                Authentication scheme (e.g., "Basic", "Bearer", "Digest").
+            bearer_format (str | None):
+                Format hint for Bearer tokens (e.g., "JWT"). Defaults to empty string.
+            description (str | None):
+                Human-readable description of the security scheme. Defaults to empty string.
+        """
 
     @property
     def scheme(self) -> str:
@@ -351,6 +385,14 @@ class MtlsSecurityScheme:
     present certificates to establish trust.
     """
 
+    def __init__(self, description: Optional[str] = None) -> None:
+        """Initialize an MtlsSecurityScheme.
+
+        Args:
+            description (str | None):
+                Human-readable description of the mTLS requirements. Defaults to empty string.
+        """
+
     @property
     def description(self) -> str:
         """Human-readable description of the mTLS requirements."""
@@ -361,6 +403,23 @@ class Oauth2SecurityScheme:
     Configures OAuth 2.0 authentication flows, including authorization endpoints,
     token endpoints, and available scopes for authorization.
     """
+
+    def __init__(
+        self,
+        description: Optional[str] = None,
+        flows: Optional["OAuthFlows"] = None,
+        oauth2_metadata_url: Optional[str] = None,
+    ) -> None:
+        """Initialize an Oauth2SecurityScheme.
+
+        Args:
+            description (str | None):
+                Human-readable description of the OAuth 2.0 configuration. Defaults to empty string.
+            flows (OAuthFlows | None):
+                OAuth 2.0 flow configurations. Defaults to empty flows.
+            oauth2_metadata_url (str | None):
+                URL to OAuth 2.0 Authorization Server Metadata (RFC 8414). Defaults to empty string.
+        """
 
     @property
     def description(self) -> Optional[str]:
@@ -380,6 +439,16 @@ class OpenIdConnectSecurityScheme:
     Configures OpenID Connect authentication, which extends OAuth 2.0 to provide
     identity verification and user profile information.
     """
+
+    def __init__(self, description: Optional[str] = None, open_id_connect_url: Optional[str] = None) -> None:
+        """Initialize an OpenIdConnectSecurityScheme.
+
+        Args:
+            description (str | None):
+                Human-readable description of the OpenID Connect configuration. Defaults to empty string.
+            open_id_connect_url (str | None):
+                URL to OpenID Connect discovery document (e.g., /.well-known/openid-configuration). Defaults to empty string.
+        """
 
     @property
     def description(self) -> Optional[str]:
@@ -439,6 +508,29 @@ class OAuthFlows:
     allowing clients to choose the most appropriate flow for their use case.
     """
 
+    def __init__(
+        self,
+        authorization_code: Optional[AuthorizationCodeFlow] = None,
+        client_credentials: Optional[ClientCredentialsFlow] = None,
+        device_code: Optional[DeviceCodeFlow] = None,
+        implicit: Optional[ImplicitAuthFlow] = None,
+        password: Optional[PassWordAuthFlow] = None,
+    ) -> None:
+        """Initialize OAuthFlows with specific flow configurations.
+
+        Args:
+            authorization_code (AuthorizationCodeFlow | None):
+                Configuration for the Authorization Code flow. Defaults to empty flow.
+            client_credentials (ClientCredentialsFlow | None):
+                Configuration for the Client Credentials flow. Defaults to empty flow.
+            device_code (DeviceCodeFlow | None):
+                Configuration for the Device Code flow. Defaults to empty flow.
+            implicit (ImplicitAuthFlow | None):
+                Configuration for the Implicit flow. Defaults to empty flow.
+            password (PassWordAuthFlow | None):
+                Configuration for the Resource Owner Password Credentials flow. Defaults to empty flow.
+        """
+
     @property
     def authorization_code(self) -> Optional[AuthorizationCodeFlow]:
         """Authorization Code flow configuration with optional PKCE support."""
@@ -465,6 +557,29 @@ class AuthorizationCodeFlow:
     The most secure OAuth 2.0 flow for web and mobile applications, with
     optional PKCE (Proof Key for Code Exchange) for enhanced security.
     """
+
+    def __init__(
+        self,
+        authorization_url: str,
+        token_url: str,
+        refresh_url: Optional[str] = None,
+        scopes: Optional[Dict[str, str]] = None,
+        pkce_required: bool = False,
+    ) -> None:
+        """Initialize an AuthorizationCodeFlow.
+
+        Args:
+            authorization_url (str | None):
+                URL where users grant authorization (e.g., /oauth/authorize). Defaults to empty string.
+            token_url (str | None):
+                URL for exchanging authorization code for tokens. Defaults to empty string.
+            refresh_url (str | None):
+                URL for refreshing access tokens. Defaults to empty string.
+            scopes (Dict[str, str] | None):
+                Available OAuth scopes mapped to their descriptions. Defaults to empty dict.
+            pkce_required (bool):
+                Whether PKCE is required for this flow. Defaults to False.
+        """
 
     @property
     def authorization_url(self) -> str:
@@ -493,6 +608,24 @@ class ClientCredentialsFlow:
     is required. Suitable for backend services and automated processes.
     """
 
+    def __init__(
+        self,
+        token_url: str,
+        refresh_url: Optional[str] = None,
+        scopes: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Initialize a ClientCredentialsFlow.
+
+        Args:
+            token_url (str):
+                URL for obtaining access tokens using client credentials. Defaults to empty string.
+            refresh_url (str | None):
+                URL for refreshing access tokens. Defaults to empty string.
+            scopes (Dict[str, str] | None):
+                Available OAuth scopes mapped to their descriptions. Defaults to empty dict.
+
+        """
+
     @property
     def refresh_url(self) -> str:
         """URL for refreshing access tokens."""
@@ -511,6 +644,26 @@ class DeviceCodeFlow:
     Designed for devices with limited input capabilities (smart TVs, IoT devices).
     Users authenticate on a separate device using a code displayed on the target device.
     """
+
+    def __init__(
+        self,
+        device_authorization_url: str,
+        token_url: str,
+        refresh_url: Optional[str] = None,
+        scopes: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Initialize a DeviceCodeFlow.
+
+        Args:
+            device_authorization_url (str | None):
+                URL where device requests a user code and device code. Defaults to empty string.
+            token_url (str | None):
+                URL for polling to exchange device code for tokens. Defaults to empty string.
+            refresh_url (str | None):
+                URL for refreshing access tokens. Defaults to empty string.
+            scopes (Dict[str, str] | None):
+                Available OAuth scopes mapped to their descriptions. Defaults to empty dict.
+        """
 
     @property
     def device_authorization_url(self) -> str:
@@ -535,6 +688,23 @@ class ImplicitAuthFlow:
     for new applications due to security concerns. Use Authorization Code with PKCE instead.
     """
 
+    def __init__(
+        self,
+        authorization_url: str,
+        refresh_url: Optional[str] = None,
+        scopes: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Initialize an ImplicitAuthFlow.
+
+        Args:
+            authorization_url (str | None):
+                URL where users grant authorization and receive tokens directly. Defaults to empty string.
+            refresh_url (str | None):
+                URL for refreshing access tokens. Defaults to empty string.
+            scopes (Dict[str, str] | None):
+                Available OAuth scopes mapped to their descriptions. Defaults to empty dict.
+        """
+
     @property
     def authorization_url(self) -> str:
         """URL where tokens are obtained directly from authorization endpoint."""
@@ -554,6 +724,23 @@ class PassWordAuthFlow:
     flows are not feasible and with highly trusted first-party applications.
     """
 
+    def __init__(
+        self,
+        token_url: str,
+        refresh_url: Optional[str] = None,
+        scopes: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Initialize a PassWordAuthFlow.
+
+        Args:
+            token_url (str):
+                URL for exchanging username/password for tokens. Defaults to empty string.
+            refresh_url (str | None):
+                URL for refreshing access tokens. Defaults to empty string.
+            scopes (Dict[str, str] | None):
+                Available OAuth scopes mapped to their descriptions. Defaults to empty dict.
+        """
+
     @property
     def refresh_url(self) -> str:
         """URL for refreshing access tokens."""
@@ -572,6 +759,18 @@ class AgentCardSignature:
     Implements JSON Web Signature (JWS) for cryptographically verifying the
     authenticity and integrity of agent card metadata.
     """
+
+    def __init__(self, protected: str = "", signature: str = "", header: Optional[Dict[str, str]] = None) -> None:
+        """Initialize an AgentCardSignature.
+
+        Args:
+            protected (str):
+                Base64url-encoded JWS protected header containing algorithm and other claims. Defaults to empty string.
+            signature (str):
+                Base64url-encoded signature over the protected header and payload. Defaults to empty string.
+            header (Dict[str, str] | None):
+                JWS unprotected header with additional metadata (e.g., key ID). Defaults to empty dict.
+        """
 
     @property
     def header(self) -> Optional[Dict[str, str]]:

@@ -1,4 +1,4 @@
-use pyo3::prelude::*;
+use pyo3::{IntoPyObjectExt, prelude::*};
 use pythonize::depythonize;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -96,6 +96,14 @@ impl AgentExtension {
             description,
             params: depythonized,
             required,
+        }
+    }
+
+    #[getter]
+    pub fn get_params<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, TypeError> {
+        match &self.params {
+            Some(params) => Ok(pythonize::pythonize(py, params)?),
+            None => Ok(py.None().into_bound_py_any(py)?),
         }
     }
 }
@@ -213,47 +221,125 @@ impl AgentSkill {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ApiKeySecurityScheme {
+    #[pyo3(get, set)]
     pub description: Option<String>,
+    #[pyo3(get, set)]
     pub location: String,
+    #[pyo3(get, set)]
     pub name: String,
+}
+
+#[pymethods]
+impl ApiKeySecurityScheme {
+    #[new]
+    #[pyo3(signature = (name, location, description=None))]
+    pub fn new(name: String, location: String, description: Option<String>) -> Self {
+        Self {
+            name,
+            location,
+            description,
+        }
+    }
 }
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct HttpAuthSecurityScheme {
+    #[pyo3(get, set)]
     scheme: String,
+    #[pyo3(get, set)]
     bearer_format: String,
+    #[pyo3(get, set)]
     description: String,
+}
+
+#[pymethods]
+impl HttpAuthSecurityScheme {
+    #[new]
+    #[pyo3(signature = (scheme, bearer_format=None, description=None))]
+    pub fn new(scheme: String, bearer_format: Option<String>, description: Option<String>) -> Self {
+        Self {
+            scheme,
+            bearer_format: bearer_format.unwrap_or_default(),
+            description: description.unwrap_or_default(),
+        }
+    }
 }
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct MtlsSecurityScheme {
+    #[pyo3(get, set)]
     description: String,
+}
+
+#[pymethods]
+impl MtlsSecurityScheme {
+    #[new]
+    #[pyo3(signature = (description=None))]
+    pub fn new(description: Option<String>) -> Self {
+        Self {
+            description: description.unwrap_or_default(),
+        }
+    }
 }
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Oauth2SecurityScheme {
+    #[pyo3(get, set)]
     pub description: Option<String>,
+    #[pyo3(get, set)]
     pub flows: OAuthFlows,
+    #[pyo3(get, set)]
     pub oauth2_metadata_url: Option<String>,
+}
+
+#[pymethods]
+impl Oauth2SecurityScheme {
+    #[new]
+    #[pyo3(signature = (flows, description=None, oauth2_metadata_url=None))]
+    pub fn new(
+        flows: OAuthFlows,
+        description: Option<String>,
+        oauth2_metadata_url: Option<String>,
+    ) -> Self {
+        Self {
+            flows,
+            description,
+            oauth2_metadata_url,
+        }
+    }
 }
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct OpenIdConnectSecurityScheme {
+    #[pyo3(get, set)]
     pub description: Option<String>,
+    #[pyo3(get, set)]
     pub open_id_connect_url: Option<String>,
+}
+
+#[pymethods]
+impl OpenIdConnectSecurityScheme {
+    #[new]
+    #[pyo3(signature = (open_id_connect_url=None, description=None))]
+    pub fn new(open_id_connect_url: Option<String>, description: Option<String>) -> Self {
+        Self {
+            open_id_connect_url,
+            description,
+        }
+    }
 }
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(tag = "type", rename_all = "camelCase")]
+#[serde(untagged, rename_all = "camelCase")]
 #[allow(clippy::large_enum_variant)]
 pub enum SecurityScheme {
     ApiKeySecurityScheme(ApiKeySecurityScheme),
@@ -295,68 +381,223 @@ impl SecurityScheme {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct OAuthFlows {
+    #[pyo3(get, set)]
     pub authorization_code: Option<AuthorizationCodeFlow>,
+    #[pyo3(get, set)]
     pub client_credentials: Option<ClientCredentialsFlow>,
+    #[pyo3(get, set)]
     pub device_code: Option<DeviceCodeFlow>,
+    #[pyo3(get, set)]
     pub implicit: Option<ImplicitAuthFlow>,
+    #[pyo3(get, set)]
     pub password: Option<PassWordAuthFlow>,
+}
+
+#[pymethods]
+impl OAuthFlows {
+    #[new]
+    #[pyo3(signature = (authorization_code=None, client_credentials=None, device_code=None, implicit=None, password=None))]
+    pub fn new(
+        authorization_code: Option<AuthorizationCodeFlow>,
+        client_credentials: Option<ClientCredentialsFlow>,
+        device_code: Option<DeviceCodeFlow>,
+        implicit: Option<ImplicitAuthFlow>,
+        password: Option<PassWordAuthFlow>,
+    ) -> Self {
+        Self {
+            authorization_code,
+            client_credentials,
+            device_code,
+            implicit,
+            password,
+        }
+    }
 }
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct AuthorizationCodeFlow {
+    #[pyo3(get, set)]
     pub authorization_url: String,
+    #[pyo3(get, set)]
     pub pkce_required: bool,
+    #[pyo3(get, set)]
     pub refresh_url: String,
+    #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
+    #[pyo3(get, set)]
     pub token_url: String,
+}
+
+#[pymethods]
+impl AuthorizationCodeFlow {
+    #[new]
+    #[pyo3(signature = (authorization_url, token_url, refresh_url=None, scopes=None, pkce_required=false))]
+    pub fn new(
+        authorization_url: String,
+        token_url: String,
+        refresh_url: Option<String>,
+        scopes: Option<HashMap<String, String>>,
+        pkce_required: bool,
+    ) -> Self {
+        Self {
+            authorization_url,
+            token_url,
+            refresh_url: refresh_url.unwrap_or_default(),
+            scopes: scopes.unwrap_or_default(),
+            pkce_required,
+        }
+    }
 }
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ClientCredentialsFlow {
+    #[pyo3(get, set)]
     pub refresh_url: String,
+    #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
+    #[pyo3(get, set)]
     pub token_url: String,
+}
+
+#[pymethods]
+impl ClientCredentialsFlow {
+    #[new]
+    #[pyo3(signature = (token_url, refresh_url=None, scopes=None))]
+    pub fn new(
+        token_url: String,
+        refresh_url: Option<String>,
+        scopes: Option<HashMap<String, String>>,
+    ) -> Self {
+        Self {
+            token_url,
+            refresh_url: refresh_url.unwrap_or_default(),
+            scopes: scopes.unwrap_or_default(),
+        }
+    }
 }
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct DeviceCodeFlow {
+    #[pyo3(get, set)]
     pub device_authorization_url: String,
+    #[pyo3(get, set)]
     pub refresh_url: String,
+    #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
+    #[pyo3(get, set)]
     pub token_url: String,
+}
+
+#[pymethods]
+impl DeviceCodeFlow {
+    #[new]
+    #[pyo3(signature = (device_authorization_url, token_url, refresh_url=None, scopes=None))]
+    pub fn new(
+        device_authorization_url: String,
+        token_url: String,
+        refresh_url: Option<String>,
+        scopes: Option<HashMap<String, String>>,
+    ) -> Self {
+        Self {
+            device_authorization_url,
+            token_url,
+            refresh_url: refresh_url.unwrap_or_default(),
+            scopes: scopes.unwrap_or_default(),
+        }
+    }
 }
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ImplicitAuthFlow {
+    #[pyo3(get, set)]
     pub authorization_url: String,
+    #[pyo3(get, set)]
     pub refresh_url: String,
+    #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
+}
+
+#[pymethods]
+impl ImplicitAuthFlow {
+    #[new]
+    #[pyo3(signature = (authorization_url, refresh_url=None, scopes=None))]
+    pub fn new(
+        authorization_url: String,
+        refresh_url: Option<String>,
+        scopes: Option<HashMap<String, String>>,
+    ) -> Self {
+        Self {
+            authorization_url,
+            refresh_url: refresh_url.unwrap_or_default(),
+            scopes: scopes.unwrap_or_default(),
+        }
+    }
 }
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct PassWordAuthFlow {
+    #[pyo3(get, set)]
     pub refresh_url: String,
+    #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
+    #[pyo3(get, set)]
     pub token_url: String,
+}
+
+#[pymethods]
+impl PassWordAuthFlow {
+    #[new]
+    #[pyo3(signature = (token_url, refresh_url=None, scopes=None))]
+    pub fn new(
+        token_url: String,
+        refresh_url: Option<String>,
+        scopes: Option<HashMap<String, String>>,
+    ) -> Self {
+        Self {
+            token_url,
+            refresh_url: refresh_url.unwrap_or_default(),
+            scopes: scopes.unwrap_or_default(),
+        }
+    }
 }
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct AgentCardSignature {
+    #[pyo3(get, set)]
     pub header: Option<HashMap<String, String>>,
+    #[pyo3(get, set)]
     pub protected: String,
+    #[pyo3(get, set)]
     pub signature: String,
+}
+
+#[pymethods]
+impl AgentCardSignature {
+    #[new]
+    #[pyo3(signature = (protected, signature, header=None))]
+    pub fn new(
+        protected: String,
+        signature: String,
+        header: Option<HashMap<String, String>>,
+    ) -> Self {
+        Self {
+            protected,
+            signature,
+            header,
+        }
+    }
 }
 
 #[pyclass]
@@ -367,39 +608,51 @@ pub struct AgentSpec {
     pub capabilities: AgentCapabilities,
 
     #[pyo3(get, set)]
+    #[serde(alias = "default_output_modes")]
     pub default_output_modes: Vec<String>,
 
     #[pyo3(get, set)]
+    #[serde(alias = "default_input_modes")]
     pub default_input_modes: Vec<String>,
 
     #[pyo3(get, set)]
     pub description: String,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none", alias = "documentation_url")]
     pub documentation_url: Option<String>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none", alias = "icon_url")]
     pub icon_url: Option<String>,
 
     #[pyo3(get, set)]
     pub name: String,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub provider: Option<AgentProvider>,
 
     #[pyo3(get, set)]
+    #[serde(
+        skip_serializing_if = "Option::is_none",
+        alias = "security_requirements"
+    )]
     pub security_requirements: Option<Vec<SecurityRequirement>>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none", alias = "security_schemes")]
     pub security_schemes: Option<HashMap<String, SecurityScheme>>,
 
     #[pyo3(get, set)]
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub signatures: Option<Vec<AgentCardSignature>>,
 
     #[pyo3(get, set)]
     pub skills: Vec<AgentSkill>,
 
     #[pyo3(get, set)]
+    #[serde(alias = "supported_interfaces")]
     pub supported_interfaces: Vec<AgentInterface>,
 
     #[pyo3(get, set)]

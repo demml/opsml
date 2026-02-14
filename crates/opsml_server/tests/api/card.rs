@@ -1974,8 +1974,9 @@ async fn test_opsml_server_card_service_card_agents() {
             version: "1.0.0".to_string(),
             service_type: ServiceType::Agent,
             service_config: Some(ServiceConfig {
-                agent: Some(agent_spec.clone()),
-
+                agent: Some(opsml_types::contracts::AgentConfig::Spec(Box::new(
+                    agent_spec.clone(),
+                ))),
                 ..Default::default()
             }),
             deployment: Some(vec![deploy]),

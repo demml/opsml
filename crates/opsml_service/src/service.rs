@@ -131,6 +131,8 @@ impl ServiceSpec {
             }
         };
 
+        println!("Loading service spec from: {}", service_path.display());
+
         let mut spec = Self::from_yaml_file(&service_path)?;
         spec.root_path = root_path;
 
@@ -174,13 +176,7 @@ impl ServiceSpec {
         self.validate_service_type()?;
         self.service
             .as_mut()
-            .map(|service| {
-                service.validate(
-                    self.space_config.get_space(),
-                    &self.service_type,
-                    Some(&self.root_path), // Pass root path for agent spec loading
-                )
-            })
+            .map(|service| service.validate(self.space_config.get_space(), &self.service_type))
             .transpose()?;
         Ok(())
     }
@@ -200,6 +196,8 @@ impl ServiceSpec {
     /// * `ServiceSpec` - The loaded service specification
     pub fn from_yaml(yaml_str: &str) -> Result<Self, ServiceError> {
         let mut spec: ServiceSpec = serde_yaml::from_str(yaml_str)?;
+
+        println!("Loaded service spec: {:#?}", spec);
 
         spec.filter_deploy_by_environment()?;
         spec.validate()?;
