@@ -204,9 +204,7 @@ impl OpsmlServiceSpec {
     /// * `OpsmlServiceSpec` - The loaded service specification
     pub fn from_yaml(yaml_str: &str) -> Result<Self, ServiceError> {
         let mut spec: OpsmlServiceSpec = serde_yaml::from_str(yaml_str)?;
-
         spec.filter_deploy_by_environment()?;
-        spec.validate()?;
         Ok(spec)
     }
 
@@ -226,7 +224,11 @@ impl OpsmlServiceSpec {
         self.validate_service_type()?;
 
         if let Some(service) = &mut self.service {
-            service.validate(self.space_config.get_space(), &self.service_type)?;
+            service.validate(
+                &self.root_path,
+                self.space_config.get_space(),
+                &self.service_type,
+            )?;
         }
 
         Ok(())

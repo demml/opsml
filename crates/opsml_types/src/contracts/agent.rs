@@ -5,7 +5,6 @@ use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::HashMap;
-use std::env;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 use tracing::debug;
@@ -308,7 +307,7 @@ impl AgentSkillStandard {
     /// If parent_dir is provided, it will be used as the base for relative paths. Otherwise, current working directory is used.
     /// It is expected that the last directory in the skills_path matches the skill name, and SKILL.md is located within that directory.
     /// If skills_path is None, it defaults to {parent_dir}/skills/{skill-name}/SKILL.md
-    fn validate_skills_path(&self) -> Result<(), AgentConfigError> {
+    fn validate_skills_path(&self, root_path: &Path) -> Result<(), AgentConfigError> {
         let skill_md_path = match &self.skills_path {
             Some(dir_path) => {
                 // Check that the last directory component matches skill name
@@ -324,13 +323,13 @@ impl AgentSkillStandard {
                 dir_path.join("SKILL.md")
             }
             None => {
-                // Default: skills/{skill-name}/SKILL.md
-                let base = env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+                println!("root_path in validate_skills_path: {}", root_path.display());
+                let base = root_path;
                 base.join("skills").join(&self.name).join("SKILL.md")
             }
         };
 
-        debug!(
+        println!(
             "Validating skills_path. Looking for SKILL.md at: {}",
             skill_md_path.display()
         );
@@ -346,14 +345,14 @@ impl AgentSkillStandard {
     }
 
     /// Comprehensive validation of all fields
-    pub fn validate(&self) -> Result<(), AgentConfigError> {
+    pub fn validate(&self, root_path: &Path) -> Result<(), AgentConfigError> {
         self.validate_name()?;
 
         self.validate_description()?;
 
         self.validate_compatibility()?;
 
-        self.validate_skills_path()?;
+        self.validate_skills_path(root_path)?;
 
         Ok(())
     }
@@ -383,9 +382,6 @@ impl AgentSkillStandard {
             skills_path,
             body,
         };
-
-        // Validate on construction
-        skill.validate()?;
 
         Ok(skill)
     }
@@ -481,10 +477,10 @@ pub enum SkillFormat {
 }
 
 impl SkillFormat {
-    pub fn validate(&self) -> Result<(), AgentConfigError> {
+    pub fn validate(&self, root_path: &Path) -> Result<(), AgentConfigError> {
         match self {
             SkillFormat::A2A(_skill) => Ok(()),
-            SkillFormat::Standard(skill) => skill.validate(),
+            SkillFormat::Standard(skill) => skill.validate(root_path),
         }
     }
 }
@@ -1022,11 +1018,15 @@ impl AgentSpec {
             signatures,
         }
     }
+}
 
-    pub(crate) fn validate(&self) -> Result<(), AgentConfigError> {
+impl AgentSpec {
+    /// Validate all skills in the agent spec
+    /// For skills in Standard format, also validate their fields and check for SKILL.md file existence
+    pub(crate) fn validate(&self, root_path: &Path) -> Result<(), AgentConfigError> {
         // Validate each skill
         for skill in &self.skills {
-            skill.validate()?;
+            skill.validate(root_path)?;
         }
 
         Ok(())
