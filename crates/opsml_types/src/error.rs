@@ -147,6 +147,12 @@ pub enum AgentConfigError {
     InvalidAgentConfig,
 }
 
+impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for AgentConfigError {
+    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
+        AgentConfigError::PyError(err.to_string())
+    }
+}
+
 impl From<PythonizeError> for AgentConfigError {
     fn from(err: PythonizeError) -> Self {
         AgentConfigError::PyError(err.to_string())

@@ -1,10 +1,12 @@
 use crate::RegistryType;
-use crate::contracts::AgentSpec;
 use crate::contracts::mcp::McpConfig;
+use crate::contracts::{AgentSpec, SkillFormat};
 use crate::error::{AgentConfigError, TypeError};
 use opsml_semver::VersionType;
+use opsml_utils::convert_keys_to_snake_case;
 use opsml_utils::extract_py_attr;
 use pyo3::prelude::*;
+use pyo3::types::PyDict;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
@@ -344,6 +346,47 @@ pub enum AgentConfig {
 }
 
 impl AgentConfig {
+    pub fn to_a2a_card<'py>(&self, py: Python<'py>) -> Result<(), AgentConfigError> {
+        // import from a2a.types import AgentCard
+        //let agent_card_type = py.import("a2a.types")?.getattr("AgentCard")?;
+        match self {
+            AgentConfig::Spec(spec) => {
+                // filter skills for a2a enum variant
+                let mut cloned_config = spec.clone();
+                // mutate the skills to only include those with format A2A
+                let filtered_skills: Vec<SkillFormat> = cloned_config
+                    .skills
+                    .iter()
+                    .filter_map(|skill| {
+                        match skill {
+                            SkillFormat::A2A(_) => Some(skill.clone()),
+                            SkillFormat::Standard(_) => None, // skip standard format skills
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+                cloned_config.skills = filtered_skills;
+
+                // create py dict
+                let camel_case_json = serde_json::to_value(cloned_config)?;
+                let snake_case_json = convert_keys_to_snake_case(camel_case_json);
+                let pythonized_config = pythonize::pythonize(py, &snake_case_json)?;
+
+                //extrace to dict
+                let agent_card_kwargs = pythonized_config.cast::<PyDict>()?;
+                // iterate over skills
+                // if skill key format is a2a then do nothing
+                // if skill key format is standard, then remove that skill
+                let agent_card = py.import("a2a.types")?.getattr("AgentCard")?;
+                let agent_card_instance = agent_card.call((), Some(agent_card_kwargs))?;
+
+                println!("Agent card instance: {:?}", agent_card_instance);
+
+                Ok(())
+            }
+            AgentConfig::Path(_) => Err(AgentConfigError::InvalidAgentConfig),
+        }
+    }
     pub fn resolve(self, root_path: &Path) -> Result<Self, AgentConfigError> {
         match self {
             AgentConfig::Spec(spec) => Ok(AgentConfig::Spec(spec)),

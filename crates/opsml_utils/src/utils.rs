@@ -324,6 +324,40 @@ pub fn pydict_to_json_value(py: Python, dict: &Bound<'_, PyDict>) -> Result<Valu
     Ok(Value::Object(map))
 }
 
+fn camel_to_snake(s: &str) -> String {
+    let mut result = String::with_capacity(s.len() + 5);
+    let mut chars = s.chars().peekable();
+
+    while let Some(c) = chars.next() {
+        if c.is_uppercase() {
+            if !result.is_empty() {
+                result.push('_');
+            }
+            result.push(c.to_ascii_lowercase());
+        } else {
+            result.push(c);
+        }
+    }
+
+    result
+}
+
+pub fn convert_keys_to_snake_case(value: Value) -> Value {
+    match value {
+        Value::Object(map) => {
+            let new_map = map
+                .into_iter()
+                .map(|(k, v)| (camel_to_snake(&k), convert_keys_to_snake_case(v)))
+                .collect();
+            Value::Object(new_map)
+        }
+        Value::Array(arr) => {
+            Value::Array(arr.into_iter().map(convert_keys_to_snake_case).collect())
+        }
+        other => other,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::clean_string;
