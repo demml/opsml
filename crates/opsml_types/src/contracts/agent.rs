@@ -473,10 +473,11 @@ impl AgentSkill {
 
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(untagged)]
+#[serde(tag = "format", rename_all = "lowercase")]
 pub enum SkillFormat {
-    A2A(AgentSkill),
     Standard(AgentSkillStandard),
+    #[serde(rename = "a2a")]
+    A2A(AgentSkill),
 }
 
 impl SkillFormat {
