@@ -55,6 +55,11 @@ service:
         metadata:
           complexity: "high"
         allowed_tools: ["pandas", "numpy"]
+    interface:
+      - uri: "https://example.com/agent-interface"
+        protocol_binding: "https"
+        protocol_version: "1.0"
+        tenant: "example-tenant"
 
 deploy:
   - environment: "dev_client"

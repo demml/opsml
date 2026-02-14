@@ -354,7 +354,9 @@ impl AgentConfig {
                     root_path.join(path)
                 };
 
-                let content = std::fs::read_to_string(&agent_path)?;
+                let content = std::fs::read_to_string(&agent_path).inspect_err(|e| {
+                    error!("Failed to read agent spec file at {:?}: {}", agent_path, e);
+                })?;
                 Ok(serde_yaml::from_str(&content)?)
             }
         }
