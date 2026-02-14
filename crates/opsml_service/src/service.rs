@@ -307,6 +307,20 @@ impl OpsmlServiceSpec {
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
+
+    // todo: this is a work in progress as the a2a python sdk does not yet support
+    // version 0.3.0 of the a2a spec
+    //pub fn to_a2a_card<'py>(&self, py: Python<'py>) -> Result<(), ServiceError> {
+    //    if let Some(service) = &self.service
+    //        && self.service_type == ServiceType::Agent
+    //        && let Some(agent_config) = &service.agent
+    //    {
+    //        agent_config.to_a2a_card(py)?;
+    //        Ok(())
+    //    } else {
+    //        Ok(())
+    //    }
+    //}
 }
 
 #[cfg(test)]
