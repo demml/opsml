@@ -4,7 +4,7 @@ use crate::utils::BaseArgs;
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
-use opsml_service::ServiceSpec;
+use opsml_service::OpsmlServiceSpec;
 use opsml_types::contracts::{Card, CardEntry, ServiceConfig};
 use opsml_types::{
     RegistryType, SaveName, Suffix,
@@ -216,9 +216,9 @@ impl ServiceCard {
             BaseArgs::create_args(Some(name), Some(space), version, None, &registry_type)?;
 
         let spec = if load_spec {
-            ServiceSpec::from_env()?
+            OpsmlServiceSpec::from_env()?
         } else {
-            ServiceSpec::new_empty(
+            OpsmlServiceSpec::new_empty(
                 &base_args.0,
                 &base_args.1,
                 service_type.unwrap_or(ServiceType::Api),
@@ -672,7 +672,7 @@ impl ServiceCard {
         space: String,
         name: String,
         cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
-        spec: &ServiceSpec,
+        spec: &OpsmlServiceSpec,
     ) -> Result<ServiceCard, CardError> {
         let registry_type = RegistryType::Service;
         let base_args = BaseArgs::create_args(

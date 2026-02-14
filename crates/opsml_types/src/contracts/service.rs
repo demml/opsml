@@ -1,7 +1,7 @@
 use crate::RegistryType;
 use crate::contracts::AgentSpec;
 use crate::contracts::mcp::McpConfig;
-use crate::error::TypeError;
+use crate::error::{AgentConfigError, TypeError};
 use opsml_semver::VersionType;
 use opsml_utils::extract_py_attr;
 use pyo3::prelude::*;
@@ -344,11 +344,11 @@ pub enum AgentConfig {
 }
 
 impl AgentConfig {
-    pub fn resolve(&self, root_path: &Path) -> Result<AgentSpec, TypeError> {
+    pub fn resolve(self, root_path: &Path) -> Result<Self, AgentConfigError> {
         match self {
-            AgentConfig::Spec(spec) => Ok((**spec).clone()),
+            AgentConfig::Spec(spec) => Ok(AgentConfig::Spec(spec)),
             AgentConfig::Path(path) => {
-                let agent_path = if Path::new(path).is_absolute() {
+                let agent_path = if Path::new(&path).is_absolute() {
                     PathBuf::from(path)
                 } else {
                     root_path.join(path)
@@ -357,6 +357,18 @@ impl AgentConfig {
                 let content = std::fs::read_to_string(&agent_path)?;
                 Ok(serde_yaml::from_str(&content)?)
             }
+        }
+    }
+
+    /// This will perform conversion of String path to AgentSpec and validate AgentSpec if provided as path. If AgentSpec is already provided, it will just validate it.
+    pub fn validate(&self) -> Result<(), AgentConfigError> {
+        // validates the agent configuration
+        match self {
+            AgentConfig::Spec(spec) => {
+                spec.validate()?;
+                Ok(())
+            }
+            AgentConfig::Path(_) => Err(AgentConfigError::InvalidAgentConfig), // Path should have been resolved at this point
         }
     }
 }
@@ -379,9 +391,6 @@ pub struct ServiceConfig {
     //#[serde(skip)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub agent: Option<AgentConfig>,
-    //#[serde(skip)]
-    //#[pyo3(get)]
-    //pub agent: Option<AgentSpec>,
 }
 
 impl ServiceConfig {
@@ -390,6 +399,7 @@ impl ServiceConfig {
         service_space: &str,
         service_type: &ServiceType,
     ) -> Result<(), TypeError> {
+        // validate cards and set space if not provided
         if let Some(cards) = &mut self.cards {
             for card in cards {
                 card.validate()?;
@@ -397,22 +407,29 @@ impl ServiceConfig {
             }
         }
 
+        // MCP services must have MCP config
         if service_type == &ServiceType::Mcp && self.mcp.is_none() {
             return Err(TypeError::MissingMCPConfig);
         }
 
+        // Agent services must have agent config
         if service_type == &ServiceType::Agent && self.agent.is_none() {
-            return Err(TypeError::MissingAgentConfig);
+            return Err(AgentConfigError::MissingAgentConfig.into());
         }
 
+        // Validate agent config if present
+        if let Some(agent_config) = &self.agent {
+            agent_config.validate()?;
+        }
         Ok(())
     }
 
-    pub fn get_agent_spec(&self, root_path: &Path) -> Result<AgentSpec, TypeError> {
-        self.agent
-            .as_ref()
-            .ok_or(TypeError::MissingAgentConfig)?
-            .resolve(root_path)
+    pub fn resolve(&mut self, root_path: &Path) -> Result<(), AgentConfigError> {
+        // resolve agent config if it's a path
+        if let Some(agent_config) = self.agent.take() {
+            self.agent = Some(agent_config.resolve(root_path)?);
+        }
+        Ok(())
     }
 }
 

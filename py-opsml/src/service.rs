@@ -1,5 +1,5 @@
 use opsml_registry::download::download_service;
-use opsml_service::{service::SpaceConfig, ServiceSpec};
+use opsml_service::{service::SpaceConfig, OpsmlServiceSpec};
 use opsml_types::contracts::{
     DeploymentConfig, GpuConfig, McpCapability, McpConfig, McpTransport, Resources, ServiceConfig,
     ServiceMetadata, ServiceType,
@@ -9,7 +9,7 @@ use pyo3::prelude::*;
 pub fn add_service_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(download_service, m)?)?;
     m.add_class::<ServiceType>()?;
-    m.add_class::<ServiceSpec>()?;
+    m.add_class::<OpsmlServiceSpec>()?;
     m.add_class::<SpaceConfig>()?;
     m.add_class::<ServiceMetadata>()?;
     m.add_class::<ServiceConfig>()?;

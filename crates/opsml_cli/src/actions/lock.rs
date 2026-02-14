@@ -6,7 +6,7 @@ use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
 use opsml_registry::error::RegistryError;
 use opsml_registry::{CardRegistries, CardRegistry};
-use opsml_service::{ServiceSpec, service::DEFAULT_SERVICE_FILENAME};
+use opsml_service::{OpsmlServiceSpec, service::DEFAULT_SERVICE_FILENAME};
 use opsml_toml::{LockArtifact, LockFile};
 use opsml_types::IntegratedService;
 use opsml_types::{
@@ -127,7 +127,7 @@ fn create_lock_artifact_from_existing_service(
 }
 
 /// Gets the write directory with a fallback default
-fn get_write_dir(spec: &ServiceSpec, default: &str) -> String {
+fn get_write_dir(spec: &OpsmlServiceSpec, default: &str) -> String {
     spec.service
         .as_ref()
         .and_then(|s| s.write_dir.clone())
@@ -137,13 +137,13 @@ fn get_write_dir(spec: &ServiceSpec, default: &str) -> String {
 
 /// Create a new lock artifact for a service that does not yet exist in the registry
 /// # Arguments
-/// * `spec` - &ServiceSpec
+/// * `spec` - &OpsmlServiceSpec
 /// * `registries` - &RustRegistries
 /// * `spec_cards` - Option<&Vec<DeckCard>>
 /// # Returns
 /// * `Result<LockArtifact, CliError>`
 fn create_new_service_lock(
-    spec: &mut ServiceSpec,
+    spec: &mut OpsmlServiceSpec,
     registry: &CardRegistry,
     spec_cards: Option<&Vec<Card>>,
     space: &str,
@@ -165,13 +165,13 @@ fn create_new_service_lock(
 
 /// Handles lock creation for an existing service
 /// # Arguments
-/// * `spec` - &ServiceSpec
+/// * `spec` - &OpsmlServiceSpec
 /// * `spec_cards` - Option<&Vec<DeckCard>>
 /// * `service` - CardRecord
 /// # Returns
 /// * `Result<LockArtifact, CliError>`
 fn handle_existing_service_lock(
-    spec: &mut ServiceSpec,
+    spec: &mut OpsmlServiceSpec,
     service_registry: &CardRegistry,
     spec_cards: Option<&Vec<Card>>, // cards from spec
     service: CardRecord,            // existing service
@@ -201,7 +201,7 @@ fn handle_existing_service_lock(
 /// # Returns
 /// * `Result<LockArtifact, CliError>` - Lock artifact or error
 #[instrument(skip_all)]
-pub fn lock_service_card(spec: &mut ServiceSpec) -> Result<LockArtifact, CliError> {
+pub fn lock_service_card(spec: &mut OpsmlServiceSpec) -> Result<LockArtifact, CliError> {
     // Extract owned values first to avoid holding references to spec
 
     let space = spec.space().to_string();
@@ -326,7 +326,7 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
 pub fn lock_service(path: PathBuf) -> Result<(), CliError> {
     debug!("Locking service with path: {:?}", path);
     // handle case of no cards
-    let mut spec = ServiceSpec::from_path(&path)?;
+    let mut spec = OpsmlServiceSpec::from_path(&path)?;
 
     // Create a lock file
     let lock_file = LockFile {

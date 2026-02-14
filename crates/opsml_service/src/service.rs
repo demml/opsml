@@ -40,10 +40,11 @@ impl SpaceConfig {
         }
     }
 }
-
+/// Top level specification for OpML
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[pyclass]
-pub struct ServiceSpec {
+pub struct OpsmlServiceSpec {
+    // change this to OpsmlSpec
     #[pyo3(get)]
     pub name: String,
 
@@ -68,13 +69,13 @@ pub struct ServiceSpec {
     pub root_path: PathBuf,
 }
 
-impl ServiceSpec {
+impl OpsmlServiceSpec {
     pub fn new_empty(
         name: &str,
         space: &str,
         service_type: ServiceType,
     ) -> Result<Self, ServiceError> {
-        let mut spec = ServiceSpec {
+        let spec = OpsmlServiceSpec {
             name: name.to_string(),
             space_config: SpaceConfig::Space {
                 space: space.to_string(),
@@ -85,17 +86,17 @@ impl ServiceSpec {
             deploy: None,
             root_path: PathBuf::new(),
         };
-        spec.validate()?;
+
         Ok(spec)
     }
-    /// Load a ServiceSpec from a file path, searching parent directories if necessary.
+    /// Load a OpsmlServiceSpec from a file path, searching parent directories if necessary.
     /// This method is used within the CLI to locate the service specification file.
     /// # Arguments
     /// * `path` - Optional path to the spec file or directory. If None, uses current directory.
     ///   - If the path is a file, loads that file directly.
     ///   - If the path is a directory, searches for `opsmlspec.yaml`.
     /// # Returns
-    /// * `ServiceSpec` - The loaded service specification
+    /// * `OpsmlServiceSpec` - The loaded service specification
     pub fn from_path(path: &Path) -> Result<Self, ServiceError> {
         // We are returning both the service spec and the root path where the spec was found
         // This is useful for (1) loading the spec file and (2) determine which root path a spec belongs to
@@ -131,12 +132,27 @@ impl ServiceSpec {
             }
         };
 
-        println!("Loading service spec from: {}", service_path.display());
-
         let mut spec = Self::from_yaml_file(&service_path)?;
+
+        // root path is where the service spec file lives
         spec.root_path = root_path;
 
+        // resolve and underlying paths
+        spec.resolve()?;
+
+        // validate the spec
+        spec.validate()?;
+
         Ok(spec)
+    }
+
+    /// Resolve any paths in the service spec (e.g. agent spec path) and replace with actual specs
+    fn resolve(&mut self) -> Result<(), ServiceError> {
+        // if service exists, resolve any paths in service config (e.g. agent spec path) and replace with actual specs
+        if let Some(service) = &mut self.service {
+            service.resolve(&self.root_path)?;
+        }
+        Ok(())
     }
 
     /// Filter the deployment configurations to only include those matching the current application environment
@@ -172,32 +188,22 @@ impl ServiceSpec {
         Self::from_path(&current_dir)
     }
 
-    fn validate(&mut self) -> Result<(), ServiceError> {
-        self.validate_service_type()?;
-        self.service
-            .as_mut()
-            .map(|service| service.validate(self.space_config.get_space(), &self.service_type))
-            .transpose()?;
-        Ok(())
-    }
-    /// Load a ServiceSpec from a YAML file at the given path
+    /// Load a OpsmlServiceSpec from a YAML file at the given path
     /// # Arguments
     /// * `path` - Path to the YAML file
     /// # Returns
-    /// * `ServiceSpec` - The loaded service specification
+    /// * `OpsmlServiceSpec` - The loaded service specification
     pub fn from_yaml_file(path: &Path) -> Result<Self, ServiceError> {
         Self::from_yaml(&std::fs::read_to_string(path)?)
     }
 
-    /// Load a ServiceSpec from a YAML string
+    /// Load a OpsmlServiceSpec from a YAML string
     /// # Arguments
     /// * `yaml_str` - The YAML string
     /// # Returns
-    /// * `ServiceSpec` - The loaded service specification
+    /// * `OpsmlServiceSpec` - The loaded service specification
     pub fn from_yaml(yaml_str: &str) -> Result<Self, ServiceError> {
-        let mut spec: ServiceSpec = serde_yaml::from_str(yaml_str)?;
-
-        println!("Loaded service spec: {:#?}", spec);
+        let mut spec: OpsmlServiceSpec = serde_yaml::from_str(yaml_str)?;
 
         spec.filter_deploy_by_environment()?;
         spec.validate()?;
@@ -215,10 +221,20 @@ impl ServiceSpec {
             None
         }
     }
+
+    fn validate(&mut self) -> Result<(), ServiceError> {
+        self.validate_service_type()?;
+
+        if let Some(service) = &mut self.service {
+            service.validate(self.space_config.get_space(), &self.service_type)?;
+        }
+
+        Ok(())
+    }
 }
 
 #[pymethods]
-impl ServiceSpec {
+impl OpsmlServiceSpec {
     #[new]
     pub fn new(
         name: String,
@@ -228,7 +244,7 @@ impl ServiceSpec {
         service: Option<ServiceConfig>,
         deploy: Option<Vec<DeploymentConfig>>,
     ) -> Result<Self, ServiceError> {
-        let mut spec = ServiceSpec {
+        let mut spec = OpsmlServiceSpec {
             name,
             space_config,
             service_type,
@@ -251,7 +267,11 @@ impl ServiceSpec {
             }
         };
 
-        let spec = Self::from_path(&path)?;
+        let mut spec = Self::from_path(&path)?;
+        spec.resolve()?;
+
+        // call validate
+        spec.validate()?;
         Ok(spec)
     }
 
@@ -312,7 +332,7 @@ deploy:
       logging: https://logging.example.com
 "#;
 
-        let spec = ServiceSpec::from_yaml(yaml_content).unwrap();
+        let spec = OpsmlServiceSpec::from_yaml(yaml_content).unwrap();
         assert_eq!(spec.name, "test-service");
         assert_eq!(spec.space(), "my-team");
 
@@ -354,7 +374,7 @@ deploy:
       logging: https://logging.example.com
 "#;
 
-        let spec = ServiceSpec::from_yaml(yaml_content).unwrap();
+        let spec = OpsmlServiceSpec::from_yaml(yaml_content).unwrap();
         assert_eq!(spec.name, "test-service");
         assert_eq!(spec.space(), "my-team");
         //assert mcp type
@@ -390,7 +410,7 @@ deploy:
     endpoints: [https://test.example.com]
 "#;
 
-        let spec = ServiceSpec::from_yaml(yaml_content).unwrap();
+        let spec = OpsmlServiceSpec::from_yaml(yaml_content).unwrap();
         assert_eq!(spec.name, "test-service");
         assert_eq!(spec.space(), "my-team");
         //assert mcp type
@@ -428,7 +448,7 @@ deploy:
   - environment: development
 "#;
 
-        let spec = ServiceSpec::from_yaml(yaml_content).unwrap();
+        let spec = OpsmlServiceSpec::from_yaml(yaml_content).unwrap();
         assert_eq!(spec.name, "test-service");
         assert_eq!(spec.space(), "my-team");
 
