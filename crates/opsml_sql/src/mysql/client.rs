@@ -2201,7 +2201,9 @@ mod tests {
             service_type: ServiceType::Agent.to_string(),
             tags: Json(vec!["tag1".to_string()]),
             service_config: Some(Json(ServiceConfig {
-                agent: Some(agent_spec.clone()),
+                agent: Some(opsml_types::contracts::AgentConfig::Spec(Box::new(
+                    agent_spec.clone(),
+                ))),
                 ..Default::default()
             })),
             deployment: Some(Json(vec![deploy.clone()])),
@@ -2226,7 +2228,9 @@ mod tests {
             service_type: ServiceType::Agent.to_string(),
             tags: Json(vec!["tag1".to_string()]),
             service_config: Some(Json(ServiceConfig {
-                agent: Some(agent_spec.clone()),
+                agent: Some(opsml_types::contracts::AgentConfig::Spec(Box::new(
+                    agent_spec.clone(),
+                ))),
                 ..Default::default()
             })),
             deployment: Some(Json(vec![deploy])),

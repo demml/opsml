@@ -142,7 +142,7 @@ impl CardList {
 
 /// ServiceCard is a collection of cards that can be associated and loaded in one call
 /// aka a ServiceCard. We use ServiceCard for consistency with developing "Applications".
-#[pyclass]
+#[pyclass(subclass)]
 #[derive(Debug)]
 pub struct ServiceCard {
     #[pyo3(get, set)]

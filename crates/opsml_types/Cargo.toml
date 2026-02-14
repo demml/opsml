@@ -18,6 +18,7 @@ opsml-version = { workspace = true }
 potato-head = { workspace = true }
 scouter-client = { workspace = true }
 semver = { workspace = true }
+serde_yaml = { workspace = true }
 pyo3 = { workspace = true }
 pythonize = { workspace = true }
 serde = { workspace = true }

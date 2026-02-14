@@ -3,6 +3,7 @@ use opsml_utils::error::UtilError;
 use pyo3::PyErr;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::pyclass::PyClassGuardError;
+use pythonize::PythonizeError;
 use thiserror::Error;
 use tracing::error;
 
@@ -58,6 +59,15 @@ pub enum TypeError {
 
     #[error("Invalid agent configuration")]
     InvalidAgentConfig,
+
+    #[error(transparent)]
+    SerdeYamlError(#[from] serde_yaml::Error),
+}
+
+impl From<PythonizeError> for TypeError {
+    fn from(err: PythonizeError) -> Self {
+        TypeError::PyError(err.to_string())
+    }
 }
 
 impl From<TypeError> for PyErr {
