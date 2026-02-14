@@ -13,6 +13,9 @@ STUB_FILES = [
     "scouter/evaluate.pyi",
     "scouter/mock.pyi",
     "scouter/scouter.pyi",
+    "service/agent.pyi",
+    "types.pyi",
+    "card.pyi",
     "opsml.pyi",
 ]
 
