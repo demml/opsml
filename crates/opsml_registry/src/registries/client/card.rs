@@ -255,7 +255,7 @@ pub trait CardRegistry: Registry {
     }
 
     #[instrument(skip_all)]
-    fn compare_card_hash(&self, content_hash: &[u8]) -> Result<bool, RegistryError> {
+    fn compare_card_hash(&self, content_hash: &[u8]) -> Result<Option<CardArgs>, RegistryError> {
         let hash_request = CompareHashRequest {
             registry_type: self.registry_type().clone(),
             content_hash: content_hash.to_vec(),
@@ -278,7 +278,7 @@ pub trait CardRegistry: Registry {
 
         let hash_response = response.json::<CompareHashResponse>()?;
 
-        Ok(hash_response.matches)
+        Ok(hash_response.card)
     }
 }
 

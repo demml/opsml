@@ -13,7 +13,9 @@ use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_types::{
     RegistryType,
-    contracts::{ArtifactKey, CardQueryArgs, DashboardStats, ServiceQueryArgs, VersionCursor},
+    contracts::{
+        ArtifactKey, CardArgs, CardQueryArgs, DashboardStats, ServiceQueryArgs, VersionCursor,
+    },
 };
 use semver::Version;
 use sqlx::{Pool, Postgres};
@@ -575,15 +577,21 @@ impl CardLogicTrait for CardLogicPostgresClient {
     /// * `table` - The table to query
     /// * `content_hash` - The content hash to compare
     /// # Returns
-    /// * `bool` - True if the content hash matches an existing card, false otherwise
-    async fn compare_hash(&self, table: &CardTable, content_hash: &[u8]) -> Result<bool, SqlError> {
-        let query = format!("SELECT EXISTS(SELECT 1 FROM {table} WHERE content_hash = $1)");
-        let exists: bool = sqlx::query_scalar(&query)
+    /// * `CardArgs` - The card arguments if the content hash matches an existing card, error otherwise
+    async fn compare_hash(
+        &self,
+        table: &CardTable,
+        content_hash: &[u8],
+    ) -> Result<Option<CardArgs>, SqlError> {
+        let query = format!(
+            "SELECT space, name, version, uid FROM {table} WHERE content_hash = $1 LIMIT 1"
+        );
+        let card_args: Option<CardArgs> = sqlx::query_as(&query)
             .bind(content_hash)
-            .fetch_one(&self.pool)
+            .fetch_optional(&self.pool)
             .await?;
 
-        Ok(exists)
+        Ok(card_args)
     }
 
     /// Helper for extracting the unique tags from a table

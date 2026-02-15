@@ -592,7 +592,7 @@ impl ServerCardRegistry {
     pub(crate) async fn compare_card_hash(
         &self,
         content_hash: &[u8],
-    ) -> Result<bool, RegistryError> {
+    ) -> Result<Option<CardArgs>, RegistryError> {
         Ok(self
             .sql_client
             .compare_hash(&self.table_name, content_hash)

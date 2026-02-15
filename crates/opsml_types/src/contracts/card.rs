@@ -357,7 +357,7 @@ pub struct CompareHashRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CompareHashResponse {
-    pub matches: bool,
+    pub card: Option<CardArgs>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
@@ -1022,7 +1022,7 @@ impl CardRecord {
             Self::Experiment(_) => RegistryType::Experiment,
             Self::Audit(_) => RegistryType::Audit,
             Self::Prompt(_) => RegistryType::Prompt,
-            Self::Service(_) => RegistryType::Service,
+            Self::Service(card) => RegistryType::from(&card.service_type),
         }
     }
 }
@@ -1216,4 +1216,13 @@ pub struct DashboardStats {
     pub nbr_data: i64,
     pub nbr_prompts: i64,
     pub nbr_experiments: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "server", derive(sqlx::FromRow))]
+pub struct CardArgs {
+    pub space: String,
+    pub name: String,
+    pub version: String,
+    pub uid: String,
 }

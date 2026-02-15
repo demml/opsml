@@ -496,9 +496,7 @@ impl AgentConfig {
                 // if skill key format is a2a then do nothing
                 // if skill key format is standard, then remove that skill
                 let agent_card = py.import("a2a.types")?.getattr("AgentCard")?;
-                let agent_card_instance = agent_card.call((), Some(agent_card_kwargs))?;
-
-                println!("Agent card instance: {:?}", agent_card_instance);
+                let _agent_card_instance = agent_card.call((), Some(agent_card_kwargs))?;
 
                 Ok(())
             }
@@ -564,7 +562,6 @@ impl ServiceConfig {
         // validate cards and set space if not provided
         if let Some(cards) = &mut self.cards {
             for card in cards {
-                println!("Validating card: {:?}", card);
                 card.validate(service_space, root_path)?;
             }
         }

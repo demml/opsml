@@ -10,14 +10,18 @@ use opsml_types::contracts::CardQueryArgs;
 use opsml_types::{
     RegistryType,
     contracts::{
-        ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, DashboardStats,
+        ArtifactKey, ArtifactQueryArgs, ArtifactRecord, AuditEvent, CardArgs, DashboardStats,
         ServiceQueryArgs, SpaceNameEvent, SpaceRecord, SpaceStats, VersionCursor,
     },
 };
 
 #[async_trait]
 pub trait CardLogicTrait {
-    async fn compare_hash(&self, table: &CardTable, content_hash: &[u8]) -> Result<bool, SqlError>;
+    async fn compare_hash(
+        &self,
+        table: &CardTable,
+        content_hash: &[u8],
+    ) -> Result<Option<CardArgs>, SqlError>;
     async fn check_uid_exists(&self, uid: &str, table: &CardTable) -> Result<bool, SqlError>;
     async fn get_versions(
         &self,

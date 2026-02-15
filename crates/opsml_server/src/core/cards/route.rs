@@ -28,7 +28,6 @@ use opsml_sql::traits::*;
 use opsml_types::contracts::{CompareHashRequest, CompareHashResponse};
 use opsml_types::{SaveName, Suffix};
 use opsml_types::{cards::*, contracts::*};
-use serde::de;
 use serde_qs;
 
 use std::panic::{AssertUnwindSafe, catch_unwind};
@@ -860,7 +859,7 @@ pub async fn compare_content_hash(
 ) -> Result<Json<CompareHashResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
 
-    let matches = state
+    let card = state
         .sql_client
         .compare_hash(&table, &params.content_hash)
         .await
@@ -869,7 +868,7 @@ pub async fn compare_content_hash(
             internal_server_error(e, "Failed to compare content hash")
         })?;
 
-    Ok(Json(CompareHashResponse { matches }))
+    Ok(Json(CompareHashResponse { card }))
 }
 
 pub async fn get_card_router(prefix: &str) -> Result<Router<Arc<AppState>>> {

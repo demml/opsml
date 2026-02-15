@@ -1,5 +1,6 @@
 use crate::mysql::helper::MySqlQueryHelper;
 use opsml_types::cards::CardTable;
+use opsml_types::contracts::CardArgs;
 
 use crate::error::SqlError;
 use crate::schemas::schema::{
@@ -122,18 +123,22 @@ impl CardLogicTrait for CardLogicMySqlClient {
     /// * `content_hash` - The content hash to compare
     /// # Returns
     /// * `bool` - True if the content hash matches an existing card, false otherwise
-    async fn compare_hash(&self, table: &CardTable, content_hash: &[u8]) -> Result<bool, SqlError> {
+    async fn compare_hash(
+        &self,
+        table: &CardTable,
+        content_hash: &[u8],
+    ) -> Result<Option<CardArgs>, SqlError> {
         let query = format!(
-            "SELECT EXISTS(SELECT 1 FROM {} WHERE content_hash = ?)",
+            "SELECT space, name, version, uid FROM {} WHERE content_hash = ? LIMIT 1",
             table
         );
 
-        let exists: i64 = sqlx::query_scalar(&query)
+        let exists: Option<CardArgs> = sqlx::query_as(&query)
             .bind(content_hash)
-            .fetch_one(&self.pool)
+            .fetch_optional(&self.pool)
             .await?;
 
-        Ok(exists == 1)
+        Ok(exists)
     }
 
     /// Query cards based on the query arguments

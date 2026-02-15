@@ -6,7 +6,7 @@ use opsml_semver::VersionType;
 use opsml_settings::ScouterSettings;
 use opsml_settings::config::OpsmlMode;
 use opsml_state::{app_state, get_api_client};
-use opsml_types::contracts::{ArtifactKey, DeleteCardRequest};
+use opsml_types::contracts::{ArtifactKey, CardArgs, DeleteCardRequest};
 use opsml_types::contracts::{CardQueryArgs, CardRecord, CreateCardResponse};
 use opsml_types::*;
 use scouter_client::{
@@ -261,7 +261,10 @@ impl OpsmlCardRegistry {
         }
     }
 
-    pub fn compare_card_hash(&self, content_hash: &[u8]) -> Result<bool, RegistryError> {
+    pub fn compare_card_hash(
+        &self,
+        content_hash: &[u8],
+    ) -> Result<Option<CardArgs>, RegistryError> {
         match self {
             Self::Client(client_registry) => client_registry.compare_card_hash(content_hash),
             #[cfg(feature = "server")]

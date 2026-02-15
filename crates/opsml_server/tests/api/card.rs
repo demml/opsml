@@ -2060,7 +2060,7 @@ async fn test_opsml_server_card_service_card_agents() {
 
         let body = response.into_body().collect().await.unwrap().to_bytes();
         let hash_response: CompareHashResponse = serde_json::from_slice(&body).unwrap();
-        assert!(hash_response.matches);
+        assert!(hash_response.card.is_some());
 
         helper.cleanup();
     });
