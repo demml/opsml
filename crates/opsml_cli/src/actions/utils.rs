@@ -5,10 +5,10 @@ pub use opsml_registry::utils::validate_service_cards;
 use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_semver::VersionType;
 use opsml_service::OpsmlServiceSpec;
-use opsml_types::contracts::Card;
+use opsml_types::contracts::{Card, CardArgs};
 use opsml_types::{RegistryType, contracts::CardVariant};
 use std::path::Path;
-use tracing::{debug, warn};
+use tracing::{debug, error, instrument, warn};
 
 /// Process prompt cards that have paths specified, loading and registering them
 ///
@@ -47,11 +47,18 @@ pub fn process_prompt_card_from_path(
     let mut prompt_card = PromptCard::from_path(card_path)
         .map_err(|e| CliError::Error(format!("Failed to load PromptCard: {}", e)))?;
 
-    if let Ok(true) = registry.compare_card_hash(prompt_card.calculate_content_hash()?.as_slice()) {
+    let prompt_hash = prompt_card.calculate_content_hash()?;
+    if let Some(existing_card) = registry.compare_card_hash(prompt_hash.as_slice())? {
         warn!(
             "PromptCard content hash matches registry, skipping registration for: {}/{}",
             prompt_card.space, prompt_card.name
         );
+        // If the card already exists in the registry, we need to get space, name, version, and uid from the registry to populate the CardVariant for downstream use in service card registration
+        // update prompt_card with existing card info from registry
+        prompt_card.space = existing_card.space;
+        prompt_card.name = existing_card.name;
+        prompt_card.version = existing_card.version;
+        prompt_card.uid = existing_card.uid;
     } else {
         registry
             .register_card_rs(
@@ -117,6 +124,7 @@ fn extract_and_validate_cards(spec: &OpsmlServiceSpec) -> Result<Vec<Card>, CliE
 /// 3. Create the service card and calculate its content hash.
 /// 4. Check the content hash against the registry - if it matches, skip registration to avoid creating a new version with the same content.
 ///    If it doesn't match, register the service card
+#[instrument(skip_all)]
 pub fn register_service_card(
     spec: &mut OpsmlServiceSpec,
     registries: &CardRegistries,
@@ -127,14 +135,22 @@ pub fn register_service_card(
 
     let registry = registries.get_registry(&RegistryType::from(&spec.service_type));
     let cards = extract_and_validate_cards(spec)?;
+
+    // Create the ServiceCard from its components to calculate the content hash before registration
+    // This becomes the source of truth
     let mut service = ServiceCard::rust_new(space.to_string(), name.to_string(), cards, spec)
         .map_err(CliError::CreateServiceError)?;
 
-    if card_exists_in_registry(registry, &service)? {
+    if let Some(existing_card) = card_exists_in_registry(registry, &service)? {
         warn!(
             "ServiceCard content hash matches registry, skipping registration for: {}/{}",
             space, name
         );
+        // update service card with existing card info from registry to ensure version and uid are populated for downstream use
+        service.space = existing_card.space;
+        service.name = existing_card.name;
+        service.version = existing_card.version;
+        service.uid = existing_card.uid;
         return Ok((service, false));
     }
 
@@ -142,6 +158,7 @@ pub fn register_service_card(
     Ok((service, true))
 }
 
+#[instrument(skip_all)]
 fn process_cards(spec: &mut OpsmlServiceSpec, registries: &CardRegistries) -> Result<(), CliError> {
     let Some(service_config) = &mut spec.service else {
         return Ok(());
@@ -161,11 +178,15 @@ fn process_cards(spec: &mut OpsmlServiceSpec, registries: &CardRegistries) -> Re
     Ok(())
 }
 
+#[instrument(skip_all)]
 fn card_exists_in_registry(
     registry: &CardRegistry,
     service: &ServiceCard,
-) -> Result<bool, CliError> {
-    registry
-        .compare_card_hash(service.calculate_content_hash()?.as_slice())
-        .map_err(Into::into)
+) -> Result<Option<CardArgs>, CliError> {
+    let content_hash = service.calculate_content_hash()?;
+    Ok(registry
+        .compare_card_hash(content_hash.as_slice())
+        .inspect_err(|e| {
+            error!("Error comparing card hash with registry: {}", e);
+        })?)
 }

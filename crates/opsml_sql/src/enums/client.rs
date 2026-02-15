@@ -15,11 +15,11 @@ use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::VersionCursor;
 use opsml_types::contracts::{
     ArtifactQueryArgs, ArtifactRecord, AuditEvent, DashboardStats, SpaceNameEvent, SpaceRecord,
     SpaceStats,
 };
+use opsml_types::contracts::{CardArgs, VersionCursor};
 use opsml_types::{
     RegistryType, SqlType,
     cards::CardTable,
@@ -43,7 +43,11 @@ impl CardLogicTrait for SqlClientEnum {
         }
     }
 
-    async fn compare_hash(&self, table: &CardTable, content_hash: &[u8]) -> Result<bool, SqlError> {
+    async fn compare_hash(
+        &self,
+        table: &CardTable,
+        content_hash: &[u8],
+    ) -> Result<Option<CardArgs>, SqlError> {
         match self {
             SqlClientEnum::Postgres(client) => client.card.compare_hash(table, content_hash).await,
             SqlClientEnum::Sqlite(client) => client.card.compare_hash(table, content_hash).await,

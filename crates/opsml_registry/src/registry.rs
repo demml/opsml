@@ -86,14 +86,6 @@ fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> Result<RegistryTyp
     }
 }
 
-pub struct CardArgs {
-    pub uid: String,
-    pub name: String,
-    pub space: String,
-    pub version: String,
-    pub registry_type: RegistryType,
-}
-
 #[pyclass]
 #[pyo3(module = "opsml.card")]
 #[derive(Clone)]
@@ -838,7 +830,10 @@ impl CardRegistry {
         Ok(response)
     }
 
-    pub fn compare_card_hash(&self, content_hash: &[u8]) -> Result<bool, RegistryError> {
+    pub fn compare_card_hash(
+        &self,
+        content_hash: &[u8],
+    ) -> Result<Option<CardArgs>, RegistryError> {
         self.registry.compare_card_hash(content_hash)
     }
 }

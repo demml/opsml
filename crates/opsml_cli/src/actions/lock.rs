@@ -111,15 +111,15 @@ fn create_lock_artifact_from_service_card(
 /// # Returns
 /// * `LockArtifact`
 fn create_lock_artifact_from_existing_service(
-    service: &CardRecord,
+    service: &ServiceCard,
     write_dir: &str,
 ) -> LockArtifact {
     LockArtifact {
-        space: service.space().to_string(),
-        name: service.name().to_string(),
-        version: service.version().to_string(),
-        uid: service.uid().to_string(),
-        registry_type: RegistryType::Service,
+        space: service.space.clone(),
+        name: service.name.clone(),
+        version: service.version.clone(),
+        uid: service.uid.clone(),
+        registry_type: service.registry_type.clone(),
         write_dir: write_dir.to_string(),
     }
 }
@@ -193,7 +193,7 @@ fn handle_existing_service_lock(
     };
 
     Ok(create_lock_artifact_from_existing_service(
-        &service,
+        &service_card,
         &get_write_dir(spec, "opsml_service"),
     ))
 }

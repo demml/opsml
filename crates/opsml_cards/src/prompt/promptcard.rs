@@ -297,16 +297,26 @@ impl PromptCard {
     pub fn calculate_content_hash(&self) -> Result<Vec<u8>, CardError> {
         let mut hasher = Sha256::new();
 
-        let prompt_json = serde_json::to_string(&self.prompt)?;
-        hasher.update(prompt_json.as_bytes());
+        // Hash the prompt
+        let prompt_string = serde_json::to_string(&self.prompt)?;
+        hasher.update(prompt_string.as_bytes());
 
-        let mut sorted_tags = self.tags.clone();
-        sorted_tags.sort();
-        hasher.update(sorted_tags.join(",").as_bytes());
-
+        // Hash the eval profile, excluding runtime-generated uid
         if let Some(eval_profile) = &self.eval_profile {
-            let profile_json = serde_json::to_string(eval_profile)?;
-            hasher.update(profile_json.as_bytes());
+            let mut eval_value = serde_json::to_value(eval_profile)?;
+
+            // Remove runtime-generated fields from config
+            if let Some(config) = eval_value.get_mut("config")
+                && let Some(config_obj) = config.as_object_mut()
+            {
+                config_obj.remove("uid");
+                config_obj.remove("space");
+                config_obj.remove("name");
+                config_obj.remove("version");
+            }
+
+            let eval_string = serde_json::to_string(&eval_value)?;
+            hasher.update(eval_string.as_bytes());
         }
 
         Ok(hasher.finalize().to_vec())
