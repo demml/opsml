@@ -243,6 +243,29 @@ impl CardPath {
     }
 }
 
+mod version_deserializer {
+    use serde::{Deserialize, Deserializer};
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum StringOrInt {
+            String(String),
+            Int(i64),
+        }
+
+        Ok(
+            Option::<StringOrInt>::deserialize(deserializer)?.map(|v| match v {
+                StringOrInt::String(s) => s,
+                StringOrInt::Int(i) => i.to_string(),
+            }),
+        )
+    }
+}
+
 /// Lock a service card by registering it if it doesn't have a uid, or validating it if it does
 #[pyclass(eq)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
@@ -254,6 +277,7 @@ pub struct Card {
     pub space: String,
     #[pyo3(get)]
     pub name: String,
+    #[serde(default, deserialize_with = "version_deserializer::deserialize")]
     #[pyo3(get)]
     pub version: Option<String>,
     #[serde(rename = "type")]
