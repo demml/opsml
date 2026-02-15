@@ -169,7 +169,7 @@ fn process_cards(spec: &mut OpsmlServiceSpec, registries: &CardRegistries) -> Re
     };
 
     for card in cards.iter_mut() {
-        if *card.registry_type() == RegistryType::Prompt {
+        if *card.registry_type() == RegistryType::Prompt && matches!(card, CardVariant::Path(_)) {
             let prompt_registry = registries.get_registry(&RegistryType::Prompt);
             process_prompt_card_from_path(card, &spec.root_path, prompt_registry)?;
         }
