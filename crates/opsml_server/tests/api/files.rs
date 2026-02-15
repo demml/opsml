@@ -1,10 +1,10 @@
 use crate::common::TestHelper;
 use axum::{
     body::Body,
-    http::{header, Request, StatusCode},
+    http::{Request, StatusCode, header},
 };
 use http_body_util::BodyExt; // for `collect`
-use opsml_types::{contracts::*, RegistryType};
+use opsml_types::{RegistryType, contracts::*};
 use test_utils::retry_flaky_test;
 
 #[tokio::test]

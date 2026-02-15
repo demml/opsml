@@ -1,6 +1,6 @@
 use password_auth::generate_hash;
-use rand::distr::Alphanumeric;
 use rand::Rng;
+use rand::distr::Alphanumeric;
 use rayon::prelude::*;
 
 pub fn generate_recovery_codes_with_hashes(count: usize) -> (Vec<String>, Vec<String>) {

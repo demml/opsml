@@ -1,0 +1,39 @@
+space: opsml
+name: my-prompt
+prompt:
+  model: gemini-2.5-flash
+  provider: Google
+  messages:
+    - "Analyze the sentiment of the provided text {input}"
+  system_instructions:
+    - "You are a helpful assistant"
+  settings:
+    generation_config: # gemini expects camelCase keys
+      maxOutputTokens: 1024
+      temperature: 0.7
+      topP: 0.9
+      topK: 40
+      presencePenalty: 0.0
+      frequencyPenalty: 0.0
+      stopSequences:
+        - "###"
+evaluation:
+  alias: sentiment_analysis_eval
+  tasks:
+    - task_type: Assertion
+      id: sentiment_score_assertion
+      field_path: sentiment.score
+      operator: GreaterThan
+      expected_value: 18
+      description: Analyze sentiment score is above threshold
+      depends_on: []
+      condition: false
+
+    - task_type: Assertion
+      id: validate_email
+      field_path: user.email
+      operator: IsEmail
+      expected_value: true
+      description: Validate email format
+      depends_on: []
+      condition: false

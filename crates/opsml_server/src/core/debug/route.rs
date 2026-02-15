@@ -3,8 +3,8 @@ use crate::core::state::AppState;
 use anyhow::{Context, Result};
 /// Route for debugging information
 use axum::extract::State;
-use axum::{routing::get, Router};
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use axum::{Router, routing::get};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::error;
 

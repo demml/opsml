@@ -5,7 +5,7 @@ use opsml_sql::schemas::*;
 use opsml_sql::traits::*;
 use opsml_storage::StorageClientEnum;
 use opsml_types::cards::CardTable;
-use opsml_types::{contracts::*, RegistryType};
+use opsml_types::{RegistryType, contracts::*};
 use semver::Version;
 use std::sync::Arc;
 use tracing::{error, instrument};
@@ -105,6 +105,7 @@ pub async fn insert_card_into_db(
                 client_card.auditcard_uid,
                 client_card.opsml_version,
                 client_card.username,
+                client_card.content_hash,
             );
             ServerCard::Prompt(server_card)
         }
@@ -116,14 +117,15 @@ pub async fn insert_card_into_db(
                 version,
                 client_card.cards,
                 client_card.opsml_version,
-                client_card.service_type,
+                client_card.service_type.to_string(),
                 client_card.metadata,
                 client_card.deployment,
                 client_card.service_config,
+                client_card.content_hash,
                 client_card.username,
                 client_card.tags,
             );
-            ServerCard::Service(server_card)
+            ServerCard::Service(Box::new(server_card))
         }
     };
     sql_client.insert_card(table, &card).await?;

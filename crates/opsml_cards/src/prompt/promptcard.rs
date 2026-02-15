@@ -1,19 +1,21 @@
 use crate::error::CardError;
+use crate::traits::OpsmlCard;
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
-use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
 use opsml_types::DriftProfileUri;
+use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
 use opsml_types::{RegistryType, SaveName, Suffix};
-use opsml_utils::{get_utc_datetime, PyHelperFuncs};
+use opsml_utils::{PyHelperFuncs, get_utc_datetime};
 use potato_head::prompt_types::Prompt;
+use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
-use pyo3::IntoPyObjectExt;
 use scouter_client::AssertionTasks;
 use scouter_client::TasksFile;
 use scouter_client::{DriftType, GenAIEvalConfig, GenAIEvalProfile};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, instrument};
@@ -33,7 +35,7 @@ pub fn deserialize_from_path<T: DeserializeOwned>(path: PathBuf) -> Result<T, Ca
             return Err(CardError::Error(format!(
                 "Unsupported file extension '{}'. Expected .json, .yaml, or .yml",
                 extension
-            )))
+            )));
         }
     };
 
@@ -93,6 +95,52 @@ pub struct PromptCard {
 
     #[pyo3(get, set)]
     pub eval_profile: Option<GenAIEvalProfile>,
+}
+
+impl OpsmlCard for PromptCard {
+    fn get_registry_card(&self) -> Result<CardRecord, CardError> {
+        self.get_registry_card()
+    }
+
+    fn get_version(&self) -> String {
+        self.version.clone()
+    }
+
+    fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    fn set_space(&mut self, space: String) {
+        self.space = space;
+    }
+
+    fn set_version(&mut self, version: String) {
+        self.version = version;
+    }
+
+    fn set_uid(&mut self, uid: String) {
+        self.uid = uid;
+    }
+
+    fn set_created_at(&mut self, created_at: DateTime<Utc>) {
+        self.created_at = created_at;
+    }
+
+    fn set_app_env(&mut self, app_env: String) {
+        self.app_env = app_env;
+    }
+
+    fn is_card(&self) -> bool {
+        self.is_card
+    }
+
+    fn save(&self, path: PathBuf) -> Result<(), CardError> {
+        self.save_card(path)
+    }
+
+    fn registry_type(&self) -> &RegistryType {
+        &self.registry_type
+    }
 }
 
 #[pymethods]
@@ -183,6 +231,7 @@ impl PromptCard {
             auditcard_uid: self.metadata.auditcard_uid.clone(),
             opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            content_hash: self.calculate_content_hash()?,
         };
 
         Ok(CardRecord::Prompt(record))
@@ -243,6 +292,34 @@ impl PromptCard {
 
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
+    }
+
+    pub fn calculate_content_hash(&self) -> Result<Vec<u8>, CardError> {
+        let mut hasher = Sha256::new();
+
+        // Hash the prompt
+        let prompt_string = serde_json::to_string(&self.prompt)?;
+        hasher.update(prompt_string.as_bytes());
+
+        // Hash the eval profile, excluding runtime-generated uid
+        if let Some(eval_profile) = &self.eval_profile {
+            let mut eval_value = serde_json::to_value(eval_profile)?;
+
+            // Remove runtime-generated fields from config
+            if let Some(config) = eval_value.get_mut("config")
+                && let Some(config_obj) = config.as_object_mut()
+            {
+                config_obj.remove("uid");
+                config_obj.remove("space");
+                config_obj.remove("name");
+                config_obj.remove("version");
+            }
+
+            let eval_string = serde_json::to_string(&eval_value)?;
+            hasher.update(eval_string.as_bytes());
+        }
+
+        Ok(hasher.finalize().to_vec())
     }
 }
 

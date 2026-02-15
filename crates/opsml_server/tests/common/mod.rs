@@ -1,15 +1,15 @@
+use axum::Router;
 use axum::extract::connect_info::MockConnectInfo;
 use axum::response::Response;
-use axum::Router;
 use axum::{
     body::Body,
-    http::{header, Request, StatusCode},
+    http::{Request, StatusCode, header},
 };
 use base64::prelude::*;
 use http_body_util::BodyExt;
-use jsonwebtoken::encode;
 use jsonwebtoken::EncodingKey;
 use jsonwebtoken::Header;
+use jsonwebtoken::encode;
 use mockito;
 use opsml_auth::sso::providers::types::IdTokenClaims;
 use opsml_auth::sso::providers::types::*;
@@ -18,6 +18,9 @@ use opsml_semver::VersionType;
 use opsml_server::core::app::create_app;
 use opsml_settings::config::DatabaseSettings;
 use opsml_sql::enums::client::SqlClientEnum;
+use opsml_types::contracts::agent::{
+    AgentCapabilities, AgentInterface, AgentProvider, AgentSkill, AgentSpec, SecurityRequirement,
+};
 use opsml_types::contracts::*;
 use opsml_types::*;
 use scouter_client::{
@@ -736,5 +739,47 @@ impl TestHelper {
         } else {
             false
         }
+    }
+
+    pub(crate) fn example_agent_spec() -> AgentSpec {
+        AgentSpec::new_rs(
+            "TestAgent".to_string(),
+            "A test agent for SQL integration tests".to_string(),
+            "1.0.0".to_string(),
+            vec![AgentInterface::new(
+                "http://localhost:8000".to_string(),
+                "HTTP".to_string(),
+                "1.0".to_string(),
+                Some("tenant1".to_string()),
+            )],
+            AgentCapabilities::new(
+                true,  // streaming
+                false, // push_notifications
+                false, // extended_agent_card
+                None,  // extensions
+            ),
+            vec!["text".to_string()],
+            vec!["json".to_string()],
+            vec![opsml_types::contracts::SkillFormat::A2A(AgentSkill::new(
+                "skill1".to_string(),
+                "Echo".to_string(),
+                "Echoes input text".to_string(),
+                Some(vec!["test".to_string()]),
+                Some(vec!["example input".to_string()]),
+                Some(vec!["text".to_string()]),
+                Some(vec!["text".to_string()]),
+                Some(vec![SecurityRequirement::new(vec!["apiKey".to_string()])]),
+            ))],
+            Some(AgentProvider::new(
+                Some("TestOrg".to_string()),
+                Some("https://test.org".to_string()),
+            )),
+            Some("https://docs.test.org".to_string()),
+            Some("https://test.org/icon.png".to_string()),
+            None, // security_schemes
+            Some(vec![SecurityRequirement::new(vec!["apiKey".to_string()])]),
+            None, // signatures
+        )
+        .unwrap()
     }
 }

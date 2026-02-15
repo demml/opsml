@@ -13,7 +13,7 @@ from opsml.cli import (
     download_card,
     DownloadCard,
 )
-from opsml.service import ServiceSpec, ServiceType
+from opsml.service import OpsmlServiceSpec, ServiceType
 import pandas as pd
 import os
 from pathlib import Path
@@ -233,7 +233,7 @@ def test_load_model_card(
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_load_spec_to_py():
     path = CURRENT_DIRECTORY / "opsmlspec.yaml"
-    spec = ServiceSpec.from_path(path)
+    spec = OpsmlServiceSpec.from_path(path)
 
     assert spec.name == "name"
     assert spec.space == "space"

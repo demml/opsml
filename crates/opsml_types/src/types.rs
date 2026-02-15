@@ -1,3 +1,4 @@
+use crate::contracts::ServiceType;
 use crate::error::TypeError;
 use pyo3::prelude::*;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -26,6 +27,7 @@ pub enum RegistryType {
     Mcp,
     Artifact,
     Evaluation,
+    Agent,
 }
 
 impl<'de> Deserialize<'de> for RegistryType {
@@ -49,6 +51,7 @@ impl<'de> Deserialize<'de> for RegistryType {
             "artifact" => Ok(RegistryType::Artifact),
             "evaluation" => Ok(RegistryType::Evaluation),
             "mcp" => Ok(RegistryType::Mcp),
+            "agent" => Ok(RegistryType::Agent),
             _ => Err(serde::de::Error::custom(format!(
                 "Invalid registry type: {s}"
             ))),
@@ -73,6 +76,7 @@ impl Display for RegistryType {
             RegistryType::Artifact => write!(f, "artifact"),
             RegistryType::Evaluation => write!(f, "evaluation"),
             RegistryType::Mcp => write!(f, "mcp"),
+            RegistryType::Agent => write!(f, "agent"),
         }
     }
 }
@@ -93,6 +97,7 @@ impl RegistryType {
             "artifact" => Ok(RegistryType::Artifact),
             "evaluation" => Ok(RegistryType::Evaluation),
             "mcp" => Ok(RegistryType::Mcp),
+            "agent" => Ok(RegistryType::Agent),
             _ => Err(TypeError::InvalidRegistryType),
         }
     }
@@ -113,6 +118,17 @@ impl RegistryType {
             RegistryType::Artifact => b"artifact",
             RegistryType::Evaluation => b"evaluation",
             RegistryType::Mcp => b"mcp",
+            RegistryType::Agent => b"agent",
+        }
+    }
+}
+
+impl From<&ServiceType> for RegistryType {
+    fn from(service_type: &ServiceType) -> Self {
+        match service_type {
+            ServiceType::Api => RegistryType::Service,
+            ServiceType::Mcp => RegistryType::Mcp,
+            ServiceType::Agent => RegistryType::Agent,
         }
     }
 }

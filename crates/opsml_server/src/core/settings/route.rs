@@ -1,11 +1,11 @@
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
+use axum::Json;
 /// Route for debugging information
 use axum::extract::State;
-use axum::Json;
-use axum::{routing::get, Router};
+use axum::{Router, routing::get};
 use opsml_types::contracts::{StorageSettings, UiSettings};
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::error;
 

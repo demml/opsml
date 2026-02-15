@@ -45,6 +45,7 @@ const INSERT_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/insert_experiment
 const INSERT_AUDITCARD_SQL: &str = include_str!("sql/card/insert_auditcard.sql");
 const INSERT_SERVICECARD_SQL: &str = include_str!("sql/card/insert_servicecard.sql");
 const INSERT_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/insert_mcp_card.sql");
+const INSERT_AGENT_CARD_SQL: &str = include_str!("sql/card/insert_agent_card.sql");
 const UPDATE_DATACARD_SQL: &str = include_str!("sql/card/update_datacard.sql");
 const UPDATE_PROMPTCARD_SQL: &str = include_str!("sql/card/update_promptcard.sql");
 const UPDATE_MODELCARD_SQL: &str = include_str!("sql/card/update_modelcard.sql");
@@ -52,6 +53,7 @@ const UPDATE_EXPERIMENTCARD_SQL: &str = include_str!("sql/card/update_experiment
 const UPDATE_AUDITCARD_SQL: &str = include_str!("sql/card/update_auditcard.sql");
 const UPDATE_SERVICECARD_SQL: &str = include_str!("sql/card/update_servicecard.sql");
 const UPDATE_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/update_mcp_card.sql");
+const UPDATE_AGENT_CARD_SQL: &str = include_str!("sql/card/update_agent_card.sql");
 const GET_DASHBOARD_STATS_SQL: &str = include_str!("sql/card/get_dashboard_stats.sql");
 
 // artifact keys
@@ -516,6 +518,7 @@ impl PostgresQueryHelper {
         match table {
             CardTable::Service => INSERT_SERVICECARD_SQL,
             CardTable::Mcp => INSERT_MCP_SERVICECARD_SQL,
+            CardTable::Agent => INSERT_AGENT_CARD_SQL,
             _ => INSERT_SERVICECARD_SQL,
         }
     }
@@ -524,6 +527,7 @@ impl PostgresQueryHelper {
         match table {
             CardTable::Service => UPDATE_SERVICECARD_SQL,
             CardTable::Mcp => UPDATE_MCP_SERVICECARD_SQL,
+            CardTable::Agent => UPDATE_AGENT_CARD_SQL,
             _ => UPDATE_SERVICECARD_SQL,
         }
     }

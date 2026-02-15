@@ -1,11 +1,11 @@
 use chrono::{DateTime, Utc};
 use opsml_sql::schemas::{
-    schema::{CardSummary, QueryStats},
     VersionSummary,
+    schema::{CardSummary, QueryStats},
 };
 use opsml_types::{
-    contracts::{CardCursor, DashboardStats, VersionCursor},
     RegistryType,
+    contracts::{CardCursor, DashboardStats, VersionCursor},
 };
 use serde::{Deserialize, Serialize};
 

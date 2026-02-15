@@ -5,19 +5,19 @@ use crate::contracts::{
 };
 use crate::error::TypeError;
 use crate::{
-    cards::CardTable,
-    interfaces::{types::DataInterfaceType, ModelType, TaskType},
     DataType, ModelInterfaceType, RegistryType,
+    cards::CardTable,
+    interfaces::{ModelType, TaskType, types::DataInterfaceType},
 };
 use chrono::{DateTime, Utc};
 use opsml_colors::Colorize;
 use opsml_semver::VersionType;
-use opsml_utils::{get_utc_datetime, PyHelperFuncs};
-use pyo3::prelude::*;
+use opsml_utils::{PyHelperFuncs, get_utc_datetime};
+use pyo3::{IntoPyObjectExt, prelude::*};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use tabled::settings::{format::Format, object::Rows, Alignment, Color, Style};
+use tabled::settings::{Alignment, Color, Style, format::Format, object::Rows};
 use tabled::{Table, Tabled};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -349,6 +349,17 @@ impl VersionCursor {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CompareHashRequest {
+    pub registry_type: RegistryType,
+    pub content_hash: Vec<u8>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct CompareHashResponse {
+    pub card: Option<CardArgs>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct VersionPageRequest {
     pub registry_type: RegistryType,
@@ -622,6 +633,7 @@ pub struct PromptCardClientRecord {
     pub auditcard_uid: Option<String>,
     pub opsml_version: String,
     pub username: String,
+    pub content_hash: Vec<u8>,
 }
 
 impl Default for PromptCardClientRecord {
@@ -638,6 +650,7 @@ impl Default for PromptCardClientRecord {
             auditcard_uid: None,
             opsml_version: opsml_version::version(),
             username: "guest".to_string(),
+            content_hash: Vec::new(),
         }
     }
 }
@@ -653,12 +666,38 @@ pub struct ServiceCardClientRecord {
     pub version: String,
     pub cards: Vec<CardEntry>,
     pub opsml_version: String,
-    pub service_type: String,
+    pub service_type: ServiceType,
     pub metadata: Option<ServiceMetadata>,
     pub deployment: Option<Vec<DeploymentConfig>>,
     pub service_config: Option<ServiceConfig>,
     pub username: String,
     pub tags: Vec<String>,
+    pub content_hash: Vec<u8>,
+}
+
+// Need to tell rust how to handle the box
+impl<'py> IntoPyObject<'py> for Box<ServiceCardClientRecord> {
+    type Target = PyAny;
+    type Output = Bound<'py, PyAny>;
+    type Error = PyErr;
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        (*self).into_bound_py_any(py)
+    }
+}
+
+impl<'a, 'py> FromPyObject<'a, 'py> for Box<ServiceCardClientRecord> {
+    type Error = PyErr;
+
+    fn extract(ob: Borrowed<'a, 'py, PyAny>) -> PyResult<Self> {
+        if let Ok(service) = ob.extract::<ServiceCardClientRecord>() {
+            return Ok(Box::new(service));
+        }
+
+        Err(PyErr::new::<pyo3::exceptions::PyTypeError, _>(
+            "Could not extract CardRecord from Python object",
+        ))
+    }
 }
 
 impl Default for ServiceCardClientRecord {
@@ -672,12 +711,13 @@ impl Default for ServiceCardClientRecord {
             version: "".to_string(),
             opsml_version: opsml_version::version(),
             username: "guest".to_string(),
-            service_type: ServiceType::Api.to_string(),
+            service_type: ServiceType::Api,
             metadata: None,
             deployment: None,
             service_config: None,
             cards: Vec::new(),
             tags: Vec::new(),
+            content_hash: Vec::new(),
         }
     }
 }
@@ -691,7 +731,7 @@ pub enum CardRecord {
     Experiment(ExperimentCardClientRecord),
     Audit(AuditCardClientRecord),
     Prompt(PromptCardClientRecord),
-    Service(ServiceCardClientRecord),
+    Service(Box<ServiceCardClientRecord>),
 }
 
 #[pymethods]
@@ -807,6 +847,18 @@ impl CardRecord {
             }
             Self::Audit(card) => Some(card.modelcard_uids.iter().map(String::as_str).collect()),
             Self::Prompt(_) => None,
+            Self::Service(_) => None,
+        }
+    }
+
+    #[getter]
+    pub fn promptcard_uids(&self) -> Option<Vec<&str>> {
+        match self {
+            Self::Data(_) => None,
+            Self::Model(_) => None,
+            Self::Experiment(_) => None,
+            Self::Audit(_) => None,
+            Self::Prompt(card) => Some(vec![&card.uid]),
             Self::Service(_) => None,
         }
     }
@@ -956,13 +1008,8 @@ impl CardRecord {
                 Ok(Path::new(&uri).to_path_buf())
             }
             Self::Service(card) => {
-                let uri = format!(
-                    "{}/{}/{}/v{}",
-                    CardTable::Service,
-                    card.space,
-                    card.name,
-                    card.version
-                );
+                let table = CardTable::from_service_type(&card.service_type);
+                let uri = format!("{}/{}/{}/v{}", table, card.space, card.name, card.version);
                 Ok(Path::new(&uri).to_path_buf())
             }
         }
@@ -975,7 +1022,7 @@ impl CardRecord {
             Self::Experiment(_) => RegistryType::Experiment,
             Self::Audit(_) => RegistryType::Audit,
             Self::Prompt(_) => RegistryType::Prompt,
-            Self::Service(_) => RegistryType::Service,
+            Self::Service(card) => RegistryType::from(&card.service_type),
         }
     }
 }
@@ -1169,4 +1216,13 @@ pub struct DashboardStats {
     pub nbr_data: i64,
     pub nbr_prompts: i64,
     pub nbr_experiments: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "server", derive(sqlx::FromRow))]
+pub struct CardArgs {
+    pub space: String,
+    pub name: String,
+    pub version: String,
+    pub uid: String,
 }

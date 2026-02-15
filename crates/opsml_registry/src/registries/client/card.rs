@@ -2,10 +2,10 @@ use crate::error::RegistryError;
 use crate::registries::client::artifact::ArtifactExt;
 use crate::registries::client::base::ErrorResponse;
 use crate::registries::client::base::Registry;
-use opsml_client::error::ApiClientError;
 use opsml_client::OpsmlApiClient;
+use opsml_client::error::ApiClientError;
 use opsml_semver::VersionType;
-use opsml_types::{api::*, cards::CardTable, contracts::*, Alive, IntegratedService, RegistryType};
+use opsml_types::{Alive, IntegratedService, RegistryType, api::*, cards::CardTable, contracts::*};
 use scouter_client::RegisteredProfileResponse;
 use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterServerError};
 use std::sync::Arc;
@@ -252,6 +252,33 @@ pub trait CardRegistry: Registry {
         response
             .json::<ArtifactKey>()
             .map_err(RegistryError::RequestError)
+    }
+
+    #[instrument(skip_all)]
+    fn compare_card_hash(&self, content_hash: &[u8]) -> Result<Option<CardArgs>, RegistryError> {
+        let hash_request = CompareHashRequest {
+            registry_type: self.registry_type().clone(),
+            content_hash: content_hash.to_vec(),
+        };
+
+        let body = serde_json::to_value(&hash_request)?;
+
+        let response = self
+            .client()
+            .request(
+                Routes::CardCompareHash,
+                RequestType::Post,
+                Some(body),
+                None,
+                None,
+            )
+            .inspect_err(|e| {
+                error!("Failed to compare card hash {}", e);
+            })?;
+
+        let hash_response = response.json::<CompareHashResponse>()?;
+
+        Ok(hash_response.card)
     }
 }
 

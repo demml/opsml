@@ -1,22 +1,49 @@
 # mypy: disable-error-code="attr-defined"
 # python/opsml/card/__init__.py
 from .._opsml import (
+    AgentCapabilities,
+    AgentCardSignature,
+    AgentExtension,
+    AgentInterface,
+    AgentProvider,
+    AgentSkill,
+    AgentSpec,
+    ApiKeySecurityScheme,
+    AuthorizationCodeFlow,
     Card,
     CardList,
     CardRecord,
     CardRegistries,
     CardRegistry,
+    ClientCredentialsFlow,
     ComputeEnvironment,
     DataCard,
     DataCardMetadata,
+    DeviceCodeFlow,
     ExperimentCard,
+    HttpAuthSecurityScheme,
+    ImplicitAuthFlow,
     ModelCard,
     ModelCardMetadata,
+    MtlsSecurityScheme,
+    Oauth2SecurityScheme,
+    OAuthFlows,
+    OpenIdConnectSecurityScheme,
+    PassWordAuthFlow,
     PromptCard,
     RegistryMode,
     RegistryType,
+    SecurityRequirement,
+    SecurityScheme,
     ServiceCard,
 )
+
+
+class AgentCard(ServiceCard):
+    """AgentCard represents a card that defines an agent,
+    including its capabilities, skills, and interfaces.
+    """
+
 
 __all__ = [
     "Card",
@@ -34,4 +61,25 @@ __all__ = [
     "ComputeEnvironment",
     "PromptCard",
     "ServiceCard",
+    "AgentCard",
+    "AgentProvider",
+    "AgentInterface",
+    "AgentExtension",
+    "AgentCapabilities",
+    "SecurityRequirement",
+    "AgentSkill",
+    "ApiKeySecurityScheme",
+    "HttpAuthSecurityScheme",
+    "MtlsSecurityScheme",
+    "Oauth2SecurityScheme",
+    "OpenIdConnectSecurityScheme",
+    "SecurityScheme",
+    "OAuthFlows",
+    "AuthorizationCodeFlow",
+    "ClientCredentialsFlow",
+    "DeviceCodeFlow",
+    "ImplicitAuthFlow",
+    "PassWordAuthFlow",
+    "AgentCardSignature",
+    "AgentSpec",
 ]

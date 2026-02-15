@@ -4,10 +4,10 @@ use crate::core::experiment::types::GroupedMetric;
 use crate::core::{error::internal_server_error, state::AppState};
 use anyhow::{Context, Result};
 use axum::{
+    Json, Router,
     extract::{Query, State},
     http::StatusCode,
     routing::{get, post, put},
-    Json, Router,
 };
 use opsml_sql::schemas::schema::{HardwareMetricsRecord, MetricRecord, ParameterRecord};
 use opsml_sql::traits::ExperimentLogicTrait;
@@ -15,7 +15,7 @@ use opsml_types::{cards::*, contracts::*};
 use opsml_utils::utils::get_utc_datetime;
 use sqlx::types::Json as SqlxJson;
 use std::collections::BTreeMap;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::error;
 

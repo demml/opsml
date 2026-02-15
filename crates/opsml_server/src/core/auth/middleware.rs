@@ -2,7 +2,7 @@ use crate::core::auth::middleware::header::HeaderValue;
 use crate::core::auth::schema::AuthError;
 use crate::core::state::AppState;
 use crate::core::user::utils::get_user;
-use axum::http::{header, StatusCode};
+use axum::http::{StatusCode, header};
 use axum::response::IntoResponse;
 use axum::{
     extract::{Request, State},
@@ -96,20 +96,21 @@ pub async fn auth_api_middleware(
                 })?;
 
             // Validate stored refresh token
-            if let Some(stored_refresh) = user.refresh_token.as_ref() {
-                if state.auth_manager.validate_jwt(stored_refresh).is_ok() {
-                    // Generate new tokens
-                    let new_access_token =
-                        state.auth_manager.generate_jwt(&user).map_err(|_| {
-                            (
-                                StatusCode::INTERNAL_SERVER_ERROR,
-                                Json(AuthError {
-                                    error: "Server Error".to_string(),
-                                    message: "Failed to generate access token".to_string(),
-                                }),
-                            )
-                        })?;
-                    let new_refresh_token = state
+            if let Some(stored_refresh) = user.refresh_token.as_ref()
+                && state.auth_manager.validate_jwt(stored_refresh).is_ok()
+            {
+                // Generate new tokens
+                let new_access_token = state.auth_manager.generate_jwt(&user).map_err(|_| {
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(AuthError {
+                            error: "Server Error".to_string(),
+                            message: "Failed to generate access token".to_string(),
+                        }),
+                    )
+                })?;
+                let new_refresh_token =
+                    state
                         .auth_manager
                         .generate_refresh_token(&user)
                         .map_err(|_| {
@@ -122,44 +123,43 @@ pub async fn auth_api_middleware(
                             )
                         })?;
 
-                    // Update refresh token in database
-                    user.refresh_token = Some(new_refresh_token.clone());
+                // Update refresh token in database
+                user.refresh_token = Some(new_refresh_token.clone());
 
-                    if (state.sql_client.update_user(&user).await).is_err() {
-                        return Err((
-                            StatusCode::INTERNAL_SERVER_ERROR,
-                            Json(AuthError {
-                                error: "Server Error".to_string(),
-                                message: "Failed to update refresh token".to_string(),
-                            }),
-                        ));
-                    }
-
-                    let auth_middleware = UserPermissions {
-                        username: user.username,
-                        permissions: user.permissions,
-                        group_permissions: user.group_permissions,
-                    };
-                    req.extensions_mut().insert(auth_middleware);
-
-                    // Add new token to request headers for downstream handlers
-                    req.headers_mut().insert(
-                        header::AUTHORIZATION,
-                        HeaderValue::from_str(&format!("Bearer {new_access_token}")).unwrap(),
-                    );
-
-                    // Run the request and modify the response
-                    let response = next.run(req).await;
-                    let mut response = response.into_response();
-
-                    // Add new token to response headers
-                    response.headers_mut().insert(
-                        header::AUTHORIZATION,
-                        HeaderValue::from_str(&format!("Bearer {new_access_token}")).unwrap(),
-                    );
-
-                    return Ok(response);
+                if (state.sql_client.update_user(&user).await).is_err() {
+                    return Err((
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(AuthError {
+                            error: "Server Error".to_string(),
+                            message: "Failed to update refresh token".to_string(),
+                        }),
+                    ));
                 }
+
+                let auth_middleware = UserPermissions {
+                    username: user.username,
+                    permissions: user.permissions,
+                    group_permissions: user.group_permissions,
+                };
+                req.extensions_mut().insert(auth_middleware);
+
+                // Add new token to request headers for downstream handlers
+                req.headers_mut().insert(
+                    header::AUTHORIZATION,
+                    HeaderValue::from_str(&format!("Bearer {new_access_token}")).unwrap(),
+                );
+
+                // Run the request and modify the response
+                let response = next.run(req).await;
+                let mut response = response.into_response();
+
+                // Add new token to response headers
+                response.headers_mut().insert(
+                    header::AUTHORIZATION,
+                    HeaderValue::from_str(&format!("Bearer {new_access_token}")).unwrap(),
+                );
+
+                return Ok(response);
             }
 
             return Err((

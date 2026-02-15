@@ -2,17 +2,17 @@ use crate::deserialize_dict_field;
 use crate::error::{ModelInterfaceError, TypeError};
 use crate::model::huggingface::types::HuggingFaceOnnxArgs;
 use opsml_utils::PyHelperFuncs;
+use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
-use pyo3::IntoPyObjectExt;
 use pythonize::depythonize;
 use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
     de::{MapAccess, Visitor},
     ser::SerializeStruct,
-    Deserialize, Deserializer, Serialize, Serializer,
 };
-use serde_json::json;
 use serde_json::Value;
+use serde_json::json;
 use std::collections::HashMap;
 use tracing::{debug, instrument};
 

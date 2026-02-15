@@ -12,8 +12,8 @@ use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
 use opsml_utils::{clean_string, unwrap_pystring};
 use pyo3::prelude::*;
-use scouter_client::try_set_span_attribute;
 use scouter_client::SCOUTER_TAG_PREFIX;
+use scouter_client::try_set_span_attribute;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
@@ -84,14 +84,6 @@ fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> Result<RegistryTyp
             })?)
         }
     }
-}
-
-pub struct CardArgs {
-    pub uid: String,
-    pub name: String,
-    pub space: String,
-    pub version: String,
-    pub registry_type: RegistryType,
 }
 
 #[pyclass]
@@ -563,7 +555,7 @@ impl CardRegistry {
             _ => {
                 return Err(RegistryError::InvalidRegistryType(
                     "Expected Model or Prompt registry type".to_string(),
-                ))
+                ));
             }
         };
 
@@ -837,6 +829,13 @@ impl CardRegistry {
 
         Ok(response)
     }
+
+    pub fn compare_card_hash(
+        &self,
+        content_hash: &[u8],
+    ) -> Result<Option<CardArgs>, RegistryError> {
+        self.registry.compare_card_hash(content_hash)
+    }
 }
 
 #[pyclass]
@@ -860,6 +859,24 @@ pub struct CardRegistries {
 
     #[pyo3(get)]
     pub mcp: CardRegistry,
+
+    #[pyo3(get)]
+    pub agent: CardRegistry,
+}
+
+impl CardRegistries {
+    pub fn get_registry(&self, registry_type: &RegistryType) -> &CardRegistry {
+        match registry_type {
+            RegistryType::Experiment => &self.experiment,
+            RegistryType::Model => &self.model,
+            RegistryType::Data => &self.data,
+            RegistryType::Prompt => &self.prompt,
+            RegistryType::Service => &self.service,
+            RegistryType::Mcp => &self.mcp,
+            RegistryType::Agent => &self.agent,
+            _ => &self.model, // default to model registry
+        }
+    }
 }
 
 #[pymethods]
@@ -879,6 +896,7 @@ impl CardRegistries {
         let prompt = CardRegistry::rust_new(&RegistryType::Prompt)?;
         let service = CardRegistry::rust_new(&RegistryType::Service)?;
         let mcp = CardRegistry::rust_new(&RegistryType::Mcp)?;
+        let agent = CardRegistry::rust_new(&RegistryType::Agent)?;
 
         Ok(Self {
             experiment,
@@ -887,6 +905,7 @@ impl CardRegistries {
             prompt,
             service,
             mcp,
+            agent,
         })
     }
 }

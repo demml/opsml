@@ -1,10 +1,10 @@
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
-use axum::response::IntoResponse;
 use axum::Json;
-use axum::{routing::get, Router};
+use axum::response::IntoResponse;
+use axum::{Router, routing::get};
 use opsml_types::Alive;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 
 pub async fn health_check() -> impl IntoResponse {

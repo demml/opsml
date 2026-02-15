@@ -14,8 +14,8 @@ use opsml_utils::create_uuid7;
 use opsml_utils::utils::get_utc_datetime;
 use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use serde_json::Value;
+use serde_json::json;
 use sqlx::{prelude::FromRow, types::Json};
 use std::collections::HashMap;
 use std::env;
@@ -692,6 +692,7 @@ pub struct PromptCardRecord {
     pub auditcard_uid: Option<String>,
     pub opsml_version: String,
     pub username: String,
+    pub content_hash: Vec<u8>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -705,6 +706,7 @@ impl PromptCardRecord {
         auditcard_uid: Option<String>,
         opsml_version: String,
         username: String,
+        content_hash: Vec<u8>,
     ) -> Self {
         let created_at = get_utc_datetime();
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
@@ -727,6 +729,7 @@ impl PromptCardRecord {
             auditcard_uid,
             opsml_version,
             username,
+            content_hash,
         }
     }
 
@@ -760,6 +763,7 @@ impl PromptCardRecord {
             auditcard_uid: client_card.auditcard_uid,
             opsml_version: client_card.opsml_version,
             username: client_card.username,
+            content_hash: client_card.content_hash,
         })
     }
 }
@@ -783,6 +787,7 @@ impl Default for PromptCardRecord {
             auditcard_uid: None,
             opsml_version: opsml_version::version(),
             username: CommonKwargs::Undefined.to_string(),
+            content_hash: Vec::new(),
         }
     }
 }
@@ -806,6 +811,7 @@ pub struct ServiceCardRecord {
     pub metadata: Option<Json<ServiceMetadata>>,
     pub deployment: Option<Json<Vec<DeploymentConfig>>>,
     pub service_config: Option<Json<ServiceConfig>>,
+    pub content_hash: Vec<u8>,
     pub username: String,
     pub tags: Json<Vec<String>>,
 }
@@ -822,6 +828,7 @@ impl ServiceCardRecord {
         metadata: Option<ServiceMetadata>,
         deployment: Option<Vec<DeploymentConfig>>,
         service_config: Option<ServiceConfig>,
+        content_hash: Vec<u8>,
         username: String,
         tags: Vec<String>,
     ) -> Self {
@@ -847,19 +854,15 @@ impl ServiceCardRecord {
             metadata: metadata.map(Json),
             deployment: deployment.map(Json),
             service_config: service_config.map(Json),
+            content_hash,
             username,
             tags: Json(tags),
         }
     }
 
     pub fn uri(&self) -> String {
-        format!(
-            "{}/{}/{}/v{}",
-            CardTable::Service,
-            self.space,
-            self.name,
-            self.version
-        )
+        let table = CardTable::from_service_type(&ServiceType::from(self.service_type.as_str()));
+        format!("{}/{}/{}/v{}", table, self.space, self.name, self.version)
     }
 
     pub fn from_client_card(client_card: ServiceCardClientRecord) -> Result<Self, SqlError> {
@@ -880,10 +883,11 @@ impl ServiceCardRecord {
             cards: Json(client_card.cards),
             opsml_version: client_card.opsml_version,
             username: client_card.username,
-            service_type: client_card.service_type,
+            service_type: client_card.service_type.to_string(),
             metadata: client_card.metadata.map(Json),
             deployment: client_card.deployment.map(Json),
             service_config: client_card.service_config.map(Json),
+            content_hash: client_card.content_hash,
             tags: Json(client_card.tags),
         })
     }
@@ -910,6 +914,7 @@ impl Default for ServiceCardRecord {
             metadata: None,
             deployment: None,
             service_config: None,
+            content_hash: Vec::new(),
             tags: Json(Vec::new()),
         }
     }
@@ -1166,7 +1171,7 @@ pub enum ServerCard {
     Experiment(ExperimentCardRecord),
     Audit(AuditCardRecord),
     Prompt(PromptCardRecord),
-    Service(ServiceCardRecord),
+    Service(Box<ServiceCardRecord>),
 }
 
 impl ServerCard {
@@ -1277,9 +1282,9 @@ impl ServerCard {
             CardRecord::Prompt(card) => Ok(ServerCard::Prompt(PromptCardRecord::from_client_card(
                 card,
             )?)),
-            CardRecord::Service(card) => Ok(ServerCard::Service(
-                ServiceCardRecord::from_client_card(card)?,
-            )),
+            CardRecord::Service(card) => Ok(ServerCard::Service(Box::new(
+                ServiceCardRecord::from_client_card(*card)?,
+            ))),
         }
     }
 }

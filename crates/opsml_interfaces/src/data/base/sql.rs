@@ -4,8 +4,8 @@ use crate::data::{
 };
 use crate::error::DataInterfaceError;
 use opsml_types::DataInterfaceType;
-use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
+use pyo3::prelude::*;
 use scouter_client::DataProfile;
 use std::collections::HashMap;
 use std::path::PathBuf;

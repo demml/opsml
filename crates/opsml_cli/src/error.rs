@@ -68,6 +68,9 @@ pub enum CliError {
     #[error("Failed to run opsml demo")]
     FailedToRunDemo,
 
+    #[error("{0}")]
+    Error(String),
+
     #[error(transparent)]
     SerdeJsonError(#[from] serde_json::Error),
 
@@ -76,6 +79,9 @@ pub enum CliError {
 
     #[error("Unsupported service type: {0:?}")]
     UnsupportedServiceType(ServiceType),
+
+    #[error("Expected a CardVariant::Card, but found a different variant")]
+    ExpectedCardPathVariant,
 }
 
 impl From<CliError> for PyErr {

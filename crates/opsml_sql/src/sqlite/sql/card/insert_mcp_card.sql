@@ -1,0 +1,23 @@
+INSERT INTO opsml_mcp_registry (
+    uid,
+    app_env,
+    name,
+    space,
+    major,
+    minor,
+    patch,
+    version,
+    pre_tag,
+    build_tag,
+    cards,
+    username,
+    opsml_version,
+    service_type,
+    metadata,
+    deployment,
+    service_config,
+    tags,
+    content_hash
+    )
+    VALUES
+    (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

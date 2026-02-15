@@ -1,0 +1,16 @@
+# Service identifier - unique name for this service
+name: "agent-service1"
+space: "opsml"
+type: Agent
+
+metadata:
+  description: "An agent service"
+  language: "python"
+  tags: ["service"]
+
+service:
+  agent: "agent/agent_spec.yaml"
+
+deploy:
+  - environment: "dev_client"
+    endpoints: ["https://api.example.com"]

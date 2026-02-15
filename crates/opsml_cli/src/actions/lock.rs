@@ -6,20 +6,18 @@ use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
 use opsml_registry::error::RegistryError;
 use opsml_registry::{CardRegistries, CardRegistry};
-use opsml_service::{service::DEFAULT_SERVICE_FILENAME, ServiceSpec};
+use opsml_service::{OpsmlServiceSpec, service::DEFAULT_SERVICE_FILENAME};
 use opsml_toml::{LockArtifact, LockFile};
 use opsml_types::IntegratedService;
-use opsml_types::{
-    contracts::{Card, CardEntry, CardRecord, ServiceType},
-    RegistryType,
-};
-
+use opsml_types::contracts::CardVariant;
+use opsml_types::{RegistryType, contracts::CardRecord};
 use pyo3::prelude::*;
 use scouter_client::{DriftType, ProfileStatusRequest};
 use std::path::PathBuf;
 use std::str::FromStr;
 use std::vec;
-use tracing::{debug, error, instrument};
+use tracing::error;
+use tracing::{debug, instrument};
 
 /// Helper function to get cards from registry
 fn get_service_from_registry(
@@ -41,53 +39,11 @@ fn get_service_from_registry(
     Ok(cards.cards.first().cloned())
 }
 
-/// Helper function to get latest card from appropriate registry
-///
-/// # Arguments
-/// * `registries` - RustRegistries
-/// * `entry` - DeckCard
-///
-/// # Returns
-/// * `Result<CardRecord, CliError>` - The latest card record
-///
-/// # Errors
-/// * `CliError::MissingRegistryType` - If the registry type is missing
-fn get_latest_card(registries: &CardRegistries, card: &Card) -> Result<CardRecord, CliError> {
-    // extract registry type from entry
-    let registry_type = card.registry_type.clone();
-
-    let registry = match registry_type {
-        RegistryType::Model => &registries.model,
-        RegistryType::Experiment => &registries.experiment,
-        RegistryType::Data => &registries.data,
-        RegistryType::Prompt => &registries.prompt,
-        RegistryType::Service => &registries.service,
-        _ => return Err(RegistryError::RegistryTypeNotSupported(registry_type).into()),
-    };
-
-    let latest_cards = registry.list_cards(
-        None,
-        Some(card.space.clone()),
-        Some(card.name.clone()),
-        card.version.clone(),
-        None,
-        None,
-        Some(false),
-        1,
-    )?;
-
-    // return the first card in the list
-    latest_cards.cards.first().cloned().ok_or({
-        error!("Failed to get latest card");
-        CliError::MissingCardError
-    })
-}
-
 /// Helper for any postprocessing needed after service card registration
 /// As an example, modelcards can activate drift profile via a drift_config in spec
 #[instrument(skip_all)]
 fn postprocess_service_card(
-    spec_cards: &[Card],
+    spec_cards: &[CardVariant],
     service: &ServiceCard,
     registry: &CardRegistry,
 ) -> Result<(), CliError> {
@@ -98,9 +54,9 @@ fn postprocess_service_card(
         // check if scouter is enabled and running first
         spec_cards
             .iter()
-            .filter_map(|card| card.drift.as_ref().map(|drift| (card, drift)))
+            .filter_map(|card| card.drift().map(|drift| (card, drift)))
             .try_for_each(|(card, drift_config)| -> Result<(), CliError> {
-                let current_card = service.get_card(&card.alias)?;
+                let current_card = service.get_card(card.alias())?;
 
                 drift_config.drift_type.iter().try_for_each(|drift_type| {
                     let drift_type = DriftType::from_str(drift_type)?;
@@ -128,59 +84,6 @@ fn postprocess_service_card(
     Ok(())
 }
 
-/// Process service card and check for version updates
-/// The goal of this function is to:
-/// 1. For each card in service spec, find the latest card in the registry
-/// 2. Check if the already registered service has the same card
-/// 3. If an existing card of same space and name is found, check if the uid is the same
-/// 4. If the uid is different, return true (needs refresh)
-/// 5. If the uid is the same, return false (no refresh needed)
-/// 6. If no existing card is found, return true (needs refresh)
-///
-/// # Arguments
-/// * `service_cards` - &[CardEntry] - List of cards associated with the most recent registered service
-/// * `spec_cards` - &[DeckCard] - List of cards found in spec
-/// * `registries` - &RustRegistries - Rust variant of Opsml registries
-///
-/// # Returns
-/// * `Result<bool, CliError>` - True if a version refresh is needed, false otherwise
-#[instrument(skip_all)]
-fn process_service_cards(
-    service_cards: &[CardEntry], // existing service cards
-    cards: &[Card],              // cards from spec
-    registries: &CardRegistries,
-) -> Result<bool, CliError> {
-    debug!("Processing service cards");
-    for card in cards {
-        // Find the latest card given the constraints provided in toml file
-        let latest_card = get_latest_card(registries, card)?;
-
-        // Find the card in the service
-        // If the entry is not found - return true (need to increment version)
-        // If the entry is found - check if the uid is different from latest card - if different - return true
-        // Otherwise - return false
-        // Find matching entry in existing service
-        let current_card = service_cards
-            .iter()
-            .find(|service_card| service_card.alias == card.alias);
-
-        // Check
-        match current_card {
-            Some(card) => {
-                // Check if existing entry UID matches latest card UID
-                let card_uid = card.uid.as_ref().ok_or(CliError::MissingCardEntriesError)?;
-                if card_uid != latest_card.uid() {
-                    return Ok(true);
-                }
-            }
-            // No existing entry found - needs refresh
-            None => return Ok(true),
-        }
-    }
-
-    Ok(false)
-}
-
 /// Creates a LockArtifact from a ServiceCard
 /// # Arguments
 /// * `service_card` - &ServiceCard
@@ -196,7 +99,7 @@ fn create_lock_artifact_from_service_card(
         name: service_card.name.clone(),
         version: service_card.version.clone(),
         uid: service_card.uid.clone(),
-        registry_type: RegistryType::Service,
+        registry_type: service_card.registry_type.clone(),
         write_dir: write_dir.to_string(),
     }
 }
@@ -208,21 +111,21 @@ fn create_lock_artifact_from_service_card(
 /// # Returns
 /// * `LockArtifact`
 fn create_lock_artifact_from_existing_service(
-    service: &CardRecord,
+    service: &ServiceCard,
     write_dir: &str,
 ) -> LockArtifact {
     LockArtifact {
-        space: service.space().to_string(),
-        name: service.name().to_string(),
-        version: service.version().to_string(),
-        uid: service.uid().to_string(),
-        registry_type: RegistryType::Service,
+        space: service.space.clone(),
+        name: service.name.clone(),
+        version: service.version.clone(),
+        uid: service.uid.clone(),
+        registry_type: service.registry_type.clone(),
         write_dir: write_dir.to_string(),
     }
 }
 
 /// Gets the write directory with a fallback default
-fn get_write_dir(spec: &ServiceSpec, default: &str) -> String {
+fn get_write_dir(spec: &OpsmlServiceSpec, default: &str) -> String {
     spec.service
         .as_ref()
         .and_then(|s| s.write_dir.clone())
@@ -230,49 +133,32 @@ fn get_write_dir(spec: &ServiceSpec, default: &str) -> String {
         .unwrap_or_else(|| default.to_string())
 }
 
-/// Check if a refresh is needed based on the service and spec cards
-/// # Arguments
-/// * `service` - &CardRecord
-/// * `spec_cards` - Option<&Vec<DeckCard>>
-/// * `registries` - &RustRegistries
-/// # Returns
-/// * `Result<bool, CliError>`
-fn check_for_refresh(
-    service: &CardRecord,           // existing service
-    spec_cards: Option<&Vec<Card>>, // cards from spec
-    registries: &CardRegistries,
-) -> Result<bool, CliError> {
-    match spec_cards {
-        None => Ok(true), // No spec cards means refresh needed
-        Some(cards) => {
-            let service_cards = service.cards().ok_or(CliError::MissingCardEntriesError)?;
-            process_service_cards(&service_cards, cards, registries)
-        }
-    }
-}
-
 /// Create a new lock artifact for a service that does not yet exist in the registry
 /// # Arguments
-/// * `spec` - &ServiceSpec
+/// * `spec` - &OpsmlServiceSpec
 /// * `registries` - &RustRegistries
 /// * `spec_cards` - Option<&Vec<DeckCard>>
-/// * `space` - &str
-/// * `name` - &str
 /// # Returns
 /// * `Result<LockArtifact, CliError>`
 fn create_new_service_lock(
-    spec: &ServiceSpec,
-    registry: &CardRegistry,
-    spec_cards: Option<&Vec<Card>>,
+    spec: &mut OpsmlServiceSpec,
+    registries: &CardRegistries,
     space: &str,
     name: &str,
 ) -> Result<LockArtifact, CliError> {
-    let service_card = register_service_card(spec, registry, space, name)?;
+    let (service_card, _registered) = register_service_card(spec, registries, space, name)?;
+
+    let spec_cards: Option<&Vec<CardVariant>> =
+        spec.service.as_ref().and_then(|s| s.cards.as_ref());
 
     // Apply postprocessing if spec cards exist
     // some service types may not have cards
     if let Some(cards) = spec_cards {
-        postprocess_service_card(cards, &service_card, registry)?;
+        postprocess_service_card(
+            cards,
+            &service_card,
+            registries.get_registry(&RegistryType::from(&spec.service_type)),
+        )?;
     }
 
     Ok(create_lock_artifact_from_service_card(
@@ -283,41 +169,33 @@ fn create_new_service_lock(
 
 /// Handles lock creation for an existing service
 /// # Arguments
-/// * `spec` - &ServiceSpec
-/// * `registries` - &RustRegistries
+/// * `spec` - &OpsmlServiceSpec
 /// * `spec_cards` - Option<&Vec<DeckCard>>
 /// * `service` - CardRecord
 /// # Returns
 /// * `Result<LockArtifact, CliError>`
 fn handle_existing_service_lock(
-    spec: &ServiceSpec,
-    service_registry: &CardRegistry,
+    spec: &mut OpsmlServiceSpec,
     registries: &CardRegistries,
-    spec_cards: Option<&Vec<Card>>, // cards from spec
-    service: CardRecord,            // existing service
+    service: CardRecord, // existing service
 ) -> Result<LockArtifact, CliError> {
-    let needs_refresh = check_for_refresh(&service, spec_cards, registries)?;
+    let (service_card, registered) =
+        register_service_card(spec, registries, service.space(), service.name())?;
 
-    if needs_refresh {
-        debug!("Service refresh needed, re-registering");
-        let service_card =
-            register_service_card(spec, service_registry, service.space(), service.name())?;
+    let spec_cards: Option<&Vec<CardVariant>> =
+        spec.service.as_ref().and_then(|s| s.cards.as_ref());
 
-        if let Some(cards) = spec_cards {
-            postprocess_service_card(cards, &service_card, service_registry)?;
-        }
+    if let Some(cards) = spec_cards
+        && registered
+    {
+        let registry = registries.get_registry(&RegistryType::from(&spec.service_type));
+        postprocess_service_card(cards, &service_card, registry)?;
+    };
 
-        Ok(create_lock_artifact_from_service_card(
-            &service_card,
-            &get_write_dir(spec, "opsml_service"),
-        ))
-    } else {
-        debug!("No refresh needed, using existing service");
-        Ok(create_lock_artifact_from_existing_service(
-            &service,
-            &get_write_dir(spec, "opsml_service"),
-        ))
-    }
+    Ok(create_lock_artifact_from_existing_service(
+        &service_card,
+        &get_write_dir(spec, "opsml_service"),
+    ))
 }
 
 /// Creates a lock entry for a service. This is the main function that handles locking logic.
@@ -330,39 +208,31 @@ fn handle_existing_service_lock(
 /// # Returns
 /// * `Result<LockArtifact, CliError>` - Lock artifact or error
 #[instrument(skip_all)]
-pub fn lock_service_card(
-    spec: &ServiceSpec,
-    space: &str,
-    name: &str,
-) -> Result<LockArtifact, CliError> {
+pub fn lock_service_card(spec: &mut OpsmlServiceSpec) -> Result<LockArtifact, CliError> {
+    // Extract owned values first to avoid holding references to spec
+
+    let space = spec.space().to_string();
+    let name = spec.name.to_string();
+    let service_version = spec.service.as_ref().and_then(|s| s.version.as_ref());
     debug!("Locking service {}/{}", space, name);
 
     let registries = CardRegistries::new()?;
-    let spec_cards = spec.service.as_ref().and_then(|s| s.cards.as_ref());
-
-    let reg = match spec.service_type {
-        ServiceType::Api => &registries.service,
-        ServiceType::Mcp => &registries.mcp,
-        _ => {
-            return Err(CliError::UnsupportedServiceType(spec.service_type.clone()));
-        }
-    };
 
     let existing_service = get_service_from_registry(
-        reg,
-        space,
-        name,
-        spec.service.as_ref().and_then(|s| s.version.as_ref()),
+        registries.get_registry(&RegistryType::from(&spec.service_type)),
+        &space,
+        &name,
+        service_version,
     )?;
 
     match existing_service {
         None => {
             debug!("No existing service found, creating new service");
-            create_new_service_lock(spec, reg, spec_cards, space, name)
+            create_new_service_lock(spec, &registries, &space, &name)
         }
         Some(service) => {
             debug!("Existing service found, checking if refresh needed");
-            handle_existing_service_lock(spec, reg, &registries, spec_cards, service)
+            handle_existing_service_lock(spec, &registries, service)
         }
     }
 }
@@ -407,13 +277,14 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
 
     for artifact in lockfile.artifact {
         match artifact.registry_type {
-            RegistryType::Service | RegistryType::Mcp => {
+            RegistryType::Service | RegistryType::Mcp | RegistryType::Agent => {
                 println!(
-                    "Downloading ServiceCard {} to path {}",
+                    "Downloading ServiceCard {}, type: {} to path {}",
                     Colorize::green(&format!(
                         "{}/{}/v{}",
                         &artifact.name, &artifact.space, &artifact.version
                     )),
+                    Colorize::alert(&format!("{:?}", &artifact.registry_type)),
                     Colorize::purple(&artifact.write_dir),
                 );
 
@@ -426,10 +297,10 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
                 };
 
                 let args = DownloadCard {
-                    space: Some(artifact.space.clone()),
-                    name: Some(artifact.name.clone()),
-                    version: Some(artifact.version.clone()),
-                    uid: Some(artifact.uid.clone()),
+                    space: Some(artifact.space),
+                    name: Some(artifact.name),
+                    version: Some(artifact.version),
+                    uid: Some(artifact.uid),
                     write_dir: write_path
                         .join(artifact.write_dir)
                         .into_os_string()
@@ -437,7 +308,7 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
                         .map_err(|_| CliError::WritePathError)?,
                 };
 
-                download_service(&args)?;
+                download_service(&args, artifact.registry_type)?;
             }
             _ => {
                 return Err(RegistryError::RegistryTypeNotSupported(artifact.registry_type).into());
@@ -453,13 +324,17 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
 pub fn lock_service(path: PathBuf) -> Result<(), CliError> {
     debug!("Locking service with path: {:?}", path);
     // handle case of no cards
-    let spec = ServiceSpec::from_path(&path)?;
+    let mut spec = OpsmlServiceSpec::from_path(&path).inspect_err(|e| {
+        error!("Failed to read service spec: {:?}", e);
+    })?;
 
     // Create a lock file
     let lock_file = LockFile {
-        artifact: vec![lock_service_card(&spec, spec.space(), &spec.name)?],
+        artifact: vec![lock_service_card(&mut spec).inspect_err(|e| {
+            error!("Failed to lock service card: {:?}", e);
+        })?],
     };
-
+    // TODO
     lock_file.write(&spec.root_path)?;
 
     Ok(())

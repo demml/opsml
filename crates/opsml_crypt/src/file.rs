@@ -1,9 +1,9 @@
 use crate::error::CryptError;
 use aes_gcm::Nonce;
 use aes_gcm::{
-    aead::{Aead, AeadCore, KeyInit, OsRng},
     Aes256Gcm,
     Key, // Or `Aes128Gcm`
+    aead::{Aead, AeadCore, KeyInit, OsRng},
 };
 
 use opsml_utils::FileUtils;
@@ -160,8 +160,8 @@ pub fn decrypt_directory(input_path: &Path, key_bytes: &[u8]) -> Result<(), Cryp
 mod tests {
     use super::*;
     use crate::key::{derive_encryption_key, derive_master_key, generate_salt};
-    use rand::distr::Alphanumeric;
     use rand::Rng;
+    use rand::distr::Alphanumeric;
     use std::io::Read;
 
     pub fn create_file(name: &str, chunk_size: &u64) {

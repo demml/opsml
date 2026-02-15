@@ -1,8 +1,8 @@
 use axum::http::HeaderMap;
 use headers::UserAgent;
 
-use opsml_types::contracts::{AuditEvent, AuditStatus, Operation, ResourceType, SpaceNameEvent};
 use opsml_types::RegistryType;
+use opsml_types::contracts::{AuditEvent, AuditStatus, Operation, ResourceType, SpaceNameEvent};
 
 use std::net::SocketAddr;
 

@@ -1,5 +1,5 @@
-use pyo3::exceptions::PyRuntimeError;
 use pyo3::PyErr;
+use pyo3::exceptions::PyRuntimeError;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -36,6 +36,9 @@ configuration environment matches the current environment set in APP_ENV.
 
     #[error("{0}")]
     PyError(String),
+
+    #[error(transparent)]
+    AgentConfigError(#[from] opsml_types::error::AgentConfigError),
 }
 
 impl From<ServiceError> for PyErr {

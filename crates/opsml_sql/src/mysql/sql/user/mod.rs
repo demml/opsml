@@ -5,7 +5,7 @@ use crate::schemas::schema::User;
 
 use crate::traits::UserLogicTrait;
 use async_trait::async_trait;
-use sqlx::{mysql::MySqlRow, FromRow, MySql, Pool, Row};
+use sqlx::{FromRow, MySql, Pool, Row, mysql::MySqlRow};
 
 impl FromRow<'_, MySqlRow> for User {
     fn from_row(row: &MySqlRow) -> Result<Self, sqlx::Error> {

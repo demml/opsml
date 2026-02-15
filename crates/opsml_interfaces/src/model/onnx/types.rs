@@ -11,9 +11,9 @@ use pyo3::types::{PyDict, PyList};
 use pyo3::{PyTraverseError, PyVisit};
 use serde;
 use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
-    Deserialize, Deserializer, Serialize, Serializer,
 };
 use std::fmt;
 use std::path::Path;

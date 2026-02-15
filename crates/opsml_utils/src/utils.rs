@@ -6,7 +6,7 @@ use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
 use pyo3::{prelude::*, types::PyAnyMethods};
 use regex::Regex;
 use serde::Serialize;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::path::{Path, PathBuf};
 use tracing::debug;
 use uuid::Uuid;
@@ -286,17 +286,17 @@ fn pyobject_to_json_value(_py: Python, obj: &Bound<'_, PyAny>) -> Result<Value, 
     }
 
     // Handle numpy arrays
-    if obj.hasattr("__array__")? || obj.hasattr("tolist")? {
-        if let Ok(py_list) = obj.call_method0("tolist") {
-            return pyobject_to_json_value(_py, &py_list);
-        }
+    if (obj.hasattr("__array__")? || obj.hasattr("tolist")?)
+        && let Ok(py_list) = obj.call_method0("tolist")
+    {
+        return pyobject_to_json_value(_py, &py_list);
     }
 
     // Handle pandas Series/DataFrame
-    if obj.hasattr("to_dict")? {
-        if let Ok(py_dict) = obj.call_method0("to_dict") {
-            return pyobject_to_json_value(_py, &py_dict);
-        }
+    if obj.hasattr("to_dict")?
+        && let Ok(py_dict) = obj.call_method0("to_dict")
+    {
+        return pyobject_to_json_value(_py, &py_dict);
     }
 
     // Fallback: convert to string representation
@@ -322,6 +322,40 @@ pub fn pydict_to_json_value(py: Python, dict: &Bound<'_, PyDict>) -> Result<Valu
     }
 
     Ok(Value::Object(map))
+}
+
+fn camel_to_snake(s: &str) -> String {
+    let mut result = String::with_capacity(s.len() + 5);
+    let chars = s.chars().peekable();
+
+    for c in chars {
+        if c.is_uppercase() {
+            if !result.is_empty() {
+                result.push('_');
+            }
+            result.push(c.to_ascii_lowercase());
+        } else {
+            result.push(c);
+        }
+    }
+
+    result
+}
+
+pub fn convert_keys_to_snake_case(value: Value) -> Value {
+    match value {
+        Value::Object(map) => {
+            let new_map = map
+                .into_iter()
+                .map(|(k, v)| (camel_to_snake(&k), convert_keys_to_snake_case(v)))
+                .collect();
+            Value::Object(new_map)
+        }
+        Value::Array(arr) => {
+            Value::Array(arr.into_iter().map(convert_keys_to_snake_case).collect())
+        }
+        other => other,
+    }
 }
 
 #[cfg(test)]

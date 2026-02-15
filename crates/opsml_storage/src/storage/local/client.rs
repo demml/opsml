@@ -1,12 +1,12 @@
-use crate::storage::base::get_files;
 use crate::storage::base::PathExt;
 use crate::storage::base::StorageClient;
+use crate::storage::base::get_files;
 use crate::storage::error::{LocalError, StorageError};
 use crate::storage::filesystem::FileSystem;
 use async_trait::async_trait;
 use opsml_settings::config::OpsmlStorageSettings;
 use opsml_types::contracts::CompleteMultipartUpload;
-use opsml_types::{contracts::FileInfo, StorageType};
+use opsml_types::{StorageType, contracts::FileInfo};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
@@ -489,9 +489,9 @@ mod tests {
     use crate::storage::error::StorageError;
     use opsml_settings::config::OpsmlConfig;
     use opsml_utils::create_uuid7;
+    use rand::Rng;
     use rand::distr::Alphanumeric;
     use rand::rng;
-    use rand::Rng;
     use std::fs::File;
     use std::io::Write;
     use std::path::Path;
@@ -551,10 +551,12 @@ mod tests {
         assert!(!path.is_empty());
 
         // ls
-        assert!(!storage_client
-            .find(rpath_nested.parent().unwrap())
-            .await?
-            .is_empty());
+        assert!(
+            !storage_client
+                .find(rpath_nested.parent().unwrap())
+                .await?
+                .is_empty()
+        );
 
         // find
         let mut blobs = storage_client.find(rpath_dir).await?;

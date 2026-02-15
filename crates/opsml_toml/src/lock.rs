@@ -1,10 +1,10 @@
 use crate::error::PyProjectTomlError;
 use opsml_types::RegistryType;
-use serde::{de::IntoDeserializer, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::IntoDeserializer};
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
-use toml_edit::{value, ArrayOfTables, DocumentMut, Item, Table};
+use toml_edit::{ArrayOfTables, DocumentMut, Item, Table, value};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LockArtifact {

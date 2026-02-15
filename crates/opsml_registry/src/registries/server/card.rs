@@ -1,17 +1,17 @@
 use crate::error::RegistryError;
 use opsml_crypt::{derive_encryption_key, encrypted_key, generate_salt};
-use opsml_semver::{error::VersionError, VersionArgs, VersionType, VersionValidator};
+use opsml_semver::{VersionArgs, VersionType, VersionValidator, error::VersionError};
 use opsml_settings::DatabaseSettings;
 use opsml_settings::OpsmlStorageSettings;
-use opsml_sql::enums::client::get_sql_client;
 use opsml_sql::enums::client::SqlClientEnum;
+use opsml_sql::enums::client::get_sql_client;
 use opsml_sql::schemas::*;
 use opsml_sql::traits::ArtifactLogicTrait;
 use opsml_sql::traits::CardLogicTrait;
 use opsml_storage::StorageClientEnum;
 use opsml_types::IntegratedService;
 use opsml_types::RegistryMode;
-use opsml_types::{cards::CardTable, contracts::*, RegistryType};
+use opsml_types::{RegistryType, cards::CardTable, contracts::*};
 use opsml_utils::uid_to_byte_key;
 use scouter_client::RegisteredProfileResponse;
 use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterClient};
@@ -185,6 +185,7 @@ impl ServerCardRegistry {
                     client_card.auditcard_uid,
                     client_card.opsml_version,
                     client_card.username,
+                    client_card.content_hash,
                 );
                 ServerCard::Prompt(server_card)
             }
@@ -196,14 +197,15 @@ impl ServerCardRegistry {
                     version,
                     client_card.cards,
                     client_card.opsml_version,
-                    client_card.service_type,
+                    client_card.service_type.to_string(),
                     client_card.metadata,
                     client_card.deployment,
                     client_card.service_config,
+                    client_card.content_hash,
                     client_card.username,
                     client_card.tags,
                 );
-                ServerCard::Service(server_card)
+                ServerCard::Service(Box::new(server_card))
             }
         };
 
@@ -373,6 +375,7 @@ impl ServerCardRegistry {
                     auditcard_uid: client_card.auditcard_uid,
                     username: client_card.username,
                     opsml_version: client_card.opsml_version,
+                    content_hash: client_card.content_hash,
                 };
                 ServerCard::Prompt(server_card)
             }
@@ -395,14 +398,15 @@ impl ServerCardRegistry {
                     version: client_card.version,
                     cards: SqlxJson(client_card.cards),
                     username: client_card.username,
-                    service_type: client_card.service_type,
+                    service_type: client_card.service_type.to_string(),
                     metadata: client_card.metadata.map(SqlxJson),
                     deployment: client_card.deployment.map(SqlxJson),
                     service_config: client_card.service_config.map(SqlxJson),
                     tags: SqlxJson(client_card.tags),
                     opsml_version: client_card.opsml_version,
+                    content_hash: client_card.content_hash,
                 };
-                ServerCard::Service(server_card)
+                ServerCard::Service(Box::new(server_card))
             }
         };
 
@@ -582,5 +586,19 @@ impl ServerCardRegistry {
             .ok_or(RegistryError::ScouterClientNotFoundError)?;
         client.update_profile_status(request)?;
         Ok(())
+    }
+
+    #[instrument(skip_all)]
+    pub(crate) async fn compare_card_hash(
+        &self,
+        content_hash: &[u8],
+    ) -> Result<Option<CardArgs>, RegistryError> {
+        Ok(self
+            .sql_client
+            .compare_hash(&self.table_name, content_hash)
+            .await
+            .inspect_err(|e| {
+                error!("Error comparing card hash: {}", e);
+            })?)
     }
 }

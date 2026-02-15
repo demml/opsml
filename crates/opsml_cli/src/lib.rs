@@ -58,9 +58,12 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             GetCommands::Model(args) => {
                 download_card(args, RegistryType::Model).context("Failed to download ModelCard")
             }
-            GetCommands::Service(args) => {
-                download_service(args).context("Failed to download ServiceCard")
-            }
+            GetCommands::Service(args) => download_service(args, RegistryType::Service)
+                .context("Failed to download ServiceCard"),
+            GetCommands::Agent(args) => download_service(args, RegistryType::Agent)
+                .context("Failed to download Agent ServiceCard"),
+            GetCommands::Mcp(args) => download_service(args, RegistryType::Mcp)
+                .context("Failed to download MCP ServiceCard"),
         },
 
         Some(Commands::Install { command }) => match command {

@@ -1,11 +1,11 @@
 use crate::error::SqlError;
 use crate::mysql::client::MySqlClient;
 use crate::postgres::client::PostgresClient;
+use crate::schemas::VersionSummary;
 use crate::schemas::schema::{
     ArtifactSqlRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord,
     ParameterRecord, QueryStats, ServerCard, ServiceCardRecord, User,
 };
-use crate::schemas::VersionSummary;
 use crate::sqlite::client::SqliteClient;
 use crate::traits::{
     ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, ExperimentLogicTrait, SpaceLogicTrait,
@@ -15,15 +15,15 @@ use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_settings::config::DatabaseSettings;
-use opsml_types::contracts::VersionCursor;
 use opsml_types::contracts::{
     ArtifactQueryArgs, ArtifactRecord, AuditEvent, DashboardStats, SpaceNameEvent, SpaceRecord,
     SpaceStats,
 };
+use opsml_types::contracts::{CardArgs, VersionCursor};
 use opsml_types::{
+    RegistryType, SqlType,
     cards::CardTable,
     contracts::{ArtifactKey, CardQueryArgs, ServiceQueryArgs},
-    RegistryType, SqlType,
 };
 
 #[derive(Debug, Clone)]
@@ -40,6 +40,18 @@ impl CardLogicTrait for SqlClientEnum {
             SqlClientEnum::Postgres(client) => client.card.check_uid_exists(uid, table).await,
             SqlClientEnum::Sqlite(client) => client.card.check_uid_exists(uid, table).await,
             SqlClientEnum::MySql(client) => client.card.check_uid_exists(uid, table).await,
+        }
+    }
+
+    async fn compare_hash(
+        &self,
+        table: &CardTable,
+        content_hash: &[u8],
+    ) -> Result<Option<CardArgs>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.card.compare_hash(table, content_hash).await,
+            SqlClientEnum::Sqlite(client) => client.card.compare_hash(table, content_hash).await,
+            SqlClientEnum::MySql(client) => client.card.compare_hash(table, content_hash).await,
         }
     }
 

@@ -30,15 +30,15 @@ pub fn download_card(args: &DownloadCard, registry_type: RegistryType) -> Result
 /// Helper function to download a service when called from the cli
 /// # Arguments
 /// * `args` - DownloadCard
+/// * `registry_type` - RegistryType
 /// # Returns
 /// None
 ///
 /// # Errors
 /// CliError
-pub fn download_service(args: &DownloadCard) -> Result<(), CliError> {
+pub fn download_service(args: &DownloadCard, registry_type: RegistryType) -> Result<(), CliError> {
     // convert to query args
-    let query_args = args.into_query_args(RegistryType::Service)?;
-
+    let query_args = args.into_query_args(registry_type)?;
     download_service_from_registry(&query_args, &args.write_path())?;
 
     Ok(())

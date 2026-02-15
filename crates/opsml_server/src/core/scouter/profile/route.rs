@@ -1,4 +1,4 @@
-use crate::core::error::{internal_server_error, OpsmlServerError};
+use crate::core::error::{OpsmlServerError, internal_server_error};
 use crate::core::files::utils::download_artifacts;
 use crate::core::scouter;
 
@@ -9,10 +9,10 @@ use crate::core::scouter::utils::save_encrypted_profile;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
+    Extension, Json, Router,
     extract::State,
     http::StatusCode,
     routing::{post, put},
-    Extension, Json, Router,
 };
 use opsml_auth::permission::UserPermissions;
 use opsml_events::AuditContext;
@@ -26,7 +26,7 @@ use scouter_client::{
     ProfileRequest, ProfileStatusRequest, RegisteredProfileResponse, ScouterResponse,
     ScouterServerError,
 };
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{error, info, instrument};

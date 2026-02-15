@@ -4,8 +4,8 @@ use crate::error::{ModelInterfaceError, OnnxError, SampleDataError};
 use crate::model::InterfaceDataType;
 
 use opsml_types::{DataType, ModelType, SaveName, Suffix};
-use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::IntoPyObjectExt;
+use pyo3::types::{PyDict, PyList, PyListMethods, PyTuple, PyTupleMethods};
 use pyo3::{prelude::*, types::PySlice};
 use std::path::Path;
 use std::path::PathBuf;
@@ -79,13 +79,12 @@ impl SampleData {
             return Self::handle_pydict(data);
         }
 
-        if let Ok(xgb) = py.import("xgboost") {
-            if let Ok(matrix) = xgb.getattr("DMatrix") {
-                if data.is_instance(&matrix).unwrap() {
-                    let slice = data.call_method("slice", ([0],), None)?;
-                    return Ok(SampleData::DMatrix(slice.into_py_any(py)?));
-                }
-            }
+        if let Ok(xgb) = py.import("xgboost")
+            && let Ok(matrix) = xgb.getattr("DMatrix")
+            && data.is_instance(&matrix)?
+        {
+            let slice = data.call_method("slice", ([0],), None)?;
+            return Ok(SampleData::DMatrix(slice.into_py_any(py)?));
         }
 
         Ok(SampleData::None)

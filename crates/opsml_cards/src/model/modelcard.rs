@@ -4,28 +4,29 @@ use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
 use opsml_interfaces::base::DriftProfileMap;
-use opsml_interfaces::{error::ModelInterfaceError, OnnxModel, OnnxSession};
 use opsml_interfaces::{
     CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
     XGBoostModel,
 };
 use opsml_interfaces::{ModelInterface, TensorFlowModel};
 use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
+use opsml_interfaces::{OnnxModel, OnnxSession, error::ModelInterfaceError};
 use opsml_storage::storage_client;
 use opsml_types::contracts::{ArtifactKey, CardRecord, ModelCardClientRecord};
 use opsml_types::{
     DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix, TaskType,
 };
-use opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime, PyHelperFuncs};
+use opsml_utils::{PyHelperFuncs, create_tmp_path, extract_py_attr, get_utc_datetime};
+use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
-use pyo3::IntoPyObjectExt;
 use pyo3::{PyTraverseError, PyVisit};
 use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
-    Deserialize, Deserializer, Serialize, Serializer,
 };
+
 use std::fmt;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, instrument};
