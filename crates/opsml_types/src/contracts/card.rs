@@ -1008,10 +1008,8 @@ impl CardRecord {
                 Ok(Path::new(&uri).to_path_buf())
             }
             Self::Service(card) => {
-                let uri = format!(
-                    "{}/{}/{}/v{}",
-                    &card.service_type, card.space, card.name, card.version
-                );
+                let table = CardTable::from_service_type(&card.service_type);
+                let uri = format!("{}/{}/{}/v{}", table, card.space, card.name, card.version);
                 Ok(Path::new(&uri).to_path_buf())
             }
         }

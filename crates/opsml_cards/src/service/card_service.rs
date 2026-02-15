@@ -335,8 +335,8 @@ impl ServiceCard {
     /// This is needed for cli work to compare current state vs previous state of the card.
     pub fn calculate_content_hash(&self) -> Result<Vec<u8>, CardError> {
         let mut hasher = Sha256::new();
-        let prompt_json = serde_json::to_string(&self)?;
-        hasher.update(prompt_json.as_bytes());
+        let service_json = serde_json::to_string(&self)?;
+        hasher.update(service_json.as_bytes());
         Ok(hasher.finalize().to_vec())
     }
 
@@ -674,7 +674,7 @@ impl ServiceCard {
         cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
         spec: &OpsmlServiceSpec,
     ) -> Result<ServiceCard, CardError> {
-        let registry_type = RegistryType::Service;
+        let registry_type = RegistryType::from(&spec.service_type);
         let base_args = BaseArgs::create_args(
             Some(&name),
             Some(&space),

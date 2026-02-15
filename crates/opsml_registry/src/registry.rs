@@ -869,6 +869,21 @@ pub struct CardRegistries {
     pub agent: CardRegistry,
 }
 
+impl CardRegistries {
+    pub fn get_registry(&self, registry_type: &RegistryType) -> &CardRegistry {
+        match registry_type {
+            RegistryType::Experiment => &self.experiment,
+            RegistryType::Model => &self.model,
+            RegistryType::Data => &self.data,
+            RegistryType::Prompt => &self.prompt,
+            RegistryType::Service => &self.service,
+            RegistryType::Mcp => &self.mcp,
+            RegistryType::Agent => &self.agent,
+            _ => &self.model, // default to model registry
+        }
+    }
+}
+
 #[pymethods]
 impl CardRegistries {
     /// Create new CardRegistries

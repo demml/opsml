@@ -9,6 +9,11 @@ metadata:
   tags: ["service"]
 
 service:
+  cards:
+    - alias: my_prompt
+      path: "prompts/my_prompt.yaml"
+      type: prompt
+
   agent:
     capabilities:
       streaming: true

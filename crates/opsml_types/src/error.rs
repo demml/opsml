@@ -59,6 +59,9 @@ pub enum TypeError {
 
     #[error(transparent)]
     AgentConfigError(#[from] AgentConfigError),
+
+    #[error("Invalid card type. Expected either Card or CardPath")]
+    InvalidCardType,
 }
 
 impl From<PythonizeError> for TypeError {

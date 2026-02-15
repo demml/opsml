@@ -1,3 +1,4 @@
+use crate::contracts::ServiceType;
 use crate::error::TypeError;
 use pyo3::prelude::*;
 use serde::{Deserialize, Deserializer, Serialize};
@@ -118,6 +119,16 @@ impl RegistryType {
             RegistryType::Evaluation => b"evaluation",
             RegistryType::Mcp => b"mcp",
             RegistryType::Agent => b"agent",
+        }
+    }
+}
+
+impl From<&ServiceType> for RegistryType {
+    fn from(service_type: &ServiceType) -> Self {
+        match service_type {
+            ServiceType::Api => RegistryType::Service,
+            ServiceType::Mcp => RegistryType::Mcp,
+            ServiceType::Agent => RegistryType::Agent,
         }
     }
 }
