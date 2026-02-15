@@ -742,7 +742,7 @@ impl TestHelper {
     }
 
     pub(crate) fn example_agent_spec() -> AgentSpec {
-        AgentSpec::new(
+        AgentSpec::new_rs(
             "TestAgent".to_string(),
             "A test agent for SQL integration tests".to_string(),
             "1.0.0".to_string(),
@@ -780,5 +780,6 @@ impl TestHelper {
             Some(vec![SecurityRequirement::new(vec!["apiKey".to_string()])]),
             None, // signatures
         )
+        .unwrap()
     }
 }

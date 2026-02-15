@@ -148,6 +148,9 @@ pub enum AgentConfigError {
 
     #[error("Invalid agent configuration")]
     InvalidAgentConfig,
+
+    #[error("Invalid skill format. Only AgentSkill and AgentSkillStandard are supported")]
+    InvalidSkillFormat,
 }
 
 impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for AgentConfigError {

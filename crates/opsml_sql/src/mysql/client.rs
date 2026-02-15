@@ -105,7 +105,7 @@ mod tests {
     const SPACE: &str = "space";
 
     fn example_agent_spec() -> AgentSpec {
-        AgentSpec::new(
+        AgentSpec::new_rs(
             "TestAgent".to_string(),
             "A test agent for SQL integration tests".to_string(),
             "1.0.0".to_string(),
@@ -143,6 +143,7 @@ mod tests {
             Some(vec![SecurityRequirement::new(vec!["apiKey".to_string()])]),
             None, // signatures
         )
+        .unwrap()
     }
 
     pub async fn cleanup(pool: &Pool<MySql>) {
