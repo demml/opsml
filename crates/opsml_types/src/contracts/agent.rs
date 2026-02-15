@@ -995,6 +995,58 @@ impl AgentSpec {
         capabilities: AgentCapabilities,
         default_input_modes: Vec<String>,
         default_output_modes: Vec<String>,
+        skills: Vec<Bound<'_, PyAny>>,
+        provider: Option<AgentProvider>,
+        documentation_url: Option<String>,
+        icon_url: Option<String>,
+        security_schemes: Option<HashMap<String, SecurityScheme>>,
+        security_requirements: Option<Vec<SecurityRequirement>>,
+        signatures: Option<Vec<AgentCardSignature>>,
+    ) -> Result<Self, AgentConfigError> {
+        let mut parsed_skills = Vec::new();
+        for skill in skills {
+            // check is_instance for AgentSkillStandard and AgentSkill, and parse accordingly
+            if skill.is_instance_of::<AgentSkillStandard>() {
+                let standard_skill = skill.extract::<AgentSkillStandard>()?;
+                parsed_skills.push(SkillFormat::Standard(standard_skill));
+            } else if skill.is_instance_of::<AgentSkill>() {
+                let a2a_skill = skill.extract::<AgentSkill>()?;
+                parsed_skills.push(SkillFormat::A2A(a2a_skill));
+            } else {
+                // If skill is not a recognized type, skip or handle as needed (here we skip)
+                return Err(AgentConfigError::InvalidSkillFormat);
+            }
+        }
+
+        Ok(Self {
+            name,
+            description,
+            version,
+            supported_interfaces,
+            provider,
+            documentation_url,
+            icon_url,
+            capabilities,
+            default_input_modes,
+            default_output_modes,
+            skills: parsed_skills,
+            security_schemes,
+            security_requirements,
+            signatures,
+        })
+    }
+}
+
+impl AgentSpec {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_rs(
+        name: String,
+        description: String,
+        version: String,
+        supported_interfaces: Vec<AgentInterface>,
+        capabilities: AgentCapabilities,
+        default_input_modes: Vec<String>,
+        default_output_modes: Vec<String>,
         skills: Vec<SkillFormat>,
         provider: Option<AgentProvider>,
         documentation_url: Option<String>,
@@ -1002,8 +1054,8 @@ impl AgentSpec {
         security_schemes: Option<HashMap<String, SecurityScheme>>,
         security_requirements: Option<Vec<SecurityRequirement>>,
         signatures: Option<Vec<AgentCardSignature>>,
-    ) -> Self {
-        Self {
+    ) -> Result<Self, AgentConfigError> {
+        Ok(Self {
             name,
             description,
             version,
@@ -1018,11 +1070,9 @@ impl AgentSpec {
             security_schemes,
             security_requirements,
             signatures,
-        }
+        })
     }
-}
 
-impl AgentSpec {
     /// Validate all skills in the agent spec
     /// For skills in Standard format, also validate their fields and check for SKILL.md file existence
     pub(crate) fn validate(&self, root_path: &Path) -> Result<(), AgentConfigError> {
