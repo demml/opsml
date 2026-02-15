@@ -1,6 +1,6 @@
 use crate::error::RegistryError;
-use opsml_settings::config::OpsmlStorageSettings;
 use opsml_settings::DatabaseSettings;
+use opsml_settings::config::OpsmlStorageSettings;
 use opsml_sql::enums::client::get_sql_client;
 use opsml_sql::error::SqlError;
 use opsml_sql::{enums::client::SqlClientEnum, traits::*};

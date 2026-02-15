@@ -1,17 +1,17 @@
-use crate::core::error::internal_server_error;
 use crate::core::error::OpsmlServerError;
+use crate::core::error::internal_server_error;
 use crate::core::files::utils::get_content_for_files;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::extract::DefaultBodyLimit;
 use axum::extract::Multipart;
 use axum::{
+    Extension, Json, Router,
     body::Body,
     extract::{Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::{delete, get, post},
-    Extension, Json, Router,
 };
 use headers::HeaderMap;
 use opsml_auth::permission::UserPermissions;
@@ -19,8 +19,8 @@ use opsml_events::AuditContext;
 use opsml_sql::enums::utils::get_next_version;
 use opsml_sql::schemas::ArtifactSqlRecord;
 use opsml_sql::traits::ArtifactLogicTrait;
-use opsml_types::{cards::CardTable, RegistryType};
-use opsml_types::{contracts::*, StorageType, MAX_FILE_SIZE};
+use opsml_types::{MAX_FILE_SIZE, StorageType, contracts::*};
+use opsml_types::{RegistryType, cards::CardTable};
 
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
@@ -28,7 +28,7 @@ use tokio::io::AsyncWriteExt;
 /// Route for debugging information
 use serde_json::json;
 use std::collections::VecDeque;
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;

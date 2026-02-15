@@ -9,8 +9,8 @@ use crate::{
 };
 use opsml_settings::config::DatabaseSettings;
 use sqlx::{
-    mysql::{MySql, MySqlPoolOptions},
     Pool,
+    mysql::{MySql, MySqlPoolOptions},
 };
 
 use tracing::debug;
@@ -68,30 +68,34 @@ mod tests {
 
     use super::*;
 
+    use crate::schemas::EvaluationSqlRecord;
     use crate::schemas::schema::{
         ArtifactSqlRecord, AuditCardRecord, CardResults, DataCardRecord, ExperimentCardRecord,
         HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
         ServerCard, ServiceCardRecord, User,
     };
-    use crate::schemas::EvaluationSqlRecord;
     use crate::traits::EvaluationLogicTrait;
     use crate::traits::{
         ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, ExperimentLogicTrait, SpaceLogicTrait,
         UserLogicTrait,
     };
     use opsml_settings::config::DatabaseSettings;
-    use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
-    use opsml_types::contracts::VersionCursor;
-    use opsml_types::contracts::{ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent};
     use opsml_types::CommonKwargs;
     use opsml_types::SqlType;
+    use opsml_types::contracts::VersionCursor;
+    use opsml_types::contracts::agent::{
+        AgentCapabilities, AgentInterface, AgentProvider, AgentSkill, AgentSpec,
+        SecurityRequirement,
+    };
+    use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
+    use opsml_types::contracts::{ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent};
     use opsml_types::{
+        RegistryType,
         cards::CardTable,
         contracts::{
             ArtifactType, CardQueryArgs, DeploymentConfig, McpCapability, McpConfig, McpTransport,
             Resources, ServiceConfig, ServiceQueryArgs, ServiceType, SpaceRecord,
         },
-        RegistryType,
     };
     use opsml_utils::utils::get_utc_datetime;
     use semver::Version;
@@ -99,6 +103,48 @@ mod tests {
     use std::env;
 
     const SPACE: &str = "space";
+
+    fn example_agent_spec() -> AgentSpec {
+        AgentSpec::new_rs(
+            "TestAgent".to_string(),
+            "A test agent for SQL integration tests".to_string(),
+            "1.0.0".to_string(),
+            vec![AgentInterface::new(
+                "http://localhost:8000".to_string(),
+                "HTTP".to_string(),
+                "1.0".to_string(),
+                Some("tenant1".to_string()),
+            )],
+            AgentCapabilities::new(
+                true,  // streaming
+                false, // push_notifications
+                false, // extended_agent_card
+                None,  // extensions
+            ),
+            vec!["text".to_string()],
+            vec!["json".to_string()],
+            vec![opsml_types::contracts::SkillFormat::A2A(AgentSkill::new(
+                "skill1".to_string(),
+                "Echo".to_string(),
+                "Echoes input text".to_string(),
+                Some(vec!["test".to_string()]),
+                Some(vec!["example input".to_string()]),
+                Some(vec!["text".to_string()]),
+                Some(vec!["text".to_string()]),
+                Some(vec![SecurityRequirement::new(vec!["apiKey".to_string()])]),
+            ))],
+            Some(AgentProvider::new(
+                Some("TestOrg".to_string()),
+                Some("https://test.org".to_string()),
+            )),
+            Some("https://docs.test.org".to_string()),
+            Some("https://test.org/icon.png".to_string()),
+            None, // security_schemes
+            Some(vec![SecurityRequirement::new(vec!["apiKey".to_string()])]),
+            None, // signatures
+        )
+        .unwrap()
+    }
 
     pub async fn cleanup(pool: &Pool<MySql>) {
         sqlx::raw_sql(
@@ -140,6 +186,12 @@ mod tests {
             FROM opsml_service_registry;
 
             DELETE
+            FROM opsml_mcp_registry;
+
+            DELETE
+            FROM opsml_agent_registry;
+
+            DELETE
             FROM opsml_artifact_registry;
 
             DELETE
@@ -166,7 +218,7 @@ mod tests {
             CardTable::Experiment => ServerCard::Experiment(ExperimentCardRecord::default()),
             CardTable::Audit => ServerCard::Audit(AuditCardRecord::default()),
             CardTable::Prompt => ServerCard::Prompt(PromptCardRecord::default()),
-            CardTable::Service => ServerCard::Service(ServiceCardRecord::default()),
+            CardTable::Service => ServerCard::Service(Box::default()),
             _ => panic!("Invalid card type"),
         };
 
@@ -241,7 +293,7 @@ mod tests {
                     name: updated_name.to_string(),
                     ..Default::default()
                 };
-                ServerCard::Service(c)
+                ServerCard::Service(Box::new(c))
             }
             _ => panic!("Invalid card type"),
         };
@@ -1277,9 +1329,11 @@ mod tests {
             4,
             "Should retrieve only non-eval accuracy metrics"
         );
-        assert!(filtered_combo
-            .iter()
-            .all(|m| m.name == "accuracy" && !m.is_eval));
+        assert!(
+            filtered_combo
+                .iter()
+                .all(|m| m.name == "accuracy" && !m.is_eval)
+        );
 
         // Test 11: Verify created_at timestamp ordering for same name/step
         // Insert two metrics with identical name and step but different timestamps
@@ -1685,7 +1739,7 @@ mod tests {
     async fn test_mysql_get_load_card_key_service() {
         let client = db_client().await;
         let service_card = ServiceCardRecord::default();
-        let card = ServerCard::Service(service_card.clone());
+        let card = ServerCard::Service(Box::new(service_card.clone()));
 
         client
             .card
@@ -1971,7 +2025,10 @@ mod tests {
         };
         client
             .card
-            .insert_card(&CardTable::Service, &ServerCard::Service(service1))
+            .insert_card(
+                &CardTable::Service,
+                &ServerCard::Service(Box::new(service1)),
+            )
             .await
             .unwrap();
 
@@ -1984,7 +2041,10 @@ mod tests {
         };
         client
             .card
-            .insert_card(&CardTable::Service, &ServerCard::Service(service2))
+            .insert_card(
+                &CardTable::Service,
+                &ServerCard::Service(Box::new(service2)),
+            )
             .await
             .unwrap();
 
@@ -2028,7 +2088,7 @@ mod tests {
         };
         client
             .card
-            .insert_card(&CardTable::Mcp, &ServerCard::Service(mcp1))
+            .insert_card(&CardTable::Mcp, &ServerCard::Service(Box::new(mcp1)))
             .await
             .unwrap();
 
@@ -2041,7 +2101,7 @@ mod tests {
         };
         client
             .card
-            .insert_card(&CardTable::Mcp, &ServerCard::Service(mcp2))
+            .insert_card(&CardTable::Mcp, &ServerCard::Service(Box::new(mcp2)))
             .await
             .unwrap();
 
@@ -2080,7 +2140,7 @@ mod tests {
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
         client
             .card
-            .insert_card(&CardTable::Mcp, &ServerCard::Service(mcp3))
+            .insert_card(&CardTable::Mcp, &ServerCard::Service(Box::new(mcp3)))
             .await
             .unwrap();
 
@@ -2104,6 +2164,96 @@ mod tests {
                 name: None,
                 tags: Some(vec!["tag1".to_string()]),
                 service_type: ServiceType::Mcp,
+            })
+            .await
+            .unwrap();
+        assert_eq!(services.len(), 1);
+
+        // check that endpoint is populated
+        assert!(services[0].deployment.is_some());
+        let deployment = services[0].deployment.as_ref().unwrap();
+        assert_eq!(deployment.len(), 1);
+        assert_eq!(deployment[0].environment, "dev");
+        assert_eq!(deployment[0].endpoints.len(), 1);
+        assert_eq!(deployment[0].endpoints[0], "http://localhost:8000");
+    }
+
+    #[tokio::test]
+    async fn test_mysql_recent_agent_services() {
+        let client = db_client().await;
+        let agent_spec = example_agent_spec();
+
+        let deploy = DeploymentConfig {
+            environment: "dev".to_string(),
+            provider: Some("development".to_string()),
+            location: Some(vec!["local".to_string()]),
+            endpoints: vec!["http://localhost:8000".to_string()],
+            resources: Some(Resources {
+                cpu: 2,
+                memory: "4GB".to_string(),
+                storage: "10GB".to_string(),
+                gpu: None,
+            }),
+            links: None,
+        };
+        let agent_card1 = ServiceCardRecord {
+            name: "agent1".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Agent.to_string(),
+            tags: Json(vec!["tag1".to_string()]),
+            service_config: Some(Json(ServiceConfig {
+                agent: Some(opsml_types::contracts::AgentConfig::Spec(Box::new(
+                    agent_spec.clone(),
+                ))),
+                ..Default::default()
+            })),
+            deployment: Some(Json(vec![deploy.clone()])),
+            ..Default::default()
+        };
+
+        client
+            .card
+            .insert_card(
+                &CardTable::Agent,
+                &ServerCard::Service(Box::new(agent_card1)),
+            )
+            .await
+            .unwrap();
+
+        tokio::time::sleep(std::time::Duration::from_millis(300)).await;
+
+        // create new version
+        let agent_card2 = ServiceCardRecord {
+            name: "agent1".to_string(),
+            space: SPACE.to_string(),
+            service_type: ServiceType::Agent.to_string(),
+            tags: Json(vec!["tag1".to_string()]),
+            service_config: Some(Json(ServiceConfig {
+                agent: Some(opsml_types::contracts::AgentConfig::Spec(Box::new(
+                    agent_spec.clone(),
+                ))),
+                ..Default::default()
+            })),
+            deployment: Some(Json(vec![deploy])),
+            ..Default::default()
+        };
+
+        client
+            .card
+            .insert_card(
+                &CardTable::Agent,
+                &ServerCard::Service(Box::new(agent_card2)),
+            )
+            .await
+            .unwrap();
+
+        let services = client
+            .card
+            .get_recent_services(&ServiceQueryArgs {
+                space: None,
+                name: None,
+                tags: None,
+                service_type: ServiceType::Agent,
             })
             .await
             .unwrap();

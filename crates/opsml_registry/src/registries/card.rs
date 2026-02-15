@@ -3,10 +3,10 @@ use crate::registries::client::artifact::ArtifactExt;
 use crate::registries::client::base::Registry;
 use crate::registries::client::card::{CardRegistry, ClientCardRegistry, ScouterRegistry};
 use opsml_semver::VersionType;
-use opsml_settings::config::OpsmlMode;
 use opsml_settings::ScouterSettings;
+use opsml_settings::config::OpsmlMode;
 use opsml_state::{app_state, get_api_client};
-use opsml_types::contracts::{ArtifactKey, DeleteCardRequest};
+use opsml_types::contracts::{ArtifactKey, CardArgs, DeleteCardRequest};
 use opsml_types::contracts::{CardQueryArgs, CardRecord, CreateCardResponse};
 use opsml_types::*;
 use scouter_client::{
@@ -258,6 +258,18 @@ impl OpsmlCardRegistry {
                 debug!("ServerRegistry: Inserting scouter profile");
                 server_registry.insert_scouter_profile(profile)
             }
+        }
+    }
+
+    pub fn compare_card_hash(
+        &self,
+        content_hash: &[u8],
+    ) -> Result<Option<CardArgs>, RegistryError> {
+        match self {
+            Self::Client(client_registry) => client_registry.compare_card_hash(content_hash),
+            #[cfg(feature = "server")]
+            Self::Server(server_registry) => app_state()
+                .block_on(async { server_registry.compare_card_hash(content_hash).await }),
         }
     }
 }

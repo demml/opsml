@@ -4,13 +4,13 @@ use crate::utils::BaseArgs;
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
-use opsml_service::ServiceSpec;
+use opsml_service::OpsmlServiceSpec;
 use opsml_types::contracts::{Card, CardEntry, ServiceConfig};
 use opsml_types::{
+    RegistryType, SaveName, Suffix,
     contracts::{
         CardRecord, DeploymentConfig, ServiceCardClientRecord, ServiceMetadata, ServiceType,
     },
-    RegistryType, SaveName, Suffix,
 };
 use opsml_utils::PyHelperFuncs;
 use pyo3::IntoPyObjectExt;
@@ -18,10 +18,11 @@ use pyo3::PyTraverseError;
 use pyo3::PyVisit;
 use pyo3::{prelude::*, types::PyDict};
 use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
-    Deserialize, Deserializer, Serialize, Serializer,
 };
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, instrument};
@@ -141,7 +142,7 @@ impl CardList {
 
 /// ServiceCard is a collection of cards that can be associated and loaded in one call
 /// aka a ServiceCard. We use ServiceCard for consistency with developing "Applications".
-#[pyclass]
+#[pyclass(subclass)]
 #[derive(Debug)]
 pub struct ServiceCard {
     #[pyo3(get, set)]
@@ -174,7 +175,6 @@ pub struct ServiceCard {
     #[pyo3(get)]
     pub registry_type: RegistryType,
 
-    // this is the holder for the card objects (ModelCard, DataCard, etc.)
     pub card_objs: HashMap<String, Py<PyAny>>,
 
     #[pyo3(get, set)]
@@ -183,10 +183,13 @@ pub struct ServiceCard {
     #[pyo3(get)]
     pub service_type: ServiceType,
 
+    #[pyo3(get)]
     pub metadata: Option<ServiceMetadata>,
 
+    #[pyo3(get)]
     pub deploy: Option<Vec<DeploymentConfig>>,
 
+    #[pyo3(get)]
     pub service_config: Option<ServiceConfig>,
 }
 
@@ -213,9 +216,9 @@ impl ServiceCard {
             BaseArgs::create_args(Some(name), Some(space), version, None, &registry_type)?;
 
         let spec = if load_spec {
-            ServiceSpec::from_env()?
+            OpsmlServiceSpec::from_env()?
         } else {
-            ServiceSpec::new_empty(
+            OpsmlServiceSpec::new_empty(
                 &base_args.0,
                 &base_args.1,
                 service_type.unwrap_or(ServiceType::Api),
@@ -328,6 +331,21 @@ impl ServiceCard {
         self.card_objs.clear();
     }
 
+    /// Calculate a content hash for the service card based on its JSON representation. This can be used to detect changes in the card's content.
+    /// This is needed for cli work to compare current state vs previous state of the card.
+    pub fn calculate_content_hash(&self) -> Result<Vec<u8>, CardError> {
+        let mut hasher = Sha256::new();
+        let mut service_json = serde_json::to_value(self)?;
+
+        // remove runtime-generated fields from the JSON before hashing (created_at)
+        if let Some(obj) = service_json.as_object_mut() {
+            obj.remove("created_at");
+            obj.remove("uid");
+        }
+        hasher.update(serde_json::to_string(&service_json)?.as_bytes());
+        Ok(hasher.finalize().to_vec())
+    }
+
     /// Get the registry card for the service card
     pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = ServiceCardClientRecord {
@@ -340,14 +358,15 @@ impl ServiceCard {
             cards: self.cards.to_card_entries(),
             opsml_version: self.opsml_version.clone(),
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
-            service_type: self.service_type.to_string(),
+            service_type: self.service_type.clone(),
             metadata: self.metadata.clone(),
             deployment: self.deploy.clone(),
             service_config: self.service_config.clone(),
             tags: self.metadata.as_ref().map_or(vec![], |m| m.tags.clone()),
+            content_hash: self.calculate_content_hash()?,
         };
 
-        Ok(CardRecord::Service(record))
+        Ok(CardRecord::Service(Box::new(record)))
     }
 
     /// enable __getitem__ for ServiceCard alias calls
@@ -659,9 +678,9 @@ impl ServiceCard {
         space: String,
         name: String,
         cards: Vec<Card>, // can be Vec<Card> or Vec<ModelCard, DataCard, etc.>
-        spec: &ServiceSpec,
+        spec: &OpsmlServiceSpec,
     ) -> Result<ServiceCard, CardError> {
-        let registry_type = RegistryType::Service;
+        let registry_type = RegistryType::from(&spec.service_type);
         let base_args = BaseArgs::create_args(
             Some(&name),
             Some(&space),

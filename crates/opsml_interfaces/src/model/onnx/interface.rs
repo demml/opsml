@@ -1,14 +1,14 @@
+use crate::ModelSaveKwargs;
+use crate::OnnxSession;
 use crate::base::parse_save_kwargs;
 use crate::error::ModelInterfaceError;
 use crate::model::base::utils::OnnxExtension;
 use crate::model::{
     ModelInterface, ModelInterfaceMetadata, ModelInterfaceSaveMetadata, ModelLoadKwargs,
 };
-use crate::ModelSaveKwargs;
-use crate::OnnxSession;
 use opsml_types::{ModelInterfaceType, ModelType, TaskType};
-use pyo3::prelude::*;
 use pyo3::IntoPyObjectExt;
+use pyo3::prelude::*;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tracing::{debug, instrument, warn};

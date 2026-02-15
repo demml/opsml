@@ -453,7 +453,7 @@ mod tests {
     use zip::write::FileOptions;
 
     #[cfg(target_os = "linux")]
-    use flate2::{write::GzEncoder, Compression};
+    use flate2::{Compression, write::GzEncoder};
     #[cfg(target_os = "linux")]
     use tar::Header;
 
@@ -666,7 +666,7 @@ mod tests {
     fn test_download_binary_linux() -> Result<(), Box<dyn std::error::Error>> {
         let mut mock_server = MockServer::new();
         let version = "0.3.0"; // Use a different version for clarity
-                               // Determine arch based on the actual test environment
+        // Determine arch based on the actual test environment
         let arch = if cfg!(target_arch = "aarch64") {
             "aarch64"
         } else {

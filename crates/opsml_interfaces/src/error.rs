@@ -1,7 +1,7 @@
 use opsml_utils::error::UtilError;
+use pyo3::PyErr;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::pyclass::PyClassGuardError;
-use pyo3::PyErr;
 use pythonize::PythonizeError;
 use thiserror::Error;
 use tracing::error;
@@ -336,7 +336,9 @@ pub enum ModelInterfaceError {
     #[error("No model detected for saving")]
     NoModelError,
 
-    #[error("Model must be an lightgbm booster or inherit from Booster. If using the Sklearn api version of LightGBMModel, use an SklearnModel interface instead")]
+    #[error(
+        "Model must be an lightgbm booster or inherit from Booster. If using the Sklearn api version of LightGBMModel, use an SklearnModel interface instead"
+    )]
     LightGBMTypeError,
 
     #[error("Model must be an instance of a Lightning Trainer")]
@@ -364,7 +366,9 @@ pub enum ModelInterfaceError {
     )]
     TorchLoadModelError,
 
-    #[error("Model must be an xgboost booster or inherit from Booster. If using the Sklearn api version of XGBoost, use the SklearnModel interface instead")]
+    #[error(
+        "Model must be an xgboost booster or inherit from Booster. If using the Sklearn api version of XGBoost, use the SklearnModel interface instead"
+    )]
     XGBoostTypeError,
 
     #[error("Drift type not found in drift profile filename: {0}")]

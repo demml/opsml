@@ -1,9 +1,9 @@
-use crate::core::error::{internal_server_error, OpsmlServerError};
+use crate::core::error::{OpsmlServerError, internal_server_error};
 use crate::core::scouter::Routes as ScouterRoutes;
 use crate::core::state::AppState;
 use anyhow::Result;
 /// Route for debugging information
-use axum::{http::StatusCode, Json};
+use axum::{Json, http::StatusCode};
 use opsml_auth::sso::types::UserInfo;
 use opsml_sql::schemas::User;
 use opsml_sql::traits::*;

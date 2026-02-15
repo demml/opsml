@@ -1,12 +1,12 @@
-use crate::core::scouter::client::{build_scouter_http_client, ScouterApiClient};
+use crate::core::scouter::client::{ScouterApiClient, build_scouter_http_client};
 use anyhow::{Context, Result as AnyhowResult};
 use opsml_auth::util::generate_recovery_codes_with_hashes;
 use opsml_colors::Colorize;
 use opsml_settings::config::{OpsmlConfig, ScouterSettings};
-use opsml_sql::enums::client::{get_sql_client, SqlClientEnum};
+use opsml_sql::enums::client::{SqlClientEnum, get_sql_client};
 use opsml_sql::schemas::User;
 use opsml_sql::traits::UserLogicTrait;
-use opsml_storage::storage::enums::client::{get_storage_system, StorageClientEnum};
+use opsml_storage::storage::enums::client::{StorageClientEnum, get_storage_system};
 use password_auth::generate_hash;
 use reqwest::StatusCode;
 use rusty_logging::setup_logging;

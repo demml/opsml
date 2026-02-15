@@ -1,6 +1,6 @@
-use crate::cards::{HardwareMetrics, Metric, Parameter};
-use crate::contracts::{traits::AuditableRequest, ResourceType};
 use crate::RegistryType;
+use crate::cards::{HardwareMetrics, Metric, Parameter};
+use crate::contracts::{ResourceType, traits::AuditableRequest};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]

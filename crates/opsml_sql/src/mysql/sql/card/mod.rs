@@ -1,5 +1,6 @@
 use crate::mysql::helper::MySqlQueryHelper;
 use opsml_types::cards::CardTable;
+use opsml_types::contracts::CardArgs;
 
 use crate::error::SqlError;
 use crate::schemas::schema::{
@@ -11,8 +12,8 @@ use crate::traits::CardLogicTrait;
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_types::{
-    contracts::{ArtifactKey, CardQueryArgs, DashboardStats, ServiceQueryArgs, VersionCursor},
     RegistryType,
+    contracts::{ArtifactKey, CardQueryArgs, DashboardStats, ServiceQueryArgs, VersionCursor},
 };
 use semver::Version;
 use sqlx::{MySql, Pool};
@@ -115,6 +116,31 @@ impl CardLogicTrait for CardLogicMySqlClient {
         Ok(VersionValidator::sort_semver_versions(versions, true)?)
     }
 
+    /// Helper for comparing content hash for cards. Mainly used for cli work to determine if card has changed before
+    /// registering a new version or not.
+    /// # Arguments
+    /// * `table` - The table to query
+    /// * `content_hash` - The content hash to compare
+    /// # Returns
+    /// * `bool` - True if the content hash matches an existing card, false otherwise
+    async fn compare_hash(
+        &self,
+        table: &CardTable,
+        content_hash: &[u8],
+    ) -> Result<Option<CardArgs>, SqlError> {
+        let query = format!(
+            "SELECT space, name, version, uid FROM {} WHERE content_hash = ? LIMIT 1",
+            table
+        );
+
+        let exists: Option<CardArgs> = sqlx::query_as(&query)
+            .bind(content_hash)
+            .fetch_optional(&self.pool)
+            .await?;
+
+        Ok(exists)
+    }
+
     /// Query cards based on the query arguments
     ///
     /// # Arguments
@@ -163,7 +189,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
                         .await?;
                 Ok(CardResults::Prompt(cards))
             }
-            CardTable::Service | CardTable::Mcp => {
+            CardTable::Service | CardTable::Mcp | CardTable::Agent => {
                 let cards =
                     query_cards_generic::<ServiceCardRecord>(&self.pool, &query, query_args, 1000)
                         .await?;
@@ -316,6 +342,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
+                        .bind(&record.content_hash)
                         .execute(&self.pool)
                         .await?;
                     Ok(())
@@ -326,7 +353,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
                 }
             },
 
-            CardTable::Service | CardTable::Mcp => match card {
+            CardTable::Service | CardTable::Mcp | CardTable::Agent => match card {
                 ServerCard::Service(record) => {
                     let query = MySqlQueryHelper::get_servicecard_insert_query(table);
                     sqlx::query(query)
@@ -348,6 +375,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
                         .bind(&record.deployment)
                         .bind(&record.service_config)
                         .bind(&record.tags)
+                        .bind(&record.content_hash)
                         .execute(&self.pool)
                         .await?;
                     Ok(())
@@ -505,6 +533,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
                         .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
+                        .bind(&record.content_hash)
                         .bind(&record.uid)
                         .execute(&self.pool)
                         .await?;
@@ -516,7 +545,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
                 }
             },
 
-            CardTable::Service | CardTable::Mcp => match card {
+            CardTable::Service | CardTable::Mcp | CardTable::Agent => match card {
                 ServerCard::Service(record) => {
                     let query = MySqlQueryHelper::get_servicecard_update_query(table);
                     sqlx::query(query)
@@ -535,6 +564,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
                         .bind(&record.deployment)
                         .bind(&record.service_config)
                         .bind(&record.tags)
+                        .bind(&record.content_hash)
                         .bind(&record.uid)
                         .execute(&self.pool)
                         .await?;

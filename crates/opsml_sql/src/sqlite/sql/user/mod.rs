@@ -5,7 +5,7 @@ use crate::schemas::schema::User;
 
 use crate::traits::UserLogicTrait;
 use async_trait::async_trait;
-use sqlx::{sqlite::SqliteRow, FromRow, Pool, Row, Sqlite};
+use sqlx::{FromRow, Pool, Row, Sqlite, sqlite::SqliteRow};
 
 impl FromRow<'_, SqliteRow> for User {
     fn from_row(row: &SqliteRow) -> Result<Self, sqlx::Error> {

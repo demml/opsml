@@ -1,0 +1,71 @@
+# Service identifier - unique name for this service
+name: "agent-service1"
+space: "opsml"
+type: Agent
+
+metadata:
+  description: "An agent service"
+  language: "python"
+  tags: ["service"]
+
+service:
+  cards:
+    - alias: my_prompt
+      path: "prompts/my_prompt.yaml"
+      type: prompt
+
+  agent:
+    capabilities:
+      streaming: true
+      push_notifications: false
+      extended_agent_card: true
+      extensions:
+        - required: true
+          uri: "https://example.com/agent-card-extension"
+    default_output_modes: ["text"]
+    default_input_modes: ["text"]
+    description: "An agent that performs tasks"
+    documentation_url: "https://example.com/agent-docs"
+    icon_url: "https://example.com/agent-icon.png"
+    name: "Example Agent"
+    provider:
+      organization: "Example Org"
+      url: "https://example.com"
+    security_requirements:
+      - schemes: ["api_key"]
+    security_schemes:
+      api_key:
+        location: "header"
+        name: "X-API-Key"
+    signatures:
+      - header:
+          alg: "HS256"
+          typ: "JWT"
+        protected: "ey1"
+        signature: "abc123"
+    skills:
+      - format: a2a
+        name: "web_search"
+        description: "Perform web searches"
+        id: "skill1"
+        examples:
+          - "Search for the latest news on AI"
+          - "Here are the latest news articles on AI..."
+        tags: ["search", "web"]
+      - format: standard
+        name: "data-analysis"
+        description: "Analyze data sets"
+        license: "MIT"
+        compatibility: "v1.0"
+        metadata:
+          complexity: "high"
+        allowed_tools: ["pandas", "numpy"]
+    interface:
+      - uri: "https://example.com/agent-interface"
+        protocol_binding: "https"
+        protocol_version: "1.0"
+        tenant: "example-tenant"
+
+deploy:
+  - environment: "dev_client"
+    endpoints: ["https://api.example.com"]

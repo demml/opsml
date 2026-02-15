@@ -3,9 +3,9 @@ use opsml_crypt::error::CryptError;
 use opsml_registry::error::RegistryError;
 use opsml_storage::storage::error::StorageError;
 use opsml_types::error::TypeError;
+use pyo3::PyErr;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::pyclass::PyClassGuardError;
-use pyo3::PyErr;
 use thiserror::Error;
 use tracing::error;
 
@@ -68,7 +68,9 @@ pub enum ExperimentError {
     #[error("Failed to downcast Python object: {0}")]
     DowncastError(String),
 
-    #[error("Invalid parameter argument. Log_parameters accepts either a dictionary of parameters or a list of parameters. Received: {0}")]
+    #[error(
+        "Invalid parameter argument. Log_parameters accepts either a dictionary of parameters or a list of parameters. Received: {0}"
+    )]
     InvalidParametersArgument(String),
 
     #[error("{0}")]

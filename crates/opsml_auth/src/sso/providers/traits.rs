@@ -2,7 +2,7 @@ use crate::sso::error::SsoError;
 use crate::sso::providers::types::{IdTokenClaims, OidcErrorResponse, TokenResponse};
 use crate::sso::types::UserInfo;
 use async_trait::async_trait;
-use jsonwebtoken::{decode, DecodingKey, Validation};
+use jsonwebtoken::{DecodingKey, Validation, decode};
 use reqwest::StatusCode;
 use tracing::{debug, error, instrument};
 #[async_trait]

@@ -1,13 +1,13 @@
-use crate::core::error::{internal_server_error, OpsmlServerError};
+use crate::core::error::{OpsmlServerError, internal_server_error};
 use crate::core::scouter;
 
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
+    Extension, Json, Router,
     extract::{Query, State},
     http::StatusCode,
     routing::{get, post},
-    Extension, Json, Router,
 };
 use opsml_auth::permission::UserPermissions;
 use opsml_types::api::RequestType;
@@ -18,7 +18,7 @@ use scouter_client::{
     GenAIEvalRecordPaginationRequest, GenAIEvalRecordPaginationResponse, GenAIEvalTaskRequest,
     GenAIEvalTaskResponse, GenAIEvalWorkflowPaginationResponse,
 };
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::{error, instrument};
 

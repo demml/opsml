@@ -1,4 +1,4 @@
 pub mod error;
 pub mod service;
 
-pub use service::ServiceSpec;
+pub use service::OpsmlServiceSpec;

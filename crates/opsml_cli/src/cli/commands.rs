@@ -1,10 +1,10 @@
 use crate::cli::arg::{
     DownloadCard, KeyArgs, ListCards, LockArgs, RegisterArgs, ScouterArgs, UiArgs,
 };
-use clap::builder::styling::{AnsiColor, Effects};
-use clap::builder::Styles;
 use clap::Parser;
 use clap::Subcommand;
+use clap::builder::Styles;
+use clap::builder::styling::{AnsiColor, Effects};
 use serde::Serialize;
 use std::fmt;
 
@@ -153,6 +153,18 @@ pub enum GetCommands {
     /// Download service card artifacts
     ///
     Service(DownloadCard),
+
+    /// Download agent card artifacts
+    ///
+    /// # Example
+    /// opsml get agent --name agent_name --version 1.0.0
+    Agent(DownloadCard),
+
+    /// Download MCP card artifacts
+    ///
+    /// # Example
+    /// opsml get mcp --name mcp_name --version 1.0.0
+    Mcp(DownloadCard),
 }
 
 #[derive(Subcommand)]

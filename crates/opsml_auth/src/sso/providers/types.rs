@@ -1,5 +1,5 @@
 use crate::sso::error::SsoError;
-use jsonwebtoken::{decode_header, DecodingKey};
+use jsonwebtoken::{DecodingKey, decode_header};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error};
 

@@ -1,7 +1,7 @@
 pub mod error;
 pub use error::StateError;
 use opsml_client::base::{
-    build_api_client, build_async_api_client, OpsmlApiAsyncClient, OpsmlApiClient,
+    OpsmlApiAsyncClient, OpsmlApiClient, build_api_client, build_async_api_client,
 };
 use opsml_settings::OpsmlConfig;
 use opsml_settings::OpsmlMode;

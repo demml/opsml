@@ -5,9 +5,9 @@ use opsml_types::{
     contracts::{CompleteMultipartUpload, PresignedQuery, PresignedUrl},
 };
 
-use reqwest::blocking::{multipart::Form, Client, Response};
-use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION};
-use reqwest::{multipart::Form as AsyncForm, Client as AsyncClient, Response as AsyncResponse};
+use reqwest::blocking::{Client, Response, multipart::Form};
+use reqwest::header::{AUTHORIZATION, HeaderMap, HeaderValue};
+use reqwest::{Client as AsyncClient, Response as AsyncResponse, multipart::Form as AsyncForm};
 use serde_json::Value;
 use std::sync::Arc;
 use std::sync::RwLock;

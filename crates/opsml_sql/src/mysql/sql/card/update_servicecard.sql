@@ -1,11 +1,11 @@
-UPDATE opsml_service_registry SET 
-    app_env = ?, 
-    name = ?, 
-    space = ?, 
-    major = ?, 
-    minor = ?, 
-    patch = ?, 
-    version = ?, 
+UPDATE opsml_service_registry SET
+    app_env = ?,
+    name = ?,
+    space = ?,
+    major = ?,
+    minor = ?,
+    patch = ?,
+    version = ?,
     cards = ?,
     username = ?,
     opsml_version = ?,
@@ -13,5 +13,6 @@ UPDATE opsml_service_registry SET
     metadata = ?,
     deployment = ?,
     service_config = ?,
-    tags = ?
+    tags = ?,
+    content_hash = ?
 WHERE uid = ?;

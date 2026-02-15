@@ -1,11 +1,11 @@
 use crate::storage::error::StorageError;
 use crate::storage::http::multipart::MultiPartUploader;
 use crate::storage::utils::set_download_chunk_size;
-use opsml_client::error::ApiClientError;
 use opsml_client::OpsmlApiClient;
+use opsml_client::error::ApiClientError;
 use opsml_colors::Colorize;
 use opsml_types::api::{RequestType, Routes};
-use opsml_types::{contracts::*, StorageType};
+use opsml_types::{StorageType, contracts::*};
 use std::io::{Read, Write};
 use std::path::Path;
 use std::sync::Arc;

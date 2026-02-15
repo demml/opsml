@@ -12,7 +12,7 @@ from tests.conftest import WINDOWS_EXCLUDE
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
 def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
-    with OpsmlTestServer(cleanup=False):
+    with OpsmlTestServer():
         with LLMTestServer():
             reg: CardRegistry[PromptCard] = CardRegistry(RegistryType.Prompt)
 

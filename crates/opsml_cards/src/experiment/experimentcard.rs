@@ -6,20 +6,20 @@ use opsml_storage::storage_client;
 use opsml_types::cards::{CardStatus, EvalMetrics};
 use opsml_types::contracts::{CardRecord, ExperimentCardClientRecord};
 use opsml_types::{
+    RegistryType, SaveName, Suffix,
     cards::{ComputeEnvironment, Metrics, Parameters},
     contracts::ArtifactKey,
-    RegistryType, SaveName, Suffix,
 };
-use opsml_utils::{get_utc_datetime, PyHelperFuncs};
+use opsml_utils::{PyHelperFuncs, get_utc_datetime};
 use pyo3::prelude::*;
 use serde_json;
 use std::path::PathBuf;
 use tracing::error;
 
 use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
-    Deserialize, Deserializer, Serialize, Serializer,
 };
 
 #[pyclass]

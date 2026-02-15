@@ -1,3 +1,4 @@
+pub mod agent;
 pub mod artifact;
 pub mod card;
 pub mod evaluation;
@@ -9,6 +10,7 @@ pub mod scouter;
 pub mod service;
 pub mod traits;
 
+pub use agent::*;
 pub use artifact::*;
 pub use card::*;
 pub use event::*;

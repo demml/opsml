@@ -4,7 +4,7 @@ use opsml_types::DataType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::types::PyTuple;
 use pyo3::types::{PyDateTime, PyFloat, PyInt, PySlice, PyString};
-use pyo3::{prelude::*, IntoPyObjectExt};
+use pyo3::{IntoPyObjectExt, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

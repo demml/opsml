@@ -6,8 +6,8 @@ use chrono::Utc;
 use opsml_cards::card_service::ServiceInfo;
 use opsml_registry::download::async_download_service_from_registry;
 use opsml_registry::registries::async_registry::AsyncOpsmlRegistry;
-use opsml_types::contracts::sort_cards_by_version;
 use opsml_types::contracts::CardQueryArgs;
+use opsml_types::contracts::sort_cards_by_version;
 use opsml_types::{RegistryType, SaveName};
 use pyo3::prelude::*;
 use std::path::PathBuf;
@@ -16,9 +16,9 @@ use std::sync::RwLock;
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc::UnboundedReceiver;
 use tokio::task::JoinHandle;
-use tokio::time::{sleep, Duration};
+use tokio::time::{Duration, sleep};
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, error, info, info_span, instrument, Instrument};
+use tracing::{Instrument, debug, error, info, info_span, instrument};
 
 /// Helper for listing cards
 pub async fn get_latest_version(
