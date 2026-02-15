@@ -1,6 +1,8 @@
 use crate::error::ServiceError;
 use opsml_state::app_state;
-use opsml_types::contracts::{Card, DeploymentConfig, ServiceConfig, ServiceMetadata, ServiceType};
+use opsml_types::contracts::{
+    CardVariant, DeploymentConfig, ServiceConfig, ServiceMetadata, ServiceType,
+};
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -215,8 +217,11 @@ impl OpsmlServiceSpec {
     /// * `path` - Path to the YAML file
     /// # Returns
     /// * `OpsmlServiceSpec` - The loaded service specification
+    #[instrument(skip_all)]
     pub fn from_yaml_file(path: &Path) -> Result<Self, ServiceError> {
-        Self::from_yaml(&std::fs::read_to_string(path)?)
+        Self::from_yaml(&std::fs::read_to_string(path).inspect_err(|e| {
+            error!("Yaml error: {}", e);
+        })?)
     }
 
     /// Load a OpsmlServiceSpec from a YAML string
@@ -224,16 +229,19 @@ impl OpsmlServiceSpec {
     /// * `yaml_str` - The YAML string
     /// # Returns
     /// * `OpsmlServiceSpec` - The loaded service specification
+    #[instrument(skip_all)]
     pub fn from_yaml(yaml_str: &str) -> Result<Self, ServiceError> {
-        let mut spec: OpsmlServiceSpec = serde_yaml::from_str(yaml_str)?;
+        let mut spec: OpsmlServiceSpec = serde_yaml::from_str(yaml_str).inspect_err(|e| {
+            error!("Failed to read yaml from string: {}", e);
+        })?;
         spec.filter_deploy_by_environment()?;
         Ok(spec)
     }
 
-    pub fn get_card(&self, alias: &str) -> Option<&Card> {
+    pub fn get_card(&self, alias: &str) -> Option<&CardVariant> {
         if let Some(service) = &self.service {
             if let Some(cards) = &service.cards {
-                cards.iter().find(|card| card.alias == alias)
+                cards.iter().find(|card| card.alias() == alias)
             } else {
                 None
             }
@@ -375,10 +383,10 @@ deploy:
         assert_eq!(spec.space(), "my-team");
 
         let model_card = spec.get_card("test_model").unwrap();
-        assert_eq!(model_card.space, "my-team");
+        assert_eq!(model_card.space(), "my-team");
 
         let prompt_card = spec.get_card("test_prompt").unwrap();
-        assert_eq!(prompt_card.space, "custom-space");
+        assert_eq!(prompt_card.space(), "custom-space");
     }
 
     #[test]
@@ -491,7 +499,13 @@ deploy:
         assert_eq!(spec.space(), "my-team");
 
         let prompt_card = spec.get_card("my_prompt").unwrap();
-        assert_eq!(prompt_card.registry_type, opsml_types::RegistryType::Prompt);
-        assert_eq!(prompt_card.path, Some("prompts/my_prompt.json".to_string()));
+        assert_eq!(
+            prompt_card.registry_type(),
+            &opsml_types::RegistryType::Prompt
+        );
+        assert_eq!(
+            prompt_card.path(),
+            Some(PathBuf::from("prompts/my_prompt.json")).as_ref()
+        );
     }
 }

@@ -153,6 +153,18 @@ pub enum GetCommands {
     /// Download service card artifacts
     ///
     Service(DownloadCard),
+
+    /// Download agent card artifacts
+    ///
+    /// # Example
+    /// opsml get agent --name agent_name --version 1.0.0
+    Agent(DownloadCard),
+
+    /// Download MCP card artifacts
+    ///
+    /// # Example
+    /// opsml get mcp --name mcp_name --version 1.0.0
+    Mcp(DownloadCard),
 }
 
 #[derive(Subcommand)]

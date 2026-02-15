@@ -28,6 +28,7 @@ use opsml_sql::traits::*;
 use opsml_types::contracts::{CompareHashRequest, CompareHashResponse};
 use opsml_types::{SaveName, Suffix};
 use opsml_types::{cards::*, contracts::*};
+use serde::de;
 use serde_qs;
 
 use std::panic::{AssertUnwindSafe, catch_unwind};
@@ -648,6 +649,12 @@ pub async fn load_card(
     Query(params): Query<CardQueryArgs>,
 ) -> Result<Json<ArtifactKey>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
+
+    debug!(
+        "Loading card with params: space={:?}, name={:?}, version={:?}, registry_type={:?}, table={:?}",
+        params.space, params.name, params.version, params.registry_type, table
+    );
+
     let key = state
         .sql_client
         .get_card_key_for_loading(&table, &params)

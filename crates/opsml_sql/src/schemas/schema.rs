@@ -861,10 +861,8 @@ impl ServiceCardRecord {
     }
 
     pub fn uri(&self) -> String {
-        format!(
-            "{}/{}/{}/v{}",
-            self.service_type, self.space, self.name, self.version
-        )
+        let table = CardTable::from_service_type(&ServiceType::from(self.service_type.as_str()));
+        format!("{}/{}/{}/v{}", table, self.space, self.name, self.version)
     }
 
     pub fn from_client_card(client_card: ServiceCardClientRecord) -> Result<Self, SqlError> {

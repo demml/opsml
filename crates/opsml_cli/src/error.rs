@@ -79,6 +79,9 @@ pub enum CliError {
 
     #[error("Unsupported service type: {0:?}")]
     UnsupportedServiceType(ServiceType),
+
+    #[error("Expected a CardVariant::Card, but found a different variant")]
+    ExpectedCardPathVariant,
 }
 
 impl From<CliError> for PyErr {
