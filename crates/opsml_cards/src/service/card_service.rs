@@ -335,7 +335,7 @@ impl ServiceCard {
     /// This is needed for cli work to compare current state vs previous state of the card.
     pub fn calculate_content_hash(&self) -> Result<Vec<u8>, CardError> {
         let mut hasher = Sha256::new();
-        let mut service_json = serde_json::to_value(&self)?;
+        let mut service_json = serde_json::to_value(self)?;
 
         // remove runtime-generated fields from the JSON before hashing (created_at)
         if let Some(obj) = service_json.as_object_mut() {
