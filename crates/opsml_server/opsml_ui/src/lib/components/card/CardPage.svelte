@@ -1,8 +1,7 @@
 <script lang="ts">
 
-    import { calculateTimeBetween, RegistryType } from "$lib/utils";
-    import { goto } from "$app/navigation";
-    import {CircuitBoard, Clock, Tag } from 'lucide-svelte';
+  import { calculateTimeBetween, RegistryType } from "$lib/utils";
+  import {CircuitBoard, Clock, Tag } from 'lucide-svelte';
   import { resolveCardPathFromArgs } from "./utils";
   
     let {

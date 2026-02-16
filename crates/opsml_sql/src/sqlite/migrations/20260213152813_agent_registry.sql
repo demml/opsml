@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS opsml_agent_registry (
     deployment TEXT,
     service_config TEXT,
     tags TEXT,
+    status INTEGER NOT NULL DEFAULT 1,
     content_hash BLOB
 );
 
