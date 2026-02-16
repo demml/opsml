@@ -1,0 +1,9 @@
+version = "3.0.0-rc.17"
+
+[[artifact]]
+space = "opsml"
+name = "vegetarian-recipe-agent"
+version = "0.1.0"
+uid = "019c641c-f55c-7af0-a362-5309f27378c9"
+write_dir = "opsml_service"
+registry_type = "agent"
