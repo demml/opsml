@@ -54,6 +54,8 @@ export function getRegistryFromString(type: string): RegistryType | undefined {
       return RegistryType.Service;
     case "mcp":
       return RegistryType.Mcp;
+    case "agent":
+      return RegistryType.Agent;
     default:
       return undefined;
   }
@@ -118,7 +120,7 @@ export function getMaxDataPoints(): number {
 
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
-  wait: number
+  wait: number,
 ): (...args: Parameters<T>) => void {
   let timeout: number;
   return (...args: Parameters<T>) => {

@@ -1,0 +1,28 @@
+name: "vegetarian-recipe-agent"
+space: "opsml"
+type: Agent
+
+metadata:
+  description: "A vegetarian recipe agent service"
+  language: "python"
+  tags: ["service", "vegetarian", "recipe"]
+
+service:
+  cards:
+    - alias: recipe_prompt
+      path: "prompts/recipe.yaml"
+      type: prompt
+
+  agent:
+    capabilities:
+      streaming: false
+      push_notifications: false
+      extended_agent_card: false
+    default_output_modes: ["text/plain"]
+    default_input_modes: ["text/plain"]
+    description: "A sample agent service that generates vegetarian recipes based on user requests."
+    name: "Vegetarian Recipe Generator Agent"
+
+deploy:
+  - environment: "dev_client"
+    endpoints: ["https://api.example.com"]
