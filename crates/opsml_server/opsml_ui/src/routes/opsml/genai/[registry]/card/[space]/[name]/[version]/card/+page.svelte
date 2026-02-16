@@ -12,7 +12,7 @@
 
 {#if registryType === RegistryType.Prompt}
   <PromptPage {data} />
-{:else if registryType === RegistryType.Mcp}
+{:else if registryType === RegistryType.Mcp || registryType === RegistryType.Agent}
   <ServicePage {data} />
 {:else}
   <div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">

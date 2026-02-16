@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS opsml_agent_registry (
     deployment JSON,
     service_config JSON,
     tags JSON,
+    status INTEGER NOT NULL DEFAULT 1,
     content_hash BINARY(32)
 );
 
