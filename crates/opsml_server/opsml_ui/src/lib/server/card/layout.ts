@@ -11,7 +11,7 @@ export async function loadCardLayout(
   space: string,
   name: string,
   version: string,
-  fetch: typeof globalThis.fetch
+  fetch: typeof globalThis.fetch,
 ): Promise<{
   metadata: any;
   registryType: RegistryType;

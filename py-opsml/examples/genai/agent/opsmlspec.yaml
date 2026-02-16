@@ -11,7 +11,7 @@ service:
   cards:
     - alias: recipe_prompt
       path: "prompts/recipe.yaml"
-      type: prompt
+      registry_type: prompt
 
   agent:
     capabilities:
