@@ -134,8 +134,8 @@ export interface AgentSkill {
 }
 
 export type SkillFormat =
-  | { format: "standard"; standard: AgentSkillStandard }
-  | { format: "a2a"; a2a: AgentSkill };
+  | (AgentSkillStandard & { format: "standard" })
+  | (AgentSkill & { format: "a2a" });
 
 export interface AgentSpec {
   capabilities: AgentCapabilities;
