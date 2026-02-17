@@ -9,7 +9,7 @@ use opsml_types::{Alive, IntegratedService, RegistryType, api::*, cards::CardTab
 use scouter_client::RegisteredProfileResponse;
 use scouter_client::{ProfileRequest, ProfileStatusRequest, ScouterServerError};
 use std::sync::Arc;
-use tracing::{error, instrument};
+use tracing::{debug, error, instrument};
 
 #[derive(Debug, Clone)]
 pub struct ClientCardRegistry {
@@ -90,6 +90,13 @@ pub trait CardRegistry: Registry {
             registry_type: self.registry_type().clone(),
             version_request,
         };
+
+        debug!(
+            "Creating card with name: {}, space: {}, registry type: {:?}",
+            card_request.card.name(),
+            card_request.card.space(),
+            card_request.registry_type,
+        );
 
         let body = serde_json::to_value(card_request).inspect_err(|e| {
             error!("Failed to serialize card request {}", e);

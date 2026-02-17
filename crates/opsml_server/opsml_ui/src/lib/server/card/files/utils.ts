@@ -9,7 +9,7 @@ import type { RegistryType } from "$lib/utils";
 
 export async function getFileTree(
   fetch: typeof globalThis.fetch,
-  path: string
+  path: string,
 ): Promise<FileTreeResponse> {
   const params = {
     path: path,
@@ -17,7 +17,7 @@ export async function getFileTree(
 
   const response = await createOpsmlClient(fetch).get(
     RoutePaths.FILE_TREE,
-    params
+    params,
   );
   return (await response.json()) as FileTreeResponse;
 }
@@ -25,7 +25,7 @@ export async function getRawFile(
   fetch: typeof globalThis.fetch,
   path: string,
   uid: string,
-  registry_type: RegistryType
+  registry_type: RegistryType,
 ): Promise<RawFile> {
   const body: RawFileRequest = {
     path: path,
@@ -33,9 +33,11 @@ export async function getRawFile(
     registry_type: registry_type,
   };
 
+  console.log("Fetching raw file with body:", body);
+
   const response = await createOpsmlClient(fetch).post(
     RoutePaths.FILE_CONTENT,
-    body
+    body,
   );
   return (await response.json()) as RawFile;
 }
