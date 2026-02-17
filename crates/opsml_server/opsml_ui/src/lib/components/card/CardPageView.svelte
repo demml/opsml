@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { QueryPageResponse, CardCursor } from "$lib/components/card/types";
   import  { RegistryType } from "$lib/utils";
-  import CardPage from "./CardPage.svelte";
+  import CardPage from "$lib/components/card/CardPage.svelte";
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
 
   let { registryPage, registry, onPageChange } = $props<{

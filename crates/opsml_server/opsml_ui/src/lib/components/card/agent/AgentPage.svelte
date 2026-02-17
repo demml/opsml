@@ -7,8 +7,6 @@
   import AgentInterfaces from './AgentInterfaces.svelte';
   import AgentCards from './AgentCards.svelte';
   import { Activity, ExternalLink } from 'lucide-svelte';
-  import { goto } from '$app/navigation';
-  import { getRegistryFromString, RegistryType } from '$lib/utils';
 
   let { data } = $props();
   let service: ServiceCard = data.metadata;
