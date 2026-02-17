@@ -1,4 +1,5 @@
 import type { RegistryType } from "$lib/utils";
+import type { AgentSpec } from "../agent/types";
 
 export interface Card {
   name: string;
@@ -68,6 +69,7 @@ export interface ServiceConfig {
   cards?: Card[];
   write_dir?: string;
   mcp?: McpConfig;
+  agent?: AgentSpec;
 }
 
 export interface ServiceCard {

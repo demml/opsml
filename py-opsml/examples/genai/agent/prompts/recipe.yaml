@@ -1,0 +1,31 @@
+space: opsml
+name: recipe-prompt
+prompt:
+  model: gemini-2.5-flash
+  provider: Google
+  messages:
+    - |
+      Generate a complete recipe for the user's request:
+      {user_request}
+  system_instructions:
+    - |
+      You are an expert chef specializing in vegetarian cuisine. Your task is to create
+      a complete vegetarian recipe based on the user's request.
+      Guidelines:
+      - Ensure all ingredients are vegetarian (no meat, poultry, or seafood)
+      - Recipe should be easy to follow and practical for home cooks
+      - Provide specific quantities and units for each ingredient
+      - Include detailed, step-by-step cooking directions
+      - Specify prep time (less than 120 minutes) and number of servings
+      - Make the recipe practical and easy to follow
+evaluation:
+  alias: recipe_evaluation
+  tasks:
+    - task_type: Assertion
+      id: has_directions
+      field_path: recipe.directions
+      operator: HasLengthGreaterThan
+      expected_value: 0
+      description: "Verify the recipe contains cooking directions"
+      depends_on: []
+      condition: false

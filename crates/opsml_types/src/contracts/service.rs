@@ -201,7 +201,7 @@ impl DriftConfig {
 pub struct CardPath {
     #[pyo3(get)]
     pub alias: String,
-    #[serde(rename = "type")]
+    #[serde(alias = "type")]
     #[pyo3(get)]
     pub registry_type: RegistryType,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -280,7 +280,7 @@ pub struct Card {
     #[serde(default, deserialize_with = "version_deserializer::deserialize")]
     #[pyo3(get)]
     pub version: Option<String>,
-    #[serde(rename = "type")]
+    #[serde(alias = "type")]
     #[pyo3(get)]
     pub registry_type: RegistryType,
     #[serde(default, skip_serializing_if = "Option::is_none")]

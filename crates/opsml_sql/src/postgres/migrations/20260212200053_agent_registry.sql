@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS opsml_agent_registry (
     deployment JSONB,
     service_config JSONB,
     tags JSONB DEFAULT '[]',
+    status INTEGER NOT NULL DEFAULT 1,
     content_hash BYTEA
 );
 

@@ -12,6 +12,6 @@ export const load: LayoutServerLoad = async ({ params, parent, fetch }) => {
     space,
     name,
     version,
-    fetch
+    fetch,
   );
 };

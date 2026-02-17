@@ -6,15 +6,13 @@
   let { data }: PageProps = $props();
 </script>
 
-{#if data.registryType === RegistryType.Agent}
-  <AgentPage/>
-{:else}
-  <CardSearch 
-    page={data.page}
-    selectedName={data.selectedName} 
-    selectedSpace={data.selectedSpace}
-  />
-{/if}
+
+<CardSearch 
+  page={data.page}
+  selectedName={data.selectedName} 
+  selectedSpace={data.selectedSpace}
+/>
+
 
 
 
