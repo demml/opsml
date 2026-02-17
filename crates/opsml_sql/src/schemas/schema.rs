@@ -1193,7 +1193,11 @@ impl ServerCard {
             ServerCard::Experiment(_) => RegistryType::Experiment.to_string(),
             ServerCard::Audit(_) => RegistryType::Audit.to_string(),
             ServerCard::Prompt(_) => RegistryType::Prompt.to_string(),
-            ServerCard::Service(_) => RegistryType::Service.to_string(),
+            ServerCard::Service(card) => {
+                // Derive RegistryType from the service_type field
+                let service_type = ServiceType::from(card.service_type.as_str());
+                RegistryType::from(&service_type).to_string()
+            }
         }
     }
 
