@@ -20,6 +20,7 @@
     service: ServiceCardLayout,
     mcp: ServiceCardLayout,
     prompt: PromptCardLayout,
+    agent: ServiceCardLayout
     // @ts-ignore
   } as const satisfies Record<RegistryType, any>;
 

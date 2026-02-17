@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { IdCard, FolderTree, Tag, Search } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Search, MessageSquare } from 'lucide-svelte';
   import { page } from '$app/state';
   import { getRegistryPath } from '$lib/utils';
   import type { RegistryType } from '$lib/utils';
@@ -25,7 +25,7 @@
    */
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'observability', 'versions', 'view'].includes(last)) return last;
+    if (['card', 'files', 'observability', 'versions', 'view', 'playground'].includes(last)) return last;
     return 'card';
   });
 
@@ -40,7 +40,7 @@
    * Navigation configuration for service-specific tabs
    * Minimal set focused on service deployment and management essentials
    */
-  const navItems = [
+  const baseNavItems = [
     {
       key: 'card',
       label: 'Card',
@@ -71,6 +71,26 @@
       description: 'Service version history and releases'
     }
   ];
+
+  /**
+   * Conditionally add Playground tab for agent registry type
+   */
+  const navItems = $derived(
+    registryType === 'agent'
+      ? [
+          baseNavItems[0], // Card
+          {
+            key: 'playground',
+            label: 'Playground',
+            icon: MessageSquare,
+            isActive: (tab: string) => tab === 'playground',
+            iconProps: undefined,
+            description: 'Interact with the agent'
+          },
+          ...baseNavItems.slice(1) // Files, Observability, Versions
+        ]
+      : baseNavItems
+  );
 
   const iconColor = '#8059b6';
 </script>

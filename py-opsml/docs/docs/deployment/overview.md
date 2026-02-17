@@ -257,7 +257,7 @@ task that will reload the entire AppState whenever a new version of the Service 
 
 ```python
 from opsml.app import AppState, ReloadConfig
-from opsml.scouter import c
+from opsml.scouter import HttpConfig
 
 app_state = AppState.from_path(
     path=Path("app/service_artifacts"),

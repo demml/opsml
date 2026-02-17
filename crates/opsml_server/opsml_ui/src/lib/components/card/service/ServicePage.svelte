@@ -36,7 +36,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {#each service.cards.cards as card}
               <CardButton
-                iconColor={iconColor} 
+                iconColor={iconColor}
                 badgeColor={badgeColor}
                 name={card.name}
                 space={card.space}
