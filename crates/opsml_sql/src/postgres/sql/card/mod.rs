@@ -584,7 +584,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
         content_hash: &[u8],
     ) -> Result<Option<CardArgs>, SqlError> {
         let query = format!(
-            "SELECT space, name, version, uid FROM {table} WHERE content_hash = $1 LIMIT 1"
+            "SELECT space, name, version, uid FROM {table} WHERE content_hash = $1 ORDER BY created_at DESC LIMIT 1"
         );
         let card_args: Option<CardArgs> = sqlx::query_as(&query)
             .bind(content_hash)
