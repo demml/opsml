@@ -33,6 +33,7 @@
       
       // Reset the copied state after 2 seconds
       clearTimeout(timeoutId);
+      // @ts-ignore
       timeoutId = setTimeout(() => {
         copied = false;
       }, 2000);

@@ -6,6 +6,7 @@
   import AgentSkills from './AgentSkills.svelte';
   import AgentInterfaces from './AgentInterfaces.svelte';
   import AgentCards from './AgentCards.svelte';
+  import EnhancedAgentPlayground from './EnhancedAgentPlayground.svelte';
   import { Activity, ExternalLink } from 'lucide-svelte';
 
   let { data } = $props();

@@ -162,20 +162,14 @@ function inferEndpointsForSkill(
   const requestContentTypes = inputModes.flatMap(modalityToContentType);
   const responseContentTypes = outputModes.flatMap(modalityToContentType);
 
-  // Standard invocation endpoint
+  // Standard invocation endpoint (JSON-RPC 2.0 for A2A)
   if (protocol === "http" || protocol === "https") {
     endpoints.push({
       method: "POST",
-      path: `${baseUrl}${A2A_ENDPOINTS.http.invoke}`,
+      path: baseUrl, // A2A uses base URL for JSON-RPC
       protocol,
-      requestContentTypes:
-        requestContentTypes.length > 0
-          ? requestContentTypes
-          : ["application/json"],
-      responseContentTypes:
-        responseContentTypes.length > 0
-          ? responseContentTypes
-          : ["application/json"],
+      requestContentTypes: ["application/json"],
+      responseContentTypes: ["application/json"],
       streaming: false,
       description: `Invoke ${skill.name} skill`,
       examples: skill.examples,
