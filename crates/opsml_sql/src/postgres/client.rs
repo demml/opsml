@@ -353,13 +353,13 @@ mod tests {
         let config = db_config();
         let client = PostgresClient::new(&config).await.unwrap();
 
-        cleanup(&client.pool).await;
+        //cleanup(&client.pool).await;
 
         client
     }
 
     #[tokio::test]
-    async fn test_postgres() {
+    async fn test_postgres_client() {
         let _client = db_client().await;
         // Add assertions or further test logic here
     }

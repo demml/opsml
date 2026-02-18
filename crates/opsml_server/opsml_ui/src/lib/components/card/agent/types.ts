@@ -153,3 +153,105 @@ export interface AgentSpec {
   supportedInterfaces: AgentInterface[];
   version: string;
 }
+
+// A2A Response Types
+export interface A2APart {
+  kind: "text" | "image" | "audio" | "video" | "file" | string;
+  text?: string;
+  data?: string;
+  mimeType?: string;
+  url?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface A2AArtifact {
+  artifactId: string;
+  parts: A2APart[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface A2AMessage {
+  contextId?: string;
+  kind: "message";
+  messageId: string;
+  parts: A2APart[];
+  role: "user" | "agent" | "system";
+  taskId?: string;
+  timestamp?: string;
+}
+
+export interface A2ATaskStatus {
+  state: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
+  message?: string;
+  timestamp?: string;
+}
+
+export interface A2ATask {
+  artifacts?: A2AArtifact[];
+  contextId?: string;
+  history?: A2AMessage[];
+  id: string;
+  metadata?: Record<string, unknown>;
+  status?: A2ATaskStatus;
+  kind?: "task";
+}
+
+export interface A2AResponse {
+  result: A2ATask | string | Record<string, unknown>;
+  status: "success" | "failed";
+  error?: {
+    message: string;
+    code?: string;
+  };
+}
+
+// Type guard functions
+export function isA2ATask(result: unknown): result is A2ATask {
+  return (
+    typeof result === "object" &&
+    result !== null &&
+    "id" in result &&
+    typeof (result as any).id === "string"
+  );
+}
+
+export function isA2AResponse(response: unknown): response is A2AResponse {
+  return (
+    typeof response === "object" &&
+    response !== null &&
+    "result" in response &&
+    "status" in response
+  );
+}
+
+export function extractTextFromA2ATask(task: A2ATask): string {
+  const textParts: string[] = [];
+
+  // Extract from artifacts
+  if (task.artifacts && Array.isArray(task.artifacts)) {
+    for (const artifact of task.artifacts) {
+      if (Array.isArray(artifact.parts)) {
+        const artifactTexts = artifact.parts
+          .filter((part) => part.kind === "text" && part.text)
+          .map((part) => part.text!);
+        textParts.push(...artifactTexts);
+      }
+    }
+  }
+
+  // If no artifacts, try extracting from history (last agent message)
+  if (textParts.length === 0 && task.history && Array.isArray(task.history)) {
+    const lastAgentMessage = [...task.history]
+      .reverse()
+      .find((msg) => msg.role === "agent");
+
+    if (lastAgentMessage && Array.isArray(lastAgentMessage.parts)) {
+      const messageTexts = lastAgentMessage.parts
+        .filter((part) => part.kind === "text" && part.text)
+        .map((part) => part.text!);
+      textParts.push(...messageTexts);
+    }
+  }
+
+  return textParts.join("\n\n");
+}

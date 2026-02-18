@@ -52,7 +52,7 @@ service:
 
     # Define where this agent is accessible (supported interfaces)
     supported_interfaces:
-      - url: "http://localhost:8080"
+      - url: "http://localhost:8888"
         protocol_binding: "http"
         protocol_version: "0.3.0"
 

@@ -8,10 +8,20 @@ import type {
   AgentContract,
   AgentSkillContract,
   InferredEndpoint,
-  A2ARequest,
   A2AResponse,
 } from "./agentInference";
 import { buildAuthHeaders } from "./agentInference";
+
+/**
+ * Message part types for A2A protocol
+ */
+export interface MessagePart {
+  kind: "text" | "image" | "audio" | "video" | "data";
+  text?: string;
+  data?: string;
+  mimeType?: string;
+  url?: string;
+}
 
 export interface AgentClientConfig {
   /** Authentication tokens/keys for each security scheme */
@@ -34,7 +44,7 @@ export interface InvokeSkillOptions {
   /** Task description or prompt */
   task: string;
 
-  /** Input data (text, image URL, etc.) */
+  /** Input data (text, image URL, audio URL, etc.) or array of message parts */
   input?: unknown;
 
   /** Additional context */
@@ -102,6 +112,176 @@ export class AgentClient {
   }
 
   /**
+   * Type guard to check if an object is a valid MessagePart
+   */
+  private isMessagePart(obj: unknown): obj is MessagePart {
+    if (typeof obj !== "object" || obj === null) {
+      return false;
+    }
+
+    const part = obj as Record<string, unknown>;
+
+    // Must have a 'kind' property with valid value
+    if (
+      typeof part.kind !== "string" ||
+      !["text", "image", "audio", "video", "data"].includes(part.kind)
+    ) {
+      return false;
+    }
+
+    // Additional validation based on kind
+    if (part.kind === "text" && typeof part.text !== "string") {
+      return false;
+    }
+
+    if (
+      (part.kind === "image" ||
+        part.kind === "audio" ||
+        part.kind === "video") &&
+      typeof part.url !== "string"
+    ) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Build message parts from input data based on skill's input modes
+   */
+  private buildMessageParts(
+    task: string,
+    input: unknown,
+    skill: AgentSkillContract,
+  ): MessagePart[] {
+    const parts: MessagePart[] = [];
+
+    // Always include the task as a text part
+    if (task) {
+      parts.push({
+        kind: "text",
+        text: task,
+      });
+    }
+
+    // If no additional input, return just the task
+    if (!input) {
+      return parts;
+    }
+
+    // If input is already an array of message parts, validate and use it
+    if (Array.isArray(input)) {
+      const validParts = input.filter((item) =>
+        this.isMessagePart(item),
+      ) as MessagePart[];
+      return [...parts, ...validParts];
+    }
+
+    // If input is a string, determine its type based on content or skill modes
+    if (typeof input === "string") {
+      const trimmedInput = input.trim();
+
+      // Check if it's a URL
+      const isUrl =
+        trimmedInput.startsWith("http://") ||
+        trimmedInput.startsWith("https://");
+
+      if (isUrl) {
+        // Determine type from URL or skill's input modes
+        if (
+          skill.inputModes.includes("image") &&
+          this.looksLikeImage(trimmedInput)
+        ) {
+          parts.push({
+            kind: "image",
+            url: trimmedInput,
+          });
+        } else if (
+          skill.inputModes.includes("audio") &&
+          this.looksLikeAudio(trimmedInput)
+        ) {
+          parts.push({
+            kind: "audio",
+            url: trimmedInput,
+          });
+        } else if (
+          skill.inputModes.includes("video") &&
+          this.looksLikeVideo(trimmedInput)
+        ) {
+          parts.push({
+            kind: "video",
+            url: trimmedInput,
+          });
+        } else {
+          // Default to data with URL
+          parts.push({
+            kind: "data",
+            url: trimmedInput,
+          });
+        }
+      } else {
+        // It's plain text
+        parts.push({
+          kind: "text",
+          text: trimmedInput,
+        });
+      }
+    }
+    // If input is an object with specific structure
+    else if (typeof input === "object" && input !== null) {
+      // Check for explicit message part structure
+      if (this.isMessagePart(input)) {
+        parts.push(input);
+      }
+      // Convert object to JSON text
+      else {
+        parts.push({
+          kind: "data",
+          data: JSON.stringify(input),
+          mimeType: "application/json",
+        });
+      }
+    }
+
+    return parts;
+  }
+
+  /**
+   * Check if URL looks like an image
+   */
+  private looksLikeImage(url: string): boolean {
+    const imageExtensions = [
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".gif",
+      ".webp",
+      ".svg",
+      ".bmp",
+    ];
+    const lowerUrl = url.toLowerCase();
+    return imageExtensions.some((ext) => lowerUrl.includes(ext));
+  }
+
+  /**
+   * Check if URL looks like audio
+   */
+  private looksLikeAudio(url: string): boolean {
+    const audioExtensions = [".mp3", ".wav", ".ogg", ".m4a", ".flac", ".aac"];
+    const lowerUrl = url.toLowerCase();
+    return audioExtensions.some((ext) => lowerUrl.includes(ext));
+  }
+
+  /**
+   * Check if URL looks like video
+   */
+  private looksLikeVideo(url: string): boolean {
+    const videoExtensions = [".mp4", ".webm", ".mov", ".avi", ".mkv"];
+    const lowerUrl = url.toLowerCase();
+    return videoExtensions.some((ext) => lowerUrl.includes(ext));
+  }
+
+  /**
    * Invoke a skill and get a response
    */
   async invokeSkill(options: InvokeSkillOptions): Promise<A2AResponse> {
@@ -113,25 +293,48 @@ export class AgentClient {
       throw new Error(`No suitable endpoint found for skill: ${skill.name}`);
     }
 
-    // Build request payload
-    const payload: A2ARequest = {
-      skillId: skill.skillId,
-      task,
-      input,
-      context,
-      stream,
-      tenant: this.config.tenant,
+    // Build message parts based on input type and skill capabilities
+    const messageParts = this.buildMessageParts(task, input, skill);
+
+    // Build JSON-RPC 2.0 request for A2A protocol
+    const messageId = crypto.randomUUID().replace(/-/g, "");
+    const requestId = crypto.randomUUID();
+
+    const jsonRpcPayload = {
+      id: requestId,
+      jsonrpc: "2.0",
+      method: "message/send",
+      params: {
+        message: {
+          kind: "message",
+          messageId: messageId,
+          parts: messageParts,
+          role: "user",
+          ...(context && { context }),
+        },
+      },
     };
+
+    console.log("[AgentClient] Invoking skill with payload:", {
+      skill: skill.name,
+      endpoint: endpoint.path,
+      payload: jsonRpcPayload,
+    });
 
     // Make fetch request
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
     try {
+      const headers = {
+        "Content-Type": "application/json",
+        ...this.buildHeaders(),
+      };
+
       const response = await fetch(endpoint.path, {
-        method: endpoint.method,
-        headers: this.buildHeaders(),
-        body: JSON.stringify(payload),
+        method: "POST",
+        headers,
+        body: JSON.stringify(jsonRpcPayload),
         signal: signal || controller.signal,
       });
 
@@ -152,8 +355,29 @@ export class AgentClient {
         };
       }
 
-      const data: A2AResponse = await response.json();
-      return data;
+      // Parse JSON-RPC response
+      const jsonRpcResponse = await response.json();
+
+      // Handle JSON-RPC error
+      if (jsonRpcResponse.error) {
+        return {
+          status: "failed",
+          error: {
+            code: jsonRpcResponse.error.code?.toString() || "RPC_ERROR",
+            message: jsonRpcResponse.error.message || "Unknown error",
+            details: jsonRpcResponse.error.data,
+          },
+        };
+      }
+
+      // Extract the actual response from JSON-RPC result
+      const result = jsonRpcResponse.result;
+
+      return {
+        status: "completed",
+        result: result?.message?.parts?.[0]?.text || result,
+        taskId: jsonRpcResponse.id,
+      };
     } catch (error) {
       clearTimeout(timeoutId);
 
@@ -190,24 +414,41 @@ export class AgentClient {
     const { skill, task, input, context, signal } = options;
 
     const endpoint = this.selectEndpoint(skill, true);
+
     if (!endpoint) {
       throw new Error(`No streaming endpoint found for skill: ${skill.name}`);
     }
 
-    // Build request payload
-    const payload: A2ARequest = {
-      skillId: skill.skillId,
-      task,
-      input,
-      context,
-      stream: true,
-      tenant: this.config.tenant,
+    // Build message parts based on input type and skill capabilities
+    const messageParts = this.buildMessageParts(task, input, skill);
+
+    // Build JSON-RPC 2.0 request for A2A protocol (with streaming enabled)
+    const messageId = crypto.randomUUID().replace(/-/g, "");
+    const requestId = crypto.randomUUID();
+
+    const jsonRpcPayload = {
+      id: requestId,
+      jsonrpc: "2.0",
+      method: "message/send",
+      params: {
+        message: {
+          kind: "message",
+          messageId: messageId,
+          parts: messageParts,
+          role: "user",
+          ...(context && { context }),
+        },
+        stream: true, // Enable streaming
+      },
     };
 
     const response = await fetch(endpoint.path, {
-      method: endpoint.method,
-      headers: this.buildHeaders(),
-      body: JSON.stringify(payload),
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...this.buildHeaders(),
+      },
+      body: JSON.stringify(jsonRpcPayload),
       signal,
     });
 

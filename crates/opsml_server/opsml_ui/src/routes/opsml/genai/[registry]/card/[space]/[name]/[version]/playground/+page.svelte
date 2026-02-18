@@ -31,9 +31,9 @@
     </div>
   </div>
 {:else}
-  <EnhancedAgentPlayground
-    {agentSpec}
-    agentName={agentSpec.name}
-  />
+    <EnhancedAgentPlayground
+      {agentSpec}
+      agentName={agentSpec.name}
+    />
 {/if}
 
