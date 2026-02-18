@@ -1,5 +1,4 @@
 import asyncio
-from urllib import response
 from uuid import uuid4
 import httpx
 
