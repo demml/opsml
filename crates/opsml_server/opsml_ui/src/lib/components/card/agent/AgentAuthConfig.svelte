@@ -74,7 +74,7 @@
 </script>
 
 <!-- Overlay -->
-<div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+<div class="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4">
   <!-- Modal -->
   <div class="bg-surface-50 rounded-lg border-2 border-black shadow-primary max-w-2xl w-full max-h-[90vh] overflow-y-auto">
     

@@ -2,23 +2,23 @@
   import { MessageSquare, Send, Loader2, Zap, AlertCircle, CheckCircle, X, Bug } from 'lucide-svelte';
   import type { AgentSpec } from "./types";
   import { isA2ATask, isA2AResponse, extractTextFromA2ATask } from "./types";
-  import { inferAgentContract, formatExamplesForDisplay } from './agentInference';
+  import { inferAgentContract, formatExamplesForDisplay, inferHealthEndpoint } from './agentInference';
   import type { AgentContract, AgentSkillContract } from './agentInference';
   import { createAgentClient } from './agentClient';
   import type { AgentClient } from './agentClient';
-  import AgentAuthConfig from './AgentAuthConfig.svelte';
+  import AgentAuthConfig from '$lib/components/card/agent/AgentAuthConfig.svelte';
   import DebugPayloadSidebar from './DebugPayloadSidebar.svelte';
-  import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
   import { onMount, onDestroy } from 'svelte';
+  import type { DeploymentConfig } from '$lib/components/card/card_interfaces/servicecard';
 
   type MessageRole = 'user' | 'agent' | 'system';
-  
+
   interface DebugPayload {
     request: unknown;
     response: unknown;
     timestamp: Date;
   }
-  
+
   interface ChatMessage {
     role: MessageRole;
     content: string; // Clean display content
@@ -31,11 +31,13 @@
     agentSpec,
     agentName,
     onClose,
+    deploymentConfig,
     showCloseButton = false,
   } = $props<{
     agentSpec: AgentSpec;
     agentName: string;
     onClose?: () => void;
+    deploymentConfig?: DeploymentConfig[];
     showCloseButton?: boolean;
   }>();
 
@@ -49,11 +51,11 @@
 
   // Skill selection
   let selectedSkill = $state<AgentSkillContract | null>(contract.skills[0] || null);
-  
+
   // Message state
   let message = $state('');
   let messages = $state<ChatMessage[]>([]);
-  
+
   let isLoading = $state(false);
   let streamingContent = $state('');
   let useStreaming = $state(false);
@@ -65,6 +67,8 @@
   let showDebugSidebar = $state(false);
   let selectedDebugIndex = $state<number | null>(null);
   let isDebugClosing = $state(false);
+  let isHealthy = $state<boolean>(false);
+  let hasCheckedHealth = $state(false);
 
   function openDebugSidebar() {
     showDebugSidebar = true;
@@ -101,7 +105,7 @@
   $effect(() => {
     const requiredSchemes = contract.security.requirements.flat();
     const noAuthRequired = requiredSchemes.length === 0;
-    
+
     if (noAuthRequired || Object.keys(authConfig).length > 0) {
       client = createAgentClient(contract, {
         authConfig,
@@ -110,7 +114,19 @@
           'X-Agent-Name': agentName,
         },
       });
-      console.log('[AgentPlayground] Client created:', { noAuthRequired, hasAuth: Object.keys(authConfig).length > 0 });
+    }
+  });
+
+  // Check health once when client becomes available
+  $effect(() => {
+    if (client && deploymentConfig && !hasCheckedHealth) {
+      hasCheckedHealth = true;
+      const healthcheckUrls = inferHealthEndpoint(deploymentConfig);
+      if (healthcheckUrls.length > 0) {
+        client.checkHealth(healthcheckUrls[0])
+          .then(result => { isHealthy = result; })
+          .catch(() => { isHealthy = false; });
+      }
     }
   });
 
@@ -128,7 +144,8 @@
   });
 
   const statusBadge = $derived(() => {
-    if (isAuthConfigured()) {
+    if (isAuthConfigured() && isHealthy) {
+
       return {
         icon: CheckCircle,
         text: 'Ready',
@@ -137,8 +154,8 @@
     } else {
       return {
         icon: AlertCircle,
-        text: 'Auth Required',
-        color: 'bg-warning-300 text-warning-950 border-warning-950',
+        text: 'Auth Required or Agent Unhealthy',
+        color: 'bg-error-300 text-error-950 border-error-950',
       };
     }
   });
@@ -215,7 +232,7 @@
     }
 
     const result = response.result;
-    
+
     // Direct string response
     if (typeof result === 'string') {
       return result;
@@ -276,8 +293,6 @@
       task: userMessage,
     });
 
-    console.log('[AgentPlayground] Received response:', response);
-
     const debugPayload: DebugPayload = {
       request,
       response,
@@ -315,13 +330,6 @@
     const userMessage = message.trim();
     message = '';
     lastError = null;
-
-    console.log('[AgentPlayground] Sending message:', {
-      skill: selectedSkill?.name,
-      skillId: selectedSkill?.skillId,
-      message: userMessage,
-      endpoint: selectedSkill?.endpoints[0]?.path,
-    });
 
     addUserMessage(userMessage);
     isLoading = true;
@@ -383,8 +391,8 @@
         <Zap class="w-5 h-5 text-primary-800" />
       </div>
       <div>
-        <h3 class="text-lg text-white font-bold">Agent Playground</h3>
-        <p class="text-xs text-white/80">{agentName}</p>
+        <h3 class="text-lg text-primary-950 font-bold">Agent Playground</h3>
+        <p class="text-xs text-primary-800">{agentName}</p>
       </div>
     </div>
 
@@ -400,7 +408,7 @@
 
       <button
         onclick={openAuthConfig}
-        class="text-black px-3 py-1 text-xs bg-white rounded-lg border-2 border-black shadow-small hover:shadow-hover transition-all font-bold"
+        class="text-black px-3 py-1 text-xs bg-white rounded-lg border-2 border-black shadow-small shadow-hover transition-all font-bold"
       >
         Configure Auth
       </button>
@@ -430,13 +438,13 @@
 
   <!-- Skill Selection -->
   {#if contract.skills.length > 1}
-    <div class="p-3 border-b-2 border-black bg-surface-100">
+    <div class="p-3 border-b-2 border-black bg-surface-500">
       <label for="skill-select" class="text-xs font-bold text-gray-700 mb-1 block">Select Skill:</label>
       <div class="flex flex-wrap gap-2">
         {#each contract.skills as skill}
           <button
             onclick={() => selectedSkill = skill}
-            class="px-3 py-1 text-xs rounded-lg border-2 border-black shadow-small transition-all {selectedSkill?.skillId === skill.skillId ? 'bg-primary-500 text-white font-bold' : 'bg-white text-gray-900 hover:bg-gray-100'}"
+            class="px-3 py-1 text-xs rounded-lg border-2 border-black shadow-small shadow-hover transition-all {selectedSkill?.skillId === skill.skillId ? 'bg-primary-500 text-white font-bold' : 'bg-white text-gray-900 hover:bg-gray-100'}"
           >
             {skill.name}
           </button>
@@ -453,7 +461,7 @@
         <div class="flex-1 min-w-0">
           <p class="text-xs font-bold text-gray-700 mb-1">What this skill does:</p>
           <p class="text-sm text-gray-900">{selectedSkill.description}</p>
-          
+
           <!-- Input/Output Modes -->
           <div class="flex flex-wrap gap-2 mt-2">
             {#each selectedSkill.inputModes as mode}
@@ -553,7 +561,7 @@
               {/if}
             </div>
             <div class="p-3 rounded-lg border-2 border-black shadow-small {msg.role === 'user' ? 'bg-primary-100' : msg.role === 'system' || msg.role === 'agent' ? 'bg-surface-100' : 'bg-white'} whitespace-pre-wrap">
-              <p class="text-sm {msg.role === 'user' ? 'text-primary-950' : msg.role === 'system' || msg.role === 'agent' ? 'bg-black' : 'text-white'}">{msg.content}</p>
+              <p class="text-sm {msg.role === 'user' ? 'text-primary-950' : msg.role === 'system' || msg.role === 'agent' ? 'text-black' : 'text-white'}">{msg.content}</p>
             </div>
           </div>
         </div>

@@ -361,7 +361,6 @@ mod tests {
     #[tokio::test]
     async fn test_postgres_client() {
         let _client = db_client().await;
-        // Add assertions or further test logic here
     }
 
     #[tokio::test]

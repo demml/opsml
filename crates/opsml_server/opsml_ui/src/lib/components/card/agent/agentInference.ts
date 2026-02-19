@@ -5,6 +5,7 @@
  * from AgentSpec based on the A2A (Agent-to-Agent) protocol specification.
  */
 
+import type { DeploymentConfig } from "../card_interfaces/servicecard";
 import type {
   AgentSpec,
   AgentInterface,
@@ -126,6 +127,26 @@ const A2A_ENDPOINTS = {
     connect: "/v1/agent/ws",
   },
 };
+
+export function inferHealthEndpoint(config: DeploymentConfig[]): string[] {
+  // build health endpoint based on deployment config, default to /health if not specified
+  // iterate through config, get url and healthcheck path, return first valid healthcheck url
+  let healthcheckUrls: string[] = [];
+  for (const deploy of config) {
+    if (deploy.healthcheck) {
+      // combine url and healthcheck path, handle trailing slashes
+      let baseUrl = deploy.urls[0]; // use first url for healthcheck
+      if (baseUrl.endsWith("/")) {
+        baseUrl = baseUrl.slice(0, -1);
+      }
+      let healthcheckPath = deploy.healthcheck.startsWith("/")
+        ? deploy.healthcheck
+        : `/${deploy.healthcheck}`;
+      healthcheckUrls.push(`${baseUrl}${healthcheckPath}`);
+    }
+  }
+  return healthcheckUrls;
+}
 
 /**
  * Map modality strings to MIME types
@@ -347,6 +368,9 @@ export interface A2ARequest {
 export interface A2AResponse {
   /** Task ID for tracking */
   taskId?: string;
+
+  /** Message ID from the original request */
+  messageId?: string;
 
   /** Result data */
   result?: unknown;
