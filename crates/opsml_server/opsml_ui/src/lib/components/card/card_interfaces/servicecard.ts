@@ -56,6 +56,7 @@ export interface DeploymentConfig {
   urls: string[];
   resources?: Resources;
   links?: Record<string, string>;
+  healthcheck?: string;
 }
 
 export interface ServiceMetadata {

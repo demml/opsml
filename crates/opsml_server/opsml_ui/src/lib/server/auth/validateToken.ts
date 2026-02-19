@@ -1,126 +1,41 @@
-import { createOpsmlClient, OpsmlClient } from "../api/opsmlClient";
+import { createOpsmlClient } from "../api/opsmlClient";
 import { RoutePaths, UiPaths } from "$lib/components/api/routes";
 import { redirect, type Cookies } from "@sveltejs/kit";
-import type {
-  AuthenticatedResponse,
-  JwtToken,
-  LoginResponse,
-} from "../../components/user/types";
+import type { LoginResponse } from "../../components/user/types";
 
 /**
- * Validates JWT token from cookies, attempts refresh if expired,
- * and redirects to login if invalid or refresh fails.
- * Flow:
- * 1. Check for JWT token in cookies
- * 2. Validate token with server
- * 3. If expired, attempt to refresh token
- * 4. If refresh successful, set new token in cookies and re-validate
- * 5. If all fails, clear cookie and redirect to login
+ * Validates JWT token from cookies and redirects to login if invalid.
+ * 
+ * This function performs a basic check for token presence. Token refresh
+ * is handled automatically by the backend middleware when actual API requests
+ * are made. The /validate endpoint doesn't trigger refresh logic, so we
+ * only redirect if there's no token at all.
+ *
+ * Token refresh flow (happens in handleFetch + backend middleware):
+ * 1. Request made to protected endpoint with expired access token
+ * 2. Backend middleware checks for valid refresh token in database
+ * 3. Generates new access + refresh tokens
+ * 4. Returns new access token in Authorization header
+ * 5. handleFetch updates jwt_token cookie
  *
  * @param cookies - SvelteKit cookies object
  * @param redirectPath - Path to redirect if validation fails (default: UiPaths.LOGIN)
  */
 export async function validateTokenOrRedirect(
   cookies: Cookies,
-  redirectPath: string = UiPaths.LOGIN
+  redirectPath: string = UiPaths.LOGIN,
 ): Promise<void> {
   const jwtToken = cookies.get("jwt_token");
-  const opsmlClient = createOpsmlClient(fetch);
 
-  // Validate the JWT token
-  const validationResult = await validateJWTToken(opsmlClient, jwtToken ?? "");
-
-  if (validationResult.isValid) return; // Authenticated
-
-  // If token is present and expired, attempt to refresh
-  if (jwtToken && isTokenExpired(jwtToken)) {
-    const refreshedToken = await attemptRefreshToken(opsmlClient, jwtToken);
-    if (refreshedToken) {
-      // Set new token in cookies and validate again
-      await setTokenInCookies(cookies, refreshedToken);
-      const refreshedValidation = await validateJWTToken(
-        opsmlClient,
-        refreshedToken
-      );
-      if (refreshedValidation.isValid) return;
-    }
+  // If no token at all, redirect to login
+  if (!jwtToken) {
+    cookies.delete("username", { path: "/" });
+    throw redirect(303, redirectPath);
   }
-  // If all else fails, clear cookie and redirect
-  cookies.delete("jwt_token", { path: "/" });
-  throw redirect(303, redirectPath);
-}
 
-/**
- * Attempts to refresh the JWT token via backend.
- */
-async function attemptRefreshToken(
-  opsmlClient: OpsmlClient,
-  jwt_Token: string
-): Promise<string | null> {
-  try {
-    const response = await opsmlClient.refreshToken(
-      RoutePaths.REFRESH_TOKEN,
-      jwt_Token
-    );
-    if (!response.ok) return null;
-    const jwtToken = (await response.json()) as JwtToken;
-    return jwtToken.token ?? null;
-  } catch {
-    return null;
-  }
-}
-
-interface AuthValidationResult {
-  isValid: boolean;
-  shouldRedirect: boolean;
-  error?: string;
-}
-
-/**
- * Validates JWT token against the server
- * @param jwtToken - The JWT token to validate
- * @returns Promise with validation result
- */
-async function validateJWTToken(
-  opsmlClient: OpsmlClient,
-  jwt_token: string
-): Promise<AuthValidationResult> {
-  try {
-    const response = await opsmlClient.validateToken(
-      RoutePaths.VALIDATE_AUTH,
-      jwt_token
-    );
-
-    if (!response.ok) {
-      const error = `Authentication failed: ${response.status} ${response.statusText}`;
-      console.error(error);
-      return {
-        isValid: false,
-        shouldRedirect: response.status === 401 || response.status === 403,
-        error,
-      };
-    }
-
-    const authenticated = (await response.json()) as AuthenticatedResponse;
-
-    return {
-      isValid: authenticated.is_authenticated,
-      shouldRedirect: !authenticated.is_authenticated,
-      error: authenticated.is_authenticated
-        ? undefined
-        : "User not authenticated",
-    };
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown validation error";
-    console.error("JWT validation error:", errorMessage);
-
-    return {
-      isValid: false,
-      shouldRedirect: true,
-      error: errorMessage,
-    };
-  }
+  // Token exists - let it be used for requests
+  // If it's expired, backend middleware will refresh it on first protected API call
+  // handleFetch will capture the new token and update the cookie
 }
 
 /**
@@ -132,7 +47,7 @@ async function validateJWTToken(
 export async function loginUser(
   fetch: typeof globalThis.fetch,
   username: string,
-  password: string
+  password: string,
 ): Promise<LoginResponse> {
   const opsmlClient = createOpsmlClient(fetch);
   const response = await opsmlClient.post(RoutePaths.LOGIN, {
@@ -159,11 +74,11 @@ export async function setTokenInCookies(
     domain?: string;
     expiresMs?: number;
     path?: string;
-  }
+  },
 ): Promise<void> {
   const expirationDate = new Date();
   expirationDate.setTime(
-    expirationDate.getTime() + (options?.expiresMs ?? 60 * 60 * 1000) // default: 1 hour
+    expirationDate.getTime() + (options?.expiresMs ?? 60 * 60 * 1000), // default: 1 hour
   );
 
   cookies.set("jwt_token", token, {
@@ -187,18 +102,4 @@ export function setUsernameInCookies(cookies: Cookies, username: string): void {
     path: "/",
     maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
   });
-}
-
-interface JwtPayload {
-  exp: number;
-  [key: string]: unknown;
-}
-
-export function isTokenExpired(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1])) as JwtPayload;
-    return payload.exp * 1000 < Date.now();
-  } catch {
-    return true;
-  }
 }
