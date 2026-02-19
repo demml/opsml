@@ -70,7 +70,26 @@
   let isHealthy = $state<boolean>(false);
   let hasCheckedHealth = $state(false);
 
+  interface DebugMessage {
+    index: number;
+    role: MessageRole;
+    content: string;
+    skillName?: string;
+    timestamp: Date;
+    debugPayload: DebugPayload;
+  }
+
+  const debugMessages = $derived(
+    messages
+      .map((msg, idx) => ({ ...msg, index: idx }))
+      .filter((msg): msg is typeof msg & { debugPayload: DebugPayload } => msg.debugPayload !== undefined)
+  );
+
   function openDebugSidebar() {
+    // Auto-select the latest message with a debugPayload
+    if (selectedDebugIndex === null && debugMessages.length > 0) {
+      selectedDebugIndex = debugMessages[debugMessages.length - 1].index;
+    }
     showDebugSidebar = true;
   }
 
@@ -539,8 +558,8 @@
       </div>
     {:else}
       {#each messages as msg, idx}
-        <div class="flex {msg.role === 'user' ? 'justify-end' : 'justify-start'}">
-          <div class="max-w-[80%]">
+        <div class="flex {msg.role === 'user' ? 'justify-end' : 'justify-start'} {idx === selectedDebugIndex && showDebugSidebar ? 'relative' : ''}">
+          <div class="max-w-[80%] {idx === selectedDebugIndex && showDebugSidebar ? 'ring-2 ring-primary-500 rounded-lg' : ''}">
             <div class="text-xs text-gray-500 mb-1 {msg.role === 'user' ? 'text-right' : 'text-left'}">
               {msg.role === 'user' ? 'You' : msg.role === 'system' ? 'System' : agentName}
               {#if msg.skillName}
@@ -610,14 +629,11 @@
   </div>
 </div>
 
-{#if showDebugSidebar && selectedDebugIndex !== null}
-  {@const selectedMessage = messages[selectedDebugIndex]}
-  {#if selectedMessage?.debugPayload}
-    <DebugPayloadSidebar
-      payload={selectedMessage.debugPayload}
-      skillName={selectedMessage.skillName}
-      messageIndex={selectedDebugIndex}
-      onClose={closeDebugSidebar}
-    />
-  {/if}
+{#if showDebugSidebar && debugMessages.length > 0}
+  <DebugPayloadSidebar
+    {debugMessages}
+    selectedIndex={selectedDebugIndex ?? debugMessages[debugMessages.length - 1].index}
+    onSelectIndex={(idx) => { selectedDebugIndex = idx; }}
+    onClose={closeDebugSidebar}
+  />
 {/if}
