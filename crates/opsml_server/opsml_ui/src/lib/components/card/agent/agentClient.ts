@@ -84,6 +84,21 @@ export class AgentClient {
   }
 
   /**
+   * Check health of the agent by calling a healthcheck endpoint if available
+   */
+  async checkHealth(url: string): Promise<boolean> {
+    try {
+      const response = await fetch(url, {
+        method: "GET",
+        headers: this.buildHeaders(),
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Select the best endpoint for a skill based on capabilities
    */
   private selectEndpoint(
@@ -300,6 +315,13 @@ export class AgentClient {
     const messageId = crypto.randomUUID().replace(/-/g, "");
     const requestId = crypto.randomUUID();
 
+    // Merge context with messageId and requestId for backend access
+    const enrichedContext = {
+      ...context,
+      messageId, // Include messageId in context for A2A protocol
+      requestId, // Include requestId for tracking
+    };
+
     const jsonRpcPayload = {
       id: requestId,
       jsonrpc: "2.0",
@@ -310,16 +332,10 @@ export class AgentClient {
           messageId: messageId,
           parts: messageParts,
           role: "user",
-          ...(context && { context }),
+          context: enrichedContext, // Use enriched context
         },
       },
     };
-
-    console.log("[AgentClient] Invoking skill with payload:", {
-      skill: skill.name,
-      endpoint: endpoint.path,
-      payload: jsonRpcPayload,
-    });
 
     // Make fetch request
     const controller = new AbortController();
@@ -328,6 +344,8 @@ export class AgentClient {
     try {
       const headers = {
         "Content-Type": "application/json",
+        "X-Message-ID": messageId, // Also send as header for middleware access
+        "X-Request-ID": requestId, // Also send as header for middleware access
         ...this.buildHeaders(),
       };
 
@@ -352,6 +370,7 @@ export class AgentClient {
             message: errorData.message || response.statusText,
             details: errorData,
           },
+          messageId,
         };
       }
 
@@ -367,6 +386,7 @@ export class AgentClient {
             message: jsonRpcResponse.error.message || "Unknown error",
             details: jsonRpcResponse.error.data,
           },
+          messageId,
         };
       }
 
@@ -377,6 +397,7 @@ export class AgentClient {
         status: "completed",
         result: result?.message?.parts?.[0]?.text || result,
         taskId: jsonRpcResponse.id,
+        messageId, // Include messageId in response
       };
     } catch (error) {
       clearTimeout(timeoutId);
@@ -389,6 +410,7 @@ export class AgentClient {
               code: "TIMEOUT",
               message: "Request timed out",
             },
+            messageId,
           };
         }
 
@@ -398,6 +420,7 @@ export class AgentClient {
             code: "NETWORK_ERROR",
             message: error.message,
           },
+          messageId,
         };
       }
 
@@ -433,7 +456,7 @@ export class AgentClient {
       params: {
         message: {
           kind: "message",
-          messageId: messageId,
+          message_id: messageId,
           parts: messageParts,
           role: "user",
           ...(context && { context }),

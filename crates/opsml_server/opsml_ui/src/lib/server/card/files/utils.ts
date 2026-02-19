@@ -33,8 +33,6 @@ export async function getRawFile(
     registry_type: registry_type,
   };
 
-  console.log("Fetching raw file with body:", body);
-
   const response = await createOpsmlClient(fetch).post(
     RoutePaths.FILE_CONTENT,
     body,

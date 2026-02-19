@@ -8,6 +8,7 @@
   import AgentCards from './AgentCards.svelte';
   import EnhancedAgentPlayground from './EnhancedAgentPlayground.svelte';
   import { Activity, ExternalLink } from 'lucide-svelte';
+  import DeploymentConfig from '../service/DeploymentConfig.svelte';
 
   let { data } = $props();
   let service: ServiceCard = data.metadata;

@@ -49,6 +49,7 @@ service:
           - "What can I use instead of chicken in this recipe?"
           - "Vegetarian substitute for fish sauce"
           - "Replace ground beef with plant-based option"
+          - "What can I use instead of eggs in baking"
 
     # Define where this agent is accessible (supported interfaces)
     supported_interfaces:
@@ -57,5 +58,6 @@ service:
         protocol_version: "0.3.0"
 
 deploy:
-  - environment: "dev_client"
-    urls: ["https://api.example.com"]
+  - environment: "development"
+    urls: ["http://localhost:8888"]
+    healthcheck: "/health"

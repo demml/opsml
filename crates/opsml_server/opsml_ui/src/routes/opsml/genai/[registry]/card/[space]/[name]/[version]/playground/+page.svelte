@@ -4,10 +4,13 @@
   import type { AgentSpec } from '$lib/components/card/agent/types';
   import EnhancedAgentPlayground from '$lib/components/card/agent/EnhancedAgentPlayground.svelte';
   import { AlertCircle } from 'lucide-svelte';
+  import type { DeploymentConfig } from '$lib/components/card/card_interfaces/servicecard';
 
   let { data }: PageProps = $props();
   let service: ServiceCard = data.metadata;
   let agentSpec: AgentSpec | undefined = service.service_config.agent;
+  let deploymentConfig: DeploymentConfig[] | undefined = service.deploy;
+  
 </script>
 
 {#if !agentSpec}
@@ -34,6 +37,7 @@
     <EnhancedAgentPlayground
       {agentSpec}
       agentName={agentSpec.name}
+      deploymentConfig={deploymentConfig}
     />
 {/if}
 
