@@ -15,7 +15,7 @@ from google.adk.a2a.utils.agent_to_a2a import to_a2a
 
 # Define the core agent
 root_agent = Agent(
-    model="gemini-3-flash-preview",
+    model="gemini-3-flash-lite",
     name="vegetarian_recipe_agent",
     description="A vegetarian recipe agent service that generates recipes and suggests substitutions.",
     instruction=app.service["recipe_prompt"].prompt.system_instructions[0].text,
@@ -38,6 +38,4 @@ a2a_app.add_middleware(
 @a2a_app.route("/health", methods=["GET"])
 async def health_check(request):
     """Basic health check endpoint for load balancers."""
-    return JSONResponse(
-        {"status": "healthy", "service": "vegetarian-recipe-agent", "version": "1.0.0"}
-    )
+    return JSONResponse({"status": "healthy", "service": "vegetarian-recipe-agent", "version": "1.0.0"})

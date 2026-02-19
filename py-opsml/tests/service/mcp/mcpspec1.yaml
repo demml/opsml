@@ -15,4 +15,4 @@ service:
 
 deploy:
   - environment: "dev_client"
-    endpoints: ["https://api.example.com"]
+    urls: ["https://api.example.com"]
