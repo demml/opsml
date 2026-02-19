@@ -941,7 +941,7 @@ impl ServiceCardRecord {
             .ok_or_else(|| SqlError::MissingField("service_config.mcp".to_string()))?;
 
         let environment = deployment.environment.clone();
-        let endpoints = deployment.endpoints.clone();
+        let urls = deployment.urls.clone();
         let description = self.metadata.as_ref().map(|m| m.description.clone());
 
         Ok(McpServer {
@@ -950,7 +950,7 @@ impl ServiceCardRecord {
             version: self.version.clone(),
             tags: self.tags.0.clone(),
             environment,
-            endpoints,
+            urls,
             config,
             description,
         })

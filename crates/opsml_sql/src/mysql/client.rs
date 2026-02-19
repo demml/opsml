@@ -2114,7 +2114,7 @@ mod tests {
             environment: "dev".to_string(),
             provider: Some("development".to_string()),
             location: Some(vec!["local".to_string()]),
-            endpoints: vec!["http://localhost:8000".to_string()],
+            urls: vec!["http://localhost:8000".to_string()],
             resources: Some(Resources {
                 cpu: 2,
                 memory: "4GB".to_string(),
@@ -2187,7 +2187,7 @@ mod tests {
             environment: "dev".to_string(),
             provider: Some("development".to_string()),
             location: Some(vec!["local".to_string()]),
-            endpoints: vec!["http://localhost:8000".to_string()],
+            urls: vec!["http://localhost:8000".to_string()],
             resources: Some(Resources {
                 cpu: 2,
                 memory: "4GB".to_string(),

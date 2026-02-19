@@ -2066,7 +2066,7 @@ mod tests {
             environment: "dev".to_string(),
             provider: Some("development".to_string()),
             location: Some(vec!["local".to_string()]),
-            endpoints: vec!["http://localhost:8000".to_string()],
+            urls: vec!["http://localhost:8000".to_string()],
             resources: Some(Resources {
                 cpu: 2,
                 memory: "4GB".to_string(),
@@ -2074,6 +2074,7 @@ mod tests {
                 gpu: None,
             }),
             links: None,
+            healthcheck: Some("/health".to_string()),
         };
         let mcp_card1 = ServiceCardRecord {
             name: "mcp1".to_string(),
@@ -2133,8 +2134,9 @@ mod tests {
         let deployment = services[0].deployment.as_ref().unwrap();
         assert_eq!(deployment.len(), 1);
         assert_eq!(deployment[0].environment, "dev");
-        assert_eq!(deployment[0].endpoints.len(), 1);
-        assert_eq!(deployment[0].endpoints[0], "http://localhost:8000");
+        assert_eq!(deployment[0].urls.len(), 1);
+        assert_eq!(deployment[0].urls[0], "http://localhost:8000");
+        assert_eq!(deployment[0].healthcheck.as_deref(), Some("/health"));
 
         cleanup();
     }
@@ -2156,7 +2158,7 @@ mod tests {
             environment: "dev".to_string(),
             provider: Some("development".to_string()),
             location: Some(vec!["local".to_string()]),
-            endpoints: vec!["http://localhost:8000".to_string()],
+            urls: vec!["http://localhost:8000".to_string()],
             resources: Some(Resources {
                 cpu: 2,
                 memory: "4GB".to_string(),
@@ -2164,6 +2166,7 @@ mod tests {
                 gpu: None,
             }),
             links: None,
+            healthcheck: Some("/health".to_string()),
         };
         let agent_card1 = ServiceCardRecord {
             name: "agent1".to_string(),
@@ -2233,8 +2236,9 @@ mod tests {
         let deployment = services[0].deployment.as_ref().unwrap();
         assert_eq!(deployment.len(), 1);
         assert_eq!(deployment[0].environment, "dev");
-        assert_eq!(deployment[0].endpoints.len(), 1);
-        assert_eq!(deployment[0].endpoints[0], "http://localhost:8000");
+        assert_eq!(deployment[0].urls.len(), 1);
+        assert_eq!(deployment[0].urls[0], "http://localhost:8000");
+        assert_eq!(deployment[0].healthcheck.as_deref(), Some("/health"));
 
         cleanup();
     }

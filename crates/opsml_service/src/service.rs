@@ -369,7 +369,7 @@ deploy:
   - environment: development
     provider: gcp
     location: [us-central1]
-    endpoints: [https://test.example.com]
+    urls: [https://test.example.com]
     resources:
       cpu: 4
       memory: 16Gi
@@ -411,7 +411,7 @@ deploy:
   - environment: development
     provider: gcp
     location: [us-central1]
-    endpoints: [https://test.example.com]
+    urls: [https://test.example.com]
     resources:
       cpu: 4
       memory: 16Gi
@@ -453,7 +453,7 @@ service:
 
 deploy:
   - environment: development
-    endpoints: [https://test.example.com]
+    urls: [https://test.example.com]
 "#;
 
         let spec = OpsmlServiceSpec::from_yaml(yaml_content).unwrap();

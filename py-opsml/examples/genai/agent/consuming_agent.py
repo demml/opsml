@@ -32,9 +32,7 @@ async def main():
             },
         }
 
-        request = SendMessageRequest(
-            id=str(uuid4()), params=MessageSendParams(**send_message_payload)
-        )
+        request = SendMessageRequest(id=str(uuid4()), params=MessageSendParams(**send_message_payload))
 
         response = await client.send_message(request)
         print(response.model_dump(mode="json", exclude_none=True))
