@@ -150,6 +150,7 @@ pub struct DeploymentConfig {
     /// Base URLs where the service is deployed and accessible
     /// Example: ["https://api.example.com", "https://api.example.com/v2"]
     #[pyo3(get)]
+    #[serde(alias = "endpoints")]
     pub urls: Vec<String>,
 
     /// The resource requirements for this deployment config
