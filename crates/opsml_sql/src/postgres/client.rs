@@ -353,7 +353,7 @@ mod tests {
         let config = db_config();
         let client = PostgresClient::new(&config).await.unwrap();
 
-        //cleanup(&client.pool).await;
+        cleanup(&client.pool).await;
 
         client
     }

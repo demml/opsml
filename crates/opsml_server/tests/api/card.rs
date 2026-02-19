@@ -1126,6 +1126,7 @@ async fn test_opsml_server_card_service_card_mcps() {
             urls: vec!["http://localhost:8080".to_string()],
             resources: None,
             links: None,
+            healthcheck: Some("/health".to_string()),
         };
 
         // ServiceCard
@@ -1958,6 +1959,7 @@ async fn test_opsml_server_card_service_card_agents() {
                 gpu: None,
             }),
             links: None,
+            healthcheck: Some("/health".to_string()),
         };
 
         // create fake content hash
