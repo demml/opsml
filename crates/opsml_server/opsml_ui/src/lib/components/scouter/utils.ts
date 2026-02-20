@@ -1,4 +1,4 @@
-import type { AlertDispatchConfig } from "./types";
+import type { AlertDispatchConfig, GetProfileExistsRequest } from "./types";
 import type { SpcDriftConfig, SpcDriftProfile } from "./spc/types";
 import type { PsiDriftConfig, PsiDriftProfile } from "./psi/types";
 import { createInternalApiClient } from "$lib/api/internalClient";
@@ -172,6 +172,35 @@ export function isSpcConfig(config: DriftConfigType): config is SpcDriftConfig {
 //====================================================
 // SERVER API HELPERS
 // ============================================================================
+
+export async function getDriftProfileExists(
+  fetch: typeof globalThis.fetch,
+  request: GetProfileExistsRequest,
+): Promise<boolean> {
+  try {
+    const response = await createInternalApiClient(fetch).post(
+      ServerPaths.MONITORING_PROFILE_EXISTS,
+      request,
+    );
+
+    if (!response.ok) {
+      console.error(
+        `Failed to check profile existence: ${response.status} ${response.statusText}`,
+      );
+      return false;
+    }
+
+    const exists = await response.json();
+    return exists;
+  } catch (err) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : "Unknown error checking profile existence";
+    console.error(`[Profile Exists Error]: ${message}`, err);
+    return false;
+  }
+}
 
 export async function getMonitoringDriftProfiles(
   fetch: typeof globalThis.fetch,
