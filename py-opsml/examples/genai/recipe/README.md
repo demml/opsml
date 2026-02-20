@@ -37,5 +37,5 @@ uv run uvicorn app.main:app --reload --port 8888
 ```bash
 curl -X POST "http://127.0.0.1:8888/predict" \
   -H "Content-Type: application/json" \
-  -d '{"user_id": "user-123", "question": "What'\''s the status on shipment 1"}'
+  -d '{"user_id": "user-123", "question": "What'\''s the status on shipment 1"}'  
 ```

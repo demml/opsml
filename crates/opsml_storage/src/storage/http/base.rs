@@ -314,7 +314,9 @@ impl HttpStorageClient {
                 error!("Failed to generate presigned url: {e}");
             })?;
 
-        let response = response.json::<PresignedUrl>()?;
+        let response = response.json::<PresignedUrl>().inspect_err(|e| {
+            error!("Failed to parse presigned url response: {e}");
+        })?;
 
         Ok(response.url)
     }

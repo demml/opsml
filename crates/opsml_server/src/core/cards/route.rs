@@ -30,10 +30,25 @@ use opsml_types::{SaveName, Suffix};
 use opsml_types::{cards::*, contracts::*};
 use serde_qs;
 
+use serde::de::DeserializeOwned;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{debug, error, info, instrument};
+
+pub fn parse_qs_query<T: DeserializeOwned>(
+    uri: &OriginalUri,
+) -> Result<T, (StatusCode, Json<OpsmlServerError>)> {
+    let query = uri
+        .query()
+        .ok_or_else(|| internal_server_error("No query string found", "No query string found"))?;
+
+    serde_qs::from_str(query).map_err(|e| {
+        error!("Failed to parse query string: {e}");
+        internal_server_error(e, "Failed to parse query string")
+    })
+}
+
 /// Route for checking if a card UID exists
 #[axum::debug_handler]
 pub async fn check_card_uid(
@@ -342,20 +357,9 @@ pub async fn query_version_page(
 pub async fn list_cards(
     State(state): State<Arc<AppState>>,
     // CardQueryArgs contains Vec<String> for tags, which serde_qs can parse correctly
-    OriginalUri(uri): OriginalUri,
+    uri: OriginalUri,
 ) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
-    let params: CardQueryArgs = match uri.query() {
-        Some(query) => serde_qs::from_str(query).map_err(|e| {
-            error!("Failed to parse query string: {e}");
-            internal_server_error(e, "Failed to parse query string")
-        })?,
-        None => {
-            return Err(internal_server_error(
-                "No query string found",
-                "No query string found",
-            ));
-        }
-    };
+    let params: CardQueryArgs = parse_qs_query(&uri)?;
 
     debug!(
         "Listing cards for registry: {:?} with params: {:?}",
@@ -645,8 +649,10 @@ pub async fn delete_card(
 #[instrument(skip_all)]
 pub async fn load_card(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<CardQueryArgs>,
+    uri: OriginalUri,
 ) -> Result<Json<ArtifactKey>, (StatusCode, Json<OpsmlServerError>)> {
+    let params: CardQueryArgs = parse_qs_query(&uri)?;
+
     let table = CardTable::from_registry_type(&params.registry_type);
 
     debug!(

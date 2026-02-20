@@ -1,7 +1,9 @@
 use crate::error::TypeError;
+use crate::{DataSaveKwargs, DriftArgs, ModelSaveKwargs};
+use opsml_types::RegistryType;
 use opsml_utils::PyHelperFuncs;
-use pyo3::prelude::*;
 use pyo3::types::PyDict;
+use pyo3::{prelude::*, IntoPyObjectExt};
 use pythonize::pythonize;
 use serde::de::MapAccess;
 use serde::{Deserialize, Serialize};
@@ -171,6 +173,74 @@ impl Display for ProcessorType {
             ProcessorType::Tokenizer => write!(f, "tokenizer"),
             ProcessorType::FeatureExtractor => write!(f, "feature_extractor"),
             ProcessorType::ImageProcessor => write!(f, "image_processor"),
+        }
+    }
+}
+
+#[pyclass(eq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+pub struct PromptSaveKwargs {
+    pub drift: DriftArgs,
+}
+
+#[pymethods]
+impl PromptSaveKwargs {
+    #[new]
+    #[pyo3(signature = (drift))]
+    pub fn new(drift: DriftArgs) -> Self {
+        PromptSaveKwargs { drift }
+    }
+}
+
+#[derive(Debug)]
+/// Generic enum to use with register card methods
+pub enum SaveKwargs {
+    Data(DataSaveKwargs),
+    Model(ModelSaveKwargs),
+    Prompt(PromptSaveKwargs),
+    Null,
+}
+
+impl SaveKwargs {
+    pub fn from_py_kwargs(
+        registry_type: &RegistryType,
+        kwargs: Option<&Bound<'_, PyAny>>,
+    ) -> Result<Self, TypeError> {
+        if let Some(kwargs) = kwargs {
+            match registry_type {
+                RegistryType::Data => {
+                    let data_kwargs = kwargs.extract::<DataSaveKwargs>()?;
+                    Ok(SaveKwargs::Data(data_kwargs))
+                }
+                RegistryType::Model => {
+                    let model_kwargs = kwargs.extract::<ModelSaveKwargs>()?;
+                    Ok(SaveKwargs::Model(model_kwargs))
+                }
+                RegistryType::Prompt => {
+                    let prompt_kwargs = kwargs.extract::<PromptSaveKwargs>()?;
+                    Ok(SaveKwargs::Prompt(prompt_kwargs))
+                }
+                _ => Ok(SaveKwargs::Null),
+            }
+        } else {
+            Ok(SaveKwargs::Null)
+        }
+    }
+
+    pub fn drift_args(&self) -> Option<&DriftArgs> {
+        match self {
+            SaveKwargs::Model(model_kwargs) => model_kwargs.drift.as_ref(),
+            SaveKwargs::Prompt(prompt_kwargs) => Some(&prompt_kwargs.drift),
+            _ => None,
+        }
+    }
+
+    pub fn to_py_bound<'py>(self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        match self {
+            SaveKwargs::Data(data_kwargs) => data_kwargs.into_bound_py_any(py),
+            SaveKwargs::Model(model_kwargs) => model_kwargs.into_bound_py_any(py),
+            SaveKwargs::Prompt(prompt_kwargs) => prompt_kwargs.into_bound_py_any(py),
+            SaveKwargs::Null => Ok(py.None().into_bound(py)),
         }
     }
 }

@@ -1,16 +1,18 @@
 <script lang="ts">
   import type { GenAIEvalWorkflowResult } from '../task';
-  import type { GenAIEvalWorkflowPaginationResponse } from '../types';
+  import type { GenAIEvalProfile, GenAIEvalWorkflowPaginationResponse } from '../types';
   import type { RecordCursor } from '$lib/components/scouter/types';
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
   import GenAIEvalWorkflowSideBar from './GenAIEvalWorkflowSideBar.svelte';
 
   let {
     currentPage,
-    onPageChange
+    onPageChange,
+    profile
   } = $props<{
     currentPage: GenAIEvalWorkflowPaginationResponse;
     onPageChange: (cursor: RecordCursor, direction: string) => void;
+    profile: GenAIEvalProfile;
   }>();
 
   let workflows = $state<GenAIEvalWorkflowResult[]>(currentPage.items || []);
@@ -79,7 +81,7 @@
 
 <div class="pt-2 h-full flex flex-col min-h-0">
   <div class="border-2 border-black rounded-lg bg-white flex flex-col h-full max-h-[500px] overflow-hidden">
-    
+
     <div class="overflow-auto flex-1 w-full relative">
       {#if workflows.length === 0}
         <div class="flex items-center justify-center p-8 bg-white h-full">
@@ -87,7 +89,7 @@
         </div>
       {:else}
         <div class="min-w-[900px] w-full">
-            
+
             <div class="bg-white border-b-2 border-black sticky top-0 z-20 w-full">
               <div class="grid gap-3 text-black text-xs font-bold px-4 py-3 items-center" style={gridLayout}>
                 <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">ID</span></div>
@@ -174,6 +176,6 @@
   </div>
 
   {#if selectedWorkflow && isSelected}
-    <GenAIEvalWorkflowSideBar selectedWorkflow={selectedWorkflow} onClose={handleClosePanel} />
+    <GenAIEvalWorkflowSideBar selectedWorkflow={selectedWorkflow} onClose={handleClosePanel} profile={profile} />
   {/if}
 </div>

@@ -6,7 +6,7 @@ use crate::utils::{upload_drift_profile_map, upload_profile};
 use const_format::concatcp;
 use opsml_cards::traits::OpsmlCard;
 use opsml_colors::Colorize;
-use opsml_interfaces::DriftArgs;
+use opsml_interfaces::{DriftArgs, SaveKwargs};
 use opsml_semver::VersionType;
 use opsml_types::*;
 use opsml_types::{cards::CardTable, contracts::*};
@@ -58,7 +58,7 @@ struct CardRegistrationParams<'py> {
     version_type: VersionType,
     pre_tag: Option<String>,
     build_tag: Option<String>,
-    save_kwargs: Option<&'py Bound<'py, PyAny>>,
+    save_kwargs: SaveKwargs,
     registry_type: &'py RegistryType,
 }
 
@@ -198,13 +198,15 @@ impl CardRegistry {
     ) -> Result<(), RegistryError> {
         debug!("Registering card");
 
+        let kwargs = SaveKwargs::from_py_kwargs(&self.registry_type, save_kwargs)?;
+
         let params = CardRegistrationParams {
             card,
             registry: &self.registry,
             version_type,
             pre_tag,
             build_tag,
-            save_kwargs,
+            save_kwargs: kwargs,
             registry_type: &self.registry_type,
         };
 
@@ -367,7 +369,7 @@ impl CardRegistry {
         registry: &OpsmlCardRegistry,
         card: &Bound<'_, PyAny>,
         response: &CreateCardResponse,
-        save_kwargs: Option<&Bound<'_, PyAny>>,
+        save_kwargs: SaveKwargs,
         registry_type: &RegistryType,
     ) -> Result<(), RegistryError> {
         // Update card attributes
@@ -382,7 +384,7 @@ impl CardRegistry {
         // This method also needs to be called before saving the card artifacts because Scouter will
         // set the drift profile uid on the modelcard
         debug!("Uploading integration artifacts");
-        Self::upload_integration_artifacts(registry, registry_type, card, save_kwargs)?;
+        Self::upload_integration_artifacts(registry, registry_type, card, &save_kwargs)?;
 
         // Save card artifacts to temp path
         debug!("Saving card artifacts");
@@ -449,7 +451,7 @@ impl CardRegistry {
     /// # Arguments
     /// * `py` - Python interpreter
     /// * `card` - Card to save
-    /// * `save_kwargs` - Optional save kwargs
+    /// * `save_kwargs` - Save kwargs
     ///
     /// # Returns
     ///
@@ -457,12 +459,12 @@ impl CardRegistry {
     #[instrument(skip_all)]
     fn save_card_artifacts(
         card: &Bound<'_, PyAny>,
-        save_kwargs: Option<&Bound<'_, PyAny>>,
+        save_kwargs: SaveKwargs,
         registry_type: &RegistryType,
     ) -> Result<PathBuf, RegistryError> {
         let tmp_dir = TempDir::new()?;
-
         let tmp_path = tmp_dir.keep();
+        let py = card.py();
 
         match registry_type {
             RegistryType::Experiment | RegistryType::Prompt | RegistryType::Service => {
@@ -474,10 +476,13 @@ impl CardRegistry {
 
             _ => {
                 // save model card artifacts
-                card.call_method1("save", (tmp_path.to_path_buf(), save_kwargs))
-                    .inspect_err(|e| {
-                        error!("Failed to save card: {e}");
-                    })?;
+                card.call_method1(
+                    "save",
+                    (tmp_path.to_path_buf(), save_kwargs.to_py_bound(py)?),
+                )
+                .inspect_err(|e| {
+                    error!("Failed to save card: {e}");
+                })?;
             }
         }
 
@@ -492,16 +497,14 @@ impl CardRegistry {
         registry: &OpsmlCardRegistry,
         registry_type: &RegistryType,
         card: &Bound<'_, PyAny>,
-        save_kwargs: Option<&Bound<'_, PyAny>>,
+        save_kwargs: &SaveKwargs,
     ) -> Result<(), RegistryError> {
         // If our integration types expand to other services and registry types, consider using a match statement
         if registry_type == &RegistryType::Model || registry_type == &RegistryType::Prompt {
             // ensure scouter integration is enabled before uploading artifacts
             debug!("Checking if Scouter service is enabled for integration");
             if registry.check_service_health(IntegratedService::Scouter)? {
-                let drift_args = save_kwargs
-                    .and_then(|kwargs| kwargs.getattr("drift").ok())
-                    .and_then(|args| args.extract::<DriftArgs>().ok());
+                let drift_args = save_kwargs.drift_args();
 
                 Self::upload_scouter_artifacts(registry, card, drift_args, registry_type)?;
             }
@@ -529,7 +532,7 @@ impl CardRegistry {
     fn upload_scouter_artifacts(
         registry: &OpsmlCardRegistry,
         card: &Bound<'_, PyAny>,
-        drift_args: Option<DriftArgs>,
+        drift_args: Option<&DriftArgs>,
         registry_type: &RegistryType,
     ) -> Result<(), RegistryError> {
         // update drift config args before uploading profiles to scouter and saving
@@ -684,10 +687,15 @@ impl CardRegistry {
     ) -> Result<ArtifactKey, RegistryError> {
         let registry_card = card
             .call_method0("get_registry_card")?
-            .extract::<CardRecord>()?;
+            .extract::<CardRecord>()
+            .inspect_err(|e| {
+                error!("Failed to extract registry card: {e}");
+            })?;
 
         // update card
-        registry.update_card(&registry_card)?;
+        registry.update_card(&registry_card).inspect_err(|e| {
+            error!("Failed to update card: {e}");
+        })?;
 
         // get key to re-save Card.json
         let uid = registry_card.uid().to_string();
@@ -698,7 +706,7 @@ impl CardRegistry {
                 ..Default::default()
             })
             .inspect_err(|e| {
-                error!("Failed to load card: {e}");
+                error!("Failed to get card key: {e}");
             })?;
 
         println!(

@@ -94,7 +94,7 @@ reqwest-middleware = "0.*"
 rusty-logging = "0.*"
 pythonize = { version = "0.*" }
 # we cant use crates.io because scouter relies on a fork of linfa at the moment
-scouter-client = { git = "https://github.com/demml/scouter.git", branch = "update-serde-logic", package = "scouter-client" }
+scouter-client = { git = "https://github.com/demml/scouter.git", branch = "main", package = "scouter-client" }
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
@@ -119,7 +119,7 @@ tracing-core = "0.*"
 tracing-subscriber = {version = "0.*", features = ["json", "time"]}
 uuid = { version = "1.*", features = ["v7"] }
 walkdir = "2.*"
-zip = "2.*"
+zip = "7.*"
 
 [profile.release]
 lto = "fat"
