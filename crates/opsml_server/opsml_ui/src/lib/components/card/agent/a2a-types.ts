@@ -521,8 +521,8 @@ export function isTask(value: unknown): value is Task {
     typeof value === "object" &&
     value !== null &&
     "id" in value &&
-    "artifacts" in value &&
-    typeof (value as Task).id === "string"
+    typeof (value as Task).id === "string" &&
+    !("messageId" in value) // Tasks have `id`; Messages have `messageId`
   );
 }
 
@@ -648,6 +648,8 @@ export function buildUserMessage(
 /** Check whether a task has reached a terminal state. */
 export function isTaskTerminal(task: Task): boolean {
   const terminal: TaskState[] = [
+    "completed",
+    "failed",
     "TASK_STATE_COMPLETED",
     "TASK_STATE_FAILED",
     "TASK_STATE_CANCELED",

@@ -21,7 +21,6 @@
   // Extract A2A task info if available
   const messageResponse = $derived.by(() => {
     if (payload.response && typeof payload.response === 'object') {
-      console.log('DebugPayload response:', responseJson);
       return (payload.response as SendMessageResponse);
     }
     return null;
@@ -111,6 +110,17 @@
             <Pill key="Task Turns" value={`${task.history.length} turn${task.history.length !== 1 ? 's' : ''}`} textSize="text-xs"/>
           {/if}
         </div>
+
+        <!-- Failed status error message -->
+        {#if task.status && (task.status.state === 'failed' || task.status.state === 'TASK_STATE_FAILED') && task.status.message}
+          {@const errorParts = task.status.message.parts.filter(p => p.text).map(p => p.text!).join('\n')}
+          {#if errorParts}
+            <div class="mt-3 p-3 bg-error-100 border-2 border-error-600 rounded-lg">
+              <p class="text-xs font-bold text-error-900 mb-1">Error Detail</p>
+              <p class="text-xs text-error-800 font-mono whitespace-pre-wrap">{errorParts}</p>
+            </div>
+          {/if}
+        {/if}
       </section>
 
       <!-- ADK Metadata -->
