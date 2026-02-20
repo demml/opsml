@@ -70,8 +70,6 @@
   );
 
   const iconColor = '#8059b6';
-
-  console.log("PromptCardLayout metadata:", JSON.stringify(metadata.metadata.drift_profile_uri_map));
 </script>
 
 <!-- Sticky header with breadcrumb and tab navigation -->

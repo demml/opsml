@@ -6,7 +6,7 @@ from opsml.app import AppState
 class Config(BaseSettings):
     """Configuration for the agent's lifespan events."""
 
-    app_path: Path = Path("service_artifacts")
+    app_path: Path = Path(__file__).parent / "opsml_service"
 
     class Config:
         env_prefix = "AGENT_LIFESPAN_"

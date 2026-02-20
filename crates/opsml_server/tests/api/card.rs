@@ -1123,9 +1123,10 @@ async fn test_opsml_server_card_service_card_mcps() {
             environment: "dev".to_string(),
             provider: None,
             location: None,
-            endpoints: vec!["http://localhost:8080".to_string()],
+            urls: vec!["http://localhost:8080".to_string()],
             resources: None,
             links: None,
+            healthcheck: Some("/health".to_string()),
         };
 
         // ServiceCard
@@ -1950,7 +1951,7 @@ async fn test_opsml_server_card_service_card_agents() {
             environment: "dev".to_string(),
             provider: Some("development".to_string()),
             location: Some(vec!["local".to_string()]),
-            endpoints: vec!["http://localhost:8000".to_string()],
+            urls: vec!["http://localhost:8000".to_string()],
             resources: Some(Resources {
                 cpu: 2,
                 memory: "4GB".to_string(),
@@ -1958,6 +1959,7 @@ async fn test_opsml_server_card_service_card_agents() {
                 gpu: None,
             }),
             links: None,
+            healthcheck: Some("/health".to_string()),
         };
 
         // create fake content hash

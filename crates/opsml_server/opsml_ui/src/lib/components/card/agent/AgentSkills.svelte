@@ -4,11 +4,11 @@
 
   let { skills } = $props<{ skills: SkillFormat[] }>();
 
-  function isStandardSkill(skill: SkillFormat): skill is { format: "standard"; standard: AgentSkillStandard } {
+  function isStandardSkill(skill: SkillFormat): skill is AgentSkillStandard & { format: "standard" } {
     return skill.format === "standard";
   }
 
-  function isA2ASkill(skill: SkillFormat): skill is { format: "a2a"; a2a: AgentSkill } {
+  function isA2ASkill(skill: SkillFormat): skill is AgentSkill & { format: "a2a" } {
     return skill.format === "a2a";
   }
 </script>
@@ -38,39 +38,39 @@
                   <span class="badge text-tertiary-950 border-tertiary-950 border-1 bg-tertiary-100 text-xs">
                     STANDARD
                   </span>
-                  <h4 class="text-sm font-bold text-gray-900">{skill.standard.name}</h4>
+                  <h4 class="text-sm font-bold text-gray-900">{skill.name}</h4>
                 </div>
-                <p class="text-xs text-gray-600 mt-1">{skill.standard.description}</p>
+                <p class="text-xs text-gray-600 mt-1">{skill.description}</p>
               </div>
             </div>
 
             <div class="flex flex-wrap gap-2 mt-3">
-              {#if skill.standard.license}
+              {#if skill.license}
                 <span class="badge text-gray-700 border-gray-400 border-1 bg-surface-100 text-xs">
-                  📄 {skill.standard.license}
+                  📄 {skill.license}
                 </span>
               {/if}
               
-              {#if skill.standard.compatibility}
+              {#if skill.compatibility}
                 <span class="badge text-gray-700 border-gray-400 border-1 bg-surface-100 text-xs">
-                  🔧 {skill.standard.compatibility}
+                  🔧 {skill.compatibility}
                 </span>
               {/if}
 
-              {#if skill.standard.allowedTools && skill.standard.allowedTools.length > 0}
+              {#if skill.allowedTools && skill.allowedTools.length > 0}
                 <span class="badge text-primary-900 border-primary-800 border-1 bg-primary-100 text-xs">
-                  🛠️ {skill.standard.allowedTools.length} tools
+                  🛠️ {skill.allowedTools.length} tools
                 </span>
               {/if}
             </div>
 
-            {#if skill.standard.metadata}
+            {#if skill.metadata}
               <details class="mt-3">
                 <summary class="text-xs font-bold text-gray-700 cursor-pointer hover:text-primary-800">
                   View Metadata
                 </summary>
                 <div class="mt-2 p-2 bg-surface-100 rounded border border-gray-300">
-                  {#each Object.entries(skill.standard.metadata) as [key, value]}
+                  {#each Object.entries(skill.metadata) as [key, value]}
                     <div class="flex gap-2 text-xs py-1">
                       <span class="font-bold text-gray-700">{key}:</span>
                       <span class="text-gray-600">{value}</span>
@@ -80,13 +80,13 @@
               </details>
             {/if}
 
-            {#if skill.standard.body}
+            {#if skill.body}
               <details class="mt-3">
                 <summary class="text-xs font-bold text-gray-700 cursor-pointer hover:text-primary-800">
                   View Skill Body
                 </summary>
                 <div class="mt-2 p-3 bg-surface-100 rounded border border-gray-300 prose prose-sm max-w-none">
-                  <pre class="text-xs overflow-x-auto whitespace-pre-wrap">{skill.standard.body}</pre>
+                  <pre class="text-xs overflow-x-auto whitespace-pre-wrap">{skill.body}</pre>
                 </div>
               </details>
             {/if}
@@ -101,17 +101,17 @@
                   <span class="badge text-secondary-900 border-secondary-800 border-1 bg-secondary-100 text-xs">
                     A2A
                   </span>
-                  <h4 class="text-sm font-bold text-gray-900">{skill.a2a.name}</h4>
-                  <span class="text-xs text-gray-500 font-mono">#{skill.a2a.id}</span>
+                  <h4 class="text-sm font-bold text-gray-900">{skill.name}</h4>
+                  <span class="text-xs text-gray-500 font-mono">#{skill.id}</span>
                 </div>
-                <p class="text-xs text-gray-600 mt-1">{skill.a2a.description}</p>
+                <p class="text-xs text-gray-600 mt-1">{skill.description}</p>
               </div>
             </div>
 
             <!-- Tags -->
-            {#if skill.a2a.tags.length > 0}
+            {#if skill.tags.length > 0}
               <div class="flex flex-wrap gap-1 mt-3">
-                {#each skill.a2a.tags as tag}
+                {#each skill.tags as tag}
                   <span class="badge text-gray-700 border-gray-400 border-1 bg-surface-100 text-xs">
                     {tag}
                   </span>
@@ -121,11 +121,11 @@
 
             <!-- Input/Output Modes -->
             <div class="grid grid-cols-2 gap-3 mt-3">
-              {#if skill.a2a.inputModes && skill.a2a.inputModes.length > 0}
+              {#if skill.inputModes && skill.inputModes.length > 0}
                 <div class="space-y-1">
                   <span class="text-xs font-bold text-gray-600 uppercase">Input Modes</span>
                   <div class="flex flex-wrap gap-1">
-                    {#each skill.a2a.inputModes as mode}
+                    {#each skill.inputModes as mode}
                       <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100 text-xs">
                         {mode}
                       </span>
@@ -134,11 +134,11 @@
                 </div>
               {/if}
 
-              {#if skill.a2a.outputModes && skill.a2a.outputModes.length > 0}
+              {#if skill.outputModes && skill.outputModes.length > 0}
                 <div class="space-y-1">
                   <span class="text-xs font-bold text-gray-600 uppercase">Output Modes</span>
                   <div class="flex flex-wrap gap-1">
-                    {#each skill.a2a.outputModes as mode}
+                    {#each skill.outputModes as mode}
                       <span class="badge text-secondary-900 border-black border-1 shadow-small bg-secondary-100 text-xs">
                         {mode}
                       </span>
@@ -149,16 +149,16 @@
             </div>
 
             <!-- Examples -->
-            {#if skill.a2a.examples.length > 0}
+            {#if skill.examples.length > 0}
               <details class="mt-3">
                 <summary class="text-xs font-bold text-gray-700 cursor-pointer hover:text-primary-800">
-                  View Examples ({skill.a2a.examples.length})
+                  View Examples ({skill.examples.length})
                 </summary>
                 <div class="mt-2 space-y-2">
-                  {#each skill.a2a.examples as example, idx}
+                  {#each skill.examples as example, idx}
                     <div class="p-2 bg-surface-100 rounded border border-gray-300">
                       <span class="text-xs font-bold text-gray-600">Example {idx + 1}:</span>
-                      <pre class="text-xs mt-1 whitespace-pre-wrap">{example}</pre>
+                      <pre class="text-xs mt-1 text-black whitespace-pre-wrap">{example}</pre>
                     </div>
                   {/each}
                 </div>
@@ -166,12 +166,12 @@
             {/if}
 
             <!-- Security Requirements -->
-            {#if skill.a2a.securityRequirements && skill.a2a.securityRequirements.length > 0}
+            {#if skill.securityRequirements && skill.securityRequirements.length > 0}
               <div class="mt-3 p-2 bg-warning-100 border-2 border-warning-600 rounded-lg">
                 <div class="flex items-center gap-2">
                   <Shield class="w-4 h-4 text-warning-800" />
                   <span class="text-xs font-bold text-warning-900">
-                    Security Required: {skill.a2a.securityRequirements.map(r => r.schemes.join(', ')).join('; ')}
+                    Security Required: {skill.securityRequirements.map(r => r.schemes.join(', ')).join('; ')}
                   </span>
                 </div>
               </div>
