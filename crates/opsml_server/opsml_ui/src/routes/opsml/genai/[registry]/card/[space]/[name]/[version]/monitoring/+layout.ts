@@ -1,51 +1,34 @@
 export const ssr = false;
 
 import type { LayoutLoad } from "./$types";
-import { getRegistryPath, RegistryType } from "$lib/utils";
+import { getRegistryPath } from "$lib/utils";
 import { redirect } from "@sveltejs/kit";
-import {
-  getProfilesFromMetadata,
-  getSortedDriftTypes,
-} from "$lib/components/scouter/dashboard/utils";
-import { driftTypeFromString } from "$lib/components/scouter/types";
+import { isPromptCard } from "$lib/components/card/card_interfaces/promptcard";
 
 export const load: LayoutLoad = async ({ parent, fetch, url }) => {
   const parentData = await parent();
   const { registryType, metadata } = parentData;
 
-  if (registryType !== RegistryType.Prompt) {
+  // only prompt profile available for prompt registry, if not prompt registry, redirect to card page
+  if (!isPromptCard(metadata)) {
     throw redirect(
       303,
-      `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${metadata.name}/${metadata.version}/card`
+      `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${metadata.name}/${metadata.version}/card`,
     );
   }
 
-  const profiles = await getProfilesFromMetadata(fetch, metadata, registryType);
-  const driftTypes = getSortedDriftTypes(profiles);
+  const eval_profile = metadata.eval_profile;
 
-  if (driftTypes.length === 0) {
+  if (!eval_profile) {
     throw redirect(
       303,
-      `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${metadata.name}/${metadata.version}/card`
-    );
-  }
-
-  // split url to get current drift type
-  const currentDriftType = driftTypeFromString(
-    url.pathname.split("/").pop() || ""
-  );
-
-  if (!currentDriftType || !driftTypes.includes(currentDriftType)) {
-    throw redirect(
-      303,
-      `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${metadata.name}/${metadata.version}/monitoring/${driftTypes[0].toLowerCase()}`
+      `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${metadata.name}/${metadata.version}/card`,
     );
   }
 
   return {
     registryType,
     metadata,
-    profiles,
-    driftTypes,
+    eval_profile,
   };
 };

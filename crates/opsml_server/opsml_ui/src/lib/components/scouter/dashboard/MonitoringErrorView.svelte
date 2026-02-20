@@ -1,28 +1,22 @@
 <script lang="ts">
-  import { AlertCircle, Activity, ArrowLeft, BookOpen } from 'lucide-svelte';
+  import { AlertCircle, Activity, ArrowLeft, BookOpen, ServerCrash } from 'lucide-svelte';
   import { getRegistryPath, type RegistryType } from '$lib/utils';
+  import type { MonitoringErrorKind } from './utils';
 
   interface Props {
     message: string;
+    errorKind: MonitoringErrorKind;
     space: string;
     name: string;
     version: string;
     registryType: RegistryType;
   }
 
-  let { message, space, name, version, registryType }: Props = $props();
+  let { message, errorKind, space, name, version, registryType }: Props = $props();
 
-  /**
-   * Determine if this is a "not found" vs "error" scenario
-   */
-  let isNotFound = $derived(
-    message.toLowerCase().includes('no drift profile') ||
-    message.toLowerCase().includes('not found')
-  );
+  let isNotFound = $derived(errorKind === 'not_found');
+  let isServerError = $derived(errorKind === 'server_error');
 
-  /**
-   * Return path to card
-   */
   let returnPath = $derived(
     `/opsml/${getRegistryPath(registryType)}/card/${space}/${name}/${version}/card`
   );
@@ -36,7 +30,6 @@
       <div class="flex flex-col items-center text-center">
         <div class="mb-6 relative">
           {#if isNotFound}
-            <!-- Activity icon with diagonal line for "not found" -->
             <div class="relative">
               <Activity
                 size={80}
@@ -47,8 +40,13 @@
                 <div class="w-24 h-1 bg-error-600 rotate-45 rounded-full"></div>
               </div>
             </div>
+          {:else if isServerError}
+            <ServerCrash
+              size={80}
+              strokeWidth={2.5}
+              class="text-warning-500"
+            />
           {:else}
-            <!-- Alert circle for errors -->
             <AlertCircle 
               size={80} 
               strokeWidth={2.5}
@@ -59,7 +57,13 @@
 
         <!-- Error Title -->
         <h1 class="text-3xl sm:text-4xl font-bold text-black mb-4 tracking-tight">
-          {isNotFound ? 'Monitoring Unavailable' : 'Error Loading Monitoring'}
+          {#if isNotFound}
+            Monitoring Unavailable
+          {:else if isServerError}
+            Server Error
+          {:else}
+            Error Loading Monitoring
+          {/if}
         </h1>
 
         <!-- Error Message -->

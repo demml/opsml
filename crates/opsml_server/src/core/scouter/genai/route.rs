@@ -12,14 +12,14 @@ use axum::{
 use opsml_auth::permission::UserPermissions;
 use opsml_types::api::RequestType;
 
-use tracing::debug;
-
+use opsml_client::error::ApiClientError;
 use scouter_client::{
     GenAIEvalRecordPaginationRequest, GenAIEvalRecordPaginationResponse, GenAIEvalTaskRequest,
     GenAIEvalTaskResponse, GenAIEvalWorkflowPaginationResponse,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
+use tracing::debug;
 use tracing::{error, instrument};
 
 #[instrument(skip_all)]
@@ -49,11 +49,30 @@ pub async fn query_genai_eval_records(
             None,
             &exchange_token,
         )
-        .await
-        .map_err(|e| {
+        .await;
+
+    let response = match response {
+        Ok(resp) => resp,
+        Err(e) => {
+            if let ApiClientError::RequestError(ref req_err) = e {
+                if req_err.status() == Some(StatusCode::NOT_FOUND) {
+                    error!("GenAI records not found: {e}");
+                    return Err(internal_server_error(
+                        e,
+                        "GenAI records not found",
+                        Some(StatusCode::NOT_FOUND),
+                    ));
+                }
+            }
+
             error!("Failed to get genai records: {e}");
-            internal_server_error(e, "Failed to get genai records", None)
-        })?;
+            return Err(internal_server_error(
+                e,
+                "Failed to get genai records",
+                None,
+            ));
+        }
+    };
 
     let body = response
         .json::<GenAIEvalRecordPaginationResponse>()
@@ -93,11 +112,30 @@ pub async fn query_genai_eval_workflow(
             None,
             &exchange_token,
         )
-        .await
-        .map_err(|e| {
+        .await;
+
+    let response = match response {
+        Ok(resp) => resp,
+        Err(e) => {
+            if let ApiClientError::RequestError(ref req_err) = e {
+                if req_err.status() == Some(StatusCode::NOT_FOUND) {
+                    error!("GenAI workflow not found: {e}");
+                    return Err(internal_server_error(
+                        e,
+                        "GenAI workflow not found",
+                        Some(StatusCode::NOT_FOUND),
+                    ));
+                }
+            }
+
             error!("Failed to get genai workflow: {e}");
-            internal_server_error(e, "Failed to get genai workflow", None)
-        })?;
+            return Err(internal_server_error(
+                e,
+                "Failed to get genai workflow",
+                None,
+            ));
+        }
+    };
 
     let body = response
         .json::<GenAIEvalWorkflowPaginationResponse>()

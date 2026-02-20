@@ -63,39 +63,39 @@ export type DriftProfileResponse = Record<DriftType, UiProfile>;
 
 export function getProfileFeatures(
   drift_type: DriftType,
-  profile: DriftProfile
+  profile: DriftProfile,
 ): string[] {
   const variables: string[] =
     drift_type === DriftType.Custom
       ? Object.keys(profile.Custom.metrics)
       : drift_type === DriftType.GenAI
-      ? profile.GenAI.task_ids
-      : drift_type === DriftType.Psi
-      ? profile.Psi.config.alert_config.features_to_monitor
-      : profile.Spc.config.alert_config.features_to_monitor;
+        ? profile.GenAI.task_ids
+        : drift_type === DriftType.Psi
+          ? profile.Psi.config.alert_config.features_to_monitor
+          : profile.Spc.config.alert_config.features_to_monitor;
 
   return variables.sort();
 }
 
 export function getProfileConfig(
   drift_type: DriftType,
-  profile: DriftProfile
+  profile: DriftProfile,
 ): DriftConfigType {
   const variables =
     drift_type === DriftType.Custom
       ? profile.Custom.config
       : drift_type === DriftType.GenAI
-      ? profile.GenAI.config
-      : drift_type === DriftType.Psi
-      ? profile.Psi.config
-      : profile.Spc.config;
+        ? profile.GenAI.config
+        : drift_type === DriftType.Psi
+          ? profile.Psi.config
+          : profile.Spc.config;
 
   return variables;
 }
 
 export function getProfileDataWithConfig(
   profiles: DriftProfileResponse,
-  driftType: DriftType
+  driftType: DriftType,
 ): { profile: UiProfile; config: DriftConfigType } {
   const uiProfile = profiles[driftType];
   const config = getProfileConfig(driftType, uiProfile.profile);
@@ -122,13 +122,13 @@ const PROFILE_EXTRACTOR: {
  */
 export function getProfileFromResponse<T extends DriftType>(
   driftType: T,
-  profiles: DriftProfileResponse
+  profiles: DriftProfileResponse,
 ): DriftProfile[T] {
   const uiProfile = profiles[driftType];
 
   if (!uiProfile) {
     throw new Error(
-      `Profile for drift type ${driftType} not found in response.`
+      `Profile for drift type ${driftType} not found in response.`,
     );
   }
 
@@ -141,7 +141,7 @@ export function getProfileFromResponse<T extends DriftType>(
  */
 export function extractProfile<T extends DriftType>(
   profile: DriftProfile,
-  driftType: T
+  driftType: T,
 ): DriftProfile[T] {
   return PROFILE_EXTRACTOR[driftType](profile) as DriftProfile[T];
 }
@@ -151,13 +151,13 @@ export function extractProfile<T extends DriftType>(
 // ============================================================================
 
 export function isCustomConfig(
-  config: DriftConfigType
+  config: DriftConfigType,
 ): config is CustomMetricDriftConfig {
   return config.drift_type === DriftType.Custom;
 }
 
 export function isGenAIConfig(
-  config: DriftConfigType
+  config: DriftConfigType,
 ): config is GenAIEvalConfig {
   return config.drift_type === DriftType.GenAI;
 }
@@ -177,7 +177,7 @@ export async function getMonitoringDriftProfiles(
   fetch: typeof globalThis.fetch,
   uid: string,
   driftMap: Record<string, DriftProfileUri>,
-  registryType: RegistryType
+  registryType: RegistryType,
 ): Promise<DriftProfileResponse> {
   let resp = createInternalApiClient(fetch).post(
     ServerPaths.MONITORING_PROFILES,
@@ -185,7 +185,7 @@ export async function getMonitoringDriftProfiles(
       uid,
       driftMap,
       registryType,
-    }
+    },
   );
 
   let profiles = (await (await resp).json()) as DriftProfileResponse;
@@ -194,11 +194,11 @@ export async function getMonitoringDriftProfiles(
 
 export async function getServerDriftAlerts(
   fetch: typeof globalThis.fetch,
-  request: DriftAlertPaginationRequest
+  request: DriftAlertPaginationRequest,
 ): Promise<DriftAlertPaginationResponse> {
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.MONITORING_ALERTS,
-    request
+    request,
   );
 
   let alerts = (await resp.json()) as DriftAlertPaginationResponse;
@@ -224,13 +224,7 @@ export function getLabelFromValue(value: string): string {
   return labelMap[value] || "Custom Range";
 }
 
-export function getDriftProfileUriMap(
-  metadata: any,
-  registryType: RegistryType
-) {
-  if (registryType === RegistryType.Prompt) {
-    return metadata.metadata.drift_profile_uri_map ?? {};
-  }
+export function getDriftProfileUriMap(metadata: any) {
   return (
     metadata.metadata.interface_metadata?.save_metadata
       ?.drift_profile_uri_map ?? {}
