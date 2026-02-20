@@ -1,7 +1,7 @@
 <script lang="ts">
   import { MessageSquare, Send, Loader2, Zap, AlertCircle, CheckCircle, X, Bug } from 'lucide-svelte';
-  import type { AgentSpec } from "./types";
-  import { isA2ATask, isA2AResponse, extractTextFromA2ATask } from "./types";
+  import type { AgentSpec, DebugPayload, ChatMessage, MessageRole } from "./types";
+  import { isA2ATask, isA2AResponse, extractTextFromA2ATask, } from "./types";
   import { inferAgentContract, formatExamplesForDisplay, inferHealthEndpoint } from './agentInference';
   import type { AgentContract, AgentSkillContract } from './agentInference';
   import { createAgentClient } from './agentClient';
@@ -11,21 +11,7 @@
   import { onMount, onDestroy } from 'svelte';
   import type { DeploymentConfig } from '$lib/components/card/card_interfaces/servicecard';
 
-  type MessageRole = 'user' | 'agent' | 'system';
 
-  interface DebugPayload {
-    request: unknown;
-    response: unknown;
-    timestamp: Date;
-  }
-
-  interface ChatMessage {
-    role: MessageRole;
-    content: string; // Clean display content
-    timestamp: Date;
-    skillName?: string;
-    debugPayload?: DebugPayload; // Full request/response for debugging
-  }
 
   let {
     agentSpec,
@@ -82,7 +68,9 @@
   const debugMessages = $derived(
     messages
       .map((msg, idx) => ({ ...msg, index: idx }))
-      .filter((msg): msg is typeof msg & { debugPayload: DebugPayload } => msg.debugPayload !== undefined)
+      .filter((msg): msg is typeof msg & { debugPayload: DebugPayload } => (
+        msg.debugPayload !== undefined && (msg.role === 'user' || msg.role === 'agent')
+      ))
   );
 
   function openDebugSidebar() {
@@ -190,6 +178,7 @@
       content,
       timestamp: new Date(),
       skillName: selectedSkill?.name,
+      messageId: debugPayload?.messageId,
       debugPayload,
     }];
   }
@@ -200,6 +189,7 @@
       content,
       timestamp: new Date(),
       skillName: selectedSkill?.name,
+      messageId: debugPayload?.messageId,
       debugPayload,
     }];
   }
@@ -298,41 +288,26 @@
     return JSON.stringify(result, null, 2);
   }
 
-  async function handleNonStreamingResponse(userMessage: string): Promise<void> {
+  async function handleNonStreamingResponse(userMessage: string, messageId: string): Promise<void> {
     if (!client || !selectedSkill) return;
-
-    const request = {
-      skill: selectedSkill.name,
-      task: userMessage,
-      timestamp: new Date(),
-    };
 
     const response = await client.invokeSkill({
       skill: selectedSkill,
       task: userMessage,
+      messageId,
     });
-
-    const debugPayload: DebugPayload = {
-      request,
-      response,
-      timestamp: new Date(),
-    };
-
-    // Update the last user message with debug payload
-    if (messages.length > 0 && messages[messages.length - 1].role === 'user') {
-      messages = messages.map((msg, idx) =>
-        idx === messages.length - 1 ? { ...msg, debugPayload } : msg
-      );
-    }
 
     if (response.status === 'failed' && response.error) {
       const errorMsg = response.error.message;
       lastError = errorMsg;
-      console.error('[AgentPlayground] Request failed:', response.error);
       addSystemMessage(`❌ Error: ${errorMsg}`);
     } else {
       const cleanContent = extractCleanResponse(response);
-      addAgentMessage(cleanContent, debugPayload);
+      addAgentMessage(cleanContent, {
+        messageId,
+        response: JSON.parse(JSON.stringify(response)),
+        timestamp: new Date(),
+      });
     }
   }
 
@@ -350,7 +325,18 @@
     message = '';
     lastError = null;
 
-    addUserMessage(userMessage);
+    const messageId = crypto.randomUUID().replace(/-/g, '');
+
+    addUserMessage(userMessage, {
+      messageId,
+      request: {
+        skill: selectedSkill!.name,
+        task: userMessage,
+        timestamp: new Date().toISOString(),
+      },
+      timestamp: new Date(),
+    });
+
     isLoading = true;
     streamingContent = '';
 
@@ -358,7 +344,7 @@
       if (useStreaming && canStream()) {
         await handleStreamingResponse(userMessage);
       } else {
-        await handleNonStreamingResponse(userMessage);
+        await handleNonStreamingResponse(userMessage, messageId);
       }
     } catch (error) {
       handleMessageError(error);
@@ -402,7 +388,7 @@
   />
 {/if}
 
-<div class="flex flex-col h-full bg-surface-50 rounded-base">
+<div class="flex flex-col flex-1 bg-surface-50 rounded-base">
   <!-- Header -->
   <div class="flex items-center justify-between gap-2 p-6 border-b-2 border-black bg-gradient-primary flex-shrink-0">
     <div class="flex items-center gap-3">
@@ -568,12 +554,9 @@
               • {msg.timestamp.toLocaleTimeString()}
               {#if msg.debugPayload}
                 <button
-                  onclick={() => {
-                    selectedDebugIndex = idx;
-                    openDebugSidebar();
-                  }}
+                  onclick={() => { selectedDebugIndex = idx; openDebugSidebar(); }}
                   class="ml-1 inline-flex items-center gap-0.5 text-primary-600 hover:text-primary-800 font-bold"
-                  title="View request/response"
+                  title={msg.role === 'user' ? 'View request' : 'View response'}
                 >
                   <Bug class="w-3 h-3" />
                 </button>
@@ -603,7 +586,7 @@
   </div>
 
   <!-- Input -->
-  <div class="p-4 border-t-2 border-black bg-surface-100 flex-shrink-0">
+  <div class="p-4 border-t-2 border-black bg-surface-100 rounded-b-base">
     <div class="flex gap-2">
       <textarea
         bind:value={message}

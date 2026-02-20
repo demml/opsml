@@ -2,22 +2,10 @@
   import { onMount, onDestroy } from 'svelte';
   import DebugPayloadContent from './DebugPayloadContent.svelte';
   import { X, Bug } from 'lucide-svelte';
+  import type { DebugMessage } from './types';
 
-  interface DebugPayload {
-    request: unknown;
-    response: unknown;
-    timestamp: Date;
-  }
 
-  interface DebugMessage {
-    index: number;
-    role: 'user' | 'agent' | 'system';
-    content: string;
-    skillName?: string;
-    timestamp: Date;
-    debugPayload: DebugPayload;
-  }
-
+  
   let {
     debugMessages,
     selectedIndex,
@@ -39,9 +27,11 @@
     }, 20);
   }
 
-  const selectedMessage = $derived(
-    debugMessages.find(m => m.index === selectedIndex) ?? debugMessages[debugMessages.length - 1]
-  );
+  const selectedEntry = $derived.by(() => {
+    const idx = debugMessages.findIndex(m => m.index === selectedIndex);
+    const i = idx === -1 ? debugMessages.length - 1 : idx;
+    return { message: debugMessages[i] };
+  });
 
   onMount(() => {
     document.body.style.overflow = 'hidden';
@@ -74,7 +64,7 @@
       <Bug class="w-5 h-5 text-primary-950" />
       <h2 class="text-lg font-bold text-primary-950">Request & Response Debug</h2>
       <span class="badge bg-primary-100 text-primary-900 border-black border-1 shadow-small">
-        {debugMessages.length} {debugMessages.length === 1 ? 'exchange' : 'exchanges'}
+        {debugMessages.length} {debugMessages.length === 1 ? 'message' : 'messages'}
       </span>
     </div>
     <button
@@ -98,15 +88,18 @@
       <div class="flex-1 overflow-auto">
         {#each debugMessages as debugMsg, i}
           {@const isSelected = debugMsg.index === selectedIndex}
+          {@const isUser = debugMsg.role === 'user'}
           <button
-            class="w-full text-left px-3 py-3 border-b border-gray-200 transition-colors hover:bg-primary-50 cursor-pointer border-l-4 {isSelected ? 'bg-primary-100 border-l-primary-500' : 'border-l-transparent'}"
+            class="w-full text-left px-3 py-3 border-b border-gray-200 transition-colors cursor-pointer border-l-4 {isSelected ? (isUser ? 'bg-primary-100 border-l-primary-500' : 'bg-secondary-100 border-l-secondary-500') : 'border-l-transparent hover:bg-surface-200'}"
             onclick={() => onSelectIndex(debugMsg.index)}
           >
             <div class="flex items-center gap-2 mb-1">
-              <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded {debugMsg.role === 'user' ? 'bg-tertiary-100 text-tertiary-900' : 'bg-secondary-100 text-secondary-900'}">
-                {debugMsg.role}
+              <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded {isUser ? 'bg-primary-100 text-primary-900 border border-primary-800' : 'bg-secondary-100 text-secondary-900 border border-secondary-800'}">
+                {isUser ? 'User' : 'Agent'}
               </span>
-              <span class="text-[10px] font-mono text-gray-500">#{i + 1}</span>
+              {#if debugMsg.messageId}
+                <span class="text-[10px] font-mono text-gray-500">{debugMsg.messageId.slice(0, 8)}</span>
+              {/if}
             </div>
             <p class="text-xs text-gray-700 truncate">
               {debugMsg.content.length > 36 ? debugMsg.content.slice(0, 36) + '…' : debugMsg.content}
@@ -124,11 +117,11 @@
 
     <!-- Right: Detail View -->
     <div class="flex-1 min-w-0 overflow-hidden">
-      {#if selectedMessage}
+      {#if selectedEntry.message}
         <DebugPayloadContent
-          payload={selectedMessage.debugPayload}
-          skillName={selectedMessage.skillName}
-          messageIndex={selectedMessage.index}
+          payload={selectedEntry.message.debugPayload}
+          role={selectedEntry.message.role}
+          skillName={selectedEntry.message.skillName}
         />
       {:else}
         <div class="flex items-center justify-center h-full text-gray-500 p-4 text-center">

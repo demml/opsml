@@ -44,6 +44,9 @@ export interface InvokeSkillOptions {
   /** Task description or prompt */
   task: string;
 
+  /** Pre-generated message ID to associate this exchange */
+  messageId?: string;
+
   /** Input data (text, image URL, audio URL, etc.) or array of message parts */
   input?: unknown;
 
@@ -311,8 +314,9 @@ export class AgentClient {
     // Build message parts based on input type and skill capabilities
     const messageParts = this.buildMessageParts(task, input, skill);
 
-    // Build JSON-RPC 2.0 request for A2A protocol
-    const messageId = crypto.randomUUID().replace(/-/g, "");
+    // Use caller-supplied messageId if provided, otherwise generate one
+    const messageId =
+      options.messageId ?? crypto.randomUUID().replace(/-/g, "");
     const requestId = crypto.randomUUID();
 
     // Merge context with messageId and requestId for backend access
