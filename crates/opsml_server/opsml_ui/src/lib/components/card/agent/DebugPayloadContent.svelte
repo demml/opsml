@@ -2,27 +2,23 @@
   import { Info, Send, MessageCircle, Clock, CheckCircle, AlertCircle } from 'lucide-svelte';
   import Pill from '$lib/components/utils/Pill.svelte';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
-  import type { A2AResponse, A2ATask } from './types';
+  import type { A2AResponse, A2ATask, DebugPayload } from './types';
   import { isA2AResponse, isA2ATask } from './types';
 
-  interface DebugPayload {
-    request: unknown;
-    response: unknown;
-    timestamp: Date;
-  }
+ 
 
   let {
     payload,
+    role,
     skillName,
-    messageIndex,
   }: {
     payload: DebugPayload;
+    role: 'user' | 'agent' | 'system';
     skillName?: string;
-    messageIndex: number;
   } = $props();
 
-  const requestJson = $derived(JSON.stringify(payload.request, null, 2));
-  const responseJson = $derived(JSON.stringify(payload.response, null, 2));
+  const requestJson = $derived(payload.request ? JSON.stringify(payload.request, null, 2) : null);
+  const responseJson = $derived(payload.response ? JSON.stringify(payload.response, null, 2) : null);
 
   // Extract A2A task info if available
   const a2aInfo = $derived.by(() => {
@@ -46,10 +42,17 @@
   <!-- Header -->
   <div class="p-3 border-b-2 border-black bg-surface-50">
     <div class="flex items-start gap-2">
-      <div class="w-1 h-14 rounded bg-primary-500"></div>
+      <div class="w-1 h-14 rounded {role === 'user' ? 'bg-primary-500' : 'bg-secondary-500'}"></div>
       <div class="flex-1 min-w-0">
-        <h3 class="font-bold text-gray-900">Debug Payload</h3>
-        <p class="text-sm text-gray-600">Message #{messageIndex + 1}</p>
+        <h3 class="font-bold text-gray-900">{role === 'user' ? 'Request' : 'Response'}</h3>
+        <p class="text-sm text-gray-600 flex items-center gap-1.5 flex-wrap">
+          <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold border {role === 'user' ? 'bg-primary-100 text-primary-900 border-primary-800' : 'bg-secondary-100 text-secondary-900 border-secondary-800'}">
+            {role === 'user' ? 'USER' : 'AGENT'}
+          </span>
+          {#if payload.messageId}
+            <span class="font-mono text-xs text-gray-500 bg-surface-200 px-1.5 py-0.5 rounded border border-gray-300">{payload.messageId}</span>
+          {/if}
+        </p>
         {#if skillName}
           <p class="text-xs font-mono text-gray-500 mt-1">{skillName}</p>
         {/if}
@@ -96,34 +99,38 @@
             />
           {/if}
           <Pill key="Artifacts" value={`${a2aInfo.artifactCount} artifact${a2aInfo.artifactCount !== 1 ? 's' : ''}`} textSize="text-xs"/>
-          <Pill key="History" value={`${a2aInfo.historyCount} message${a2aInfo.historyCount !== 1 ? 's' : ''}`} textSize="text-xs"/>
+          <Pill key="Task Turns" value={`${a2aInfo.historyCount} turn${a2aInfo.historyCount !== 1 ? 's' : ''}`} textSize="text-xs"/>
         </div>
       </section>
     {/if}
 
     <!-- Request Details -->
-    <section>
-      <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-        <Send color="#8059b6"/>
-        <header class="pl-2 text-primary-950 text-sm font-bold">Request</header>
-      </div>
+    {#if requestJson}
+      <section>
+        <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
+          <Send color="#8059b6"/>
+          <header class="pl-2 text-primary-950 text-sm font-bold">Request</header>
+        </div>
 
-      <div class="rounded-lg border-2 border-black bg-surface-50 overflow-y-scroll max-h-[600px] text-xs">
-        <CodeBlock code={requestJson} lang="json" />
-      </div>
-    </section>
+        <div class="rounded-lg border-2 border-black bg-surface-50 overflow-y-scroll max-h-[600px] text-xs">
+          <CodeBlock code={requestJson} lang="json" />
+        </div>
+      </section>
+    {/if}
 
     <!-- Response Details -->
-    <section>
-      <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-        <MessageCircle color="#8059b6"/>
-        <header class="pl-2 text-primary-950 text-sm font-bold">Response</header>
-      </div>
+    {#if responseJson}
+      <section>
+        <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
+          <MessageCircle color="#8059b6"/>
+          <header class="pl-2 text-primary-950 text-sm font-bold">Response</header>
+        </div>
 
-      <div class="rounded-lg border-2 border-black bg-surface-50 overflow-y-scroll max-h-[600px] text-xs">
-        <CodeBlock code={responseJson} lang="json" />
-      </div>
-    </section>
+        <div class="rounded-lg border-2 border-black bg-surface-50 overflow-y-scroll max-h-[600px] text-xs">
+          <CodeBlock code={responseJson} lang="json" />
+        </div>
+      </section>
+    {/if}
 
   </div>
 </div>
