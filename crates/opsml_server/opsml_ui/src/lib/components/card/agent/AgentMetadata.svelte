@@ -17,7 +17,7 @@
   let useCardContent = $state('');
 
   onMount(() => {
-    useCardContent = `from opsml import CardRegistry
+    useCardContent = `from pyshipt_opsml import CardRegistry
 
 # load the agent service card
 registry = CardRegistry('agent')

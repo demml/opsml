@@ -87,7 +87,7 @@ impl CardLogicTrait for CardLogicSqliteClient {
         content_hash: &[u8],
     ) -> Result<Option<CardArgs>, SqlError> {
         let query = format!(
-            "SELECT space, name, version, uid FROM {table} WHERE content_hash = ? LIMIT 1",
+            "SELECT space, name, version, uid FROM {table} WHERE content_hash = ? ORDER BY created_at DESC LIMIT 1",
             table = table
         );
 

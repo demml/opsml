@@ -6,9 +6,9 @@
   import AgentSkills from './AgentSkills.svelte';
   import AgentInterfaces from './AgentInterfaces.svelte';
   import AgentCards from './AgentCards.svelte';
+  import EnhancedAgentPlayground from './EnhancedAgentPlayground.svelte';
   import { Activity, ExternalLink } from 'lucide-svelte';
-  import { goto } from '$app/navigation';
-  import { getRegistryFromString, RegistryType } from '$lib/utils';
+  import DeploymentConfig from '../service/DeploymentConfig.svelte';
 
   let { data } = $props();
   let service: ServiceCard = data.metadata;

@@ -1,3 +1,44 @@
+import type { SendMessageRequest, SendMessageResponse } from "./a2a-types";
+
+// Re-export A2A protocol types from the canonical mapping
+export type {
+  Part,
+  Message,
+  MessageRole,
+  Artifact,
+  TaskState,
+  TaskStatus,
+  Task,
+  AuthenticationInfo,
+  PushNotificationConfig,
+  TaskPushNotificationConfig,
+  SendMessageConfiguration,
+  SendMessageRequest,
+  SendMessageResponse,
+  TaskStatusUpdateEvent,
+  TaskArtifactUpdateEvent,
+  StreamResponse,
+  GetTaskRequest,
+  CancelTaskRequest,
+  SubscribeToTaskRequest,
+  ListTasksRequest,
+  ListTasksResponse,
+  Struct,
+  Value,
+  Timestamp,
+} from "./a2a-types";
+
+export {
+  isTask,
+  isMessage,
+  isSendMessageResponse,
+  isStreamResponse,
+  extractTextFromTask,
+  buildUserMessage,
+  isTaskTerminal,
+  isTaskInterrupted,
+} from "./a2a-types";
+
 export interface AgentExtension {
   description?: string;
   params?: Record<string, unknown>; // Value in Rust -> arbitrary JSON object
@@ -134,8 +175,8 @@ export interface AgentSkill {
 }
 
 export type SkillFormat =
-  | { format: "standard"; standard: AgentSkillStandard }
-  | { format: "a2a"; a2a: AgentSkill };
+  | (AgentSkillStandard & { format: "standard" })
+  | (AgentSkill & { format: "a2a" });
 
 export interface AgentSpec {
   capabilities: AgentCapabilities;
@@ -152,4 +193,35 @@ export interface AgentSpec {
   skills: SkillFormat[];
   supportedInterfaces: AgentInterface[];
   version: string;
+}
+
+// UI-specific debug / chat types
+
+export interface DebugPayload {
+  messageId?: string;
+  request?: SendMessageRequest;
+  response?: SendMessageResponse;
+  timestamp: Date;
+}
+
+export interface DebugMessage {
+  index: number;
+  messageId?: string;
+  role: ChatRole;
+  content: string;
+  skillName?: string;
+  timestamp: Date;
+  debugPayload: DebugPayload;
+}
+
+/** Display role used in the chat UI (distinct from the A2A wire protocol role). */
+export type ChatRole = "user" | "agent" | "system";
+
+export interface ChatMessage {
+  role: ChatRole;
+  content: string;
+  timestamp: Date;
+  skillName?: string;
+  messageId?: string;
+  debugPayload?: DebugPayload;
 }

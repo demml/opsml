@@ -22,6 +22,7 @@ const PUBLIC_ROUTES = [
   "/",
 ];
 
+// The handle function runs on every request to the server. We use it to check for a valid JWT token in cookies and redirect to login if not authenticated.
 export const handle: Handle = async ({ event, resolve }) => {
   logger.debug(`Handling request for: ${event.url.pathname}`);
 
@@ -35,12 +36,13 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
   }
   logger.debug(
-    `Request for ${event.url.pathname} passed authentication check.`
+    `Request for ${event.url.pathname} passed authentication check.`,
   );
 
   return await resolve(event);
 };
 
+// For outgoing requests from the server (e.g. API calls), we need to add the JWT token to the Authorization header
 export const handleFetch: HandleFetch = async ({ request, event, fetch }) => {
   const token = event.cookies.get("jwt_token");
 
@@ -50,5 +52,24 @@ export const handleFetch: HandleFetch = async ({ request, event, fetch }) => {
     request.headers.set("Authorization", `Bearer ${token}`);
   }
 
-  return fetch(request);
+  const response = await fetch(request);
+
+  // If backend middleware refreshed the token, it will be in the Authorization header
+  const newToken = response.headers.get("Authorization");
+  if (newToken?.startsWith("Bearer ")) {
+    const refreshedToken = newToken.replace("Bearer ", "");
+    // Update the cookie with the new token
+    event.cookies.set("jwt_token", refreshedToken, {
+      httpOnly: true,
+      secure:
+        process.env.APP_ENV === "production" ||
+        process.env.FORCE_HTTPS === "true",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60,
+    });
+    logger.debug("Token refreshed automatically by backend middleware");
+  }
+
+  return response;
 };

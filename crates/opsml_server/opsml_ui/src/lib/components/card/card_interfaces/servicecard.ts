@@ -53,9 +53,10 @@ export interface DeploymentConfig {
   environment: string;
   provider?: string;
   location?: string[];
-  endpoints: string[];
+  urls: string[];
   resources?: Resources;
   links?: Record<string, string>;
+  healthcheck?: string;
 }
 
 export interface ServiceMetadata {
