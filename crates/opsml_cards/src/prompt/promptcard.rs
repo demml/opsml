@@ -252,16 +252,15 @@ impl PromptCard {
     /// * `tasks` - List of tasks (LLMJudgeTask or AssertionTask)
     /// # Returns
     ///
-    #[pyo3(signature = (alias, config, tasks))]
+    #[pyo3(signature = (alias, tasks, config=None))]
     pub fn create_eval_profile(
         &mut self,
         alias: String,
-        config: GenAIEvalConfig,
         tasks: &Bound<'_, PyList>,
+        config: Option<GenAIEvalConfig>,
     ) -> Result<(), CardError> {
         debug!("Creating eval profile");
         self.eval_profile = Some(GenAIEvalProfile::new_py(tasks, Some(config), Some(alias))?);
-
         Ok(())
     }
 
@@ -515,7 +514,7 @@ impl PromptCard {
             .metadata
             .drift_profile_uri_map
             .as_ref()
-            .ok_or(CardError::DriftProfileNotFoundError)?;
+            .ok_or(CardError::DriftProfileNotFoundInMap)?;
 
         for (alias, drift_profile_uri) in map {
             debug!(filepath = ?drift_profile_uri.uri, tmp_path = ?path, "Loading drift profile for alias: {}", alias);
