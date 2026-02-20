@@ -255,3 +255,31 @@ export function extractTextFromA2ATask(task: A2ATask): string {
 
   return textParts.join("\n\n");
 }
+
+export interface DebugPayload {
+  messageId?: string;
+  request?: unknown;
+  response?: unknown;
+  timestamp: Date;
+}
+
+export interface DebugMessage {
+  index: number;
+  messageId?: string;
+  role: "user" | "agent" | "system";
+  content: string;
+  skillName?: string;
+  timestamp: Date;
+  debugPayload: DebugPayload;
+}
+
+export type MessageRole = "user" | "agent" | "system";
+
+export interface ChatMessage {
+  role: MessageRole;
+  content: string; // Clean display content
+  timestamp: Date;
+  skillName?: string;
+  messageId?: string;
+  debugPayload?: DebugPayload; // Full request/response for debugging
+}
