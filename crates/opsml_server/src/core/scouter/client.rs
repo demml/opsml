@@ -109,14 +109,20 @@ impl ScouterApiClient {
     }
 
     async fn check_and_enable_service(mut self) -> Result<Self> {
-        let healthcheck = self.healthcheck(&self.bootstrap_token).await?;
-        self.enabled = healthcheck.status().is_success();
-
-        if !self.enabled {
-            error!(
-                "Scouter is configured but healthcheck failed with status: {}",
-                healthcheck.status()
-            );
+        match self.healthcheck(&self.bootstrap_token).await {
+            Ok(healthcheck) => {
+                self.enabled = healthcheck.status().is_success();
+                if !self.enabled {
+                    error!(
+                        "Scouter is configured but healthcheck failed with status: {}",
+                        healthcheck.status()
+                    );
+                }
+            }
+            Err(e) => {
+                error!("Scouter healthcheck request failed (Scouter may be down): {e}");
+                self.enabled = false;
+            }
         }
 
         Ok(self)

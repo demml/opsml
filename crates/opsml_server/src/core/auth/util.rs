@@ -91,34 +91,36 @@ async fn create_user(
 
     info!("User {} created successfully", user.username);
 
-    // pass to scouter if enabled
+    // pass to scouter if enabled — non-fatal: SSO login proceeds even if Scouter is unreachable
     if state.scouter_client.enabled {
-        let exchange_token = state
+        match state
             .auth_manager
             .exchange_token_for_scouter(&new_user)
             .await
-            .map_err(|e| {
-                error!("Failed to exchange token from permissions: {e}");
-                internal_server_error(e, "Failed to exchange token from permissions", None)
-            })?;
-
-        state
-            .scouter_client
-            .request(
-                ScouterRoutes::Users,
-                RequestType::Post,
-                Some(serde_json::json!(&new_user)),
-                None,
-                None,
-                &exchange_token,
-            )
-            .await
-            .map_err(|e| {
-                error!("Failed to create user in scouter: {e}");
-                internal_server_error(e, "Failed to create user in scouter", None)
-            })?;
+        {
+            Ok(exchange_token) => {
+                if let Err(e) = state
+                    .scouter_client
+                    .request(
+                        ScouterRoutes::Users,
+                        RequestType::Post,
+                        Some(serde_json::json!(&new_user)),
+                        None,
+                        None,
+                        &exchange_token,
+                    )
+                    .await
+                {
+                    error!("Failed to sync SSO user to Scouter (non-fatal): {e}");
+                } else {
+                    info!("User {} synced to scouter", user.username);
+                }
+            }
+            Err(e) => {
+                error!("Failed to get exchange token for Scouter sync (non-fatal): {e}");
+            }
+        }
     }
-    info!("User {} created in scouter", user.username);
     // return the user
     Ok(new_user)
 }

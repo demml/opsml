@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { GenAIEvalConfig, GenAIEvalProfile, GenAIEvalRecordPaginationResponse, GenAIEvalWorkflowPaginationResponse } from '../types';
-  import type { MonitoringPageData } from '../../dashboard/utils';
+  import type { GenAIMonitoringPageData } from '../../dashboard/utils';
   import type { RecordCursor } from '../../types';
   import type { BinnedMetrics } from '../../custom/types';
   import { DriftType } from '$lib/components/scouter/types';
@@ -21,20 +21,17 @@
     onRecordPageChange,
     onWorkflowPageChange
   }: {
-    monitoringData: Extract<MonitoringPageData, { status: 'success' }>;
+    monitoringData: Extract<GenAIMonitoringPageData, { status: 'success' }>;
     onRecordPageChange: (cursor: RecordCursor, direction: string) => Promise<void>;
     onWorkflowPageChange: (cursor: RecordCursor, direction: string) => Promise<void>;
   } = $props();
 
   // -- Derived Data from Parent --
-  const profile = $derived(monitoringData.profiles[DriftType.GenAI].profile.GenAI as GenAIEvalProfile);
+  const profile = $derived(monitoringData.profile as GenAIEvalProfile);
   const config = $derived(profile.config as GenAIEvalConfig);
 
-  const genAIData = $derived(monitoringData.selectedData.genAIData);
-
-
-  const records = $derived(genAIData?.records ?? { items: [], has_next: false, has_prev: false });
-  const workflows = $derived(genAIData?.workflows ?? { items: [], has_next: false, has_prev: false });
+  const records = $derived(monitoringData.selectedData.records ?? { items: [], has_next: false, has_prev: false });
+  const workflows = $derived(monitoringData.selectedData.workflows ?? { items: [], has_next: false, has_prev: false });
 
   const metrics = $derived(monitoringData.selectedData.metrics as { task: BinnedMetrics; workflow: BinnedMetrics });
   const taskMetrics = $derived(metrics?.task);
@@ -53,10 +50,6 @@
     }
   });
 
-
-  function handleRangeChange(newRange: any) {
-     monitoringData.selectedTimeRange = newRange;
-  }
 
   const metricViews = ['task', 'workflow'] as const;
 </script>
@@ -106,7 +99,7 @@
           config={config}
           alertConfig={config.alert_config}
           profile={profile}
-          profileUri={monitoringData.profiles[DriftType.GenAI].profile_uri}
+          profileUri={monitoringData.profileUri}
           uid={config.uid}
           registry={monitoringData.registryType}
         />

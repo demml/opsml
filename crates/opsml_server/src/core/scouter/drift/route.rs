@@ -15,6 +15,7 @@ use opsml_types::api::RequestType;
 
 use tracing::debug;
 
+use opsml_client::error::ApiClientError;
 use scouter_client::{BinnedMetrics, BinnedPsiFeatureMetrics, DriftRequest, SpcDriftFeatures};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
@@ -180,13 +181,30 @@ pub async fn get_genai_task_metrics(
             None,
             &exchange_token,
         )
-        .await
-        .map_err(|e| {
-            error!("Failed to get genai task metrics: {e}");
-            internal_server_error(e, "Failed to get genai task metrics", None)
-        })?;
+        .await;
 
-    // extract body into SpcDriftFeatures
+    let response = match response {
+        Ok(resp) => resp,
+        Err(e) => {
+            if let ApiClientError::RequestError(ref req_err) = e {
+                if req_err.status() == Some(StatusCode::NOT_FOUND) {
+                    error!("GenAI task metrics not found: {e}");
+                    return Err(internal_server_error(
+                        e,
+                        "GenAI task metrics not found",
+                        Some(StatusCode::NOT_FOUND),
+                    ));
+                }
+            }
+
+            error!("Failed to get genai task metrics: {e}");
+            return Err(internal_server_error(
+                e,
+                "Failed to get genai task metrics",
+                None,
+            ));
+        }
+    };
 
     let body = response.json::<BinnedMetrics>().await.map_err(|e| {
         error!("Failed to parse genai task metrics: {e}");
@@ -224,11 +242,30 @@ pub async fn get_genai_workflow_metrics(
             None,
             &exchange_token,
         )
-        .await
-        .map_err(|e| {
+        .await;
+
+    let response = match response {
+        Ok(resp) => resp,
+        Err(e) => {
+            if let ApiClientError::RequestError(ref req_err) = e {
+                if req_err.status() == Some(StatusCode::NOT_FOUND) {
+                    error!("GenAI workflow metrics not found: {e}");
+                    return Err(internal_server_error(
+                        e,
+                        "GenAI workflow metrics not found",
+                        Some(StatusCode::NOT_FOUND),
+                    ));
+                }
+            }
+
             error!("Failed to get genai workflow metrics: {e}");
-            internal_server_error(e, "Failed to get genai workflow metrics", None)
-        })?;
+            return Err(internal_server_error(
+                e,
+                "Failed to get genai workflow metrics",
+                None,
+            ));
+        }
+    };
 
     // extract body into SpcDriftFeatures
 

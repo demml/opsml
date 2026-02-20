@@ -1,32 +1,33 @@
 export const ssr = false;
 
 import type { PageLoad } from "./$types";
-import { DriftType, driftTypeFromString } from "$lib/components/scouter/types";
-import { error } from "@sveltejs/kit";
+import { DriftType } from "$lib/components/scouter/types";
 import {
-  loadInitialData,
   getTimeRange,
-  type MonitoringPageData,
+  loadGenAIData,
+  classifyError,
+  type GenAIMonitoringPageData,
+  type MonitoringErrorKind,
 } from "$lib/components/scouter/dashboard/utils";
 
 export const load: PageLoad = async ({ parent, fetch }) => {
   const parentData = await parent();
-  const { registryType, metadata, profiles, driftTypes } = parentData;
+  const { registryType, metadata, eval_profile } = parentData;
 
   const timeRange = getTimeRange();
 
-  try {
-    const selectedData = await loadInitialData(
-      fetch,
-      [DriftType.GenAI],
-      profiles,
-      timeRange
-    );
+  console.log("GenAI page");
 
-    const monitoringData: Extract<MonitoringPageData, { status: "success" }> = {
+  try {
+    const selectedData = await loadGenAIData(fetch, eval_profile, timeRange);
+
+    const monitoringData: Extract<
+      GenAIMonitoringPageData,
+      { status: "success" }
+    > = {
       status: "success",
-      driftTypes,
-      profiles,
+      profile: eval_profile,
+      profileUri: "",
       selectedData,
       uid: metadata.uid,
       registryType,
@@ -44,14 +45,15 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       err instanceof Error ? err.message : "Unknown monitoring error";
     console.error(`[Monitoring Load Error]: ${message}`, err);
 
-    const errorData: Extract<MonitoringPageData, { status: "error" }> = {
+    const errorKind: MonitoringErrorKind = classifyError(err);
+
+    const errorData: Extract<GenAIMonitoringPageData, { status: "error" }> = {
       status: "error",
       uid: metadata.uid,
       registryType,
       selectedTimeRange: timeRange,
       errorMsg: message,
-      driftTypes: [],
-      profiles: {},
+      errorKind,
     };
 
     return {

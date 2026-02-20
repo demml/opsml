@@ -10,7 +10,8 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
     space,
     uid,
     time_range,
-    max_data_points
+    max_data_points,
   );
+
   return json(response);
 };

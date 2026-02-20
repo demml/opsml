@@ -1,32 +1,34 @@
 export const ssr = false;
 
 import type { PageLoad } from "./$types";
-import { DriftType, driftTypeFromString } from "$lib/components/scouter/types";
-import { error } from "@sveltejs/kit";
+import { DriftType } from "$lib/components/scouter/types";
 import {
-  loadInitialData,
   getTimeRange,
-  type MonitoringPageData,
+  loadGenAIData,
+  type GenAIMonitoringPageData,
 } from "$lib/components/scouter/dashboard/utils";
+import type { GenAIEvalProfile } from "$lib/components/scouter/genai/types";
 
 export const load: PageLoad = async ({ parent, fetch }) => {
   const parentData = await parent();
-  const { registryType, metadata, profiles, driftTypes } = parentData;
+  const { registryType, metadata, profiles } = parentData;
 
   const timeRange = getTimeRange();
 
   try {
-    const selectedData = await loadInitialData(
-      fetch,
-      [DriftType.GenAI],
-      profiles,
-      timeRange
-    );
+    const genAIProfileEntry = profiles[DriftType.GenAI];
+    const eval_profile = genAIProfileEntry.profile.GenAI as GenAIEvalProfile;
+    const profileUri = genAIProfileEntry.profile_uri ?? "";
 
-    const monitoringData: Extract<MonitoringPageData, { status: "success" }> = {
+    const selectedData = await loadGenAIData(fetch, eval_profile, timeRange);
+
+    const monitoringData: Extract<
+      GenAIMonitoringPageData,
+      { status: "success" }
+    > = {
       status: "success",
-      driftTypes,
-      profiles,
+      profile: eval_profile,
+      profileUri,
       selectedData,
       uid: metadata.uid,
       registryType,
@@ -44,14 +46,12 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       err instanceof Error ? err.message : "Unknown monitoring error";
     console.error(`[Monitoring Load Error]: ${message}`, err);
 
-    const errorData: Extract<MonitoringPageData, { status: "error" }> = {
+    const errorData: Extract<GenAIMonitoringPageData, { status: "error" }> = {
       status: "error",
       uid: metadata.uid,
       registryType,
       selectedTimeRange: timeRange,
       errorMsg: message,
-      driftTypes: [],
-      profiles: {},
     };
 
     return {

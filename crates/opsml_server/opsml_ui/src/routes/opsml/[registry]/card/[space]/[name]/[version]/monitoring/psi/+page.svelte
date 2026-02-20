@@ -8,7 +8,6 @@
   import { getMaxDataPoints } from '$lib/utils';
   import { Loader2 } from 'lucide-svelte';
   import { DriftType } from '$lib/components/scouter/types';
-  import GenAIDashboard from '$lib/components/scouter/genai/dashboard/GenAIDashboard.svelte';
   import CustomDashboard from '$lib/components/scouter/custom/CustomDashboard.svelte';
   import PsiDashboard from '$lib/components/scouter/psi/PsiDashboard.svelte';
   import SpcDashboard from '$lib/components/scouter/spc/SpcDashboard.svelte';
@@ -58,32 +57,17 @@
     };
   });
 
-  async function performRefresh(
-    type: DriftType,
-    rCursor?: { cursor: RecordCursor; direction: string },
-    wCursor?: { cursor: RecordCursor; direction: string }
-  ) {
+  async function performRefresh(type: DriftType) {
     if (monitoringData.status !== 'success') return;
     
     isRefreshing = true;
     try {
-      await refreshMonitoringData(fetch, type, monitoringData, {
-        recordCursor: rCursor,
-        workflowCursor: wCursor,
-      });
+      await refreshMonitoringData(fetch, type, monitoringData);
     } catch (e) {
       console.error('Dashboard Refresh Failed', e);
     } finally {
       isRefreshing = false;
     }
-  }
-
-  async function handleRecordPageChange(cursor: RecordCursor, direction: string) {
-    await performRefresh(driftType, { cursor, direction }, undefined);
-  }
-
-  async function handleWorkflowPageChange(cursor: RecordCursor, direction: string) {
-    await performRefresh(driftType, undefined, { cursor, direction });
   }
 
   async function handleAlertPageChange(cursor: RecordCursor, direction: string) {
@@ -132,9 +116,7 @@
   />
 {:else}
   <div class="transition-opacity duration-200 {isRefreshing ? 'opacity-60 pointer-events-none grayscale-[0.5]' : ''}">
-    {#if driftType === DriftType.GenAI}
-      <GenAIDashboard bind:monitoringData onRecordPageChange={handleRecordPageChange} onWorkflowPageChange={handleWorkflowPageChange} />
-    {:else if driftType === DriftType.Custom}
+    {#if driftType === DriftType.Custom}
       <CustomDashboard bind:monitoringData onAlertPageChange={handleAlertPageChange} onUpdateAlert={updateAlert} />
     {:else if driftType === DriftType.Psi}
       <PsiDashboard bind:monitoringData onAlertPageChange={handleAlertPageChange} onUpdateAlert={updateAlert} />

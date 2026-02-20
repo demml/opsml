@@ -5,16 +5,20 @@ import type { UserResponse } from "$lib/components/user/types";
 import { userStore } from "$lib/components/user/user.svelte";
 
 export const load: LayoutLoad = async ({ fetch }) => {
-  const resp = await createInternalApiClient(fetch).get(ServerPaths.USER);
-  const user = (await resp.json()) as {
-    success: boolean;
-    user: UserResponse | null;
-  };
+  try {
+    const resp = await createInternalApiClient(fetch).get(ServerPaths.USER);
+    const user = (await resp.json()) as {
+      success: boolean;
+      user: UserResponse | null;
+    };
 
-  if (user.success) {
-    let userResponse = user.user as UserResponse;
-    userStore.fromUserResponse(userResponse);
+    if (user.success) {
+      const userResponse = user.user as UserResponse;
+      userStore.fromUserResponse(userResponse);
+    }
+
+    return { user };
+  } catch {
+    return { user: { success: false, user: null } };
   }
-
-  return { user };
 };
