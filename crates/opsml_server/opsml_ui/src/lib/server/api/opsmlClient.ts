@@ -111,7 +111,7 @@ export class OpsmlClient {
     const headers: Record<string, string> = {
       Authorization: `Bearer ${token}`,
     };
-    return this.request(path, { method: "POST", headers });
+    return this.request(path, { method: "GET", headers });
   }
 
   /**
@@ -153,7 +153,7 @@ export class OpsmlClient {
   async post(
     path: string,
     body: any,
-    additionalHeaders: Record<string, string> = {}
+    additionalHeaders: Record<string, string> = {},
   ): Promise<Response> {
     return this.request(path, {
       method: "POST",

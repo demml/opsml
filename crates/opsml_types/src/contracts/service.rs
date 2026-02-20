@@ -135,38 +135,58 @@ impl Resources {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[pyclass]
 pub struct DeploymentConfig {
+    /// The environment this deployment config applies to (e.g. "production", "staging", "dev")
     #[pyo3(get)]
     pub environment: String,
+
+    /// The provider to deploy to (e.g. "aws", "gcp", "azure", "local")
     #[pyo3(get)]
     pub provider: Option<String>,
+
+    /// The location/region to deploy to (e.g. ["us-east-1", "us-west-2"] for AWS)
     #[pyo3(get)]
     pub location: Option<Vec<String>>,
+
+    /// Base URLs where the service is deployed and accessible
+    /// Example: ["https://api.example.com", "https://api.example.com/v2"]
     #[pyo3(get)]
-    pub endpoints: Vec<String>,
+    #[serde(alias = "endpoints")]
+    pub urls: Vec<String>,
+
+    /// The resource requirements for this deployment config
     #[pyo3(get)]
     pub resources: Option<Resources>,
+
+    /// Additional links related to this deployment (e.g. monitoring dashboard, logs, etc.)
     #[pyo3(get)]
     pub links: Option<HashMap<String, String>>,
+
+    /// Health check endpoint path (relative to base URL)
+    /// Example: "/health" or "/api/v1/health"
+    #[pyo3(get)]
+    pub healthcheck: Option<String>,
 }
 #[pymethods]
 impl DeploymentConfig {
     #[new]
-    #[pyo3(signature = (environment, provider=None, location=None, endpoints=None, resources=None, links=None))]
+    #[pyo3(signature = (environment, provider=None, location=None, urls=None, resources=None, links=None, healthcheck=None))]
     pub fn new(
         environment: String,
         provider: Option<String>,
         location: Option<Vec<String>>,
-        endpoints: Option<Vec<String>>,
+        urls: Option<Vec<String>>,
         resources: Option<Resources>,
         links: Option<HashMap<String, String>>,
+        healthcheck: Option<String>,
     ) -> Self {
         DeploymentConfig {
             environment,
             provider,
             location,
-            endpoints: endpoints.unwrap_or_default(),
+            urls: urls.unwrap_or_default(),
             resources,
             links,
+            healthcheck,
         }
     }
 }

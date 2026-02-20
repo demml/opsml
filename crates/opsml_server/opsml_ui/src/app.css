@@ -67,6 +67,23 @@
     @apply transition-all hover:translate-x-[-4px] hover:translate-y-[-4px] hover:shadow;
 }
 
+/* Click-based button press effects */
+.shadow-click {
+    @apply transition-all active:translate-x-[4px] active:translate-y-[4px] active:shadow-none;
+}
+
+.shadow-click-small {
+    @apply transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-none;
+}
+
+.reverse-shadow-click-small {
+    @apply transition-all active:translate-x-[-2px] active:translate-y-[-2px] active:shadow-small;
+}
+
+.reverse-shadow-click {
+    @apply transition-all active:translate-x-[-4px] active:translate-y-[-4px] active:shadow;
+}
+
 
 ::selection {
     @apply bg-secondary-100; /* Replace with your desired color */

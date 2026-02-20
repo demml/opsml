@@ -3002,19 +3002,21 @@ class DeploymentConfig:
     def __init__(
         self,
         environment: str,
-        endpoints: List[str],
+        urls: List[str],
         provider: Optional[str] = None,
         location: Optional[List[str]] = None,
         resources: Optional[Resources] = None,
         links: Optional[Dict[str, str]] = None,
+        healthcheck: Optional[str] = None,
     ):
         """Initialize deployment configuration.
 
         Args:
             environment:
                 Deployment environment (e.g., 'development', 'production')
-            endpoints:
-                List of endpoint URLs for the deployed service
+            urls:
+                List of service endpoint URLs for this deployment
+                E.g., ['https://api.example.com/v1', 'https://api-backup.example.com/v1']
             provider:
                 Cloud provider (e.g., 'gcp', 'aws'). Defaults to None
             location:
@@ -3023,9 +3025,9 @@ class DeploymentConfig:
                 Resource requirements for deployment. Defaults to None
             links:
                 Related links (e.g., logging, monitoring URLs). Defaults to None
+            healthcheck:
+                Health check endpoint path (relative to base URL). Defaults to None
 
-        Raises:
-            ValueError: If endpoints list is empty
         """
 
     @property

@@ -279,7 +279,7 @@ Here is the full specification for the `opsmlspec.yaml` file:
     - environment: production     # (string, required)
         provider: aws               # (string, optional)
         location: [us-east-1]       # (list[string], optional)
-        endpoints: ["https://api.example.com"]  # (list[string], required)
+        urls: ["https://api.example.com"]  # (list[string], required)
         resources:                  # (object, optional)
         cpu: 4                    # (integer, required)
         memory: 16Gi              # (string, required)

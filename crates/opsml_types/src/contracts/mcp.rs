@@ -78,7 +78,7 @@ pub struct McpServer {
     #[pyo3(get)]
     pub environment: String,
     #[pyo3(get)]
-    pub endpoints: Vec<String>,
+    pub urls: Vec<String>,
     #[pyo3(get)]
     pub tags: Vec<String>,
     #[pyo3(get)]

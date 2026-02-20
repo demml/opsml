@@ -35,8 +35,8 @@ build.postgres:
 
 .PHONY: test.sql.postgres
 test.sql.postgres: build.postgres
-	cargo test -p opsml-sql test_postgres -- --nocapture --test-threads=1
-	docker compose down --volumes
+	cargo test -p opsml-sql test_postgres_client -- --nocapture --test-threads=1
+	
 
 .PHONY: build.mysql
 build.mysql:
