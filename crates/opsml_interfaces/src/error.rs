@@ -403,7 +403,9 @@ pub enum ModelInterfaceError {
     #[error("Failed to downcast Python object: {0}")]
     DowncastError(String),
 
-    #[error("Drift profile argument must be a dictionary of alias with drift profile, list of drift profiles with aliases or a single drift profile with and alias")]
+    #[error(
+        "Drift profile argument must be a dictionary of alias with drift profile, list of drift profiles with aliases or a single drift profile with and alias"
+    )]
     DriftProfileNotFound,
 
     #[error("Drift profile not found in map")]

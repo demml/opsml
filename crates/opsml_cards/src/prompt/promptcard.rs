@@ -260,7 +260,7 @@ impl PromptCard {
         config: Option<GenAIEvalConfig>,
     ) -> Result<(), CardError> {
         debug!("Creating eval profile");
-        self.eval_profile = Some(GenAIEvalProfile::new_py(tasks, Some(config), Some(alias))?);
+        self.eval_profile = Some(GenAIEvalProfile::new_py(tasks, config, Some(alias))?);
         Ok(())
     }
 
