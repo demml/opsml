@@ -1,7 +1,7 @@
 <script lang="ts">
   import { MessageSquare, Send, Loader2, Zap, AlertCircle, CheckCircle, X, Bug } from 'lucide-svelte';
-  import type { AgentSpec, DebugPayload, ChatMessage, MessageRole } from "./types";
-  import { isA2ATask, isA2AResponse, extractTextFromA2ATask, } from "./types";
+  import type { AgentSpec, DebugPayload, ChatMessage, SendMessageResponse } from "./types";
+  import { extractTextFromTask, isMessage, isTask } from "./types";
   import { inferAgentContract, formatExamplesForDisplay, inferHealthEndpoint } from './agentInference';
   import type { AgentContract, AgentSkillContract } from './agentInference';
   import { createAgentClient } from './agentClient';
@@ -56,14 +56,6 @@
   let isHealthy = $state<boolean>(false);
   let hasCheckedHealth = $state(false);
 
-  interface DebugMessage {
-    index: number;
-    role: MessageRole;
-    content: string;
-    skillName?: string;
-    timestamp: Date;
-    debugPayload: DebugPayload;
-  }
 
   const debugMessages = $derived(
     messages
@@ -229,86 +221,52 @@
     }
   }
 
-  function extractCleanResponse(response: unknown): string {
-    // Type guard: ensure response is A2AResponse
-    if (!isA2AResponse(response)) {
-      return typeof response === 'string' ? response : JSON.stringify(response, null, 2);
+  function extractCleanResponse(response: SendMessageResponse): string {
+    if (isTask(response)) {
+      const extracted = extractTextFromTask(response);
+      if (extracted) return extracted;
     }
 
-    // Handle failed responses
-    if (response.status === 'failed') {
-      return response.error?.message || 'Request failed';
+    if (isMessage(response)) {
+      const text = response.parts
+        .filter((p) => p.text)
+        .map((p) => p.text!)
+        .join('\n\n');
+      if (text) return text;
     }
 
-    const result = response.result;
-
-    // Direct string response
-    if (typeof result === 'string') {
-      return result;
-    }
-
-    // Type-safe A2A Task extraction
-    if (isA2ATask(result)) {
-      const extracted = extractTextFromA2ATask(result);
-      if (extracted) {
-        return extracted;
-      }
-      // If no text found, show task status
-      if (result.status) {
-        return `Task ${result.status.state}: ${result.status.message || 'No message'}`;
-      }
-    }
-
-    // Legacy format: result.parts[] array (non-A2A)
-    if (typeof result === 'object' && result !== null && 'parts' in result && Array.isArray(result.parts)) {
-      const textParts = result.parts
-        .filter((part: any) => part.kind === 'text' && part.text)
-        .map((part: any) => part.text);
-      if (textParts.length > 0) {
-        return textParts.join('\n\n');
-      }
-    }
-
-    // Legacy format: result.message (non-A2A)
-    if (typeof result === 'object' && result !== null && 'message' in result) {
-      if (typeof result.message === 'string') {
-        return result.message;
-      }
-      if (typeof result.message === 'object' && result.message !== null && 'parts' in result.message && Array.isArray(result.message.parts)) {
-        const textParts = result.message.parts
-          .filter((part: any) => part.kind === 'text' && part.text)
-          .map((part: any) => part.text);
-        if (textParts.length > 0) {
-          return textParts.join('\n\n');
-        }
-      }
-    }
-
-    // Fallback
-    return JSON.stringify(result, null, 2);
+    return JSON.stringify(response, null, 2);
   }
 
   async function handleNonStreamingResponse(userMessage: string, messageId: string): Promise<void> {
     if (!client || !selectedSkill) return;
 
-    const response = await client.invokeSkill({
+    const sendRequest = client.buildSendMessageRequest({
       skill: selectedSkill,
       task: userMessage,
       messageId,
     });
 
-    if (response.status === 'failed' && response.error) {
-      const errorMsg = response.error.message;
-      lastError = errorMsg;
-      addSystemMessage(`❌ Error: ${errorMsg}`);
-    } else {
-      const cleanContent = extractCleanResponse(response);
-      addAgentMessage(cleanContent, {
-        messageId,
-        response: JSON.parse(JSON.stringify(response)),
-        timestamp: new Date(),
-      });
-    }
+    // Add user message with debug payload before sending the request, so it's included in the debug sidebar
+    addUserMessage(userMessage, {
+      messageId,
+      timestamp: new Date(),
+      request: sendRequest,
+    });
+
+    const response = await client.invokeSkillWithRequest(sendRequest, {
+      skill: selectedSkill,
+      task: userMessage,
+      messageId,
+    });
+
+    const cleanContent = extractCleanResponse(response);
+    addAgentMessage(cleanContent, {
+      messageId,
+      request: sendRequest,
+      response,
+      timestamp: new Date(),
+    });
   }
 
   function handleMessageError(error: unknown): void {
@@ -326,17 +284,6 @@
     lastError = null;
 
     const messageId = crypto.randomUUID().replace(/-/g, '');
-
-    addUserMessage(userMessage, {
-      messageId,
-      request: {
-        skill: selectedSkill!.name,
-        task: userMessage,
-        timestamp: new Date().toISOString(),
-      },
-      timestamp: new Date(),
-    });
-
     isLoading = true;
     streamingContent = '';
 

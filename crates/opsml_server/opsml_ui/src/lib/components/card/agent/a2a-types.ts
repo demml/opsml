@@ -1,0 +1,664 @@
+/**
+ * A2A Protocol v1 — TypeScript types
+ *
+ * Directly mapped from https://a2a-protocol.org/latest/spec/a2a.json
+ * Non-normative JSON Schema bundle extracted from proto definitions.
+ */
+
+// ---------------------------------------------------------------------------
+// Primitives
+// ---------------------------------------------------------------------------
+
+/** google.protobuf.Struct — arbitrary JSON object */
+export type Struct = Record<string, unknown>;
+
+/** google.protobuf.Value — any JSON value */
+export type Value = unknown;
+
+/** google.protobuf.Timestamp — ISO 8601 date-time string */
+export type Timestamp = string;
+
+// ---------------------------------------------------------------------------
+// Part
+// ---------------------------------------------------------------------------
+
+/**
+ * Container for a section of communication content.
+ * Parts can be purely textual, some sort of file (image, video, etc)
+ * or a structured data blob (i.e. JSON).
+ */
+export interface Part {
+  /** The string content of the `text` part. */
+  text?: string;
+
+  /** Arbitrary structured `data` as a JSON value. */
+  data?: Value;
+
+  /** The `raw` byte content of a file, base64-encoded. */
+  raw?: string;
+
+  /** A `url` pointing to the file's content. */
+  url?: string;
+
+  /** An optional `filename` for the file (e.g. "document.pdf"). */
+  filename?: string;
+
+  /** MIME type of the part content (e.g. "text/plain", "image/png"). */
+  mediaType?: string;
+
+  /** Optional metadata associated with this part. */
+  metadata?: Struct;
+}
+
+// ---------------------------------------------------------------------------
+// Role
+// ---------------------------------------------------------------------------
+
+export type MessageRole =
+  | "ROLE_UNSPECIFIED"
+  | "ROLE_USER"
+  | "ROLE_AGENT"
+  | "user"
+  | "agent";
+
+// ---------------------------------------------------------------------------
+// Message
+// ---------------------------------------------------------------------------
+
+/**
+ * One unit of communication between client and server.
+ * Can be associated with a context and/or a task.
+ */
+export interface Message {
+  /** Unique identifier (e.g. UUID) created by the message creator. */
+  messageId: string;
+
+  /** Identifies the sender of the message. */
+  role: MessageRole;
+
+  /** Parts is the container of the message content. */
+  parts: Part[];
+
+  /** Optional. The context id of the message. */
+  contextId?: string;
+
+  /** Optional. The task id of the message. */
+  taskId?: string;
+
+  /** A list of task IDs that this message references for additional context. */
+  referenceTaskIds?: string[];
+
+  /** The URIs of extensions present or contributed to this Message. */
+  extensions?: string[];
+
+  /** Optional metadata to provide along with the message. */
+  metadata?: Struct;
+}
+
+// ---------------------------------------------------------------------------
+// Artifact
+// ---------------------------------------------------------------------------
+
+/** Artifacts represent task outputs. */
+export interface Artifact {
+  /** Unique identifier (e.g. UUID) for the artifact. Must be unique within a task. */
+  artifactId: string;
+
+  /** The content of the artifact. Must contain at least one part. */
+  parts: Part[];
+
+  /** A human readable name for the artifact. */
+  name?: string;
+
+  /** Optional human readable description of the artifact. */
+  description?: string;
+
+  /** The URIs of extensions present or contributed to this Artifact. */
+  extensions?: string[];
+
+  /** Optional metadata included with the artifact. */
+  metadata?: Struct;
+}
+
+// ---------------------------------------------------------------------------
+// TaskState
+// ---------------------------------------------------------------------------
+
+export type TaskState =
+  | "TASK_STATE_UNSPECIFIED"
+  | "TASK_STATE_SUBMITTED"
+  | "TASK_STATE_WORKING"
+  | "TASK_STATE_COMPLETED"
+  | "TASK_STATE_FAILED"
+  | "TASK_STATE_CANCELED"
+  | "TASK_STATE_INPUT_REQUIRED"
+  | "TASK_STATE_REJECTED"
+  | "TASK_STATE_AUTH_REQUIRED";
+
+// ---------------------------------------------------------------------------
+// TaskStatus
+// ---------------------------------------------------------------------------
+
+/** Container for the status of a task. */
+export interface TaskStatus {
+  /** The current state of this task. */
+  state: TaskState;
+
+  /** A message associated with the status. */
+  message?: Message;
+
+  /** ISO 8601 timestamp when the status was recorded. */
+  timestamp?: Timestamp;
+}
+
+// ---------------------------------------------------------------------------
+// Task
+// ---------------------------------------------------------------------------
+
+/**
+ * Core unit of action for A2A.
+ * Has a current status; results are stored in artifacts.
+ * Multi-turn history is stored in history.
+ */
+export interface Task {
+  /** Unique identifier (e.g. UUID) for the task, generated by the server. */
+  id: string;
+
+  /** Unique identifier for the contextual collection of interactions. */
+  contextId?: string;
+
+  /** The current status of the Task. */
+  status?: TaskStatus;
+
+  /** A set of output artifacts for the Task. */
+  artifacts?: Artifact[];
+
+  /** The history of interactions from the Task. */
+  history?: Message[];
+
+  /** A key/value object to store custom metadata about a task. */
+  metadata?: Struct;
+}
+
+// ---------------------------------------------------------------------------
+// Push notifications
+// ---------------------------------------------------------------------------
+
+/** Authentication information for push notifications. */
+export interface AuthenticationInfo {
+  /** HTTP Authentication Scheme (e.g. "Bearer", "Basic"). */
+  scheme: string;
+
+  /** Push notification credentials (e.g. the token for Bearer). */
+  credentials?: string;
+}
+
+/** Configuration for setting up push notifications for task updates. */
+export interface PushNotificationConfig {
+  /** A unique identifier (e.g. UUID) for this push notification configuration. */
+  id?: string;
+
+  /** The URL where the notification should be sent. */
+  url: string;
+
+  /** A token unique for this task or session. */
+  token?: string;
+
+  /** Authentication information required to send the notification. */
+  authentication?: AuthenticationInfo;
+}
+
+/** Associates a push notification configuration with a specific task. */
+export interface TaskPushNotificationConfig {
+  /** The ID of the task this configuration is associated with. */
+  taskId: string;
+
+  /** Optional. Tenant ID. */
+  tenant?: string;
+
+  /** The push notification configuration details. */
+  pushNotificationConfig?: PushNotificationConfig;
+}
+
+// ---------------------------------------------------------------------------
+// SendMessage
+// ---------------------------------------------------------------------------
+
+/** Configuration of a SendMessage request. */
+export interface SendMessageConfiguration {
+  /** A list of media types the client is prepared to accept for response parts. */
+  acceptedOutputModes?: string[];
+
+  /**
+   * If `true`, the operation MUST wait until the task reaches a terminal state
+   * before returning. Default is `false`.
+   */
+  blocking?: boolean;
+
+  /**
+   * The maximum number of most recent messages from the task's history to
+   * retrieve in the response.
+   */
+  historyLength?: number;
+
+  /** Configuration for the agent to send push notifications for task updates. */
+  pushNotificationConfig?: PushNotificationConfig;
+}
+
+/** Request for the `SendMessage` method. */
+export interface SendMessageRequest {
+  /** The message to send to the agent. */
+  message: Message;
+
+  /** Configuration for the send request. */
+  configuration?: SendMessageConfiguration;
+
+  /** A flexible key-value map for passing additional context or parameters. */
+  metadata?: Struct;
+
+  /** Optional. Tenant ID, provided as a path parameter. */
+  tenant?: string;
+}
+
+/** Wrapper envelope returned by `SendMessage` when the server wraps the result. */
+export interface SendMessageEnvelope {
+  /** A message from the agent (present when no task was created). */
+  message?: Message;
+
+  /** The task created or updated by the message. */
+  task?: Task;
+}
+
+/**
+ * Response for the `SendMessage` method.
+ * Servers may return the envelope object, a bare `Message`, or a bare `Task`.
+ */
+export type SendMessageResponse = SendMessageEnvelope | Message | Task;
+
+// ---------------------------------------------------------------------------
+// Streaming
+// ---------------------------------------------------------------------------
+
+/** Event indicating a task status update during streaming. */
+export interface TaskStatusUpdateEvent {
+  /** The ID of the task that has changed. */
+  taskId: string;
+
+  /** The ID of the context that the task belongs to. */
+  contextId?: string;
+
+  /** The new status of the task. */
+  status?: TaskStatus;
+
+  /** Optional metadata associated with the task update. */
+  metadata?: Struct;
+}
+
+/** Event indicating a task artifact update during streaming. */
+export interface TaskArtifactUpdateEvent {
+  /** The ID of the task for this artifact. */
+  taskId: string;
+
+  /** The ID of the context that this task belongs to. */
+  contextId?: string;
+
+  /** The artifact that was generated or updated. */
+  artifact?: Artifact;
+
+  /**
+   * If `true`, the content of this artifact should be appended to a previously
+   * sent artifact with the same ID.
+   */
+  append?: boolean;
+
+  /** If `true`, this is the final chunk of the artifact. */
+  lastChunk?: boolean;
+
+  /** Optional metadata associated with the artifact update. */
+  metadata?: Struct;
+}
+
+/**
+ * Wrapper object used in streaming operations to encapsulate different types
+ * of response data. Exactly one field should be set per event.
+ */
+export interface StreamResponse {
+  /** A Task object containing the current state of the task. */
+  task?: Task;
+
+  /** A Message object containing a message from the agent. */
+  message?: Message;
+
+  /** An event indicating a task status update. */
+  statusUpdate?: TaskStatusUpdateEvent;
+
+  /** An event indicating a task artifact update. */
+  artifactUpdate?: TaskArtifactUpdateEvent;
+}
+
+// ---------------------------------------------------------------------------
+// GetTask
+// ---------------------------------------------------------------------------
+
+/** Request for the `GetTask` method. */
+export interface GetTaskRequest {
+  /** The resource ID of the task to retrieve. */
+  id: string;
+
+  /** Optional. Tenant ID, provided as a path parameter. */
+  tenant?: string;
+
+  /**
+   * The maximum number of most recent messages to retrieve.
+   * Unset = no limit; 0 = no messages.
+   */
+  historyLength?: number;
+}
+
+// ---------------------------------------------------------------------------
+// CancelTask
+// ---------------------------------------------------------------------------
+
+/** Request for the `CancelTask` method. */
+export interface CancelTaskRequest {
+  /** The resource ID of the task to cancel. */
+  id: string;
+
+  /** Optional. Tenant ID, provided as a path parameter. */
+  tenant?: string;
+
+  /** A flexible key-value map for passing additional context or parameters. */
+  metadata?: Struct;
+}
+
+// ---------------------------------------------------------------------------
+// SubscribeToTask
+// ---------------------------------------------------------------------------
+
+/** Request for the `SubscribeToTask` method. */
+export interface SubscribeToTaskRequest {
+  /** The resource ID of the task to subscribe to. */
+  id: string;
+
+  /** Optional. Tenant ID, provided as a path parameter. */
+  tenant?: string;
+}
+
+// ---------------------------------------------------------------------------
+// ListTasks
+// ---------------------------------------------------------------------------
+
+/** Parameters for listing tasks with optional filtering criteria. */
+export interface ListTasksRequest {
+  /** Tenant ID, provided as a path parameter. */
+  tenant?: string;
+
+  /** Filter tasks by context ID. */
+  contextId?: string;
+
+  /** Filter tasks by their current status state. */
+  status?: TaskState;
+
+  /**
+   * Filter tasks with a status updated after this timestamp
+   * (ISO 8601, e.g. "2023-10-27T10:00:00Z").
+   */
+  statusTimestampAfter?: Timestamp;
+
+  /**
+   * The maximum number of tasks to return.
+   * If unspecified, at most 50 tasks will be returned. Max is 100.
+   */
+  pageSize?: number;
+
+  /** A page token received from a previous `ListTasks` call. */
+  pageToken?: string;
+
+  /** The maximum number of messages to include in each task's history. */
+  historyLength?: number;
+
+  /** Whether to include artifacts in the returned tasks. Defaults to false. */
+  includeArtifacts?: boolean;
+}
+
+/** Result object for the `ListTasks` method. */
+export interface ListTasksResponse {
+  /** Array of tasks matching the specified criteria. */
+  tasks: Task[];
+
+  /** A token to retrieve the next page of results, or empty if no more results. */
+  nextPageToken?: string;
+
+  /** The page size used for this response. */
+  pageSize?: number;
+
+  /** Total number of tasks available (before pagination). */
+  totalSize?: number;
+}
+
+// ---------------------------------------------------------------------------
+// Push notification CRUD helpers
+// ---------------------------------------------------------------------------
+
+/** Request for `CreateTaskPushNotificationConfig`. */
+export interface CreateTaskPushNotificationConfigRequest {
+  /** The parent task resource ID. */
+  taskId: string;
+
+  /** Optional. Tenant ID, provided as a path parameter. */
+  tenant?: string;
+
+  /** The configuration to create. */
+  config?: PushNotificationConfig;
+}
+
+/** Request for `GetTaskPushNotificationConfig`. */
+export interface GetTaskPushNotificationConfigRequest {
+  /** The resource ID of the configuration to retrieve. */
+  id: string;
+
+  /** The parent task resource ID. */
+  taskId: string;
+
+  /** Optional. Tenant ID, provided as a path parameter. */
+  tenant?: string;
+}
+
+/** Request for `DeleteTaskPushNotificationConfig`. */
+export interface DeleteTaskPushNotificationConfigRequest {
+  /** The resource ID of the configuration to delete. */
+  id: string;
+
+  /** The parent task resource ID. */
+  taskId: string;
+
+  /** Optional. Tenant ID, provided as a path parameter. */
+  tenant?: string;
+}
+
+/** Request for `ListTaskPushNotificationConfigs`. */
+export interface ListTaskPushNotificationConfigsRequest {
+  /** The parent task resource ID. */
+  taskId: string;
+
+  /** Optional. Tenant ID, provided as a path parameter. */
+  tenant?: string;
+
+  /** The maximum number of configurations to return. */
+  pageSize?: number;
+
+  /** A page token received from a previous call. */
+  pageToken?: string;
+}
+
+/** Response for `ListTaskPushNotificationConfigs`. */
+export interface ListTaskPushNotificationConfigsResponse {
+  /** The list of push notification configurations. */
+  configs: TaskPushNotificationConfig[];
+
+  /** A token to retrieve the next page of results. */
+  nextPageToken?: string;
+}
+
+// ---------------------------------------------------------------------------
+// GetExtendedAgentCard
+// ---------------------------------------------------------------------------
+
+/** Request for the `GetExtendedAgentCard` method. */
+export interface GetExtendedAgentCardRequest {
+  /** Optional. Tenant ID, provided as a path parameter. */
+  tenant?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Type guards
+// ---------------------------------------------------------------------------
+
+export function isTask(value: unknown): value is Task {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "id" in value &&
+    "artifacts" in value &&
+    typeof (value as Task).id === "string"
+  );
+}
+
+export function isMessage(value: unknown): value is Message {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "messageId" in value &&
+    "role" in value &&
+    "parts" in value
+  );
+}
+
+export function isSendMessageResponse(
+  value: unknown,
+): value is SendMessageResponse {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    ("message" in value ||
+      "task" in value ||
+      "messageId" in value ||
+      "id" in value)
+  );
+}
+
+/** Narrows a `SendMessageResponse` to a bare `Message`. */
+export function sendMessageResponseIsMessage(
+  response: SendMessageResponse,
+): response is Message {
+  return isMessage(response);
+}
+
+/** Narrows a `SendMessageResponse` to a bare `Task`. */
+export function sendMessageResponseIsTask(
+  response: SendMessageResponse,
+): response is Task {
+  return isTask(response) && !isMessage(response);
+}
+
+/** Narrows a `SendMessageResponse` to the `SendMessageEnvelope` wrapper. */
+export function sendMessageResponseIsEnvelope(
+  response: SendMessageResponse,
+): response is SendMessageEnvelope {
+  return !isMessage(response) && !isTask(response);
+}
+
+/**
+ * Resolves a `SendMessageResponse` to a `{ message?, task? }` shape
+ * regardless of which variant was returned.
+ */
+export function resolveSendMessageResponse(response: SendMessageResponse): {
+  message: Message | undefined;
+  task: Task | undefined;
+} {
+  if (sendMessageResponseIsMessage(response)) {
+    return { message: response, task: undefined };
+  }
+  if (sendMessageResponseIsTask(response)) {
+    return { message: undefined, task: response };
+  }
+  const envelope = response as SendMessageEnvelope;
+  return { message: envelope.message, task: envelope.task };
+}
+
+export function isStreamResponse(value: unknown): value is StreamResponse {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    ("task" in value ||
+      "message" in value ||
+      "statusUpdate" in value ||
+      "artifactUpdate" in value)
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Utility helpers
+// ---------------------------------------------------------------------------
+
+/** Extract all text content from a Task's artifacts and history. */
+export function extractTextFromTask(task: Task): string {
+  const parts: string[] = [];
+
+  if (task.artifacts) {
+    for (const artifact of task.artifacts) {
+      for (const part of artifact.parts) {
+        if (part.text) parts.push(part.text);
+      }
+    }
+  }
+
+  if (parts.length === 0 && task.history) {
+    const lastAgentMsg = [...task.history]
+      .reverse()
+      .find((m) => m.role === "ROLE_AGENT");
+
+    if (lastAgentMsg) {
+      for (const part of lastAgentMsg.parts) {
+        if (part.text) parts.push(part.text);
+      }
+    }
+  }
+
+  return parts.join("\n\n");
+}
+
+/** Build a minimal user `Message` ready to send. */
+export function buildUserMessage(
+  text: string,
+  contextId?: string,
+  taskId?: string,
+): Message {
+  return {
+    messageId: crypto.randomUUID(),
+    role: "ROLE_USER",
+    parts: [{ text }],
+    ...(contextId && { contextId }),
+    ...(taskId && { taskId }),
+  };
+}
+
+/** Check whether a task has reached a terminal state. */
+export function isTaskTerminal(task: Task): boolean {
+  const terminal: TaskState[] = [
+    "TASK_STATE_COMPLETED",
+    "TASK_STATE_FAILED",
+    "TASK_STATE_CANCELED",
+    "TASK_STATE_REJECTED",
+  ];
+  return terminal.includes(task.status?.state ?? "TASK_STATE_UNSPECIFIED");
+}
+
+/** Check whether a task requires an interruption (input or auth). */
+export function isTaskInterrupted(task: Task): boolean {
+  const interrupted: TaskState[] = [
+    "TASK_STATE_INPUT_REQUIRED",
+    "TASK_STATE_AUTH_REQUIRED",
+  ];
+  return interrupted.includes(task.status?.state ?? "TASK_STATE_UNSPECIFIED");
+}

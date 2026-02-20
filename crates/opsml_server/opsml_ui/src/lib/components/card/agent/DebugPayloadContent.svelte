@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { Info, Send, MessageCircle, Clock, CheckCircle, AlertCircle } from 'lucide-svelte';
+  import { Info, Send, MessageCircle, Clock } from 'lucide-svelte';
   import Pill from '$lib/components/utils/Pill.svelte';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
-  import type { A2AResponse, A2ATask, DebugPayload } from './types';
-  import { isA2AResponse, isA2ATask } from './types';
-
- 
+  import { isTask, type DebugPayload, type SendMessageResponse } from './types';
+  import { isAdkMetadata, type AdkMetadata } from './agentClient';
 
   let {
     payload,
@@ -21,21 +19,28 @@
   const responseJson = $derived(payload.response ? JSON.stringify(payload.response, null, 2) : null);
 
   // Extract A2A task info if available
-  const a2aInfo = $derived.by(() => {
-    if (!isA2AResponse(payload.response)) return null;
-    
-    const response = payload.response as A2AResponse;
-    if (!isA2ATask(response.result)) return null;
-    
-    const task = response.result as A2ATask;
-    return {
-      taskId: task.id,
-      contextId: task.contextId,
-      status: task.status,
-      artifactCount: task.artifacts?.length || 0,
-      historyCount: task.history?.length || 0,
-    };
+  const messageResponse = $derived.by(() => {
+    if (payload.response && typeof payload.response === 'object') {
+      console.log('DebugPayload response:', responseJson);
+      return (payload.response as SendMessageResponse);
+    }
+    return null;
   });
+
+  const taskMetadata = $derived.by(() => {
+    if (messageResponse && isTask(messageResponse) && messageResponse.metadata) {
+      return messageResponse.metadata;
+    }
+    return null;
+  });
+
+  const adkMetadata = $derived.by(() => {
+    if (taskMetadata && isAdkMetadata(taskMetadata)) {
+      return taskMetadata as AdkMetadata;
+    }
+    return null;
+  });
+
 </script>
 
 <div class="flex flex-col h-full bg-white">
@@ -76,7 +81,8 @@
     </section>
 
     <!-- A2A Task Summary (if available) -->
-    {#if a2aInfo}
+    {#if messageResponse && isTask(messageResponse)}
+    {@const task = messageResponse}
       <section>
         <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
           <Info color="#8059b6"/>
@@ -84,28 +90,90 @@
         </div>
 
         <div class="flex flex-col space-y-1 text-sm">
-          <Pill key="Task ID" value={a2aInfo.taskId} textSize="text-xs"/>
-          {#if a2aInfo.contextId}
-            <Pill key="Context ID" value={a2aInfo.contextId} textSize="text-xs"/>
+          <Pill key="Task ID" value={task.id} textSize="text-xs"/>
+          {#if task.contextId}
+            <Pill key="Context ID" value={task.contextId} textSize="text-xs"/>
           {/if}
-          {#if a2aInfo.status}
-            <Pill 
-              key="Status" 
-              value={a2aInfo.status.state} 
+          {#if task.status}
+            <Pill
+              key="Status"
+              value={task.status.state}
               textSize="text-xs"
-              bgColor={a2aInfo.status.state === 'completed' ? 'bg-secondary-100' : a2aInfo.status.state === 'failed' ? 'bg-error-100' : 'bg-warning-100'}
-              textColor={a2aInfo.status.state === 'completed' ? 'text-secondary-950' : a2aInfo.status.state === 'failed' ? 'text-error-950' : 'text-warning-950'}
-              borderColor={a2aInfo.status.state === 'completed' ? 'border-secondary-950' : a2aInfo.status.state === 'failed' ? 'border-error-950' : 'border-warning-950'}
+              bgColor={task.status.state === 'TASK_STATE_COMPLETED' ? 'bg-secondary-100' : task.status.state === 'TASK_STATE_FAILED' ? 'bg-error-100' : 'bg-warning-100'}
+              textColor={task.status.state === 'TASK_STATE_COMPLETED' ? 'text-secondary-950' : task.status.state === 'TASK_STATE_FAILED' ? 'text-error-950' : 'text-warning-950'}
+              borderColor={task.status.state === 'TASK_STATE_COMPLETED' ? 'border-secondary-950' : task.status.state === 'TASK_STATE_FAILED' ? 'border-error-950' : 'border-warning-950'}
             />
           {/if}
-          <Pill key="Artifacts" value={`${a2aInfo.artifactCount} artifact${a2aInfo.artifactCount !== 1 ? 's' : ''}`} textSize="text-xs"/>
-          <Pill key="Task Turns" value={`${a2aInfo.historyCount} turn${a2aInfo.historyCount !== 1 ? 's' : ''}`} textSize="text-xs"/>
+          {#if task.artifacts}
+            <Pill key="Artifacts" value={`${task.artifacts.length} artifact${task.artifacts.length !== 1 ? 's' : ''}`} textSize="text-xs"/>
+          {/if}
+          {#if task.history}
+            <Pill key="Task Turns" value={`${task.history.length} turn${task.history.length !== 1 ? 's' : ''}`} textSize="text-xs"/>
+          {/if}
         </div>
       </section>
+
+      <!-- ADK Metadata -->
+      {#if adkMetadata}
+        <section>
+          <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
+            <Info color="#8059b6"/>
+            <header class="pl-2 text-primary-950 text-sm font-bold">ADK Metadata</header>
+          </div>
+          <div class="flex flex-col space-y-1 text-sm">
+            {#if adkMetadata.adk_app_name}
+              <Pill key="App" value={adkMetadata.adk_app_name} textSize="text-xs"/>
+            {/if}
+            {#if adkMetadata.adk_author}
+              <Pill key="Author" value={adkMetadata.adk_author} textSize="text-xs"/>
+            {/if}
+            {#if adkMetadata.adk_user_id}
+              <Pill key="User" value={adkMetadata.adk_user_id} textSize="text-xs"/>
+            {/if}
+            {#if adkMetadata.adk_session_id}
+              <Pill key="Session" value={adkMetadata.adk_session_id} textSize="text-xs"/>
+            {/if}
+            {#if adkMetadata.adk_invocation_id}
+              <Pill key="Invocation" value={adkMetadata.adk_invocation_id} textSize="text-xs"/>
+            {/if}
+            {#if adkMetadata.adk_event_id}
+              <Pill key="Event" value={adkMetadata.adk_event_id} textSize="text-xs"/>
+            {/if}
+          </div>
+          {#if adkMetadata.adk_usage_metadata}
+            {@const usage = adkMetadata.adk_usage_metadata}
+            <div class="mt-3">
+              <p class="text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Token Usage</p>
+              <div class="flex flex-wrap gap-2">
+                <Pill key="Total" value={String(usage.totalTokenCount)} textSize="text-xs"/>
+                <Pill key="Prompt" value={String(usage.promptTokenCount)} textSize="text-xs"/>
+                <Pill key="Candidates" value={String(usage.candidatesTokenCount)} textSize="text-xs"/>
+                {#if usage.thoughtsTokenCount}
+                  <Pill key="Thoughts" value={String(usage.thoughtsTokenCount)} textSize="text-xs"/>
+                {/if}
+              </div>
+            </div>
+          {/if}
+        </section>
+
+      <!-- Generic Metadata -->
+      {:else if taskMetadata}
+        <section>
+          <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
+            <Info color="#8059b6"/>
+            <header class="pl-2 text-primary-950 text-sm font-bold">Metadata</header>
+          </div>
+          <div class="flex flex-col space-y-1 text-sm">
+            {#each Object.entries(taskMetadata) as [key, value]}
+              <Pill {key} value={typeof value === 'string' ? value : JSON.stringify(value)} textSize="text-xs"/>
+            {/each}
+          </div>
+        </section>
+      {/if}
     {/if}
 
     <!-- Request Details -->
-    {#if requestJson}
+    {#if requestJson && role === 'user'}
       <section>
         <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
           <Send color="#8059b6"/>
@@ -119,7 +187,7 @@
     {/if}
 
     <!-- Response Details -->
-    {#if responseJson}
+    {#if responseJson && role === 'agent'}
       <section>
         <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
           <MessageCircle color="#8059b6"/>

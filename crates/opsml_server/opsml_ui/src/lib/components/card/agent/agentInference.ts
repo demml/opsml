@@ -340,56 +340,6 @@ export function inferAgentContract(spec: AgentSpec): AgentContract {
 }
 
 /**
- * Build request payload for A2A protocol
- */
-export interface A2ARequest {
-  /** Skill ID to invoke */
-  skillId?: string;
-
-  /** Task description or prompt */
-  task: string;
-
-  /** Input data in appropriate format */
-  input?: unknown;
-
-  /** Additional context */
-  context?: Record<string, unknown>;
-
-  /** Streaming preference */
-  stream?: boolean;
-
-  /** Tenant ID for multi-tenancy */
-  tenant?: string;
-}
-
-/**
- * Expected A2A response
- */
-export interface A2AResponse {
-  /** Task ID for tracking */
-  taskId?: string;
-
-  /** Message ID from the original request */
-  messageId?: string;
-
-  /** Result data */
-  result?: unknown;
-
-  /** Status (pending, processing, completed, failed) */
-  status: "pending" | "processing" | "completed" | "failed";
-
-  /** Error information if failed */
-  error?: {
-    code: string;
-    message: string;
-    details?: unknown;
-  };
-
-  /** Additional metadata */
-  metadata?: Record<string, unknown>;
-}
-
-/**
  * Build headers with authentication
  */
 export function buildAuthHeaders(
