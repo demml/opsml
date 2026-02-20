@@ -513,14 +513,14 @@ where
 /// * `Result<(), RegistryError>` - Result
 pub(crate) fn upload_profile(
     profile: &Bound<'_, PyAny>,
-    drift_args: Option<DriftArgs>,
+    drift_args: Option<&DriftArgs>,
     registry: &OpsmlCardRegistry,
 ) -> Result<String, RegistryError> {
     let mut profile_request = profile
         .call_method0("create_profile_request")?
         .extract::<ProfileRequest>()?;
 
-    if let Some(drift_args) = &drift_args {
+    if let Some(drift_args) = drift_args {
         profile_request.active = drift_args.active;
         profile_request.deactivate_others = drift_args.deactivate_others;
     }
@@ -540,7 +540,7 @@ pub(crate) fn upload_profile(
 /// * `Result<(), RegistryError>` - Result
 pub(crate) fn upload_drift_profile_map(
     profile_map: &Bound<'_, PyAny>,
-    drift_args: Option<DriftArgs>,
+    drift_args: Option<&DriftArgs>,
     registry: &OpsmlCardRegistry,
 ) -> Result<(), RegistryError> {
     let binding = profile_map.call_method0("values")?;
@@ -549,7 +549,7 @@ pub(crate) fn upload_drift_profile_map(
         .inspect_err(|e| error!("Failed to downcast drift profiles: {e}"))?;
 
     for profile in collected_profiles.iter() {
-        let uid = upload_profile(&profile, drift_args.clone(), registry)?;
+        let uid = upload_profile(&profile, drift_args, registry)?;
         profile.setattr("uid", uid).inspect_err(|e| {
             error!("Failed to set drift profile uid: {e}");
         })?;

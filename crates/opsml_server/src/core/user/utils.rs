@@ -34,7 +34,7 @@ pub async fn get_user(
         .await
         .map_err(|e| {
             error!("Failed to get user from database: {e}");
-            internal_server_error(e, "Failed to get user from database")
+            internal_server_error(e, "Failed to get user from database", None)
         })?
         .ok_or_else(|| {
             error!("User not found in database");

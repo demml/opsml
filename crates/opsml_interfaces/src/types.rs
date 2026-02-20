@@ -3,7 +3,7 @@ use crate::{DataSaveKwargs, DriftArgs, ModelSaveKwargs};
 use opsml_types::RegistryType;
 use opsml_utils::PyHelperFuncs;
 use pyo3::types::PyDict;
-use pyo3::{prelude::*, IntoPyObjectExt};
+use pyo3::{IntoPyObjectExt, prelude::*};
 use pythonize::pythonize;
 use serde::de::MapAccess;
 use serde::{Deserialize, Serialize};

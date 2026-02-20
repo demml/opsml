@@ -86,7 +86,7 @@ async fn create_user(
     // Save to database
     if let Err(e) = state.sql_client.insert_user(&new_user).await {
         error!("Failed to create user: {e}");
-        return Err(internal_server_error(e, "Failed to create user"));
+        return Err(internal_server_error(e, "Failed to create user", None));
     }
 
     info!("User {} created successfully", user.username);
@@ -99,7 +99,7 @@ async fn create_user(
             .await
             .map_err(|e| {
                 error!("Failed to exchange token from permissions: {e}");
-                internal_server_error(e, "Failed to exchange token from permissions")
+                internal_server_error(e, "Failed to exchange token from permissions", None)
             })?;
 
         state
@@ -115,7 +115,7 @@ async fn create_user(
             .await
             .map_err(|e| {
                 error!("Failed to create user in scouter: {e}");
-                internal_server_error(e, "Failed to create user in scouter")
+                internal_server_error(e, "Failed to create user in scouter", None)
             })?;
     }
     info!("User {} created in scouter", user.username);
@@ -142,7 +142,7 @@ async fn validate_user_with_opsml(
         .await
         .map_err(|e| {
             error!("Failed to get user from database: {e}");
-            internal_server_error(e, "Failed to get user from database")
+            internal_server_error(e, "Failed to get user from database", None)
         })? {
         Some(opsml_user) => {
             // user exists, return it

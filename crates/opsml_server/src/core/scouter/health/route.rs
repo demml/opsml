@@ -27,7 +27,7 @@ pub async fn check_scouter_health(
 
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let response = state
@@ -43,7 +43,7 @@ pub async fn check_scouter_health(
         .await
         .map_err(|e| {
             error!("Failed to get scouter healthcheck: {e}");
-            internal_server_error(e, "Failed to get scouter healthcheck")
+            internal_server_error(e, "Failed to get scouter healthcheck", None)
         })?;
 
     let status_code = response.status();
@@ -51,14 +51,14 @@ pub async fn check_scouter_health(
         true => {
             let _ = response.json::<Alive>().await.map_err(|e| {
                 error!("Failed to parse scouter response: {e}");
-                internal_server_error(e, "Failed to parse scouter response")
+                internal_server_error(e, "Failed to parse scouter response", None)
             })?;
             Ok(Json(Alive { alive: true }))
         }
         false => {
             let body = response.json::<ScouterServerError>().await.map_err(|e| {
                 error!("Failed to parse scouter error response: {e}");
-                internal_server_error(e, "Failed to parse scouter error response")
+                internal_server_error(e, "Failed to parse scouter error response", None)
             })?;
             // return error response
             Err((status_code, Json(OpsmlServerError::new(body.error))))

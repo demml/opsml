@@ -102,6 +102,9 @@ pub enum CardError {
     #[error("Failed to to get drift profile from card profile map")]
     DriftProfileNotFoundInMap,
 
+    #[error("Failed to to get drift profile from card")]
+    DriftProfileNotFoundError,
+
     #[error("Unsupported drift type: {0}")]
     UnsupportedDriftType(DriftType),
 

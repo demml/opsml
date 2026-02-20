@@ -210,10 +210,11 @@ impl OpsmlServerError {
 pub fn internal_server_error<E: std::fmt::Display>(
     error: E,
     message: &str,
+    status_code: Option<StatusCode>,
 ) -> (StatusCode, Json<OpsmlServerError>) {
     let msg = format!("{message}: {error}");
     (
-        StatusCode::INTERNAL_SERVER_ERROR,
+        status_code.unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
         Json(OpsmlServerError::new(msg)),
     )
 }

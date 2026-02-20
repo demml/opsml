@@ -129,7 +129,7 @@ pub async fn api_login_handler(
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
         error!("Failed to generate JWT token: {e}");
-        internal_server_error(e, "Failed to generate JWT token")
+        internal_server_error(e, "Failed to generate JWT token", None)
     })?;
 
     // check if refresh token is already set.
@@ -146,7 +146,7 @@ pub async fn api_login_handler(
         .generate_refresh_token(&user)
         .map_err(|e| {
             error!("Failed to generate refresh token: {e}");
-            internal_server_error(e, "Failed to generate refresh token")
+            internal_server_error(e, "Failed to generate refresh token", None)
         })?;
 
     user.refresh_token = Some(refresh_token);
@@ -154,7 +154,7 @@ pub async fn api_login_handler(
     // set refresh token in db
     state.sql_client.update_user(&user).await.map_err(|e| {
         error!("Failed to set refresh token in database: {e}");
-        internal_server_error(e, "Failed to set refresh token in database")
+        internal_server_error(e, "Failed to set refresh token in database", None)
     })?;
 
     // update scouter with new refresh token
@@ -264,7 +264,7 @@ async fn ui_login_handler(
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
         error!("Failed to generate JWT token: {e}");
-        internal_server_error(e, "Failed to generate JWT token")
+        internal_server_error(e, "Failed to generate JWT token", None)
     })?;
 
     let refresh_token = state
@@ -382,7 +382,7 @@ pub async fn api_refresh_token_handler(
         // set refresh token in db
         state.sql_client.update_user(&user).await.map_err(|e| {
             error!("Failed to set refresh token in database: {e}");
-            internal_server_error(e, "Failed to set refresh token in database")
+            internal_server_error(e, "Failed to set refresh token in database", None)
         })?;
 
         Ok(Json(JwtToken { token: jwt_token }))
@@ -488,7 +488,7 @@ async fn exchange_callback_token(
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
         error!("Failed to generate JWT token: {e}");
-        internal_server_error(e, "Failed to generate JWT token")
+        internal_server_error(e, "Failed to generate JWT token", None)
     })?;
 
     let refresh_token = state
@@ -585,7 +585,7 @@ async fn reset_password_with_recovery(
 
     // Save changes
     if let Err(e) = state.sql_client.update_user(&user).await {
-        return Err(internal_server_error(e, "Failed to update password"));
+        return Err(internal_server_error(e, "Failed to update password", None));
     }
 
     Ok(Json(serde_json::json!(ResetPasswordResponse {

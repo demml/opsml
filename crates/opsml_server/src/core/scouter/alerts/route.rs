@@ -26,7 +26,7 @@ pub async fn drift_alerts(
 ) -> Result<Json<DriftAlertPaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let response = state
@@ -36,7 +36,7 @@ pub async fn drift_alerts(
             RequestType::Post,
             Some(serde_json::to_value(&body).map_err(|e| {
                 error!("Failed to serialize alert request: {e}");
-                internal_server_error(e, "Failed to serialize alert request")
+                internal_server_error(e, "Failed to serialize alert request", None)
             })?),
             None,
             None,
@@ -45,7 +45,7 @@ pub async fn drift_alerts(
         .await
         .map_err(|e| {
             error!("Failed to get drift alerts: {e}");
-            internal_server_error(e, "Failed to get drift alerts")
+            internal_server_error(e, "Failed to get drift alerts", None)
         })?;
 
     let status_code = response.status();
@@ -57,7 +57,7 @@ pub async fn drift_alerts(
                 .await
                 .map_err(|e| {
                     error!("Failed to parse scouter response: {e}");
-                    internal_server_error(e, "Failed to parse scouter response")
+                    internal_server_error(e, "Failed to parse scouter response", None)
                 })?;
 
             Ok(Json(body))
@@ -65,7 +65,7 @@ pub async fn drift_alerts(
         false => {
             let body = response.json::<ScouterServerError>().await.map_err(|e| {
                 error!("Failed to parse scouter error response: {e}");
-                internal_server_error(e, "Failed to parse scouter error response")
+                internal_server_error(e, "Failed to parse scouter error response", None)
             })?;
             Err((status_code, Json(OpsmlServerError::new(body.error))))
         }
@@ -84,7 +84,7 @@ pub async fn update_alert_status(
 
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let response = state
@@ -94,7 +94,7 @@ pub async fn update_alert_status(
             RequestType::Put,
             Some(serde_json::to_value(&body).map_err(|e| {
                 error!("Failed to serialize alert request: {e}");
-                internal_server_error(e, "Failed to serialize alert request")
+                internal_server_error(e, "Failed to serialize alert request", None)
             })?),
             None,
             None,
@@ -103,7 +103,7 @@ pub async fn update_alert_status(
         .await
         .map_err(|e| {
             error!("Failed to acknowledge drift alerts: {e}");
-            internal_server_error(e, "Failed to acknowledge drift alerts")
+            internal_server_error(e, "Failed to acknowledge drift alerts", None)
         })?;
 
     let status_code = response.status();
@@ -111,14 +111,14 @@ pub async fn update_alert_status(
         true => {
             let body = response.json::<UpdateAlertResponse>().await.map_err(|e| {
                 error!("Failed to parse scouter response: {e}");
-                internal_server_error(e, "Failed to parse scouter response")
+                internal_server_error(e, "Failed to parse scouter response", None)
             })?;
             Ok(Json(body))
         }
         false => {
             let body = response.json::<ScouterServerError>().await.map_err(|e| {
                 error!("Failed to parse scouter error response: {e}");
-                internal_server_error(e, "Failed to parse scouter error response")
+                internal_server_error(e, "Failed to parse scouter error response", None)
             })?;
             Err((status_code, Json(OpsmlServerError::new(body.error))))
         }

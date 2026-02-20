@@ -44,7 +44,7 @@ pub async fn insert_metrics(
         .await
         .map_err(|e| {
             error!("Failed to insert metric: {e}");
-            internal_server_error(e, "Failed to insert metric")
+            internal_server_error(e, "Failed to insert metric", None)
         })?;
 
     Ok(Json(MetricResponse { success: true }))
@@ -61,7 +61,7 @@ pub async fn get_metrics(
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {e}");
-            internal_server_error(e, "Failed to get metrics")
+            internal_server_error(e, "Failed to get metrics", None)
         })?;
 
     // map all entries in the metrics to the Metric struct
@@ -93,7 +93,7 @@ pub async fn get_grouped_metrics(
             .await
             .map_err(|e| {
                 error!("Failed to get metrics: {e}");
-                internal_server_error(e, "Failed to get metrics")
+                internal_server_error(e, "Failed to get metrics", None)
             })?;
 
         // Use BTreeMap to preserve database sort order
@@ -149,7 +149,7 @@ pub async fn get_metric_names(
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {e}");
-            internal_server_error(e, "Failed to get metrics")
+            internal_server_error(e, "Failed to get metrics", None)
         })?;
 
     Ok(Json(names))
@@ -172,7 +172,7 @@ pub async fn insert_parameters(
         .await
         .map_err(|e| {
             error!("Failed to insert parameter: {e}");
-            internal_server_error(e, "Failed to insert parameter")
+            internal_server_error(e, "Failed to insert parameter", None)
         })?;
 
     Ok(Json(ParameterResponse { success: true }))
@@ -188,7 +188,7 @@ pub async fn get_parameter(
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {e}");
-            internal_server_error(e, "Failed to get metrics")
+            internal_server_error(e, "Failed to get metrics", None)
         })?;
 
     // map all entries in the metrics to the Metric struct
@@ -229,7 +229,7 @@ pub async fn insert_hardware_metrics(
         .await
         .map_err(|e| {
             error!("Failed to insert hardware metrics: {e}");
-            internal_server_error(e, "Failed to insert hardware metrics")
+            internal_server_error(e, "Failed to insert hardware metrics", None)
         })?;
 
     Ok(Json(HardwareMetricResponse { success: true }))
@@ -245,7 +245,7 @@ pub async fn get_hardware_metrics(
         .await
         .map_err(|e| {
             error!("Failed to get metrics: {e}");
-            internal_server_error(e, "Failed to get metrics")
+            internal_server_error(e, "Failed to get metrics", None)
         })?;
 
     // map to the HardwareMetrics struct
