@@ -38,14 +38,14 @@ pub async fn insert_drift_profile(
 ) -> Result<Json<RegisteredProfileResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     info!("Inserting drift profile for space: {:?}", &body.space);
 
     let profile = serde_json::to_value(&body).map_err(|e| {
         error!("Failed to serialize profile request: {e}");
-        internal_server_error(e, "Failed to serialize profile request")
+        internal_server_error(e, "Failed to serialize profile request", None)
     })?;
 
     let mut response = state
@@ -61,7 +61,7 @@ pub async fn insert_drift_profile(
         .await
         .map_err(|e| {
             error!("Failed to insert drift profile: {e}");
-            internal_server_error(e, "Failed to insert drift profile")
+            internal_server_error(e, "Failed to insert drift profile", None)
         })?;
 
     let metadata = serde_json::json!({
@@ -90,14 +90,14 @@ pub async fn insert_drift_profile(
                 .await
                 .map_err(|e| {
                     error!("Failed to parse scouter response: {e}");
-                    internal_server_error(e, "Failed to parse scouter response")
+                    internal_server_error(e, "Failed to parse scouter response", None)
                 })?;
             Ok(Json(body))
         }
         false => {
             let body = response.json::<ScouterServerError>().await.map_err(|e| {
                 error!("Failed to parse scouter error response: {e}");
-                internal_server_error(e, "Failed to parse scouter error response")
+                internal_server_error(e, "Failed to parse scouter error response", None)
             })?;
             Err((status_code, Json(OpsmlServerError::new(body.error))))
         }
@@ -123,7 +123,7 @@ pub async fn update_drift_profile(
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {e}");
-            internal_server_error(e, "Failed to get artifact key")
+            internal_server_error(e, "Failed to get artifact key", None)
         })?;
 
     let drift_path = artifact_key.storage_path().join(&req.profile_uri);
@@ -131,7 +131,7 @@ pub async fn update_drift_profile(
     // list files in the directory
     let files = state.storage_client.find(&drift_path).await.map_err(|e| {
         error!("Failed to list files in directory: {e}");
-        internal_server_error(e, "Failed to list files in directory")
+        internal_server_error(e, "Failed to list files in directory", None)
     })?;
 
     // assert files is not empty
@@ -154,7 +154,7 @@ pub async fn update_drift_profile(
 
     let encryption_key = artifact_key.get_decrypt_key().map_err(|e| {
         error!("Failed to get encryption key: {e}");
-        internal_server_error(e, "Failed to get encryption key")
+        internal_server_error(e, "Failed to get encryption key", None)
     })?;
 
     save_encrypted_profile(
@@ -169,7 +169,7 @@ pub async fn update_drift_profile(
     // 2. Scouter task
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let mut response = state
@@ -179,7 +179,7 @@ pub async fn update_drift_profile(
             RequestType::Put,
             Some(serde_json::to_value(&req.request).map_err(|e| {
                 error!("Failed to serialize profile request: {e}");
-                internal_server_error(e, "Failed to serialize profile request")
+                internal_server_error(e, "Failed to serialize profile request", None)
             })?),
             None,
             None,
@@ -188,7 +188,7 @@ pub async fn update_drift_profile(
         .await
         .map_err(|e| {
             error!("Failed to update drift profile: {e}");
-            internal_server_error(e, "Failed to update drift profile")
+            internal_server_error(e, "Failed to update drift profile", None)
         })?;
 
     info!("Drift profile updated successfully for uid: {:?}", &req.uid);
@@ -235,7 +235,7 @@ pub async fn update_drift_profile_status(
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let mut response = data
@@ -245,7 +245,7 @@ pub async fn update_drift_profile_status(
             RequestType::Put,
             Some(serde_json::to_value(&body).map_err(|e| {
                 error!("Failed to serialize profile status request: {e}");
-                internal_server_error(e, "Failed to serialize profile status request")
+                internal_server_error(e, "Failed to serialize profile status request", None)
             })?),
             None,
             None,
@@ -254,7 +254,7 @@ pub async fn update_drift_profile_status(
         .await
         .map_err(|e| {
             error!("Failed to update drift profile status: {e}");
-            internal_server_error(e, "Failed to update drift profile status")
+            internal_server_error(e, "Failed to update drift profile status", None)
         })?;
 
     let metadata = serde_json::json!({
@@ -300,7 +300,7 @@ pub async fn get_drift_profiles_for_ui(
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {e}");
-            internal_server_error(e, "Failed to get artifact key")
+            internal_server_error(e, "Failed to get artifact key", None)
         })?;
 
     if !perms.has_read_permission(&artifact_key.space) {
@@ -310,7 +310,7 @@ pub async fn get_drift_profiles_for_ui(
     // create temp dir
     let tmp_dir = tempdir().map_err(|e| {
         error!("Failed to create temp dir: {e}");
-        internal_server_error(e, "Failed to create temp dir")
+        internal_server_error(e, "Failed to create temp dir", None)
     })?;
     let tmp_path = tmp_dir.path();
 
@@ -322,7 +322,11 @@ pub async fn get_drift_profiles_for_ui(
         .next()
         .ok_or_else(|| {
             error!("No profiles found");
-            internal_server_error("No profiles found", "No profiles found")
+            internal_server_error(
+                "No profiles found",
+                "No profiles found",
+                Some(StatusCode::NOT_FOUND),
+            )
         })?
         .root_dir;
 
@@ -331,7 +335,7 @@ pub async fn get_drift_profiles_for_ui(
 
     std::fs::create_dir_all(&dest_path).map_err(|e| {
         error!("Failed to create directory: {e}");
-        internal_server_error(e, "Failed to create directory")
+        internal_server_error(e, "Failed to create directory", None)
     })?;
 
     download_artifacts(
@@ -345,12 +349,12 @@ pub async fn get_drift_profiles_for_ui(
     .await
     .map_err(|e| {
         error!("Failed to download artifact: {e}");
-        internal_server_error(e, "Failed to download artifact")
+        internal_server_error(e, "Failed to download artifact", None)
     })?;
 
     let profiles = load_drift_profiles(tmp_path, &req.drift_profile_uri_map).map_err(|e| {
         error!("Failed to load drift profile: {e}");
-        internal_server_error(e, "Failed to load drift profile")
+        internal_server_error(e, "Failed to load drift profile", None)
     })?;
 
     Ok(Json(profiles))

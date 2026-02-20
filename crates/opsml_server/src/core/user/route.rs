@@ -76,7 +76,7 @@ pub async fn create_user(
     // Save to database
     if let Err(e) = state.sql_client.insert_user(&user).await {
         error!("Failed to create user: {e}");
-        return Err(internal_server_error(e, "Failed to create user"));
+        return Err(internal_server_error(e, "Failed to create user", None));
     }
 
     info!("User {} created successfully", user.username);
@@ -85,7 +85,7 @@ pub async fn create_user(
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
             error!("Failed to exchange token for scouter: {e}");
-            internal_server_error(e, "Failed to exchange token for scouter")
+            internal_server_error(e, "Failed to exchange token for scouter", None)
         })?;
 
         state
@@ -101,7 +101,7 @@ pub async fn create_user(
             .await
             .map_err(|e| {
                 error!("Failed to create user in scouter: {e}");
-                internal_server_error(e, "Failed to create user in scouter")
+                internal_server_error(e, "Failed to create user in scouter", None)
             })?;
     }
 
@@ -155,7 +155,7 @@ async fn list_users(
         Ok(users) => users,
         Err(e) => {
             error!("Failed to list users: {e}");
-            return Err(internal_server_error(e, "Failed to list users"));
+            return Err(internal_server_error(e, "Failed to list users", None));
         }
     };
 
@@ -216,7 +216,7 @@ async fn update_user(
     // Save updated user to database
     if let Err(e) = state.sql_client.update_user(&user).await {
         error!("Failed to update user: {e}");
-        return Err(internal_server_error(e, "Failed to update user"));
+        return Err(internal_server_error(e, "Failed to update user", None));
     }
 
     info!("User {} updated successfully", user.username);
@@ -225,7 +225,7 @@ async fn update_user(
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
             error!("Failed to exchange token for scouter: {e}");
-            internal_server_error(e, "Failed to exchange token for scouter")
+            internal_server_error(e, "Failed to exchange token for scouter", None)
         })?;
         state
             .scouter_client
@@ -240,7 +240,7 @@ async fn update_user(
             .await
             .map_err(|e| {
                 error!("Failed to create user in scouter: {e}");
-                internal_server_error(e, "Failed to create user in scouter")
+                internal_server_error(e, "Failed to create user in scouter", None)
             })?;
         info!("User {} updated in scouter", user.username);
     }
@@ -271,6 +271,7 @@ async fn delete_user(
             return Err(internal_server_error(
                 e,
                 "Failed to check if user is last admin",
+                None,
             ));
         }
     };
@@ -284,7 +285,7 @@ async fn delete_user(
     if state.scouter_client.enabled {
         let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
             error!("Failed to exchange token for scouter: {e}");
-            internal_server_error(e, "Failed to exchange token for scouter")
+            internal_server_error(e, "Failed to exchange token for scouter", None)
         })?;
 
         state
@@ -293,7 +294,7 @@ async fn delete_user(
             .await
             .map_err(|e| {
                 error!("Failed to delete user in scouter: {e}");
-                internal_server_error(e, "Failed to delete user in scouter")
+                internal_server_error(e, "Failed to delete user in scouter", None)
             })?;
 
         info!("User {} deleted in scouter", username);
@@ -302,7 +303,7 @@ async fn delete_user(
     // Delete the user
     if let Err(e) = state.sql_client.delete_user(&username).await {
         error!("Failed to delete user: {e}");
-        return Err(internal_server_error(e, "Failed to delete user"));
+        return Err(internal_server_error(e, "Failed to delete user", None));
     }
 
     info!("User {} deleted successfully", username);

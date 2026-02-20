@@ -22,7 +22,7 @@ pub async fn entity_from_tags(
 ) -> Result<Json<EntityIdTagsResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let response = state
@@ -32,7 +32,7 @@ pub async fn entity_from_tags(
             RequestType::Post,
             Some(serde_json::to_value(&body).map_err(|e| {
                 error!("Failed to serialize request body: {e}");
-                internal_server_error(e, "Failed to serialize request body")
+                internal_server_error(e, "Failed to serialize request body", None)
             })?),
             None,
             None,
@@ -41,7 +41,7 @@ pub async fn entity_from_tags(
         .await
         .map_err(|e| {
             error!("Failed to get entity from tags: {e}");
-            internal_server_error(e, "Failed to get entity from tags")
+            internal_server_error(e, "Failed to get entity from tags", None)
         })?;
 
     let status_code = response.status();
@@ -49,14 +49,14 @@ pub async fn entity_from_tags(
         true => {
             let body = response.json::<EntityIdTagsResponse>().await.map_err(|e| {
                 error!("Failed to parse scouter tag entity response: {e}");
-                internal_server_error(e, "Failed to parse scouter tag entity response")
+                internal_server_error(e, "Failed to parse scouter tag entity response", None)
             })?;
             Ok(Json(body))
         }
         false => {
             let body = response.json::<ScouterServerError>().await.map_err(|e| {
                 error!("Failed to parse scouter error response: {e}");
-                internal_server_error(e, "Failed to parse scouter error response")
+                internal_server_error(e, "Failed to parse scouter error response", None)
             })?;
             Err((status_code, Json(OpsmlServerError::new(body.error))))
         }
