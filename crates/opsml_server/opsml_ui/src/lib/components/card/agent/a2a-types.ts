@@ -125,6 +125,8 @@ export interface Artifact {
 // ---------------------------------------------------------------------------
 
 export type TaskState =
+  | "completed"
+  | "failed"
   | "TASK_STATE_UNSPECIFIED"
   | "TASK_STATE_SUBMITTED"
   | "TASK_STATE_WORKING"

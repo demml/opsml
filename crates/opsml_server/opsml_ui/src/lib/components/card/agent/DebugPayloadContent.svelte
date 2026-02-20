@@ -99,9 +99,9 @@
               key="Status"
               value={task.status.state}
               textSize="text-xs"
-              bgColor={task.status.state === 'TASK_STATE_COMPLETED' ? 'bg-secondary-100' : task.status.state === 'TASK_STATE_FAILED' ? 'bg-error-100' : 'bg-warning-100'}
-              textColor={task.status.state === 'TASK_STATE_COMPLETED' ? 'text-secondary-950' : task.status.state === 'TASK_STATE_FAILED' ? 'text-error-950' : 'text-warning-950'}
-              borderColor={task.status.state === 'TASK_STATE_COMPLETED' ? 'border-secondary-950' : task.status.state === 'TASK_STATE_FAILED' ? 'border-error-950' : 'border-warning-950'}
+              bgColor={task.status.state === 'TASK_STATE_COMPLETED' || task.status.state === 'completed' ? 'bg-secondary-100' : task.status.state === 'TASK_STATE_FAILED' || task.status.state === 'failed' ? 'bg-error-100' : 'bg-warning-100'}
+              textColor={task.status.state === 'TASK_STATE_COMPLETED' || task.status.state === 'completed' ? 'text-secondary-950' : task.status.state === 'TASK_STATE_FAILED' || task.status.state === 'failed' ? 'text-error-950' : 'text-warning-950'}
+              borderColor={task.status.state === 'TASK_STATE_COMPLETED' || task.status.state === 'completed' ? 'border-secondary-950' : task.status.state === 'TASK_STATE_FAILED' || task.status.state === 'failed' ? 'border-error-950' : 'border-warning-950'}
             />
           {/if}
           {#if task.artifacts}
