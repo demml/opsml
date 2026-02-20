@@ -29,7 +29,7 @@ pub fn add_drift_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TerrellScott>()?;
     m.add_class::<FreedmanDiaconis>()?;
 
-    // GenAI Drift
+    // GenAI Evals
     m.add_class::<GenAIEvalConfig>()?;
     m.add_class::<GenAIEvalProfile>()?;
     m.add_class::<GenAIEvalRecord>()?;

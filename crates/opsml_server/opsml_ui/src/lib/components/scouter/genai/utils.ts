@@ -1,6 +1,7 @@
 import { createInternalApiClient } from "$lib/api/internalClient";
 import { ServerPaths } from "$lib/components/api/routes";
 import type {
+  GenAIEvalProfile,
   GenAIEvalRecordPaginationRequest,
   GenAIEvalRecordPaginationResponse,
   GenAIEvalTaskRequest,
@@ -11,14 +12,15 @@ import type { TimeRange } from "$lib/components/trace/types";
 import type { DriftType } from "../types";
 import type { DriftProfile } from "../utils";
 import type { BinnedMetrics } from "../custom/types";
+import type { AssertionTask, LLMJudgeTask, TraceAssertionTask } from "./task";
 
 export async function getServerGenAIEvalRecordPage(
   fetch: typeof globalThis.fetch,
-  request: GenAIEvalRecordPaginationRequest
+  request: GenAIEvalRecordPaginationRequest,
 ): Promise<GenAIEvalRecordPaginationResponse> {
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.GENAI_EVAL_RECORD_PAGE,
-    request
+    request,
   );
 
   let response = (await resp.json()) as GenAIEvalRecordPaginationResponse;
@@ -36,11 +38,11 @@ export async function getServerGenAIEvalRecordPage(
  */
 export async function getServerGenAIEvalWorkflowPage(
   fetch: typeof globalThis.fetch,
-  request: GenAIEvalRecordPaginationRequest
+  request: GenAIEvalRecordPaginationRequest,
 ): Promise<GenAIEvalWorkflowPaginationResponse> {
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.GENAI_EVAL_WORKFLOW_PAGE,
-    request
+    request,
   );
 
   let response = (await resp.json()) as GenAIEvalWorkflowPaginationResponse;
@@ -57,11 +59,11 @@ export async function getServerGenAIEvalWorkflowPage(
  */
 export async function getServerGenAIEvalTask(
   fetch: typeof globalThis.fetch,
-  request: GenAIEvalTaskRequest
+  request: GenAIEvalTaskRequest,
 ): Promise<GenAIEvalTaskResponse> {
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.GENAI_EVAL_TASK,
-    request
+    request,
   );
 
   let response = (await resp.json()) as GenAIEvalTaskResponse;
@@ -85,7 +87,7 @@ export async function getGenAIEvalTaskDriftMetrics(
   space: string,
   uid: string,
   time_range: TimeRange,
-  max_data_points: number
+  max_data_points: number,
 ): Promise<BinnedMetrics> {
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.GENAI_TASK_DRIFT,
@@ -94,7 +96,7 @@ export async function getGenAIEvalTaskDriftMetrics(
       uid,
       time_range,
       max_data_points,
-    }
+    },
   );
 
   let response = (await resp.json()) as BinnedMetrics;
@@ -119,7 +121,7 @@ export async function getGenAIEvalWorkflowDriftMetrics(
   space: string,
   uid: string,
   time_range: TimeRange,
-  max_data_points: number
+  max_data_points: number,
 ): Promise<BinnedMetrics> {
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.GENAI_WORKFLOW_DRIFT,
@@ -128,10 +130,42 @@ export async function getGenAIEvalWorkflowDriftMetrics(
       uid,
       time_range,
       max_data_points,
-    }
+    },
   );
 
   let response = (await resp.json()) as BinnedMetrics;
 
   return response;
+}
+
+export class GenAIEvalProfileHelper {
+  /**
+   * Get LLMJudgeTask by task ID from the profile.
+   */
+  static getLLMJudgeById(
+    profile: GenAIEvalProfile,
+    id: string,
+  ): LLMJudgeTask | null {
+    return profile.tasks.judge.find((task) => task.id === id) ?? null;
+  }
+
+  /**
+   * Get AssertionTask by task ID from the profile.
+   */
+  static getAssertionById(
+    profile: GenAIEvalProfile,
+    id: string,
+  ): AssertionTask | null {
+    return profile.tasks.assertion.find((task) => task.id === id) ?? null;
+  }
+
+  /**
+   * Get TraceAssertionTask by task ID from the profile.
+   */
+  static getTraceAssertionById(
+    profile: GenAIEvalProfile,
+    id: string,
+  ): TraceAssertionTask | null {
+    return profile.tasks.trace.find((task) => task.id === id) ?? null;
+  }
 }

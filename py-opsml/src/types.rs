@@ -1,4 +1,6 @@
-use opsml_interfaces::{DriftArgs, DriftProfileMap, ExtraMetadata, Feature, FeatureSchema};
+use opsml_interfaces::{
+    DriftArgs, DriftProfileMap, ExtraMetadata, Feature, FeatureSchema, PromptSaveKwargs,
+};
 use opsml_semver::VersionType;
 use opsml_types::{CommonKwargs, DataType, DriftProfileUri, SaveName, SaverPath, Suffix};
 use pyo3::prelude::*;
@@ -18,6 +20,7 @@ pub fn add_types_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Feature>()?;
     m.add_class::<ExtraMetadata>()?;
     m.add_class::<FeatureSchema>()?;
+    m.add_class::<PromptSaveKwargs>()?;
 
     Ok(())
 }

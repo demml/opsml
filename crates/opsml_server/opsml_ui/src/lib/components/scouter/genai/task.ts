@@ -59,7 +59,8 @@ export type EvaluationTaskType =
   | "Assertion"
   | "LLMJudge"
   | "Conditional"
-  | "HumanValidation";
+  | "HumanValidation"
+  | "TraceAssertion";
 
 /**
  * Result of an assertion execution.
@@ -137,6 +138,13 @@ export interface GenAIEvalWorkflowResult {
 }
 
 /**
+ * Assertion target that can be either a field path or trace assertion.
+ */
+export type Assertion =
+  | { FieldPath: string | null }
+  | { TraceAssertion: TraceAssertion };
+
+/**
  * Maps to GenAIEvalTaskResult struct.
  * Note: entity_id is included here for TS safety even if not exposed to Python.
  */
@@ -150,7 +158,7 @@ export interface GenAIEvalTaskResult {
   task_type: EvaluationTaskType;
   passed: boolean;
   value: number; // f64
-  field_path: string | null;
+  assertion: Assertion;
   operator: ComparisonOperator;
   expected: JsonValue;
   actual: JsonValue;
@@ -158,4 +166,85 @@ export interface GenAIEvalTaskResult {
   entity_uid: string;
   condition: boolean;
   stage: number; // i32
+}
+
+/**
+ * Extract assertion from GenAIEvalTaskResult.
+ * Returns field_path for standard assertions, TraceAssertion for trace tasks.
+ */
+export function getAssertion(
+  result: GenAIEvalTaskResult,
+): string | null | TraceAssertion {
+  if ("FieldPath" in result.assertion) {
+    return result.assertion.FieldPath;
+  }
+  if ("TraceAssertion" in result.assertion) {
+    return result.assertion.TraceAssertion;
+  }
+  throw new Error("Invalid Assertion variant");
+}
+
+/**
+ * Aggregation operations for span attribute values.
+ */
+export type AggregationType =
+  | "Count"
+  | "Sum"
+  | "Average"
+  | "Min"
+  | "Max"
+  | "First"
+  | "Last";
+
+/**
+ * Filter configuration for selecting spans within a trace.
+ */
+export type SpanFilter =
+  | { ByName: { name: string } }
+  | { ByNamePattern: { pattern: string } }
+  | { WithAttribute: { key: string } }
+  | { WithAttributeValue: { key: string; value: JsonValue } }
+  | { WithStatus: { status: string } }
+  | { WithDuration: { min_ms?: number; max_ms?: number } }
+  | { Sequence: { names: string[] } }
+  | { And: { filters: SpanFilter[] } }
+  | { Or: { filters: SpanFilter[] } };
+
+/**
+ * Unified assertion target for trace-level and span-level checks.
+ */
+export type TraceAssertion =
+  | { SpanSequence: { span_names: string[] } }
+  | { SpanSet: { span_names: string[] } }
+  | { SpanCount: { filter: SpanFilter } }
+  | { SpanExists: { filter: SpanFilter } }
+  | { SpanAttribute: { filter: SpanFilter; attribute_key: string } }
+  | { SpanDuration: { filter: SpanFilter } }
+  | {
+      SpanAggregation: {
+        filter: SpanFilter;
+        attribute_key: string;
+        aggregation: AggregationType;
+      };
+    }
+  | { TraceDuration: {} }
+  | { TraceSpanCount: {} }
+  | { TraceErrorCount: {} }
+  | { TraceServiceCount: {} }
+  | { TraceMaxDepth: {} }
+  | { TraceAttribute: { attribute_key: string } };
+
+/**
+ * Assertion task for distributed trace validation.
+ */
+export interface TraceAssertionTask {
+  id: string;
+  assertion: TraceAssertion;
+  operator: ComparisonOperator;
+  expected_value: JsonValue;
+  description: string | null;
+  depends_on: string[];
+  task_type: EvaluationTaskType;
+  result?: AssertionResult;
+  condition: boolean;
 }

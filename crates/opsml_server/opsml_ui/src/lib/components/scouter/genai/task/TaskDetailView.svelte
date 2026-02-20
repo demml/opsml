@@ -1,16 +1,42 @@
 <script lang="ts">
-  import type { GenAIEvalTaskResult } from '../task';
-  import { Info, Activity, AlertCircle, GitBranch, CheckCircle2, XCircle, TrendingUp } from 'lucide-svelte';
+  import { getAssertion, type GenAIEvalTaskResult } from '../task';
+  import { Info, Activity, AlertCircle, GitBranch, CheckCircle2, XCircle, TrendingUp, MessageSquareText } from 'lucide-svelte';
   import Pill from '$lib/components/utils/Pill.svelte';
   import ComparisonView from './ComparisonView.svelte';
+  import type { TraceAssertion } from '../task';
+  import TraceAssertionPill from './TraceAssertionPill.svelte';
+  import type { GenAIEvalProfile } from '../types';
+  import { GenAIEvalProfileHelper } from '../utils';
+  import PromptModal from '$lib/components/card/prompt/common/PromptModal.svelte';
 
-  let { task } = $props<{ 
+  let { task, profile } = $props<{
     task: GenAIEvalTaskResult;
+    profile: GenAIEvalProfile;
   }>();
 
+  const active_task: GenAIEvalTaskResult = $derived(task);
+  const assertion = $derived(getAssertion(task));
+
+  const isTraceAssertion = $derived(
+    typeof assertion !== 'string' && assertion !== null
+  );
+
+  const fieldPath = $derived(
+    typeof assertion === 'string' || assertion === null
+      ? assertion
+      : null
+  );
+
+  const judgeTask = $derived(
+    active_task.task_type === 'LLMJudge'
+      ? GenAIEvalProfileHelper.getLLMJudgeById(profile, active_task.task_id)
+      : null
+  );
+
+
   function formatTimestamp(timestamp: string): string {
-    return new Date(timestamp).toLocaleTimeString('en-US', { 
-        hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3 
+    return new Date(timestamp).toLocaleTimeString('en-US', {
+        hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit", fractionalSecondDigits: 3
     });
   }
 
@@ -22,17 +48,17 @@
     return seconds < 1 ? `${durationMs}ms` : `${seconds.toFixed(2)}s`;
   }
 
-  const isConditional = $derived(task.condition);
-  
+  const isConditional = $derived(active_task.condition);
+
   // Status Bar Color logic
   const statusColor = $derived.by(() => {
     if (isConditional) return 'bg-tertiary-500';
-    return task.passed ? 'bg-secondary-500' : 'bg-error-600';
+    return active_task.passed ? 'bg-secondary-500' : 'bg-error-600';
   });
 
   const statusLabel = $derived.by(() => {
      if (isConditional) return 'CONDITIONAL';
-     return task.passed ? 'PASSED' : 'FAILED';
+     return active_task.passed ? 'PASSED' : 'FAILED';
   });
 
   // Dynamic Theme for the Message Box (Fixes the "Always Red" bug)
@@ -45,7 +71,7 @@
         bgColor: 'bg-tertiary-50',
         title: 'Logic Message'
       };
-    } else if (task.passed) {
+    } else if (active_task.passed) {
       return {
         color: '#16a34a', // Secondary/Green
         borderColor: 'border-secondary-600',
@@ -66,21 +92,21 @@
 </script>
 
 <div class="flex flex-col h-full bg-white">
-  
+
   <div class="p-3 border-b-2 border-black bg-surface-50">
     <div class="flex items-start gap-2">
       <div class={`w-1 h-14 rounded ${statusColor}`}></div>
-      
+
       <div class="flex-1 min-w-0">
-        <h3 class="font-bold text-gray-900 truncate">{task.task_id}</h3>
-        <p class="text-sm text-gray-600">{task.task_type}</p>
-        <p class="text-xs font-mono text-gray-500 mt-1">{task.record_uid.slice(0, 16)}...</p>
+        <h3 class="font-bold text-gray-900 truncate">{active_task.task_id}</h3>
+        <p class="text-sm text-gray-600">{active_task.task_type}</p>
+        <p class="text-xs font-mono text-gray-500 mt-1">{active_task.record_uid.slice(0, 16)}...</p>
       </div>
 
       <div class="mr-2 mt-1">
         {#if isConditional}
             <GitBranch class="w-6 h-6 text-tertiary-600"/>
-        {:else if task.passed}
+        {:else if active_task.passed}
             <CheckCircle2 class="w-6 h-6 text-secondary-600"/>
         {:else}
             <XCircle class="w-6 h-6 text-error-600"/>
@@ -98,21 +124,58 @@
       </div>
 
       <div class="flex flex-wrap gap-2 text-xs">
-        <Pill 
-            key="Status" 
-            value={statusLabel} 
+        <Pill
+            key="Status"
+            value={statusLabel}
             textSize="text-xs"
-            bgColor={isConditional ? 'bg-tertiary-100' : task.passed ? 'bg-secondary-100' : 'bg-error-100'}
-            textColor={isConditional ? 'text-tertiary-900' : task.passed ? 'text-secondary-900' : 'text-error-900'}
-            borderColor={isConditional ? 'border-tertiary-900' : task.passed ? 'border-secondary-900' : 'border-error-900'}
+            bgColor={isConditional ? 'bg-tertiary-100' : active_task.passed ? 'bg-secondary-100' : 'bg-error-100'}
+            textColor={isConditional ? 'text-tertiary-900' : active_task.passed ? 'text-secondary-900' : 'text-error-900'}
+            borderColor={isConditional ? 'border-tertiary-900' : active_task.passed ? 'border-secondary-900' : 'border-error-900'}
         />
-        
-        <Pill key="Type" value={task.task_type} textSize="text-xs"/>
-        <Pill key="Stage" value={task.stage.toString()} textSize="text-xs"/>
-        <Pill key="Operator" value={task.operator} textSize="text-xs"/>
-        <Pill key="Field Path" value={task.field_path || 'N/A'} textSize="text-xs"/>
+
+        <Pill key="Type" value={active_task.task_type} textSize="text-xs"/>
+        <Pill key="Stage" value={active_task.stage.toString()} textSize="text-xs"/>
+        <Pill key="Operator" value={active_task.operator} textSize="text-xs"/>
       </div>
     </section>
+
+    {#if active_task.task_type === 'Assertion' || active_task.task_type === 'TraceAssertion' || active_task.task_type === 'LLMJudge'}
+      <section>
+        <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
+          <Activity color="#8059b6"/>
+          <header class="pl-2 text-primary-950 text-sm font-bold">Assertion Target</header>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          {#if isTraceAssertion}
+            <TraceAssertionPill assertion={assertion as TraceAssertion} />
+          {:else if fieldPath}
+            <Pill key="Field Path" value={fieldPath} textSize="text-xs"/>
+          {:else}
+            <Pill key="Field Path" value="Root" textSize="text-xs" bgColor="bg-surface-200"/>
+          {/if}
+        </div>
+      </section>
+    {/if}
+
+    {#if judgeTask}
+      <section>
+        <div class="flex flex-row items-center justify-between pb-2 mb-3 border-b-2 border-black">
+          <div class="flex items-center">
+            <MessageSquareText color="#8059b6"/>
+            <header class="pl-2 text-primary-950 text-sm font-bold">LLM Judge Prompt</header>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <PromptModal prompt={judgeTask.prompt} />
+          
+          {#if judgeTask.max_retries}
+            <Pill key="Max Retries" value={judgeTask.max_retries.toString()} textSize="text-xs" />
+          {/if}
+        </div>
+      </section>
+    {/if}
 
     <section>
       <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
@@ -121,9 +184,9 @@
       </div>
 
       <div class="flex flex-col space-y-1 text-sm">
-        <Pill key="Start Time" value={formatTimestamp(task.start_time)} textSize="text-xs"/>
-        <Pill key="End Time" value={formatTimestamp(task.end_time)} textSize="text-xs"/>
-        <Pill key="Duration" value={formatDuration(task.start_time, task.end_time)} textSize="text-xs"/>
+        <Pill key="Start Time" value={formatTimestamp(active_task.start_time)} textSize="text-xs"/>
+        <Pill key="End Time" value={formatTimestamp(active_task.end_time)} textSize="text-xs"/>
+        <Pill key="Duration" value={formatDuration(active_task.start_time, active_task.end_time)} textSize="text-xs"/>
       </div>
     </section>
 
@@ -133,19 +196,19 @@
         <header class="pl-2 text-primary-950 text-sm font-bold">Evaluation Result</header>
       </div>
       <div class="flex flex-wrap gap-2 text-xs">
-        <Pill key="Score / Value" value={task.value.toFixed(4)} textSize="text-xs" />
+        <Pill key="Score / Value" value={active_task.value.toFixed(4)} textSize="text-xs" />
       </div>
     </section>
 
-    {#if (task.expected !== null || task.actual !== null)}
-      <ComparisonView 
-        expected={task.expected} 
-        actual={task.actual} 
-        label={`Assertion: ${task.operator}`}
+    {#if (active_task.expected !== null || active_task.actual !== null)}
+      <ComparisonView
+        expected={active_task.expected}
+        actual={active_task.actual}
+        label={`Assertion: ${active_task.operator}`}
       />
     {/if}
 
-    {#if task.message}
+    {#if active_task.message}
       <section>
         <div class={`flex flex-row items-center pb-2 mb-3 border-b-2 ${messageTheme.borderColor}`}>
           <AlertCircle color={messageTheme.color}/>
@@ -155,7 +218,7 @@
         </div>
 
         <div class={`bg-surface-50 border-2 ${messageTheme.borderColor} rounded-base p-3 shadow-small`}>
-          <p class={`text-sm ${messageTheme.textColor} font-mono whitespace-pre-wrap`}>{task.message}</p>
+          <p class={`text-sm ${messageTheme.textColor} font-mono whitespace-pre-wrap`}>{active_task.message}</p>
         </div>
       </section>
     {/if}

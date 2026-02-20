@@ -2,13 +2,16 @@
   import { onMount, onDestroy } from 'svelte';
   import type { GenAIEvalWorkflowResult } from '../task';
   import GenAIEvalWorkflowContent from './GenAIEvalWorkflowContent.svelte';
+  import type { GenAIEvalProfile } from '../types';
 
   let {
     selectedWorkflow,
     onClose,
+    profile,
   }: {
     selectedWorkflow: GenAIEvalWorkflowResult;
     onClose: () => void;
+    profile: GenAIEvalProfile;
   } = $props();
 
   let isClosing = $state(false);
@@ -43,5 +46,5 @@
   class="fixed top-0 right-0 h-full w-full lg:w-4/5 xl:w-3/4 bg-white border-l-4 border-black shadow-2xl z-50 flex flex-col transition-transform duration-300"
   class:translate-x-full={isClosing}
 >
-  <GenAIEvalWorkflowContent workflow={selectedWorkflow} onClose={handleClose} showCloseButton={true} />
+  <GenAIEvalWorkflowContent workflow={selectedWorkflow} onClose={handleClose} showCloseButton={true} profile={profile} />
 </div>

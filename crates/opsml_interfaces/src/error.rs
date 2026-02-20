@@ -8,6 +8,9 @@ use tracing::error;
 
 #[derive(Error, Debug)]
 pub enum TypeError {
+    #[error("{0}")]
+    Error(String),
+
     #[error("Key {0} not found in FeatureMap")]
     MissingKeyError(String),
 
@@ -35,6 +38,12 @@ impl From<TypeError> for PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for TypeError {
+    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
+        TypeError::Error(err.to_string())
     }
 }
 
@@ -394,11 +403,17 @@ pub enum ModelInterfaceError {
     #[error("Failed to downcast Python object: {0}")]
     DowncastError(String),
 
-    #[error("Drift profile argument must be a dictionary of alias (string) and drift profile")]
-    DriftProfileMustBeDictionary,
+    #[error("Drift profile argument must be a dictionary of alias with drift profile, list of drift profiles with aliases or a single drift profile with and alias")]
+    DriftProfileNotFound,
 
     #[error("Drift profile not found in map")]
-    DriftProfileNotFound,
+    DriftProfileNotFoundInMap,
+
+    #[error("Drift profile alias must be set when passing list of drift profiles")]
+    DriftProfileListAliasMustBeSet,
+
+    #[error("Drift profile alias must be set when passing drift profile")]
+    DriftProfileAliasMustBeSet,
 }
 
 impl From<PythonizeError> for ModelInterfaceError {
