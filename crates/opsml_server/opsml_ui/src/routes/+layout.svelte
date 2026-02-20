@@ -10,8 +10,11 @@
 
     let { data, children} = $props();
   
-    // initialize settings store with data from server
-    uiSettingsStore.initialize(data.settings);
+    // Re-initialize settings reactively so the store updates on every navigation
+    // (e.g. when Scouter is disabled while the app is running)
+    $effect(() => {
+      uiSettingsStore.initialize(data.settings);
+    });
     
     let show = $state(false);
 

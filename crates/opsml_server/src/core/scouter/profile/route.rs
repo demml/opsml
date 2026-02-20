@@ -1,13 +1,14 @@
 use crate::core::error::{OpsmlServerError, internal_server_error};
 use crate::core::files::utils::download_artifacts;
 use crate::core::scouter;
-
 use crate::core::scouter::types::DriftProfileResult;
 use crate::core::scouter::utils::load_drift_profiles;
 use crate::core::scouter::utils::parse_scouter_response;
 use crate::core::scouter::utils::save_encrypted_profile;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
+use axum::extract::Query;
+use axum::routing::get;
 use axum::{
     Extension, Json, Router,
     extract::State,
@@ -15,6 +16,7 @@ use axum::{
     routing::{post, put},
 };
 use opsml_auth::permission::UserPermissions;
+use opsml_client::error::ApiClientError;
 use opsml_events::AuditContext;
 use opsml_sql::traits::ArtifactLogicTrait;
 use opsml_types::api::RequestType;
@@ -23,8 +25,8 @@ use opsml_types::contracts::ResourceType;
 use opsml_types::contracts::{DriftProfileRequest, UpdateProfileRequest};
 
 use scouter_client::{
-    ProfileRequest, ProfileStatusRequest, RegisteredProfileResponse, ScouterResponse,
-    ScouterServerError,
+    GetProfileRequest, ProfileRequest, ProfileStatusRequest, RegisteredProfileResponse,
+    ScouterResponse, ScouterServerError,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
@@ -282,6 +284,57 @@ pub async fn update_drift_profile_status(
     parse_scouter_response(response).await
 }
 
+#[instrument(skip_all)]
+pub async fn profile_exists(
+    State(state): State<Arc<AppState>>,
+    Query(params): Query<GetProfileRequest>,
+    Extension(perms): Extension<UserPermissions>,
+) -> Result<Json<bool>, (StatusCode, Json<OpsmlServerError>)> {
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter", None)
+    })?;
+
+    let query_string = serde_qs::to_string(&params).map_err(|e| {
+        error!("Failed to serialize query string: {e}");
+        internal_server_error(e, "Failed to serialize query string", None)
+    })?;
+
+    let response = state
+        .scouter_client
+        .request(
+            scouter::Routes::Profile,
+            RequestType::Get,
+            None,
+            Some(query_string),
+            None,
+            &exchange_token,
+        )
+        .await;
+
+    let response = match response {
+        Ok(resp) => resp,
+        Err(e) => {
+            if let ApiClientError::RequestError(ref req_err) = e {
+                if req_err.status() == Some(StatusCode::NOT_FOUND) {
+                    error!("GenAI workflow not found: {e}");
+                    return Ok(Json(false));
+                }
+            }
+
+            error!("Failed to get genai workflow: {e}");
+            return Err(internal_server_error(
+                e,
+                "Failed to get genai workflow",
+                None,
+            ));
+        }
+    };
+
+    let exists = response.status().is_success();
+    Ok(Json(exists))
+}
+
 /// Get drift  profiles for UI
 /// UI will make a request to return all profiles for a given card
 /// The card is identified by parent drift path.
@@ -374,6 +427,10 @@ pub async fn get_scouter_profile_router(prefix: &str) -> Result<Router<Arc<AppSt
             .route(
                 &format!("{prefix}/scouter/profile/status"),
                 put(update_drift_profile_status),
+            )
+            .route(
+                &format!("{prefix}/scouter/profile/exists"),
+                get(profile_exists),
             )
     }));
 
