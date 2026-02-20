@@ -223,6 +223,17 @@
 
   function extractCleanResponse(response: SendMessageResponse): string {
     if (isTask(response)) {
+      const state = response.status?.state;
+      const isFailed = state === 'failed' || state === 'TASK_STATE_FAILED';
+
+      if (isFailed) {
+        const errorText = response.status?.message?.parts
+          ?.filter((p) => p.text)
+          .map((p) => p.text!)
+          .join('\n');
+        return errorText ? `Task failed: ${errorText}` : 'Task failed with no error details.';
+      }
+
       const extracted = extractTextFromTask(response);
       if (extracted) return extracted;
     }
@@ -259,6 +270,7 @@
       task: userMessage,
       messageId,
     });
+
 
     const cleanContent = extractCleanResponse(response);
     addAgentMessage(cleanContent, {
