@@ -37,12 +37,12 @@ export enum RoutePaths {
   // GenAI Evaluation
   GENAI_EVAL_TASK_DRIFT = "/opsml/api/scouter/drift/genai/task",
   GENAI_EVAL_WORKFLOW_DRIFT = "/opsml/api/scouter/drift/genai/workflow",
-
   GENAI_EVAL_TASK_RECORD = "/opsml/api/scouter/genai/task",
   GENAI_EVAL_RECORD_PAGE = "/opsml/api/scouter/genai/page/record",
   GENAI_EVAL_WORKFLOW_PAGE = "/opsml/api/scouter/genai/page/workflow",
 
   DRIFT_PROFILE = "/opsml/api/scouter/profile",
+  DRIFT_PROFILE_EXISTS = "/opsml/api/scouter/profile/exists",
   DRIFT_ALERT = "/opsml/api/scouter/alerts",
   TRACE_PAGE = "/opsml/api/scouter/trace/paginated",
   TRACE_METRICS = "/opsml/api/scouter/trace/metrics",
@@ -98,6 +98,7 @@ export enum ServerPaths {
   // scouter
   // profile
   MONITORING_PROFILES = "/api/scouter/profiles",
+  MONITORING_PROFILE_EXISTS = "/api/scouter/profile/exists",
   UPDATE_MONITORING_PROFILE = "/api/scouter/profile/update",
 
   // drift
