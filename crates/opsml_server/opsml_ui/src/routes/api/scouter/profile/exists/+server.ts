@@ -1,6 +1,6 @@
 import { type RequestHandler, json } from "@sveltejs/kit";
-import { getDriftProfileExists } from "$lib/components/scouter/utils";
 import type { GetProfileExistsRequest } from "$lib/components/scouter/types";
+import { getProfileExists } from "$lib/server/scouter/drift/utils";
 
 /**
  * POST endpoint for checking if a drift profile exists
@@ -11,7 +11,7 @@ import type { GetProfileExistsRequest } from "$lib/components/scouter/types";
 export const POST: RequestHandler = async ({ request, fetch }) => {
   try {
     const filters: GetProfileExistsRequest = await request.json();
-    const response: boolean = await getDriftProfileExists(fetch, filters);
+    const response: boolean = await getProfileExists(fetch, filters);
 
     return json({ response, error: null });
   } catch (error) {
