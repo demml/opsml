@@ -7,8 +7,6 @@ use crate::core::scouter::utils::parse_scouter_response;
 use crate::core::scouter::utils::save_encrypted_profile;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
-use axum::extract::Query;
-use axum::routing::get;
 use axum::{
     Extension, Json, Router,
     extract::State,
@@ -287,8 +285,8 @@ pub async fn update_drift_profile_status(
 #[instrument(skip_all)]
 pub async fn profile_exists(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<GetProfileRequest>,
     Extension(perms): Extension<UserPermissions>,
+    Json(params): Json<GetProfileRequest>,
 ) -> Result<Json<bool>, (StatusCode, Json<OpsmlServerError>)> {
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
@@ -317,15 +315,15 @@ pub async fn profile_exists(
         Err(e) => {
             if let ApiClientError::RequestError(ref req_err) = e {
                 if req_err.status() == Some(StatusCode::NOT_FOUND) {
-                    error!("GenAI workflow not found: {e}");
+                    error!("Drift profile not found: {e}");
                     return Ok(Json(false));
                 }
             }
 
-            error!("Failed to get genai workflow: {e}");
+            error!("Failed to get drift profile: {e}");
             return Err(internal_server_error(
                 e,
-                "Failed to get genai workflow",
+                "Failed to get drift profile",
                 None,
             ));
         }
@@ -430,7 +428,7 @@ pub async fn get_scouter_profile_router(prefix: &str) -> Result<Router<Arc<AppSt
             )
             .route(
                 &format!("{prefix}/scouter/profile/exists"),
-                get(profile_exists),
+                post(profile_exists),
             )
     }));
 

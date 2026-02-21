@@ -9,13 +9,14 @@
 
 
     let { data, children} = $props();
-  
+
     // Re-initialize settings reactively so the store updates on every navigation
     // (e.g. when Scouter is disabled while the app is running)
     $effect(() => {
+      console.log("Initializing UI settings with data:", data.settings);
       uiSettingsStore.initialize(data.settings);
     });
-    
+
     let show = $state(false);
 
     onMount(() => {
@@ -26,7 +27,7 @@
 
 
   </script>
-  
+
   <svelte:head>
     <link rel="icon" type="image/x-icon" href={favicon}/>
   </svelte:head>
@@ -34,10 +35,10 @@
 {#if show}
   <div class="layout flex flex-col font-sans" id="page">
     <Navbar/>
-      <ToastProvider 
-        messageBase="text-base" 
-        placement="top-end" 
-        stateError="bg-error-500 justify-center text-black border-2 border-black" 
+      <ToastProvider
+        messageBase="text-base"
+        placement="top-end"
+        stateError="bg-error-500 justify-center text-black border-2 border-black"
         stateSuccess="bg-secondary-500 text-black border-2 border-black">
         <div class="grid-background pt-14 min-h-screen">
           {@render children()}
@@ -54,7 +55,7 @@
 <style>
   .grid-background {
     background-color: #E3DFF2;
-    background-image: 
+    background-image:
       linear-gradient(to right, #CECBDB 1px, transparent 1px),
       linear-gradient(to bottom, #CECBDB 1px, transparent 1px);
     background-size: 60px 60px;
