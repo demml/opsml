@@ -9,7 +9,9 @@ use opsml_types::api::RequestType;
 use reqwest::Response;
 use reqwest::{Client, header::HeaderMap};
 use serde_json::Value;
-use tracing::error;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use tracing::{error, info};
 
 const X_BOOTSTRAP_TOKEN: &str = "x-bootstrap-token";
 
@@ -78,8 +80,14 @@ const TIMEOUT_SECS: u64 = 30;
 pub struct ScouterApiClient {
     pub client: Client,
     pub base_path: String,
-    pub enabled: bool,
+    pub enabled: Arc<AtomicBool>,
     pub bootstrap_token: String,
+}
+
+impl ScouterApiClient {
+    pub fn is_enabled(&self) -> bool {
+        self.enabled.load(Ordering::Relaxed)
+    }
 }
 
 impl ScouterApiClient {
@@ -89,7 +97,7 @@ impl ScouterApiClient {
         let client = Self {
             client,
             base_path: settings.server_uri.clone(),
-            enabled: false,
+            enabled: Arc::new(AtomicBool::new(false)),
             bootstrap_token: settings.bootstrap_token.clone(),
         };
 
@@ -108,11 +116,12 @@ impl ScouterApiClient {
             .map_err(ServerError::CreateClientError)
     }
 
-    async fn check_and_enable_service(mut self) -> Result<Self> {
+    async fn check_and_enable_service(self) -> Result<Self> {
         match self.healthcheck(&self.bootstrap_token).await {
             Ok(healthcheck) => {
-                self.enabled = healthcheck.status().is_success();
-                if !self.enabled {
+                let ok = healthcheck.status().is_success();
+                self.enabled.store(ok, Ordering::Relaxed);
+                if !ok {
                     error!(
                         "Scouter is configured but healthcheck failed with status: {}",
                         healthcheck.status()
@@ -121,11 +130,45 @@ impl ScouterApiClient {
             }
             Err(e) => {
                 error!("Scouter healthcheck request failed (Scouter may be down): {e}");
-                self.enabled = false;
+                self.enabled.store(false, Ordering::Relaxed);
             }
         }
 
         Ok(self)
+    }
+
+    /// Spawn a background task that periodically pings Scouter's healthcheck endpoint
+    /// and updates `enabled` in-place.  All clones of this client share the same
+    /// `Arc<AtomicBool>`, so `AppState` sees the change automatically.
+    pub fn spawn_health_watcher(&self) {
+        if self.base_path.is_empty() {
+            return;
+        }
+
+        let client = self.clone();
+        tokio::spawn(async move {
+            let mut ticker = tokio::time::interval(tokio::time::Duration::from_secs(30));
+            ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+
+            loop {
+                ticker.tick().await;
+
+                let is_up = client
+                    .healthcheck(&client.bootstrap_token)
+                    .await
+                    .map(|r| r.status().is_success())
+                    .unwrap_or(false);
+
+                let was_enabled = client.enabled.load(Ordering::Relaxed);
+                client.enabled.store(is_up, Ordering::Relaxed);
+
+                if is_up && !was_enabled {
+                    info!("✅ Scouter is now online");
+                } else if !is_up && was_enabled {
+                    error!("❌ Scouter went offline");
+                }
+            }
+        });
     }
 
     async fn _request(

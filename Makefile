@@ -190,25 +190,44 @@ stop.both:
 
 
 ###### Scouter Integration
-###### It's assumed that Scouter is running on 8080
-###### Steps:
-###### 1. Set environment variable SCOUTER_SERVER_URI=http://localhost:8080
-###### 2. Set OPSML_SERVER_PORT=8000 for backend to avoid port conflict with Scouter
-###### 3. Frontend SSR will run on default port 3000
-.PHONY: dev.both.scouter
-dev.both.scouter:
-	@echo "Starting both servers in development mode with Scouter integration..."
-	@echo "Backend API: http://localhost:8090"
-	@echo "Frontend SSR: http://localhost:3000"
-	@echo "Scouter: http://localhost:8000"
-	OPSML_SERVER_PORT=8090 SCOUTER_SERVER_URI=http://localhost:8000 $(MAKE) -j2 dev.backend.scouter.run dev.frontend
+###### Service B (Scouter) is expected to run independently on port 8000.
+###### Service A (opsml) exposes its backend on 8090 and frontend on 3000.
+###### Stopping Service B will NOT affect Service A — opsml degrades gracefully
+###### (Scouter-backed features show as unavailable; core UI keeps working).
+######
+###### Usage:
+######   Terminal 1: make dev.both.scouter    (starts opsml backend + frontend)
+######   Terminal 2: cd <scouter> && make start.server
+######   To stop opsml only: make stop.both.scouter
 
-.PHONY: dev.backend.scouter.run
-dev.backend.scouter.run:
+.PHONY: dev.backend.scouter
+dev.backend.scouter:
 	cargo build -p opsml-server
-	./target/debug/opsml-server
+	OPSML_SERVER_PORT=8090 SCOUTER_SERVER_URI=http://localhost:8000 ./target/debug/opsml-server
+
+.PHONY: dev.both.scouter
+dev.both.scouter: stop.both.scouter
+	@echo "Building opsml backend..."
+	@cargo build -p opsml-server
+	@echo "Starting backend on port 8090 (Scouter integration: http://localhost:8000)"
+	@echo "Starting frontend on port 3000"
+	@# Run backend as an independent background process (separate process group so
+	@# Ctrl-C on the frontend does not propagate to it).
+	@OPSML_SERVER_PORT=8090 SCOUTER_SERVER_URI=http://localhost:8000 \
+		nohup ./target/debug/opsml-server > /tmp/opsml-backend.log 2>&1 & \
+		echo $$! > /tmp/opsml-backend.pid && \
+		echo "Backend PID: $$(cat /tmp/opsml-backend.pid) — logs: /tmp/opsml-backend.log"
+	@# Frontend runs in the foreground; kill it with Ctrl-C when done.
+	cd $(UI_DIR) && OPSML_SERVER_PORT=8090 pnpm run dev
 
 .PHONY: stop.both.scouter
 stop.both.scouter:
-	-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+	@# Kill by saved PID first (clean shutdown), then fall back to port scan.
+	-[ -f /tmp/opsml-backend.pid ] && kill $$(cat /tmp/opsml-backend.pid) 2>/dev/null || true
+	-rm -f /tmp/opsml-backend.pid
 	-lsof -ti:8090 | xargs kill -9 2>/dev/null || true
+	-lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+
+.PHONY: logs.backend.scouter
+logs.backend.scouter:
+	tail -f /tmp/opsml-backend.log

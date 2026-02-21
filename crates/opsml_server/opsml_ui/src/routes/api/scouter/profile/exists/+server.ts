@@ -13,19 +13,10 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
     const filters: GetProfileExistsRequest = await request.json();
     const response: boolean = await getProfileExists(fetch, filters);
 
-    return json({ response, error: null });
+    return json(response);
   } catch (error) {
     console.error("Error checking drift profile existence:", error);
 
-    return json(
-      {
-        response: null,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to check drift profile existence",
-      },
-      { status: 500 },
-    );
+    return json(false);
   }
 };

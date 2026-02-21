@@ -32,7 +32,11 @@ import type {
 
 // ─── Error Classification ────────────────────────────────────────────────────
 
-export type MonitoringErrorKind = "not_found" | "server_error" | "unknown";
+export type MonitoringErrorKind =
+  | "not_found"
+  | "server_error"
+  | "unknown"
+  | "not_enabled";
 
 export function classifyError(err: unknown): MonitoringErrorKind {
   const msg = err instanceof Error ? err.message : String(err);
@@ -111,6 +115,7 @@ export type MonitoringPageData =
       errorMsg: string;
       driftTypes: never[];
       profiles: Record<string, never>;
+      errorKind: MonitoringErrorKind;
     };
 
 // ─── Time Range ───────────────────────────────────────────────────────────────
@@ -411,6 +416,7 @@ export async function getMonitoringPageData(
       errorMsg: message,
       driftTypes: [],
       profiles: {},
+      errorKind: classifyError(err),
     };
   }
 }

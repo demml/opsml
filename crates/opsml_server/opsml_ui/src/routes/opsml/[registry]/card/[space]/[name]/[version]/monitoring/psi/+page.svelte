@@ -113,6 +113,7 @@
     name={data.metadata.name}
     version={data.metadata.version}
     registryType={data.registryType}
+    errorKind={monitoringData.errorKind}
   />
 {:else}
   <div class="transition-opacity duration-200 {isRefreshing ? 'opacity-60 pointer-events-none grayscale-[0.5]' : ''}">

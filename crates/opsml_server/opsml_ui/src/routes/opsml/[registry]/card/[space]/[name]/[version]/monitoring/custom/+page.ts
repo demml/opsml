@@ -7,26 +7,46 @@ import {
   loadInitialData,
   getTimeRange,
   type MonitoringPageData,
+  classifyError,
 } from "$lib/components/scouter/dashboard/utils";
+import type { DriftProfileResponse } from "$lib/components/scouter/utils";
 
 export const load: PageLoad = async ({ parent, fetch }) => {
   const parentData = await parent();
-  const { registryType, metadata, profiles, driftTypes } = parentData;
+  const { registryType, metadata, profiles, driftTypes, settings } = parentData;
 
   const timeRange = getTimeRange();
+
+  if (!settings?.scouter_enabled) {
+    return {
+      monitoringData: {
+        status: "error" as const,
+        uid: metadata.uid,
+        registryType,
+        selectedTimeRange: timeRange,
+        errorMsg: "Scouter is not enabled.",
+        driftTypes: [] as never[],
+        profiles: {} as Record<string, never>,
+        errorKind: "not_found" as const,
+      },
+      metadata,
+      driftType: DriftType.Custom,
+      registryType,
+    };
+  }
 
   try {
     const selectedData = await loadInitialData(
       fetch,
       [DriftType.Custom],
-      profiles,
-      timeRange
+      profiles as DriftProfileResponse,
+      timeRange,
     );
 
     const monitoringData: Extract<MonitoringPageData, { status: "success" }> = {
       status: "success",
       driftTypes,
-      profiles,
+      profiles: profiles as DriftProfileResponse,
       selectedData,
       uid: metadata.uid,
       registryType,
@@ -52,6 +72,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       errorMsg: message,
       driftTypes: [],
       profiles: {},
+      errorKind: classifyError(err),
     };
 
     return {
