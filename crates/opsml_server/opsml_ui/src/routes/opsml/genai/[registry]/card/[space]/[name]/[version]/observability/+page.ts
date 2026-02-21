@@ -14,7 +14,16 @@ import {
 } from "$lib/components/trace/utils";
 
 export const load: PageLoad = async ({ parent, fetch }) => {
-  const { metadata, registryType } = await parent();
+  const { metadata, registryType, settings } = await parent();
+
+  if (!settings?.scouter_enabled) {
+    return {
+      trace: null,
+      spans: null,
+      type: "not_found" as const,
+      errorMessage: "Scouter is not enabled.",
+    };
+  }
 
   try {
     const key = getCardKeyAttribute(registryType);

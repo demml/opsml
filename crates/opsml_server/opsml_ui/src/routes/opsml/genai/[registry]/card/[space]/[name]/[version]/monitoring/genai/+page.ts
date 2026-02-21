@@ -13,9 +13,26 @@ import { getDriftProfileExists } from "$lib/components/scouter/utils";
 
 export const load: PageLoad = async ({ parent, fetch }) => {
   const parentData = await parent();
-  const { registryType, metadata, eval_profile } = parentData;
+  const { registryType, metadata, eval_profile, settings } = parentData;
 
   const timeRange = getTimeRange();
+
+  if (!settings?.scouter_enabled) {
+    const errorData: Extract<GenAIMonitoringPageData, { status: "error" }> = {
+      status: "error",
+      uid: metadata.uid,
+      registryType,
+      selectedTimeRange: timeRange,
+      errorMsg: "Scouter is not enabled.",
+      errorKind: "not_found",
+    };
+    return {
+      monitoringData: errorData,
+      driftType: DriftType.GenAI,
+      metadata,
+      registryType,
+    };
+  }
 
   // check if profile exists before attempting to load data, if show not found screen
   let profileExists = await getDriftProfileExists(fetch, {
