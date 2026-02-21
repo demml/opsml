@@ -12,7 +12,6 @@
 
   let { data, children }: { data: LayoutData; children: any } = $props();
   let scouterEnabled = $derived(uiSettingsStore.scouterEnabled);
-
   let registryType = $derived(getRegistryFromString(page.params.registry as string)) as RegistryType;
 
 

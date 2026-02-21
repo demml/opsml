@@ -4,25 +4,25 @@
     import favicon from "$lib/images/opsml-green.ico";
     import Navbar from "$lib/components/nav/Navbar.svelte";
     import { onMount } from 'svelte';
+    import { afterNavigate } from '$app/navigation';
     import { ToastProvider } from '@skeletonlabs/skeleton-svelte';
     import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
 
-
-    let { data, children} = $props();
-
-    // Re-initialize settings reactively so the store updates on every navigation
-    // (e.g. when Scouter is disabled while the app is running)
-    $effect(() => {
-      console.log("Initializing UI settings with data:", data.settings);
-      uiSettingsStore.initialize(data.settings);
-    });
-
+    let { data, children } = $props();
     let show = $state(false);
 
+    // Initial sync: runs client-side only, after SSR hydration.
     onMount(() => {
+        uiSettingsStore.initialize(data.settings);
         setTimeout(() => {
           show = true;
         }, 50);
+    });
+
+    // Re-sync on every navigation: +layout.server.ts re-fetches settings
+    // on each navigation, so data.settings always reflects latest state.
+    afterNavigate(() => {
+        uiSettingsStore.initialize(data.settings);
     });
 
 

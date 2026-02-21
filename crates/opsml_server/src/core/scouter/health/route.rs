@@ -1,7 +1,6 @@
-use crate::core::error::{OpsmlServerError, internal_server_error};
-
 use crate::core::scouter;
 
+use crate::core::error::OpsmlServerError;
 use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{Extension, Json, Router, extract::State, http::StatusCode, routing::get};
@@ -10,27 +9,30 @@ use opsml_auth::permission::UserPermissions;
 use opsml_types::Alive;
 use opsml_types::api::RequestType;
 
-use scouter_client::ScouterServerError;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
-use tracing::{error, instrument};
+use tracing::{error, instrument, warn};
 
 #[instrument(skip_all)]
 pub async fn check_scouter_health(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
 ) -> Result<Json<Alive>, (StatusCode, Json<OpsmlServerError>)> {
-    // exit early if scouter is not enabled
-    if !state.scouter_client.enabled {
+    // Scouter is either not configured or the background watcher has marked it as down.
+    // Return alive:false with 200 so the UI can degrade gracefully rather than error.
+    if !state.scouter_client.is_enabled() {
         return Ok(Json(Alive { alive: false }));
     }
 
-    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
-        error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter", None)
-    })?;
+    let exchange_token = match state.exchange_token_from_perms(&perms).await {
+        Ok(token) => token,
+        Err(e) => {
+            warn!("Failed to exchange token for scouter healthcheck (non-fatal): {e}");
+            return Ok(Json(Alive { alive: false }));
+        }
+    };
 
-    let response = state
+    let response = match state
         .scouter_client
         .request(
             scouter::Routes::Healthcheck,
@@ -41,28 +43,23 @@ pub async fn check_scouter_health(
             &exchange_token,
         )
         .await
-        .map_err(|e| {
-            error!("Failed to get scouter healthcheck: {e}");
-            internal_server_error(e, "Failed to get scouter healthcheck", None)
-        })?;
+    {
+        Ok(r) => r,
+        Err(e) => {
+            // Connection refused or timeout — Scouter is offline. Degrade gracefully.
+            warn!("Scouter healthcheck request failed (Scouter may be offline): {e}");
+            return Ok(Json(Alive { alive: false }));
+        }
+    };
 
-    let status_code = response.status();
-    match status_code.is_success() {
-        true => {
-            let _ = response.json::<Alive>().await.map_err(|e| {
-                error!("Failed to parse scouter response: {e}");
-                internal_server_error(e, "Failed to parse scouter response", None)
-            })?;
-            Ok(Json(Alive { alive: true }))
-        }
-        false => {
-            let body = response.json::<ScouterServerError>().await.map_err(|e| {
-                error!("Failed to parse scouter error response: {e}");
-                internal_server_error(e, "Failed to parse scouter error response", None)
-            })?;
-            // return error response
-            Err((status_code, Json(OpsmlServerError::new(body.error))))
-        }
+    if response.status().is_success() {
+        Ok(Json(Alive { alive: true }))
+    } else {
+        error!(
+            "Scouter healthcheck returned non-success status: {}",
+            response.status()
+        );
+        Ok(Json(Alive { alive: false }))
     }
 }
 

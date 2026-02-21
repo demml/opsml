@@ -24,10 +24,10 @@
 
   $effect(() => {
     const newRange = timeRangeState.selectedTimeRange;
-    
+
     if (newRange && monitoringData.status === 'success') {
       const currentRange = monitoringData.selectedTimeRange;
-      
+
       if (
         currentRange.startTime !== newRange.startTime ||
         currentRange.endTime !== newRange.endTime
@@ -59,7 +59,7 @@
 
   async function performRefresh(type: DriftType) {
     if (monitoringData.status !== 'success') return;
-    
+
     isRefreshing = true;
     try {
       await refreshMonitoringData(fetch, type, monitoringData);
@@ -72,7 +72,7 @@
 
   async function handleAlertPageChange(cursor: RecordCursor, direction: string) {
     if (monitoringData.status !== 'success') return;
-    
+
     isRefreshing = true;
     try {
       await changeAlertPage(fetch, { cursor, direction }, monitoringData);
@@ -85,7 +85,7 @@
 
   async function updateAlert(id: number, space: string): Promise<void> {
     if (monitoringData.status !== 'success') return;
-    
+
     const updated = await acknowledgeMonitoringAlert(fetch, id, space);
     if (updated) {
       const newAlerts = await getServerDriftAlerts(fetch, {
@@ -108,6 +108,7 @@
 
 {#if monitoringData.status === 'error'}
   <MonitoringErrorView
+    errorKind={monitoringData.errorKind}
     message={monitoringData.errorMsg}
     space={data.metadata.space}
     name={data.metadata.name}

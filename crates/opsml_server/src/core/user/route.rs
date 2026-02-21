@@ -82,7 +82,7 @@ pub async fn create_user(
     info!("User {} created successfully", user.username);
 
     // pass to scouter if enabled — non-fatal: OpsML continues even if Scouter is unreachable
-    if state.scouter_client.enabled {
+    if state.scouter_client.is_enabled() {
         match state.exchange_token_from_perms(&perms).await {
             Ok(exchange_token) => {
                 if let Err(e) = state
@@ -223,7 +223,7 @@ async fn update_user(
     info!("User {} updated successfully", user.username);
 
     // pass to scouter if enabled — non-fatal: OpsML continues even if Scouter is unreachable
-    if state.scouter_client.enabled {
+    if state.scouter_client.is_enabled() {
         match state.exchange_token_from_perms(&perms).await {
             Ok(exchange_token) => {
                 if let Err(e) = state
@@ -285,7 +285,7 @@ async fn delete_user(
     }
 
     // Delete in scouter first if enabled — non-fatal: proceed with OpsML delete even if Scouter is unreachable
-    if state.scouter_client.enabled {
+    if state.scouter_client.is_enabled() {
         match state.exchange_token_from_perms(&perms).await {
             Ok(exchange_token) => {
                 match state

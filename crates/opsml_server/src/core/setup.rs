@@ -83,7 +83,7 @@ pub async fn initialize_default_user(
 
     info!("✅ Created default admin and guest user (change password on first login)",);
 
-    if scouter_client.enabled {
+    if scouter_client.is_enabled() {
         // send admin user to scouter
         match scouter_client
             .create_initial_user(&admin_user, &default_password)

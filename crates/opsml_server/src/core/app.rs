@@ -34,6 +34,9 @@ pub async fn create_app() -> Result<Router> {
         event_bus: EventBus::new(100),
     });
 
+    // Start background Scouter health watcher — updates enabled flag every 30 s
+    app_state.scouter_client.spawn_health_watcher();
+
     // Initialize the event bus
     let event_handler = AuditEventHandler::new(app_state.clone());
     event_handler.start().await;

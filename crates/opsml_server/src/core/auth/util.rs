@@ -92,7 +92,7 @@ async fn create_user(
     info!("User {} created successfully", user.username);
 
     // pass to scouter if enabled — non-fatal: SSO login proceeds even if Scouter is unreachable
-    if state.scouter_client.enabled {
+    if state.scouter_client.is_enabled() {
         match state
             .auth_manager
             .exchange_token_for_scouter(&new_user)
