@@ -24,6 +24,15 @@ pub async fn drift_alerts(
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<DriftAlertPaginationRequest>,
 ) -> Result<Json<DriftAlertPaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter", None)
@@ -78,6 +87,15 @@ pub async fn update_alert_status(
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<UpdateAlertStatus>,
 ) -> Result<Json<UpdateAlertResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     if !perms.has_write_permission(&body.space) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }

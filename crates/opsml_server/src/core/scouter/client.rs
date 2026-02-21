@@ -147,7 +147,7 @@ impl ScouterApiClient {
 
         let client = self.clone();
         tokio::spawn(async move {
-            let mut ticker = tokio::time::interval(tokio::time::Duration::from_secs(30));
+            let mut ticker = tokio::time::interval(tokio::time::Duration::from_secs(5));
             ticker.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
 
             loop {
