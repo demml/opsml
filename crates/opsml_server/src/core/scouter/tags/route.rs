@@ -20,6 +20,15 @@ pub async fn entity_from_tags(
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<EntityIdTagsRequest>,
 ) -> Result<Json<EntityIdTagsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter", None)

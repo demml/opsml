@@ -36,6 +36,15 @@ pub async fn insert_drift_profile(
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<ProfileRequest>,
 ) -> Result<Json<RegisteredProfileResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter", None)
@@ -113,6 +122,15 @@ pub async fn update_drift_profile(
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<UpdateProfileRequest>,
 ) -> Result<Json<ScouterResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     if !perms.has_write_permission(&req.request.space) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
@@ -228,6 +246,15 @@ pub async fn update_drift_profile_status(
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<ProfileStatusRequest>,
 ) -> Result<Json<ScouterResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     if !perms.has_write_permission(&body.space) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
@@ -288,6 +315,10 @@ pub async fn profile_exists(
     Extension(perms): Extension<UserPermissions>,
     Json(params): Json<GetProfileRequest>,
 ) -> Result<Json<bool>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Ok(Json(false));
+    }
+
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter", None)
