@@ -31,6 +31,15 @@ pub async fn get_paginated_traces(
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<TraceFilters>,
 ) -> Result<Json<TracePaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter", None)
@@ -84,6 +93,15 @@ pub async fn get_trace_spans(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<TraceRequest>,
 ) -> Result<Json<TraceSpansResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter", None)
@@ -136,6 +154,15 @@ pub async fn trace_metrics(
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<TraceMetricsRequest>,
 ) -> Result<Json<TraceMetricsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     debug!("Getting trace metrics with params: {:?}", &body);
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");

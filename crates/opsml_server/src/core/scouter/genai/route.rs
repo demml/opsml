@@ -28,6 +28,15 @@ pub async fn query_genai_eval_records(
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<GenAIEvalRecordPaginationRequest>,
 ) -> Result<Json<GenAIEvalRecordPaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     debug!("Getting genai eval records with params: {:?}", &body);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
@@ -91,6 +100,15 @@ pub async fn query_genai_eval_workflow(
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<GenAIEvalRecordPaginationRequest>,
 ) -> Result<Json<GenAIEvalWorkflowPaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     debug!("Getting genai eval workflow with params: {:?}", &body);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
@@ -154,6 +172,15 @@ pub async fn get_genai_tasks(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<GenAIEvalTaskRequest>,
 ) -> Result<Json<GenAIEvalTaskResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     // validate time window
     debug!("Getting genai task with params: {:?}", &params);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {

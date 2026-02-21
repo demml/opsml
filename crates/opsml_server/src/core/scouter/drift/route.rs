@@ -27,7 +27,14 @@ pub async fn get_spc_drift(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
 ) -> Result<Json<SpcDriftFeatures>, (StatusCode, Json<OpsmlServerError>)> {
-    // validate time window
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
@@ -69,7 +76,14 @@ pub async fn get_psi_drift(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
 ) -> Result<Json<BinnedPsiFeatureMetrics>, (StatusCode, Json<OpsmlServerError>)> {
-    // validate time window
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
@@ -116,7 +130,14 @@ pub async fn get_custom_drift(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
 ) -> Result<Json<BinnedMetrics>, (StatusCode, Json<OpsmlServerError>)> {
-    // validate time window
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
@@ -159,6 +180,15 @@ pub async fn get_genai_task_metrics(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
 ) -> Result<Json<BinnedMetrics>, (StatusCode, Json<OpsmlServerError>)> {
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     // validate time window
     debug!("Getting genai task metrics with params: {:?}", &params);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
@@ -220,6 +250,15 @@ pub async fn get_genai_workflow_metrics(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
 ) -> Result<Json<BinnedMetrics>, (StatusCode, Json<OpsmlServerError>)> {
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     // validate time window
     debug!("Getting genai task metrics with params: {:?}", &params);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
