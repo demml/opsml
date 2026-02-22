@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Sequence
 
-from ..genai.potato import Prompt
 from ..header import SerializedType
+from ..genai.potato import Prompt
 from .tracing import TraceSpan
 
 #### end of imports ####
@@ -177,7 +177,7 @@ class AssertionTask:
 
     Assertions can operate on:
         - Nested fields via dot-notation paths (e.g., "response.user.age")
-        - Top-level context values when field_path is None
+        - Top-level context values when context_path is None
         - String, numeric, boolean, or collection values
 
     Common Use Cases:
@@ -192,7 +192,7 @@ class AssertionTask:
         >>> # Context at runtime: {"response": {"user": {"age": 25}}}
         >>> task = AssertionTask(
         ...     id="check_user_age",
-        ...     field_path="response.user.age",
+        ...     context_path="response.user.age",
         ...     operator=ComparisonOperator.GreaterThan,
         ...     expected_value=18,
         ...     description="Verify user is an adult"
@@ -203,7 +203,7 @@ class AssertionTask:
         >>> # Context at runtime: {"user": {"age": 25}}
         >>> task = AssertionTask(
         ...     id="check_age",
-        ...     field_path="user.age",
+        ...     context_path="user.age",
         ...     operator=ComparisonOperator.GreaterThanOrEqual,
         ...     expected_value=21,
         ...     description="Check minimum age requirement"
@@ -214,7 +214,7 @@ class AssertionTask:
         >>> # Context at runtime: 25
         >>> task = AssertionTask(
         ...     id="age_threshold",
-        ...     field_path=None,
+        ...     context_path=None,
         ...     operator=ComparisonOperator.GreaterThan,
         ...     expected_value=18,
         ...     description="Validate age value"
@@ -225,7 +225,7 @@ class AssertionTask:
         >>> # Context: {"response": {"status": "completed"}}
         >>> task = AssertionTask(
         ...     id="status_check",
-        ...     field_path="response.status",
+        ...     context_path="response.status",
         ...     operator=ComparisonOperator.Equals,
         ...     expected_value="completed",
         ...     description="Verify completion status"
@@ -236,7 +236,7 @@ class AssertionTask:
         >>> # Context: {"response": {"tags": ["valid", "processed"]}}
         >>> task = AssertionTask(
         ...     id="tag_validation",
-        ...     field_path="response.tags",
+        ...     context_path="response.tags",
         ...     operator=ComparisonOperator.Contains,
         ...     expected_value="valid",
         ...     description="Check for required tag"
@@ -246,7 +246,7 @@ class AssertionTask:
 
         >>> task = AssertionTask(
         ...     id="confidence_check",
-        ...     field_path="response.confidence",
+        ...     context_path="response.confidence",
         ...     operator=ComparisonOperator.GreaterThan,
         ...     expected_value=0.9,
         ...     description="High confidence validation",
@@ -256,7 +256,7 @@ class AssertionTask:
     Note:
         - Field paths use dot-notation for nested access
         - Field paths are case-sensitive
-        - When field_path is None, the entire context is used as the value
+        - When context_path is None, the entire context is used as the value
         - Type mismatches between actual and expected values will fail the assertion
         - Dependencies are executed before this task
     """
@@ -266,7 +266,8 @@ class AssertionTask:
         id: str,
         expected_value: Any,
         operator: ComparisonOperator,
-        field_path: Optional[str] = None,
+        context_path: Optional[str] = None,
+        item_context_path: Optional[str] = None,
         description: Optional[str] = None,
         depends_on: Optional[Sequence[str]] = None,
         condition: bool = False,
@@ -283,10 +284,17 @@ class AssertionTask:
             operator:
                 Comparison operator to use for the assertion. Must be a
                 ComparisonOperator enum value.
-            field_path:
+            context_path:
                 Optional dot-notation path to extract value from context
                 (e.g., "response.user.age"). If None, the entire context
                 is used as the comparison value.
+            item_context_path:
+                Optional dot-notation path applied to each element when
+                `context_path` resolves to an array of objects. For example,
+                if `context_path="responses"` yields
+                `[{"text": "hello"}, {"text": "world"}]`, setting
+                `item_context_path="text"` causes the operator to be evaluated
+                against the `"text"` value of every element.
             description:
                 Optional human-readable description of what this assertion validates.
                 Useful for understanding evaluation results.
@@ -312,12 +320,20 @@ class AssertionTask:
         """Set task identifier (will be converted to lowercase)."""
 
     @property
-    def field_path(self) -> Optional[str]:
+    def context_path(self) -> Optional[str]:
         """Dot-notation path to field in context, or None for entire context."""
 
-    @field_path.setter
-    def field_path(self, field_path: Optional[str]) -> None:
-        """Set field path for value extraction."""
+    @context_path.setter
+    def context_path(self, context_path: Optional[str]) -> None:
+        """Set context path for value extraction."""
+
+    @property
+    def item_context_path(self) -> Optional[str]:
+        """Dot-notation path applied to each array element when context_path resolves to an array of objects."""
+
+    @item_context_path.setter
+    def item_context_path(self, item_context_path: Optional[str]) -> None:
+        """Set item context path for per-element extraction during array evaluation."""
 
     @property
     def operator(self) -> ComparisonOperator:
@@ -412,7 +428,7 @@ class LLMJudgeTask:
         ...     id="relevance_judge",
         ...     prompt=relevance_prompt,
         ...     expected_value=8,
-        ...     field_path="score",
+        ...     context_path="score",
         ...     operator=ComparisonOperator.GreaterThanOrEqual,
         ...     description="Ensure response relevance score >= 8"
         ... )
@@ -438,7 +454,7 @@ class LLMJudgeTask:
         ...     id="fact_checker",
         ...     prompt=fact_check_prompt,
         ...     expected_value={"is_factual": True, "confidence": 0.95},
-        ...     field_path="response",
+        ...     context_path="response",
         ...     operator=ComparisonOperator.Contains
         ... )
 
@@ -457,7 +473,7 @@ class LLMJudgeTask:
         ...     id="quality_judge",
         ...     prompt=quality_prompt,
         ...     expected_value=0.7,
-        ...     field_path=None,
+        ...     context_path=None,
         ...     operator=ComparisonOperator.GreaterThan,
         ...     depends_on=["relevance_judge"],
         ...     description="Evaluate overall quality after relevance check"
@@ -478,7 +494,7 @@ class LLMJudgeTask:
         id: str,
         prompt: Prompt,
         expected_value: Any,
-        field_path: Optional[str],
+        context_path: Optional[str],
         operator: ComparisonOperator,
         description: Optional[str] = None,
         depends_on: Optional[List[str]] = None,
@@ -502,7 +518,7 @@ class LLMJudgeTask:
                 The expected value to compare against the LLM's response. Type depends
                 on prompt response type. Can be any JSON-serializable type: str, int,
                 float, bool, list, dict, or None.
-            field_path (Optional[str]):
+            context_path (Optional[str]):
                 Optional dot-notation path to extract value from context before passing
                 to the LLM prompt (e.g., "response.text"), the entire response will be
                 evaluated.
@@ -541,7 +557,7 @@ class LLMJudgeTask:
         """
 
     @property
-    def field_path(self) -> Optional[str]:
+    def context_path(self) -> Optional[str]:
         """Dot-notation path to extract value from context before LLM evaluation.
 
         If specified, extracts nested value from context (e.g., "response.text")
