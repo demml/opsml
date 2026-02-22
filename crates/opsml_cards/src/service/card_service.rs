@@ -1,5 +1,5 @@
 use crate::error::CardError;
-use crate::traits::OpsmlCard;
+use crate::traits::{OpsmlCard, ProfileExt};
 use crate::utils::BaseArgs;
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
@@ -767,6 +767,22 @@ impl OpsmlCard for ServiceCard {
 
     fn save(&self, path: PathBuf) -> Result<(), CardError> {
         self.save(path)
+    }
+
+    fn update_drift_config_args(&mut self) -> Result<(), CardError> {
+        Ok(())
+    }
+
+    fn set_profile_uid(&mut self, _profile_uid: String) -> Result<(), CardError> {
+        Ok(())
+    }
+}
+
+impl ProfileExt for ServiceCard {
+    fn get_profile_request(&self) -> Result<scouter_client::ProfileRequest, CardError> {
+        Err(CardError::ProfileNotSupportedError(
+            "ServiceCard does not support profiling".to_string(),
+        ))
     }
 }
 

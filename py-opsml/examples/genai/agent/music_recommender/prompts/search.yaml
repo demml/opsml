@@ -1,0 +1,81 @@
+space: opsml
+name: search-specialist
+prompt:
+  model: google/gemini-2.5-flash
+  provider: Google
+  messages:
+    - |
+      You are a music discovery specialist. You receive a search strategy:
+
+      **Search Strategy:**
+      {search_strategy}
+
+      **User Preferences (for reference):**
+      {user_preferences}
+
+      Your job is to find 5-7 candidate tracks using search_music_catalog.
+      For each promising candidate, validate it with calculate_similarity.
+
+      Output a JSON list of candidates:
+      [
+          {{
+              "artist": "Artist Name",
+              "song": "Song Title",
+              "similarity_score": 0.85,
+              "why_it_fits": "Brief reason"
+          }},
+          ...
+      ]
+
+      Only include tracks with similarity_score > 0.7.
+      Output *only* the JSON array.
+  response_format:
+    title: SearchResults
+    type: array
+    items:
+      type: object
+      properties:
+        artist:
+          type: string
+        song:
+          type: string
+        similarity_score:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+        why_it_fits:
+          type: string
+      required: ["artist", "song", "similarity_score", "why_it_fits"]
+      additionalProperties: false
+evaluation:
+  alias: check_search_results
+  tasks:
+    - task_type: Assertion
+      id: validate_artist_exists
+      context_path: search_results
+      item_context_path: artist
+      operator: IsNotEmpty
+      expected_value: true
+      description: "Verifies search results are in line with directions"
+      depends_on: []
+      condition: false
+
+    - task_type: Assertion
+      id: validate_song_exists
+      context_path: search_results
+      item_context_path: song
+      operator: IsNotEmpty
+      expected_value: true
+      description: "Verifies search results are in line with directions"
+      depends_on: []
+      condition: false
+
+    - task_type: Assertion
+      id: validate_similarity_score
+      context_path: search_results
+      item_context_path: similarity_score
+      operator: GreaterThan
+      expected_value: 0.7
+      description: "Verifies search results are in line with directions"
+      depends_on: []
+      condition: false
