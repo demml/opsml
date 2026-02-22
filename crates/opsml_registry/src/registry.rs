@@ -825,14 +825,12 @@ impl CardRegistry {
                 let registered_response = registry.insert_scouter_profile(&profile_request)?;
                 debug!("Successfully uploaded scouter profile");
 
-                return Ok(registered_response.uid);
+                Ok(registered_response.uid)
             }
-            _ => {
-                return Err(RegistryError::InvalidRegistryType(
-                    "Expected Prompt registry type".to_string(),
-                ));
-            }
-        };
+            _ => Err(RegistryError::InvalidRegistryType(
+                "Expected Prompt registry type".to_string(),
+            )),
+        }
     }
 
     #[instrument(skip_all)]
