@@ -37,7 +37,7 @@
         <div class="p-2 {currentConfig.bg} border-2 border-black rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
           <currentConfig.icon class="w-6 h-6 text-black" />
         </div>
-        <h1 class="text-2xl font-black text-black uppercase tracking-tight">
+        <h1 class="text-xl font-black text-black uppercase tracking-tight">
           {currentConfig.title} Dashboard
         </h1>
       </div>

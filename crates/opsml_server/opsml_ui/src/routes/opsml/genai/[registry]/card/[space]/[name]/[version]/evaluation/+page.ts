@@ -1,6 +1,6 @@
 export const ssr = false;
 
-import type { PageLoad } from "./$types";
+import type { PageLoad } from "./genai/$types";
 import { DriftType } from "$lib/components/scouter/types";
 import {
   getTimeRange,
@@ -17,6 +17,8 @@ export const load: PageLoad = async ({ parent, fetch }) => {
 
   const timeRange = getTimeRange();
 
+  console.log("eval tasks", eval_profile.tasks);
+
   if (!settings?.scouter_enabled) {
     const errorData: Extract<GenAIMonitoringPageData, { status: "error" }> = {
       status: "error",
@@ -25,6 +27,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       selectedTimeRange: timeRange,
       errorMsg: "Scouter is not enabled.",
       errorKind: "not_found",
+      profile: eval_profile,
     };
     return {
       monitoringData: errorData,
@@ -50,6 +53,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       selectedTimeRange: timeRange,
       errorMsg: "No evaluation profile found for this card.",
       errorKind: "not_found",
+      profile: eval_profile,
     };
 
     return {
@@ -96,6 +100,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       selectedTimeRange: timeRange,
       errorMsg: message,
       errorKind,
+      profile: eval_profile,
     };
 
     return {

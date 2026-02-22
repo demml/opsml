@@ -29,37 +29,37 @@
     const pathParts = page.url.pathname.split('/');
     const last = pathParts[pathParts.length - 1] ?? '';
     const secondLast = pathParts[pathParts.length - 2] ?? '';
-    
-    // Check if we're in a nested monitoring route (e.g., /monitoring/custom)
-    if (secondLast === 'monitoring') return 'monitoring';
-    
+
+    // Check if we're in a nested evaluation route (e.g., /evaluation/custom)
+    if (secondLast === 'evaluation') return 'evaluation';
+
     // Direct routes
-    if (['card', 'files', 'monitoring', 'observability', 'versions', 'view'].includes(last)) return last;
-    
+    if (['card', 'files', 'evaluation', 'observability', 'versions', 'view'].includes(last)) return last;
+
     return 'card';
   });
 
   /**
-   * Determines if monitoring tab should be shown based on metadata and settings
+   * Determines if evaluation tab should be shown based on metadata and settings
    */
-  let showMonitoring = $derived(
+  let showEvaluation = $derived(
     (metadata.metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled) || dev
   );
 
-  /// determine base path for monitoring links
+  /// determine base path for evaluation links
   // if metadata.metadata.drift_profile_uri_map exists and scouter is enabled, get the first drift type from the map
   // example profile map: {"genai":{"drift_type":"GenAI","root_dir":"drift","uri":"drift/genai.json"}}
   // iterate over map and get first drift type at key "drift_type"
-  let monitoringBasePath = $derived(() => {
+  let evaluationBasePath = $derived(() => {
     if (metadata.metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled) {
       const driftTypes = Object.values(metadata.metadata.drift_profile_uri_map).map(
         (profile: any) => profile.drift_type.toLowerCase()
       );
       if (driftTypes.length > 0) {
-        return `monitoring/${driftTypes[0]}`;
+        return `evaluation/${driftTypes[0]}`;
       }
     }
-    return 'monitoring';
+    return 'evaluation';
   });
 
   /**
@@ -112,15 +112,15 @@
         <span>Card</span>
       </a>
 
-      {#if showMonitoring}
+      {#if showEvaluation}
         <a
-          class="flex items-center gap-x-2 border-b-3 {activeTab === 'monitoring' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors"
-          href={`${basePath}/${monitoringBasePath()}`}
+          class="flex items-center gap-x-2 border-b-3 {activeTab === 'evaluation' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors"
+          href={`${basePath}/evaluation`}
           data-sveltekit-preload-data="hover"
-          aria-current={activeTab === 'monitoring' ? 'page' : undefined}
+          aria-current={activeTab === 'evaluation' ? 'page' : undefined}
         >
           <Activity color={iconColor} size={16} />
-          <span>Monitoring</span>
+          <span>Evaluation</span>
         </a>
       {/if}
 
