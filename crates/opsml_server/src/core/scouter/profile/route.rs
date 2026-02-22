@@ -344,11 +344,11 @@ pub async fn profile_exists(
     let response = match response {
         Ok(resp) => resp,
         Err(e) => {
-            if let ApiClientError::RequestError(ref req_err) = e {
-                if req_err.status() == Some(StatusCode::NOT_FOUND) {
-                    error!("Drift profile not found: {e}");
-                    return Ok(Json(false));
-                }
+            if let ApiClientError::RequestError(ref req_err) = e
+                && req_err.status() == Some(StatusCode::NOT_FOUND)
+            {
+                error!("Drift profile not found: {e}");
+                return Ok(Json(false));
             }
 
             error!("Failed to get drift profile: {e}");

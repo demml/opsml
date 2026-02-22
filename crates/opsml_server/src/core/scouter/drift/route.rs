@@ -216,15 +216,15 @@ pub async fn get_genai_task_metrics(
     let response = match response {
         Ok(resp) => resp,
         Err(e) => {
-            if let ApiClientError::RequestError(ref req_err) = e {
-                if req_err.status() == Some(StatusCode::NOT_FOUND) {
-                    error!("GenAI task metrics not found: {e}");
-                    return Err(internal_server_error(
-                        e,
-                        "GenAI task metrics not found",
-                        Some(StatusCode::NOT_FOUND),
-                    ));
-                }
+            if let ApiClientError::RequestError(ref req_err) = e
+                && req_err.status() == Some(StatusCode::NOT_FOUND)
+            {
+                error!("GenAI task metrics not found: {e}");
+                return Err(internal_server_error(
+                    e,
+                    "GenAI task metrics not found",
+                    Some(StatusCode::NOT_FOUND),
+                ));
             }
 
             error!("Failed to get genai task metrics: {e}");
@@ -286,15 +286,15 @@ pub async fn get_genai_workflow_metrics(
     let response = match response {
         Ok(resp) => resp,
         Err(e) => {
-            if let ApiClientError::RequestError(ref req_err) = e {
-                if req_err.status() == Some(StatusCode::NOT_FOUND) {
-                    error!("GenAI workflow metrics not found: {e}");
-                    return Err(internal_server_error(
-                        e,
-                        "GenAI workflow metrics not found",
-                        Some(StatusCode::NOT_FOUND),
-                    ));
-                }
+            if let ApiClientError::RequestError(ref req_err) = e
+                && req_err.status() == Some(StatusCode::NOT_FOUND)
+            {
+                error!("GenAI workflow metrics not found: {e}");
+                return Err(internal_server_error(
+                    e,
+                    "GenAI workflow metrics not found",
+                    Some(StatusCode::NOT_FOUND),
+                ));
             }
 
             error!("Failed to get genai workflow metrics: {e}");
