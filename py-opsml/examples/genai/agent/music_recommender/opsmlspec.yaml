@@ -1,0 +1,33 @@
+name: "prompt-chaining-agent"
+space: "opsml"
+type: Agent
+
+metadata:
+  description: "A prompt chaining agent service"
+  language: "python"
+  tags: ["prompt-chain"]
+
+service:
+  cards:
+    - alias: pattern_prompt
+      path: "prompts/pattern.yaml"
+      registry_type: prompt
+    - alias: preference_prompt
+      path: "prompts/preference.yaml"
+      registry_type: prompt
+    - alias: recommendation_prompt
+      path: "prompts/recommendation.yaml"
+      registry_type: prompt
+    - alias: search_prompt
+      path: "prompts/search.yaml"
+      registry_type: prompt
+
+  agent:
+    capabilities:
+      streaming: false
+      push_notifications: false
+      extended_agent_card: false
+    default_output_modes: ["text/plain"]
+    default_input_modes: ["text/plain"]
+    description: "A sample agent service that demonstrates prompt chaining."
+    name: "Prompt Chaining Agent"

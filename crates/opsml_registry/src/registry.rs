@@ -4,7 +4,7 @@ use crate::utils::verify_card_rs;
 use crate::utils::{check_if_card, download_card, upload_card_artifacts, verify_card};
 use crate::utils::{upload_drift_profile_map, upload_profile};
 use const_format::concatcp;
-use opsml_cards::traits::OpsmlCard;
+use opsml_cards::traits::{OpsmlCard, ProfileExt};
 use opsml_colors::Colorize;
 use opsml_interfaces::{DriftArgs, SaveKwargs};
 use opsml_semver::VersionType;
@@ -743,7 +743,7 @@ impl CardRegistry {
         version_type: VersionType,
     ) -> Result<(), RegistryError>
     where
-        T: OpsmlCard,
+        T: OpsmlCard + ProfileExt,
     {
         // Verify card for registration
         debug!("Verifying card");
@@ -757,6 +757,10 @@ impl CardRegistry {
         debug!("Updating card with server response");
         Self::update_card_with_server_response_rs(&create_response, card)?;
 
+        //register promptcard drift profile with scouter if integration is enabled and registry type is prompt
+        debug!("Uploading integration artifacts");
+        Self::upload_integration_artifacts_rs(&self.registry, &self.registry_type, card)?;
+
         // Save card artifacts to temp path
         debug!("Saving card artifacts");
         let tmp_path = Self::save_card_artifacts_rs(card)?;
@@ -767,6 +771,68 @@ impl CardRegistry {
 
         debug!("Successfully registered card");
         Ok(())
+    }
+
+    #[instrument(skip_all)]
+    fn upload_integration_artifacts_rs<T>(
+        registry: &OpsmlCardRegistry,
+        registry_type: &RegistryType,
+        card: &mut T,
+    ) -> Result<(), RegistryError>
+    where
+        T: OpsmlCard + ProfileExt,
+    {
+        // Can only upload profile for Prompt types when using cli
+        if registry_type == &RegistryType::Prompt {
+            // ensure scouter integration is enabled before uploading artifacts
+            debug!("Checking if Scouter service is enabled for integration");
+            if registry.check_service_health(IntegratedService::Scouter)? {
+                let profile_uid =
+                    Self::upload_scouter_artifacts_rs(registry, card, None, registry_type)?;
+                card.set_profile_uid(profile_uid)?;
+            }
+        }
+        Ok(())
+    }
+
+    #[instrument(skip_all)]
+    fn upload_scouter_artifacts_rs<T>(
+        registry: &OpsmlCardRegistry,
+        card: &mut T,
+        drift_args: Option<&DriftArgs>,
+        registry_type: &RegistryType,
+    ) -> Result<String, RegistryError>
+    where
+        T: OpsmlCard + ProfileExt,
+    {
+        // update drift config args before uploading profiles to scouter and saving
+        card.update_drift_config_args()?;
+
+        match registry_type {
+            RegistryType::Prompt => {
+                let mut profile_request = card.get_profile_request()?;
+
+                // if drift_args is Some, update the drift profile status (allows users to immediately activate a drift profile)
+                // else set both to true
+                if let Some(drift_args) = drift_args {
+                    profile_request.active = drift_args.active;
+                    profile_request.deactivate_others = drift_args.deactivate_others;
+                } else {
+                    profile_request.active = true;
+                    profile_request.deactivate_others = true;
+                }
+
+                let registered_response = registry.insert_scouter_profile(&profile_request)?;
+                debug!("Successfully uploaded scouter profile");
+
+                return Ok(registered_response.uid);
+            }
+            _ => {
+                return Err(RegistryError::InvalidRegistryType(
+                    "Expected Prompt registry type".to_string(),
+                ));
+            }
+        };
     }
 
     #[instrument(skip_all)]

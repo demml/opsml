@@ -113,6 +113,12 @@ pub enum CardError {
 
     #[error(transparent)]
     SerdeYamlError(#[from] serde_yaml::Error),
+
+    #[error(transparent)]
+    ScouterTypeError(#[from] scouter_client::TypeError),
+
+    #[error("{0}")]
+    ProfileNotSupportedError(String),
 }
 
 impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for CardError {
