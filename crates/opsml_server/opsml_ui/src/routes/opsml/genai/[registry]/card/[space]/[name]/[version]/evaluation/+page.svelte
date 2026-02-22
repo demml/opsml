@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import MonitoringErrorView from '$lib/components/scouter/dashboard/MonitoringErrorView.svelte';
-  import type { PageProps } from './$types';
+  import type { PageProps } from './genai/$types';
   import type { GenAIMonitoringPageData } from '$lib/components/scouter/dashboard/utils';
   import { refreshGenAIMonitoringData } from '$lib/components/scouter/dashboard/utils';
   import type { RecordCursor } from '$lib/components/scouter/types';
@@ -9,7 +9,7 @@
   import { Loader2 } from 'lucide-svelte';
   import GenAIDashboard from '$lib/components/scouter/genai/dashboard/GenAIDashboard.svelte';
   import { timeRangeState } from '$lib/components/utils/timeState.svelte';
-
+  import GenAITaskAccordion from '$lib/components/scouter/genai/task/GenAITaskAccordion.svelte';
   let { data }: PageProps = $props();
   let monitoringData = $state<GenAIMonitoringPageData>(data.monitoringData);
   let isRefreshing = $state(false);
@@ -87,6 +87,7 @@
 {/if}
 
 {#if monitoringData.status === 'error'}
+  <GenAITaskAccordion tasks={monitoringData.profile.tasks} />
   <MonitoringErrorView
     message={monitoringData.errorMsg}
     errorKind={monitoringData.errorKind}
