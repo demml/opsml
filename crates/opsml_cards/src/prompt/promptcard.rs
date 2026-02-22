@@ -1,5 +1,5 @@
 use crate::error::CardError;
-use crate::traits::OpsmlCard;
+use crate::traits::{OpsmlCard, ProfileExt};
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_types::DriftProfileUri;
@@ -11,6 +11,7 @@ use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use scouter_client::AssertionTasks;
+use scouter_client::ProfileRequest;
 use scouter_client::TasksFile;
 use scouter_client::{DriftType, GenAIEvalConfig, GenAIEvalProfile};
 use serde::de::DeserializeOwned;
@@ -97,6 +98,16 @@ pub struct PromptCard {
     pub eval_profile: Option<GenAIEvalProfile>,
 }
 
+impl ProfileExt for PromptCard {
+    fn get_profile_request(&self) -> Result<ProfileRequest, CardError> {
+        if let Some(profile) = &self.eval_profile {
+            Ok(profile.create_profile_request()?)
+        } else {
+            Err(CardError::DriftProfileNotFoundError)
+        }
+    }
+}
+
 impl OpsmlCard for PromptCard {
     fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         self.get_registry_card()
@@ -140,6 +151,14 @@ impl OpsmlCard for PromptCard {
 
     fn registry_type(&self) -> &RegistryType {
         &self.registry_type
+    }
+
+    fn update_drift_config_args(&mut self) -> Result<(), CardError> {
+        self.update_drift_config_args()
+    }
+
+    fn set_profile_uid(&mut self, profile_uid: String) -> Result<(), CardError> {
+        self.update_eval_uid(profile_uid)
     }
 }
 

@@ -381,7 +381,7 @@ dependencies = [
  "futures-lite 2.6.1",
  "parking",
  "polling 3.11.0",
- "rustix 1.1.3",
+ "rustix 1.1.4",
  "slab",
  "windows-sys 0.61.2",
 ]
@@ -421,7 +421,7 @@ dependencies = [
  "cfg-if",
  "event-listener 5.4.1",
  "futures-lite 2.6.1",
- "rustix 1.1.3",
+ "rustix 1.1.4",
 ]
 
 [[package]]
@@ -448,7 +448,7 @@ dependencies = [
  "cfg-if",
  "futures-core",
  "futures-io",
- "rustix 1.1.3",
+ "rustix 1.1.4",
  "signal-hook-registry",
  "slab",
  "windows-sys 0.61.2",
@@ -1143,9 +1143,9 @@ dependencies = [
 
 [[package]]
 name = "baked-potato"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71ad2ffb12af157ca117258d6b429d54cd47399067a90df8253e440583bc9629"
+checksum = "08c1f763364fbb8c4499fc638a15f3701675f2c9301832d530e958431fe4a5db"
 dependencies = [
  "mockito",
  "potato-agent",
@@ -3386,9 +3386,9 @@ checksum = "ef53942eb7bf7ff43a617b3e2c1c4a5ecf5944a7c1bc12d7ee39bbb15e5c1519"
 
 [[package]]
 name = "linux-raw-sys"
-version = "0.11.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df1d3c3b53da64cf5760482273a98e575c651a67eec7f77df96b5b642de8f039"
+checksum = "32a66949e030da00e8c7d4434b251670a91556f4144941d37452769c25d58a53"
 
 [[package]]
 name = "litemap"
@@ -5005,7 +5005,7 @@ dependencies = [
  "concurrent-queue",
  "hermit-abi 0.5.2",
  "pin-project-lite",
- "rustix 1.1.3",
+ "rustix 1.1.4",
  "windows-sys 0.61.2",
 ]
 
@@ -5038,9 +5038,9 @@ dependencies = [
 
 [[package]]
 name = "potato-agent"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f55306b56f7f12f69b318ecd2e5aba8a8a0a2ead26ca72fd216e8647413e7ffc"
+checksum = "443b22db9221f1924b9ae2ed1cfabf80b7be12903168b4c9b4f0b86ec139cc14"
 dependencies = [
  "base64 0.22.1",
  "gcloud-auth",
@@ -5062,9 +5062,9 @@ dependencies = [
 
 [[package]]
 name = "potato-head"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0aefc62119ede0d86b8db3596e469a0ae1513a826701d7cba88a242bacc72a32"
+checksum = "35308ab40da7278490899ba2d53262f3ac3e3cb9669cc32a0a7d3c52f861cee0"
 dependencies = [
  "baked-potato",
  "potato-agent",
@@ -5076,9 +5076,9 @@ dependencies = [
 
 [[package]]
 name = "potato-provider"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f911f2b3330867f159d4d853e27ad95bf42a4e6b59097f2208528c0e7b56b93"
+checksum = "cbe55ab7b8a2bb4939ca5fd289391428bb17a6f000fd12b24c43a00919dd8400"
 dependencies = [
  "base64 0.22.1",
  "gcloud-auth",
@@ -5099,9 +5099,9 @@ dependencies = [
 
 [[package]]
 name = "potato-state"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21c3da7155cf0522a2d3d342f0ac45b0541c2f8798b4a006c6d3dd083cff510c"
+checksum = "5c4276ea24cbb7e0ea34987fe37b0723136ce233ac84cc16a2598c8ce5746dcf"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -5110,9 +5110,9 @@ dependencies = [
 
 [[package]]
 name = "potato-type"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "878dd8ac590910ae51a78de1c8ad0a734bd4848c8af91dacdf2d0a12d556b514"
+checksum = "d576e170c442f95a94d8349190b00646c7a6c8418f4e842473c647f3f8a148b9"
 dependencies = [
  "potato-util",
  "potatohead-macro",
@@ -5129,9 +5129,9 @@ dependencies = [
 
 [[package]]
 name = "potato-util"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a87c1a6805672b60b69b4fe24c7b46670eceaf24dd98b92be521de2d33309116"
+checksum = "3c3aa12910fbc0973c4e75ab433e8902c0ce07929e5597815caa338d2ce0568e"
 dependencies = [
  "colored_json",
  "pyo3",
@@ -5146,9 +5146,9 @@ dependencies = [
 
 [[package]]
 name = "potato-workflow"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fc421df31ef2473895947a644d75f8e44aeb4395f764fcb60f174c080880cd24"
+checksum = "000663ff498b3e074f95b850f1b97ebf975f7a0bd18267f8a5edcbd896a10cd5"
 dependencies = [
  "chrono",
  "potato-agent",
@@ -5167,9 +5167,9 @@ dependencies = [
 
 [[package]]
 name = "potatohead-macro"
-version = "0.14.0"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "07185eb3419e90be99816fae1ef23b006acdf69b400c0f4b08646fb08864cdbd"
+checksum = "bf7dda323dc41f664825fec505e50e9f9cd4b20bde11fc6c0e2cd5adcc13ebc6"
 dependencies = [
  "thiserror 2.0.18",
 ]
@@ -6132,14 +6132,14 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "1.1.3"
+version = "1.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "146c9e247ccc180c1f61615433868c99f3de3ae256a30a43b49f67c2d9171f34"
+checksum = "b6fe4565b9518b83ef4f91bb47ce29620ca828bd32cb7e408f0062e9930ba190"
 dependencies = [
  "bitflags 2.11.0",
  "errno",
  "libc",
- "linux-raw-sys 0.11.0",
+ "linux-raw-sys 0.12.1",
  "windows-sys 0.61.2",
 ]
 
@@ -6377,7 +6377,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6409,7 +6409,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "futures",
  "pyo3",
@@ -6424,7 +6424,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "chrono",
  "futures",
@@ -6450,7 +6450,7 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "chrono",
  "itertools 0.14.0",
@@ -6477,7 +6477,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6512,7 +6512,7 @@ dependencies = [
 [[package]]
 name = "scouter-http"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "pyo3",
  "reqwest 0.12.28",
@@ -6527,7 +6527,7 @@ dependencies = [
 [[package]]
 name = "scouter-macro"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "thiserror 2.0.18",
 ]
@@ -6535,7 +6535,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6552,7 +6552,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6574,7 +6574,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "pyo3",
  "semver",
@@ -6585,7 +6585,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -6599,7 +6599,7 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -6609,7 +6609,7 @@ dependencies = [
 [[package]]
 name = "scouter-tonic"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "prost",
  "prost-types",
@@ -6628,7 +6628,7 @@ dependencies = [
 [[package]]
 name = "scouter-tracing"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6654,7 +6654,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#c340a539f3aeca48dcc7761555d28ec04a5c3142"
+source = "git+https://github.com/demml/scouter.git?branch=status-code#8864bcd15d151e8c67b0f2634167f6d3b3aa67f8"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -7337,15 +7337,15 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
 name = "strum"
-version = "0.27.2"
+version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af23d6f6c1a224baef9d3f61e287d2761385a5b88fdab4eb4c6f11aeb54c4bcf"
+checksum = "9628de9b8791db39ceda2b119bbe13134770b56c138ec1d3af810d045c04f9bd"
 
 [[package]]
 name = "strum_macros"
-version = "0.27.2"
+version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7695ce3845ea4b33927c055a39dc438a45b059f7c1b3d91d38d10355fb8cbca7"
+checksum = "ab85eea0270ee17587ed4156089e10b9e6880ee688791d45a905f5b1ca36f664"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -7479,7 +7479,7 @@ dependencies = [
  "fastrand 2.3.0",
  "getrandom 0.4.1",
  "once_cell",
- "rustix 1.1.3",
+ "rustix 1.1.4",
  "windows-sys 0.61.2",
 ]
 
@@ -7498,7 +7498,7 @@ version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60b8cb979cb11c32ce1603f8137b22262a9d131aaa5c37b5678025f22b8becd0"
 dependencies = [
- "rustix 1.1.3",
+ "rustix 1.1.4",
  "windows-sys 0.60.2",
 ]
 
@@ -9063,7 +9063,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "32e45ad4206f6d2479085147f02bc2ef834ac85886624a23575ae137c8aa8156"
 dependencies = [
  "libc",
- "rustix 1.1.3",
+ "rustix 1.1.4",
 ]
 
 [[package]]

@@ -2,6 +2,7 @@
 use crate::error::CardError;
 use chrono::{DateTime, Utc};
 use opsml_types::{RegistryType, contracts::CardRecord};
+use scouter_client::ProfileRequest;
 use std::path::PathBuf;
 
 pub trait OpsmlCard {
@@ -27,4 +28,12 @@ pub trait OpsmlCard {
     fn save(&self, path: PathBuf) -> Result<(), CardError>;
 
     fn registry_type(&self) -> &RegistryType;
+
+    fn update_drift_config_args(&mut self) -> Result<(), CardError>;
+
+    fn set_profile_uid(&mut self, profile_uid: String) -> Result<(), CardError>;
+}
+
+pub trait ProfileExt {
+    fn get_profile_request(&self) -> Result<ProfileRequest, CardError>;
 }
