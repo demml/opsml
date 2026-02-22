@@ -11,6 +11,7 @@
   import GenAIEvalRecordTable from '../record/GenAIEvalRecordTable.svelte';
   import GenAIEvalWorkflowTable from '../workflow/GenAIEvalWorkflowTable.svelte';
   import VizBody from '$lib/components/scouter/dashboard/VizBody.svelte';
+  import GenAITaskAccordion from '../task/GenAITaskAccordion.svelte';
 
   // Icons
   import { KeySquare, TableProperties, ArrowRightLeft } from 'lucide-svelte';
@@ -55,6 +56,9 @@
 </script>
 
 <div class="mx-auto w-full px-4 sm:px-6 lg:px-8 space-y-8 pb-12">
+  <!-- Task Accordion: always first -->
+  <GenAITaskAccordion tasks={profile.tasks} />
+
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
     <div class="lg:col-span-3 flex flex-col gap-6">
       <div class="bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl flex flex-col gap-5">

@@ -235,6 +235,11 @@ export type TraceAssertion =
   | { TraceAttribute: { attribute_key: string } };
 
 /**
+ * Union of all evaluation task types.
+ */
+export type AnyTask = AssertionTask | LLMJudgeTask | TraceAssertionTask;
+
+/**
  * Assertion task for distributed trace validation.
  */
 export interface TraceAssertionTask {

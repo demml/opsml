@@ -95,6 +95,7 @@ export type GenAIMonitoringPageData =
       selectedTimeRange: TimeRange;
       errorMsg: string;
       errorKind: MonitoringErrorKind;
+      profile: GenAIEvalProfile;
     };
 
 export type MonitoringPageData =
@@ -363,6 +364,7 @@ export async function getGenAIMonitoringPageData(
       selectedTimeRange: timeRange,
       errorMsg: message,
       errorKind: classifyError(err),
+      profile: eval_profile,
     };
   }
 }
