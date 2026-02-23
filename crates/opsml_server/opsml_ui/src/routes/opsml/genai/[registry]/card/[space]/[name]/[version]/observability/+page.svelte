@@ -17,25 +17,26 @@
 
 </script>
 
+{#if scouterEnabled}
 <div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
-  {#if scouterEnabled}
-    {#if trace && traceSpans}
-      <div class="border-black border-2 rounded-lg shadow">
-        <TraceDetailContent
-          trace={trace}
-          traceSpans={traceSpans}
-          showCloseButton={false}
-        />
-      </div>
-    {:else}
-      <NoTraceView message={data.errorMessage} type={data.type} />
-    {/if}
+  {#if trace && traceSpans}
+    <div class="border-black border-2 rounded-lg shadow">
+      <TraceDetailContent
+        trace={trace}
+        traceSpans={traceSpans}
+        showCloseButton={false}
+      />
+    </div>
   {:else}
-    <ScouterRequiredView
-      featureName="Observability Dashboard"
-      featureDescription="Track distributed traces, monitor request flows, and identify performance bottlenecks across your services with real-time observability powered by Scouter."
-      icon={Search}
-    />
+      <NoTraceView message={data.errorMessage} type={data.type} />
   {/if}
 </div>
+{:else}
+  <ScouterRequiredView
+    featureName="Observability Dashboard"
+    featureDescription="Track distributed traces, monitor request flows, and identify performance bottlenecks across your services with real-time observability powered by Scouter."
+    icon={Search}
+  />
+{/if}
+
 

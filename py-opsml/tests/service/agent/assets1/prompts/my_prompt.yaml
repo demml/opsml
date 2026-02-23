@@ -22,7 +22,7 @@ evaluation:
   tasks:
     - task_type: Assertion
       id: sentiment_score_assertion
-      field_path: sentiment.score
+      context_path: sentiment.score
       operator: GreaterThan
       expected_value: 18
       description: Analyze sentiment score is above threshold
@@ -31,7 +31,7 @@ evaluation:
 
     - task_type: Assertion
       id: validate_email
-      field_path: user.email
+      context_path: user.email
       operator: IsEmail
       expected_value: true
       description: Validate email format

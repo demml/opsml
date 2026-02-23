@@ -1,6 +1,6 @@
 export const ssr = false;
 
-import type { PageLoad } from "./genai/$types";
+import type { PageLoad } from "./$types";
 import { DriftType } from "$lib/components/scouter/types";
 import {
   getTimeRange,
@@ -16,8 +16,6 @@ export const load: PageLoad = async ({ parent, fetch }) => {
   const { registryType, metadata, eval_profile, settings } = parentData;
 
   const timeRange = getTimeRange();
-
-  console.log("eval tasks", eval_profile.tasks);
 
   if (!settings?.scouter_enabled) {
     const errorData: Extract<GenAIMonitoringPageData, { status: "error" }> = {

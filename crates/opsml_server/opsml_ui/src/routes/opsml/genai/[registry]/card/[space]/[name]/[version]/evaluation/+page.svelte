@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import MonitoringErrorView from '$lib/components/scouter/dashboard/MonitoringErrorView.svelte';
-  import type { PageProps } from './genai/$types';
+  import type { PageProps } from './$types';
   import type { GenAIMonitoringPageData } from '$lib/components/scouter/dashboard/utils';
   import { refreshGenAIMonitoringData } from '$lib/components/scouter/dashboard/utils';
   import type { RecordCursor } from '$lib/components/scouter/types';

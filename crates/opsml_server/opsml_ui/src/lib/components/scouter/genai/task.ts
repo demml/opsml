@@ -78,7 +78,7 @@ export interface AssertionResult {
  */
 export interface AssertionTask {
   id: string;
-  field_path: string | null; // Option<String>
+  context_path: string | null; // Option<String>
   operator: ComparisonOperator;
   expected_value: JsonValue; // Value
   description: string | null; // Option<String>
@@ -91,7 +91,7 @@ export interface AssertionTask {
 export interface LLMJudgeTask {
   id: string;
   prompt: Prompt;
-  field_path: string | null;
+  context_path: string | null;
   expected_value: JsonValue;
   operator: ComparisonOperator;
   task_type: EvaluationTaskType;
@@ -170,7 +170,7 @@ export interface GenAIEvalTaskResult {
 
 /**
  * Extract assertion from GenAIEvalTaskResult.
- * Returns field_path for standard assertions, TraceAssertion for trace tasks.
+ * Returns context_path for standard assertions, TraceAssertion for trace tasks.
  */
 export function getAssertion(
   result: GenAIEvalTaskResult,

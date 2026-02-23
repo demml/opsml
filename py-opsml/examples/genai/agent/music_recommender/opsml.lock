@@ -1,0 +1,9 @@
+version = "3.0.1"
+
+[[artifact]]
+space = "opsml"
+name = "prompt-chaining-agent"
+version = "0.16.0"
+uid = "019c8afc-9ced-7fa3-8b4a-f102dd37566d"
+write_dir = "opsml_service"
+registry_type = "agent"

@@ -1152,7 +1152,7 @@ class PromptCard:
             ...         id="response_relevance",
             ...         prompt=relevance_prompt,
             ...         expected_value=7,
-            ...         field_path="score",
+            ...         context_path="score",
             ...         operator=ComparisonOperator.GreaterThanOrEqual,
             ...         description="Ensure relevance score >= 7"
             ...     )
