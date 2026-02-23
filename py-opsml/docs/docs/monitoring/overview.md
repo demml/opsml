@@ -199,7 +199,7 @@ relevance = LLMJudgeTask(
     id="relevance",
     prompt=create_relevance_evaluation_prompt(),
     expected_value=3.0,
-    field_path="score",
+    context_path="score",
     operator=ComparisonOperator.GreaterThanOrEqual,
     description="Evaluate the relevance of the LLM response to the user query",
 )
@@ -208,7 +208,7 @@ reformulation = LLMJudgeTask(
     id="reformulation",
     prompt=create_reformulation_evaluation_prompt(),
     expected_value=3.0,
-    field_path="score",
+    context_path="score",
     operator=ComparisonOperator.GreaterThanOrEqual,
     description="Evaluate the quality of the query reformulation",
 )

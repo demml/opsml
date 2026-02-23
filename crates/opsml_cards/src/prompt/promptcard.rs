@@ -333,6 +333,11 @@ impl PromptCard {
                 config_obj.remove("version");
             }
 
+            // remove workflow if exists since it contains runtime-generated fields like id and created_at
+            if let Some(_workflow) = eval_value.get_mut("workflow") {
+                eval_value.as_object_mut().unwrap().remove("workflow");
+            }
+
             let eval_string = serde_json::to_string(&eval_value)?;
             hasher.update(eval_string.as_bytes());
         }
@@ -364,6 +369,7 @@ pub struct PromptConfig {
 }
 
 impl PromptConfig {
+    #[instrument(skip_all)]
     pub fn into_promptcard(self) -> Result<PromptCard, CardError> {
         let mut card = PromptCard::new_rs(
             self.prompt,
@@ -377,8 +383,15 @@ impl PromptConfig {
         if let Some(evaluation) = self.evaluation {
             let config = evaluation.config.unwrap_or_default();
             let tasks: AssertionTasks = AssertionTasks::from_tasks_file(evaluation.tasks);
-            let profile =
-                GenAIEvalProfile::build_from_parts(config, tasks, Some(evaluation.alias))?;
+
+            debug!(
+                "Building GenAIEvalProfile with alias and tasks: {} - tasks: {:?}",
+                evaluation.alias, tasks
+            );
+            let profile = GenAIEvalProfile::build_from_parts(config, tasks, Some(evaluation.alias))
+                .inspect_err(|e| {
+                    error!("Failed to build GenAIEvalProfile: {e}");
+                })?;
             card.eval_profile = Some(profile);
         }
 

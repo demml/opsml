@@ -105,6 +105,8 @@ export interface GenAIEvalProfile {
   config: GenAIEvalConfig;
   tasks: AssertionTasks;
   task_ids: string[];
+  scouter_version: string;
+  alias?: string;
 }
 
 export interface GenAIEvalRecordPaginationRequest {

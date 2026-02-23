@@ -83,7 +83,7 @@ llm_judge_task = LLMJudgeTask(  # LLM judges validate the prompt outputs, not or
     prompt=create_vegetarian_validation_prompt(),
     expected_value=True,
     operator=ComparisonOperator.Equals,
-    field_path="is_vegetarian",
+    context_path="is_vegetarian",
     description="Validate that the recipe is truly vegetarian",
 )
 
@@ -92,14 +92,14 @@ recipe_correctness_task = LLMJudgeTask(  # LLM judges validate the prompt output
     prompt=validate_recipe_correctness_response(),
     expected_value=True,
     operator=ComparisonOperator.Equals,
-    field_path="is_practical",
+    context_path="is_practical",
     description="Validate that the recipe is practical and easy to follow",
 )
 
 
 has_directions = AssertionTask(
     id="has_directions",
-    field_path="recipe.directions",
+    context_path="recipe.directions",
     operator=ComparisonOperator.HasLengthGreaterThan,
     expected_value=0,
     description="Verify the recipe contains cooking directions",

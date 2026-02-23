@@ -32,9 +32,9 @@
   const colorClass = $derived(taskTypeColor[task.task_type] ?? 'bg-surface-200 text-black border-black');
   const Icon = $derived(taskTypeIcon[task.task_type] ?? ClipboardList);
 
-  /** field_path for Assertion/LLMJudge, stringified assertion for TraceAssertion */
+  /** context_path for Assertion/LLMJudge, stringified assertion for TraceAssertion */
   const fieldDisplay = $derived.by(() => {
-    if ('field_path' in task) return task.field_path ?? '—';
+    if ('context_path' in task) return task.context_path ?? '—';
     if ('assertion' in task) {
       const key = Object.keys(task.assertion)[0];
       return key ?? '—';
@@ -51,7 +51,6 @@
   const dependsOnDisplay = $derived(
     task.depends_on.length > 0 ? task.depends_on.join(', ') : '—'
   );
-  console.log('Task:', JSON.stringify(task, null, 2));
 </script>
 
 <article class="flex flex-col w-72 flex-shrink-0 border-2 border-black shadow-small bg-surface-100 overflow-hidden">
