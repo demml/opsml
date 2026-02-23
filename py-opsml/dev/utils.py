@@ -73,7 +73,7 @@ def create_genai_tasks() -> list[AssertionTask]:
 
     check_foo = AssertionTask(
         id="check_foo",
-        field_path="response",
+        context_path="response",
         operator=ComparisonOperator.Equals,
         expected_value="foo",
         description="Check that the response is 'foo'",
@@ -82,7 +82,7 @@ def create_genai_tasks() -> list[AssertionTask]:
 
     check_bar = AssertionTask(
         id="check_bar",
-        field_path="response",
+        context_path="response",
         operator=ComparisonOperator.Equals,
         expected_value="bar",
         description="Check that the response is 'bar'",
@@ -91,7 +91,7 @@ def create_genai_tasks() -> list[AssertionTask]:
 
     check_foo_1 = AssertionTask(
         id="check_foo_1",
-        field_path="value",
+        context_path="value",
         operator=ComparisonOperator.GreaterThan,
         expected_value=5,
         description="Check that the value is 'foo'",
@@ -100,7 +100,7 @@ def create_genai_tasks() -> list[AssertionTask]:
 
     check_foo_2 = AssertionTask(
         id="check_foo_2",
-        field_path="value",
+        context_path="value",
         operator=ComparisonOperator.GreaterThan,
         expected_value=10,
         description="Check that the value is 'foo'",
@@ -109,7 +109,7 @@ def create_genai_tasks() -> list[AssertionTask]:
 
     check_bar_1 = AssertionTask(
         id="check_bar_1",
-        field_path="value",
+        context_path="value",
         operator=ComparisonOperator.GreaterThan,
         expected_value=5,
         description="Check that the value is 'bar'",

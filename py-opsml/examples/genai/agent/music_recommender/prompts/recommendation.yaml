@@ -1,8 +1,8 @@
 space: opsml
 name: recommendation-specialist
 prompt:
-  model: google/gemini-2.5-flash
-  provider: Google
+  model: gemini-2.5-flash
+  provider: Gemini
   messages:
     - |
       You are the final recommendation specialist. You receive candidate tracks:
@@ -39,7 +39,7 @@ evaluation:
   tasks:
     - task_type: LLMJudge
       id: validate_recommendations
-      field_path: recommendation_result.score
+      context_path: recommendation_result.score
       operator: GreaterThanOrEqual
       expected_value: 3
       description: "Verifies recommendations are in line with directions"

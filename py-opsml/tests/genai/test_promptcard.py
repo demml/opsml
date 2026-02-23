@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import cast
 from opsml.card import CardRegistry, RegistryType, PromptCard
-from opsml.types import DriftArgs
+from opsml.types import DriftArgs, PromptSaveKwargs
 from opsml.scouter.evaluate import GenAIEvalConfig, LLMJudgeTask, ComparisonOperator
 from opsml.genai import Prompt, Provider
 from opsml.genai.google import GeminiSettings
@@ -35,7 +35,7 @@ def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
                     LLMJudgeTask(
                         id="score_assertion",
                         prompt=reformulation_evaluation_prompt,
-                        field_path="score",
+                        context_path="score",
                         operator=ComparisonOperator.GreaterThan,
                         expected_value=1,
                         description="Check that score is greater than 1",
@@ -45,15 +45,14 @@ def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
 
             assert card.eval_profile is not None
 
-            reg.register_card(
-                card,
-                save_kwargs={
-                    "drift": DriftArgs(  # we want to set the drift profile to active
-                        active=True,
-                        deactivate_others=True,
-                    ),
-                },
+            save_kwargs = PromptSaveKwargs(
+                drift=DriftArgs(  # we want to set the drift profile to active
+                    active=True,
+                    deactivate_others=True,
+                )
             )
+
+            reg.register_card(card, save_kwargs=save_kwargs)
 
             assert card.uid is not None
             loaded_card = reg.load_card(uid=card.uid)
@@ -87,7 +86,7 @@ def test_load_prompt_from_file():
     assert prompt_card.name == "my-prompt"
     assert prompt_card.space == "opsml"
     assert prompt_card.prompt.model == "gemini-2.5-flash"
-    assert prompt_card.prompt.provider == Provider.Google
+    assert prompt_card.prompt.provider == Provider.Gemini
 
     assert (
         prompt_card.prompt.message.text
@@ -111,7 +110,7 @@ def test_load_prompt_from_file():
     tasks = profile.assertion_tasks
     task1 = tasks[0]
     assert task1.id == "sentiment_score_assertion"
-    assert task1.field_path == "sentiment.score"
+    assert task1.context_path == "sentiment.score"
     task2 = tasks[1]
     assert task2.id == "validate_email"
-    assert task2.field_path == "user.email"
+    assert task2.context_path == "user.email"

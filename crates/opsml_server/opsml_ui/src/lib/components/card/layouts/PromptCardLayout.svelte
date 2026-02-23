@@ -4,23 +4,20 @@
   import { page } from '$app/state';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
   import { dev } from '$app/environment';
+  import type { PromptCard } from '../card_interfaces/promptcard';
 
-  interface PromptMetadata {
-    space: string;
-    name: string;
-    version: string;
-    metadata: {
-      drift_profile_uri_map?: any;
-    };
-  }
+
 
   interface PromptLayoutProps {
-    metadata: PromptMetadata;
+    metadata: PromptCard;
     registryType: string;
     children: Snippet;
   }
 
   let { metadata, registryType, children }: PromptLayoutProps = $props();
+
+  console.log('PromptCardLayout metadata:', metadata);
+
 
   /**
    * Determines the active tab based on the current URL path
@@ -43,7 +40,7 @@
    * Determines if evaluation tab should be shown based on metadata and settings
    */
   let showEvaluation = $derived(
-    (metadata.metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled) || dev
+    (metadata.eval_profile && uiSettingsStore.scouterEnabled) || dev
   );
 
   /// determine base path for evaluation links
