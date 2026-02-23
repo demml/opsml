@@ -16,9 +16,6 @@
 
   let { metadata, registryType, children }: PromptLayoutProps = $props();
 
-  console.log('PromptCardLayout metadata:', metadata);
-
-
   /**
    * Determines the active tab based on the current URL path
    */
