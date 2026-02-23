@@ -4,7 +4,6 @@
 
   let { task }: { task: AnyTask } = $props();
 
-  console.log('Rendering GenAITaskCard with task:', task); // Debugging line
 
   const taskTypeLabel: Record<string, string> = {
     Assertion: 'Assertion',
