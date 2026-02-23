@@ -5,11 +5,12 @@
   import { Info, Diamond, Tags } from 'lucide-svelte';
   import CodeModal from "../CodeModal.svelte";
   import Pill from "$lib/components/utils/Pill.svelte";
-  import { MessageSquareText, Settings } from 'lucide-svelte';
+  import { MessageSquareText, Settings, ListChecks } from 'lucide-svelte';
   import PromptModal from "./common/PromptModal.svelte";
   import LinkPill from "$lib/components/utils/LinkPill.svelte";
   import { RegistryType } from "$lib/utils";
   import ResponseSchemaModal from "./ResponseSchemaModal.svelte";
+  import EvalTasksModal from "./common/EvalTasksModal.svelte";
 
 
   let {
@@ -107,6 +108,19 @@ datacard = registry.load_card(uid="${card.uid}")
     <Pill key="Provider" value={card.prompt.provider} textSize="text-sm"/>
     
   </div>
+
+  {#if card.eval_profile}
+    <div class="flex flex-col space-y-1 gap-1">
+      <div class="flex flex-row items-center mb-1 border-b-2 border-black">
+        <ListChecks color="#8059b6" />
+        <header class="pl-2 text-primary-900 text-sm font-bold">Evaluation Profile</header>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <EvalTasksModal evalProfile={card.eval_profile} />
+    </div>
+  {/if}
 
   {#if card.tags.length > 0}
     <div class="flex flex-col space-y-1 gap-1">

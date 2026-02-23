@@ -1,8 +1,10 @@
 <script lang="ts">
-  import type { AnyTask } from '../task';
+  import { isAssertionTask, type AnyTask } from '../task';
   import { ClipboardList, GitBranch, Brain, Layers } from 'lucide-svelte';
 
   let { task }: { task: AnyTask } = $props();
+
+  console.log('Rendering GenAITaskCard with task:', task); // Debugging line
 
   const taskTypeLabel: Record<string, string> = {
     Assertion: 'Assertion',
@@ -55,24 +57,37 @@
 
 <article class="flex flex-col w-72 flex-shrink-0 border-2 border-black shadow-small bg-surface-100 overflow-hidden">
   <!-- Card Header -->
-  <header class="flex items-start justify-between gap-2 px-4 py-3 border-b-2 border-black bg-primary-500">
-    <div class="flex flex-col min-w-0">
+   <header class = "flex flex-col min-w-0 px-4 py-2 border-b-2 border-black bg-primary-500">
+    <div class="flex justify-between items-center min-w-0 gap-2 mb-1">
       <span class="text-[10px] font-black uppercase tracking-widest text-white mb-0.5">Task ID</span>
-      <p class="text-sm font-mono font-bold text-white truncate" title={task.id}>{task.id}</p>
+      <span class="badge text-[10px] border-1 px-2 rounded-full flex-shrink-0 whitespace-nowrap {colorClass}">
+        <Icon class="w-3 h-3 inline-block mr-1 -mt-px" />
+        {label}
+      </span>
     </div>
-    <span class="badge text-[10px] border-1 px-2 py-0.5 rounded-full flex-shrink-0 whitespace-nowrap {colorClass}">
-      <Icon class="w-3 h-3 inline-block mr-1 -mt-px" />
-      {label}
-    </span>
+    <div class="relative group">
+      <p class="text-sm font-mono font-bold text-white truncate cursor-help" title={task.id}>{task.id}</p>
+      <div class="absolute left-0 top-full mt-2 px-3 py-2 bg-slate-900 text-white text-xs font-mono rounded-lg border-2 border-white shadow-[4px_4px_0px_0px_rgba(255,255,255,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 max-w-sm break-all">
+        {task.id}
+        <div class="absolute -top-1 left-4 w-2 h-2 bg-slate-900 border-t-2 border-l-2 border-white transform rotate-45"></div>
+      </div>
+    </div>
   </header>
 
   <!-- Card Body -->
   <div class="flex flex-col gap-2.5 px-4 py-3 text-xs">
 
     <div class="flex flex-col gap-0.5">
-      <span class="text-[10px] font-black uppercase tracking-wider text-slate-500">Field / Assertion Path</span>
+      <span class="text-[10px] font-black uppercase tracking-wider text-slate-500">Context Path</span>
       <span class="font-mono text-slate-700 truncate" title={fieldDisplay}>{fieldDisplay}</span>
     </div>
+
+    {#if isAssertionTask(task) && task.item_context_path}
+      <div class="flex flex-col gap-0.5">
+        <span class="text-[10px] font-black uppercase tracking-wider text-slate-500">Item Context Path</span>
+        <span class="font-mono text-slate-700 truncate" title={task.item_context_path}>{task.item_context_path}</span>
+      </div>
+    {/if}
 
     <div class="flex items-center gap-3">
       <div class="flex flex-col gap-0.5 flex-1">
