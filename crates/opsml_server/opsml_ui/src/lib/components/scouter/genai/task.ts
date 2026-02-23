@@ -79,6 +79,7 @@ export interface AssertionResult {
 export interface AssertionTask {
   id: string;
   context_path: string | null; // Option<String>
+  item_context_path: string | null; // Option<String>
   operator: ComparisonOperator;
   expected_value: JsonValue; // Value
   description: string | null; // Option<String>
@@ -252,4 +253,8 @@ export interface TraceAssertionTask {
   task_type: EvaluationTaskType;
   result?: AssertionResult;
   condition: boolean;
+}
+
+export function isAssertionTask(task: AnyTask): task is AssertionTask {
+  return task.task_type === "Assertion";
 }
