@@ -1,8 +1,8 @@
 space: opsml
 name: search-specialist
 prompt:
-  model: google/gemini-2.5-flash
-  provider: Google
+  model: gemini-2.5-flash
+  provider: Gemini
   messages:
     - |
       You are a music discovery specialist. You receive a search strategy:

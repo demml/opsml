@@ -40,9 +40,7 @@ def my_before_agent_callback(
     return None  # Allow agent to proceed
 
 
-def my_before_model_logic(
-    callback_context: CallbackContext, llm_request: LlmRequest
-) -> Optional[LlmResponse]:
+def my_before_model_logic(callback_context: CallbackContext, llm_request: LlmRequest) -> Optional[LlmResponse]:
     """Access messageId from the LlmRequest contents."""
 
     print(callback_context._invocation_context.model_dump_json())
@@ -94,6 +92,4 @@ async def log_request_headers(request, call_next):
 @a2a_app.route("/health", methods=["GET"])
 async def health_check(request):
     """Basic health check endpoint for load balancers."""
-    return JSONResponse(
-        {"status": "healthy", "service": "vegetarian-recipe-agent", "version": "1.0.0"}
-    )
+    return JSONResponse({"status": "healthy", "service": "vegetarian-recipe-agent", "version": "1.0.0"})

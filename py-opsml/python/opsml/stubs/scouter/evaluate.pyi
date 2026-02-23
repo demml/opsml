@@ -3,8 +3,8 @@
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Sequence
 
-from ..header import SerializedType
 from ..genai.potato import Prompt
+from ..header import SerializedType
 from .tracing import TraceSpan
 
 #### end of imports ####

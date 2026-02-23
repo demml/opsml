@@ -23,7 +23,7 @@ evaluation:
   tasks:
     - task_type: Assertion
       id: has_directions
-      field_path: recipe.directions
+      context_path: recipe.directions
       operator: HasLengthGreaterThan
       expected_value: 0
       description: "Verify the recipe contains cooking directions"

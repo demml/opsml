@@ -34,7 +34,7 @@
   );
 </script>
 
-<!-- 
+<!--
   Dynamic layout component selection based on registry type
   Each registry type (model, data, experiment, service) has its own specialized layout
   with appropriate navigation tabs and functionality

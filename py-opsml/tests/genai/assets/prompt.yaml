@@ -2,7 +2,7 @@ space: opsml
 name: my-prompt
 prompt:
   model: gemini-2.5-flash
-  provider: Google
+  provider: Gemini
   messages:
     - "Analyze the sentiment of the provided text {input}"
   system_instructions:
@@ -22,7 +22,7 @@ evaluation:
   tasks:
     - task_type: Assertion
       id: sentiment_score_assertion
-      field_path: sentiment.score
+      context_path: sentiment.score
       operator: GreaterThan
       expected_value: 18
       description: Analyze sentiment score is above threshold
@@ -31,9 +31,21 @@ evaluation:
 
     - task_type: Assertion
       id: validate_email
-      field_path: user.email
+      context_path: user.email
       operator: IsEmail
       expected_value: true
       description: Validate email format
       depends_on: []
       condition: false
+
+    - task_type: LLMJudge
+      id: validate_recommendations
+      context_path: response.text
+      operator: Equals
+      expected_value: Positive
+      description: Judge sentiment using LLM
+      max_retries: 3
+      condition: false
+      depends_on: []
+      prompt:
+        path: "tests/genai/assets/evaluation.yaml"
