@@ -43,7 +43,7 @@
 </script>
 
 
-<div class="bg-white p-1 border-2 border-black rounded-lg shadow min-h-[12rem] h-full">
+<div class="bg-white p-1 border-2 border-black shadow-small min-h-[12rem] h-full">
   <div class="flex flex-col h-full">
     <div class="flex flex-row flex-wrap gap-2 pb-2 items-center justify-between w-full px-2">
       <div class="items-center text-lg mr-2 font-bold text-primary-800">{title}</div>
