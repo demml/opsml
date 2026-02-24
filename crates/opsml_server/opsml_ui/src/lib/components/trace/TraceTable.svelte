@@ -90,68 +90,80 @@
 </script>
 
 <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
- 
-  <div class="col-span-1 lg:col-span-1 p-2 flex flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 self-start overflow-hidden">
-    <MultiComboSearchBox
-      boxId="attribute-search-input"
-      label="Search Attributes"
-      filteredItems={filteredAttributes}
-      onItemsChange={handleAttributeFilterChange}
-    />
+
+  <!-- Filter Sidebar -->
+  <div class="col-span-1 lg:col-span-1 flex flex-col rounded-base border-2 border-black shadow bg-surface-50 self-start overflow-hidden">
+    <div class="flex flex-col px-3 py-2.5 border-b-2 border-black bg-white gap-1">
+      <span class="text-xs font-black uppercase tracking-widest text-gray-500">Filters</span>
+      <span class="text-xs font-mono text-gray-400"><span class="text-primary-700">key:value</span> or <span class="text-primary-700">key=value</span></span>
+    </div>
+    <div class="p-2">
+      <MultiComboSearchBox
+        boxId="attribute-search-input"
+        label="Search Attributes"
+        filteredItems={filteredAttributes}
+        onItemsChange={handleAttributeFilterChange}
+      />
+    </div>
   </div>
 
-  <div class="col-span-1 lg:col-span-4 pt-2 flex-1 flex-col bg-primary-500 border-2 border-black shadow-small">
-    <div class="flex flex-col h-full">
-      <div class="items-center mr-2 font-bold text-white text-lg mb-2 ml-4">Traces</div>
+  <!-- Trace Table -->
+  <div class="col-span-1 lg:col-span-4 flex flex-col rounded-base border-2 border-black shadow overflow-hidden">
+    <!-- Table Header -->
+    <div class="flex items-center justify-between px-4 py-2.5 bg-primary-500 border-b-2 border-black">
+      <span class="font-black text-sm uppercase tracking-wide text-white">Traces</span>
+      <span class="text-xs font-mono text-primary-100">click a row to inspect</span>
+    </div>
 
-      <div class="flex-1 overflow-x-auto">
-        <div class="h-full flex flex-col min-w-[900px]">
+    <div class="flex-1 flex flex-col bg-white overflow-x-auto">
+      <div class="h-full flex flex-col min-w-[900px]">
 
-          <div class="bg-white border-y-2 border-black sticky top-0 z-10">
-            <div class="grid grid-cols-[64px_180px_1fr_1fr_100px_100px_80px_120px] gap-2 text-black text-sm font-heading px-2 py-2">
-              <div class="text-center">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Id</span>
-              </div>
-              <div class="text-left">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Date</span>
-              </div>
-              <div class="text-left">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Service</span>
-              </div>
-              <div class="text-left">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Resource</span>
-              </div>
-              <div class="text-center">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Duration</span>
-              </div>
-              <div class="text-center">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Method</span>
-              </div>
-              <div class="text-center">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Spans</span>
-              </div>
-              <div class="text-center">
-                <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Status</span>
-              </div>
+        <!-- Column Headers -->
+        <div class="bg-surface-100 border-b-2 border-black sticky top-0 z-10">
+          <div class="grid grid-cols-[64px_180px_1fr_1fr_100px_100px_80px_120px] gap-2 text-black text-xs font-black uppercase tracking-wide px-3 py-2">
+            <div class="text-center text-gray-500">ID</div>
+            <div class="text-left">
+              <span class="px-2 py-0.5 rounded-base bg-primary-100 text-primary-800 border border-primary-300">Date</span>
+            </div>
+            <div class="text-left">
+              <span class="px-2 py-0.5 rounded-base bg-primary-100 text-primary-800 border border-primary-300">Service</span>
+            </div>
+            <div class="text-left">
+              <span class="px-2 py-0.5 rounded-base bg-primary-100 text-primary-800 border border-primary-300">Resource</span>
+            </div>
+            <div class="text-center">
+              <span class="px-2 py-0.5 rounded-base bg-primary-100 text-primary-800 border border-primary-300">Duration</span>
+            </div>
+            <div class="text-center">
+              <span class="px-2 py-0.5 rounded-base bg-primary-100 text-primary-800 border border-primary-300">Method</span>
+            </div>
+            <div class="text-center">
+              <span class="px-2 py-0.5 rounded-base bg-primary-100 text-primary-800 border border-primary-300">Spans</span>
+            </div>
+            <div class="text-center">
+              <span class="px-2 py-0.5 rounded-base bg-primary-100 text-primary-800 border border-primary-300">Status</span>
             </div>
           </div>
+        </div>
 
-          <div class="flex-1 bg-white overflow-y-auto">
+        <!-- Rows -->
+        <div class="flex-1 bg-white overflow-y-auto">
             <TraceInfiniteScroll initialPage={trace_page} filters={filters} height="800px">
               {#snippet children(trace: TraceListItem, index: number)}
                 <div
-                  class="grid grid-cols-[64px_180px_1fr_1fr_100px_100px_80px_120px] gap-2 items-center px-2 py-2 border-b border-gray-200 hover:bg-primary-200 cursor-pointer transition-colors {index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}"
+                  class="grid grid-cols-[64px_180px_1fr_1fr_100px_100px_80px_120px] gap-2 items-center px-3 py-2.5 border-b border-gray-100 hover:bg-primary-100 cursor-pointer transition-colors {index % 2 === 0 ? 'bg-white' : 'bg-surface-500'}"
                   onclick={() => handleTraceClick(trace)}
                   onkeydown={(e) => e.key === 'Enter' && handleTraceClick(trace)}
                   role="button"
                   tabindex="0"
                 >
                   <div class="text-center">
-                    <span class="text-xs font-mono text-gray-500">{trace.trace_id.slice(0, 7)}</span>
+                    <span class="text-xs font-mono text-gray-400 bg-surface-200 px-1.5 py-0.5 rounded">{trace.trace_id.slice(0, 7)}</span>
                   </div>
 
                   <div class="flex items-center gap-2 min-w-0">
-                    <div class={`w-1.5 h-4 rounded-sm flex-shrink-0 ${trace.has_errors ? 'bg-error-600' : 'bg-secondary-500'}`}></div>
+                    <div class={`w-1 h-5 rounded-sm flex-shrink-0 ${trace.has_errors ? 'bg-error-600' : 'bg-secondary-500'}`}></div>
+
                     <span class="text-xs text-black font-mono truncate">{formatTimestamp(trace.start_time)}</span>
                   </div>
 
@@ -169,17 +181,17 @@
                   </div>
 
                   <div class="text-center">
-                    <span class="px-2 py-1 rounded bg-gray-100 text-gray-800 text-xs font-medium">
+                    <span class="px-2 py-0.5 rounded-base bg-surface-200 border border-black text-gray-800 text-xs font-bold">
                       {trace.scope ?? 'GET'}
                     </span>
                   </div>
 
                   <div class="text-center">
-                    <span class="text-xs text-black font-medium">{trace.span_count ?? 0}</span>
+                    <span class="text-xs text-black font-mono font-bold">{trace.span_count ?? 0}</span>
                   </div>
 
                   <div class="text-center">
-                    <span class={`inline-block px-2 py-1 rounded text-white text-xs font-bold ${getStatusColor(trace.status_code)}`}>
+                    <span class={`inline-block px-2 py-0.5 rounded-base border border-black text-white text-xs font-black ${getStatusColor(trace.status_code)}`}>
                       {trace.status_code}
                     </span>
                   </div>
@@ -189,7 +201,6 @@
           </div>
         </div>
       </div>
-    </div>
   </div>
 </div>
 
@@ -202,10 +213,10 @@
 {/if}
 
 {#if isLoadingDetail}
-  <div class="fixed inset-0 bg-opacity-30 z-50 flex items-center justify-center">
-    <div class="bg-white border-4 border-black rounded-lg p-8 shadow-2xl">
-      <div class="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent"></div>
-      <p class="mt-4 text-sm font-bold text-primary-800">Loading trace details...</p>
+  <div class="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
+    <div class="bg-white border-2 border-black rounded-base shadow p-6 flex flex-col items-center gap-3">
+      <div class="w-10 h-10 border-3 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-sm font-black text-primary-800 uppercase tracking-wide">Loading trace details</p>
     </div>
   </div>
 {/if}
