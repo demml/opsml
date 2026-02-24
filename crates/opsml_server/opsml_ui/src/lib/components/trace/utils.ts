@@ -30,7 +30,7 @@ import { TimeInterval } from "$lib/components/scouter/types";
  */
 export function getNextCursor(
   traces: TraceListItem[],
-  requestedLimit: number
+  requestedLimit: number,
 ): TraceCursor | undefined {
   if (traces.length === 0 || traces.length < requestedLimit) {
     return undefined;
@@ -66,7 +66,7 @@ export function formatErrorRate(rate: number): string {
  */
 export function getStatusVariant(
   statusCode: number,
-  hasErrors: boolean
+  hasErrors: boolean,
 ): "success" | "warning" | "error" {
   if (hasErrors || statusCode >= 400) return "error";
   if (statusCode >= 300) return "warning";
@@ -229,11 +229,11 @@ export function getHttpStatusCode(span: TraceSpan): number | null {
 
 export async function getServerTraceMetrics(
   fetch: typeof globalThis.fetch,
-  metricsRequest: TraceMetricsRequest
+  metricsRequest: TraceMetricsRequest,
 ): Promise<TraceMetricsResponse> {
   const resp = await createInternalApiClient(fetch).post(
     ServerPaths.TRACE_METRICS,
-    metricsRequest
+    metricsRequest,
   );
   const { response, error } = await resp.json();
 
@@ -246,11 +246,11 @@ export async function getServerTraceMetrics(
 
 export async function getServerTraceSpans(
   fetch: typeof globalThis.fetch,
-  traceRequest: TraceRequest
+  traceRequest: TraceRequest,
 ): Promise<TraceSpansResponse> {
   const resp = await createInternalApiClient(fetch).post(
     ServerPaths.TRACE_SPANS,
-    traceRequest
+    traceRequest,
   );
 
   const { response, error } = await resp.json();
@@ -264,11 +264,11 @@ export async function getServerTraceSpans(
 
 export async function getServerTracePage(
   fetch: typeof globalThis.fetch,
-  filters: TraceFilters
+  filters: TraceFilters,
 ): Promise<TracePaginationResponse> {
   const resp = await createInternalApiClient(fetch).post(
     ServerPaths.TRACE_PAGE,
-    filters
+    filters,
   );
 
   const { response, error } = await resp.json();
