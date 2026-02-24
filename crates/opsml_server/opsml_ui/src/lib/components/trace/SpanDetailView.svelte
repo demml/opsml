@@ -1,14 +1,13 @@
 <script lang="ts">
   import { type TraceSpan } from './types';
   import {
-    formatTimestamp,
     formatDuration,
     formatAttributeValue,
     hasSpanError,
     getHttpStatusCode,
     parseSpanJson
   } from './utils';
-  import { Info, Tags, Activity, Link2, AlertCircle, FileJson } from 'lucide-svelte';
+  import { Info, Tags, Activity, Link2, AlertCircle, FileJson, ChevronDown, ChevronUp, Copy, Check } from 'lucide-svelte';
   import Pill from '$lib/components/utils/Pill.svelte';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
   import SpanEvents from './SpanEvents.svelte';
@@ -31,10 +30,11 @@
   const parsedInput = $derived(parseSpanJson(span.input));
   const parsedOutput = $derived(parseSpanJson(span.output));
 
-  // Create a lookup map for quick span access by ID
-  const spanMap = $derived(
-    new Map(allSpans.map(s => [s.span_id, s]))
-  );
+  const spanMap = $derived(new Map(allSpans.map(s => [s.span_id, s])));
+
+  let showInput = $state(true);
+  let showOutput = $state(true);
+  let copiedSpanId = $state(false);
 
   function handlePathSegmentClick(spanId: string) {
     const targetSpan = spanMap.get(spanId);
@@ -43,203 +43,268 @@
     }
   }
 
-  function getStatusColor(statusCode: number): string {
-    if (statusCode === 1) return 'bg-secondary-500'; // OK
-    if (statusCode === 2) return 'bg-error-600'; // ERROR
-    return 'bg-gray-400'; // UNSET
+  function copySpanId() {
+    navigator.clipboard.writeText(span.span_id);
+    copiedSpanId = true;
+    setTimeout(() => copiedSpanId = false, 2000);
   }
 
   function getStatusLabel(statusCode: number): string {
-    const labels: Record<number, string> = {
-      0: 'UNSET',
-      1: 'OK',
-      2: 'ERROR',
-    };
+    const labels: Record<number, string> = { 0: 'UNSET', 1: 'OK', 2: 'ERROR' };
     return labels[statusCode] || 'UNKNOWN';
   }
+
+  const headerBg = $derived(
+    spanHasError ? 'bg-error-100 border-b-error-600' :
+    span.status_code === 1 ? 'bg-secondary-100' :
+    'bg-surface-100'
+  );
+
+  const statusPillClasses = $derived(
+    spanHasError ? 'bg-error-600 text-white border-error-800' :
+    span.status_code === 1 ? 'bg-secondary-500 text-black border-secondary-800' :
+    'bg-gray-300 text-black border-gray-500'
+  );
+
+  const accentBarColor = $derived(spanHasError ? 'bg-error-600' : span.status_code === 1 ? 'bg-secondary-500' : 'bg-gray-400');
+
+  const isSlowest = $derived(slowestSpan && span.span_id === slowestSpan.span_id);
 </script>
 
-<div class="flex flex-col h-full bg-white">
-  <!-- Span Header -->
-  <div class="p-3 border-b-2 border-black bg-surface-50">
-    <div class="flex items-start gap-2">
-      <div class={`w-1 h-14 rounded ${spanHasError ? 'bg-error-600' : 'bg-secondary-500'}`}></div>
-      <div class="flex-1 min-w-0">
-        <h3 class="font-bold text-gray-900 truncate">{span.span_name}</h3>
-        <p class="text-sm text-gray-600">{serviceName}</p>
-        <p class="text-xs font-mono text-gray-500 mt-1">{span.span_id}</p>
+<div class="flex flex-col h-full bg-white overflow-hidden">
+
+  <!-- Bold neo-brutalist span header -->
+  <div class="flex-shrink-0 border-b-2 border-black {headerBg}">
+    <div class="flex gap-0">
+      <!-- Status accent bar -->
+      <div class="w-2 flex-shrink-0 {accentBarColor}"></div>
+
+      <div class="flex-1 p-3 min-w-0">
+        <div class="flex items-start justify-between gap-2">
+          <div class="min-w-0 flex-1">
+            <h3 class="font-black text-black text-sm leading-tight truncate">{span.span_name}</h3>
+            <p class="text-xs text-gray-600 mt-0.5 truncate">{serviceName}</p>
+          </div>
+          <!-- Status + copy -->
+          <div class="flex items-center gap-1.5 flex-shrink-0">
+            <span class="px-2 py-0.5 text-xs font-black border-2 rounded uppercase {statusPillClasses}">
+              {getStatusLabel(span.status_code)}
+            </span>
+            {#if isSlowest}
+              <span class="px-2 py-0.5 text-xs font-black border-2 rounded uppercase warn-color">
+                Slowest
+              </span>
+            {/if}
+          </div>
+        </div>
+
+        <!-- Span ID row with copy -->
+        <div class="flex items-center gap-1.5 mt-2">
+          <code class="text-xs font-mono text-gray-500 truncate flex-1">{span.span_id}</code>
+          <button
+            onclick={copySpanId}
+            class="flex-shrink-0 p-1 rounded border border-black/30 bg-white/60 hover:bg-white transition-colors"
+            aria-label="Copy span ID"
+          >
+            {#if copiedSpanId}
+              <Check class="w-3 h-3 text-secondary-600" />
+            {:else}
+              <Copy class="w-3 h-3 text-gray-500" />
+            {/if}
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Scrollable Content -->
-  <div class="flex-1 overflow-auto p-4 space-y-4">
+  <!-- Scrollable detail sections -->
+  <div class="flex-1 overflow-y-auto">
 
-    <!-- Core Metrics -->
-    <section>
-      <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-        <Info color="#8059b6"/>
-        <header class="pl-2 text-primary-950 text-sm font-bold">Span Info</header>
-      </div>
-
-      <div class="flex flex-wrap gap-2 text-xs">
-        <Pill key="Duration" value={formatDuration(span.duration_ms)} textSize="text-xs"/>
-        <Pill key="Status" value={getStatusLabel(span.status_code)} textSize="text-xs"/>
-        {#if httpStatusCode}
-          <Pill key="HTTP Status" value={String(httpStatusCode)} textSize="text-xs"/>
-        {/if}
-        <Pill key="Kind" value={span.span_kind || 'UNSPECIFIED'} textSize="text-xs"/>
-        <Pill key="Depth" value={`Level ${span.depth}`} textSize="text-xs"/>
-        <Pill key="Order" value={`#${span.span_order}`} textSize="text-xs"/>
-        {#if slowestSpan && span.span_id === slowestSpan.span_id}
-          <Pill key="Slowest" value="Yes" textSize="text-xs" bgColor="bg-retro-orange-100" textColor="text-retro-orange-900" borderColor="border-retro-orange-900" />
-        {/if}
-      </div>
-    </section>
-
-    <!-- Timing Information -->
-    <section>
-      <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-        <Activity color="#8059b6"/>
-        <header class="pl-2 text-primary-950 text-sm font-bold">Timing</header>
-      </div>
-
-      <div class="flex flex-col space-y-1 text-sm">
-        <Pill key="Start Time" value={span.start_time} textSize="text-xs"/>
-        {#if span.end_time}
-          <Pill key="End Time" value={span.end_time} textSize="text-xs"/>
-        {/if}
-        <Pill key="Duration" value={formatDuration(span.duration_ms)} textSize="text-xs"/>
-      </div>
-    </section>
-
-    <!-- Span Path -->
-     {#if span.path.length > 0}
-      <section>
-        <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-          <Link2 color="#8059b6"/>
-          <header class="pl-2 text-primary-950 text-sm font-bold">Span Path</header>
+    <!-- Error banner (if applicable) -->
+    {#if spanHasError && span.status_message}
+      <div class="mx-3 mt-3 flex items-start gap-2 p-3 bg-error-100 border-2 border-error-600 shadow-small">
+        <AlertCircle class="w-4 h-4 text-error-600 flex-shrink-0 mt-0.5" />
+        <div>
+          <p class="text-xs font-black text-error-700 uppercase tracking-wide mb-0.5">Error</p>
+          <p class="text-xs text-error-700 font-mono">{span.status_message}</p>
         </div>
+      </div>
+    {/if}
 
-        <div class="flex flex-wrap gap-2">
-          {#each span.path as pathSegment, i}
-            <button
-              class="px-2 py-1 bg-primary-100 border border-primary-800 rounded text-xs font-mono text-primary-900 hover:bg-primary-500 hover:text-white transition-colors cursor-pointer"
-              onclick={() => handlePathSegmentClick(pathSegment)}
-            >
-              {pathSegment.slice(0, 7)}
-            </button>
-            {#if i < span.path.length - 1}
-              <span class="text-gray-400 self-center">→</span>
-            {/if}
-          {/each}
+    <div class="p-3 space-y-4">
+
+      <!-- Span Info -->
+      <section>
+        <div class="flex items-center gap-2 pb-1.5 mb-2 border-b-2 border-black">
+          <Info class="w-3.5 h-3.5" color="#8059b6" />
+          <span class="text-xs font-black uppercase tracking-wide text-primary-950">Span Info</span>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <Pill key="Duration" value={formatDuration(span.duration_ms)} textSize="text-xs"/>
+          <Pill key="Status" value={getStatusLabel(span.status_code)} textSize="text-xs"/>
+          {#if httpStatusCode}
+            <Pill key="HTTP" value={String(httpStatusCode)} textSize="text-xs"/>
+          {/if}
+          <Pill key="Kind" value={span.span_kind || 'UNSPECIFIED'} textSize="text-xs"/>
+          <Pill key="Depth" value={`L${span.depth}`} textSize="text-xs"/>
+          <Pill key="Order" value={`#${span.span_order}`} textSize="text-xs"/>
+          {#if isSlowest}
+            <Pill key="Slowest" value="Yes" textSize="text-xs" bgColor="bg-retro-orange-100" textColor="text-retro-orange-900" borderColor="border-retro-orange-900" />
+          {/if}
         </div>
       </section>
-    {/if}
 
-    <!-- Input/Output -->
-    {#if parsedInput}
-      {#key span.span_id}
-        <section>
-          <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-            <FileJson color="#8059b6"/>
-            <header class="pl-2 text-primary-950 text-sm font-bold">Input</header>
-          </div>
-          <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs">
-            <CodeBlock
-              code={JSON.stringify(parsedInput, null, 2)}
-              showLineNumbers={false}
-              lang="json"
-              prePadding="p-1"
-            />
-          </div>
-        </section>
-      {/key}
-    {/if}
-
-    {#if parsedOutput}
-      {#key span.span_id}
-        <section>
-          <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-            <FileJson color="#8059b6"/>
-            <header class="pl-2 text-primary-950 text-sm font-bold">Output</header>
-          </div>
-          <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs">
-            <CodeBlock
-              code={JSON.stringify(parsedOutput, null, 2)}
-              showLineNumbers={false}
-              lang="json"
-              prePadding="p-1"
-            />
-          </div>
-        </section>
-      {/key}
-    {/if}
-
-    <!-- Attributes -->
-    <section>
-      <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-        <Tags color="#8059b6"/>
-        <header class="pl-2 text-primary-950 text-sm font-bold">Attributes ({span.attributes.length})</header>
-      </div>
-
-      {#if span.attributes.length > 0}
-        <div class="flex flex-col space-y-1 text-sm">
-          {#each span.attributes as attr}
-            <Pill key={attr.key} value={formatAttributeValue(attr.value)} textSize="text-xs"/>
-          {/each}
-        </div>
-      {:else}
-        <p class="text-sm text-gray-500 italic">No attributes</p>
-      {/if}
-    </section>
-
-    <SpanEvents events={span.events} />
-
-    <!-- Links -->
-    {#if span.links.length > 0}
+      <!-- Timing -->
       <section>
-        <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-          <Link2 color="#8059b6"/>
-          <header class="pl-2 text-primary-950 text-sm font-bold">Links ({span.links.length})</header>
+        <div class="flex items-center gap-2 pb-1.5 mb-2 border-b-2 border-black">
+          <Activity class="w-3.5 h-3.5" color="#8059b6" />
+          <span class="text-xs font-black uppercase tracking-wide text-primary-950">Timing</span>
         </div>
+        <div class="flex flex-col gap-1">
+          <Pill key="Start" value={span.start_time} textSize="text-xs"/>
+          {#if span.end_time}
+            <Pill key="End" value={span.end_time} textSize="text-xs"/>
+          {/if}
+          <Pill key="Duration" value={formatDuration(span.duration_ms)} textSize="text-xs"/>
+        </div>
+      </section>
 
-        <div class="space-y-3">
-          {#each span.links as link}
-            <div class="bg-surface-50 border-2 border-black rounded-base p-3 shadow-small">
-              <div class="flex flex-col space-y-1">
-                <Pill key="Trace ID" value={link.trace_id} textSize="text-xs"/>
-                <Pill key="Span ID" value={link.span_id} textSize="text-xs"/>
-                {#if link.trace_state}
-                  <Pill key="State" value={link.trace_state} textSize="text-xs"/>
+      <!-- Span Path -->
+      {#if span.path.length > 0}
+        <section>
+          <div class="flex items-center gap-2 pb-1.5 mb-2 border-b-2 border-black">
+            <Link2 class="w-3.5 h-3.5" color="#8059b6" />
+            <span class="text-xs font-black uppercase tracking-wide text-primary-950">Path</span>
+            <span class="ml-auto text-xs font-mono text-gray-500">{span.path.length} hops</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5 items-center">
+            {#each span.path as pathSegment, i}
+              <button
+                class="px-2 py-1 bg-primary-100 border-1 border-primary-700 shadow-small text-xs font-mono text-primary-950 shadow-small shadow-hover-small transition-all cursor-pointer"
+                onclick={() => handlePathSegmentClick(pathSegment)}
+                title={pathSegment}
+              >
+                {pathSegment.slice(0, 8)}
+              </button>
+              {#if i < span.path.length - 1}
+                <span class="text-gray-400 text-xs font-bold">→</span>
+              {/if}
+            {/each}
+          </div>
+        </section>
+      {/if}
+
+      <!-- Input (collapsible) -->
+      {#if parsedInput}
+        {#key span.span_id}
+          <section>
+            <button
+              class="w-full flex items-center gap-2 py-1 mb-2 border-1 border-primary-500 px-1 rounded-sm cursor-pointer transition-opacity hover:bg-slate-100 text-primary-800 hover:text-primary-800"
+              onclick={() => showInput = !showInput}
+            >
+              <FileJson class="w-3.5 h-3.5 text-primary-700" />
+              <span class="text-xs font-black uppercase tracking-wide text-primary-950">Input</span>
+              <span class="ml-auto">
+                {#if showInput}<ChevronUp class="w-3.5 h-3.5 text-gray-500"/>{:else}<ChevronDown class="w-3.5 h-3.5 text-gray-500"/>{/if}
+              </span>
+            </button>
+            {#if showInput}
+              <div class="bg-surface-50 rounded-base border-1 border-black shadow-small text-xs overflow-hidden">
+                <CodeBlock
+                  code={JSON.stringify(parsedInput, null, 2)}
+                  showLineNumbers={false}
+                  lang="json"
+                  prePadding="p-2"
+                />
+              </div>
+            {/if}
+          </section>
+        {/key}
+      {/if}
+
+      <!-- Output (collapsible) -->
+      {#if parsedOutput}
+        {#key span.span_id}
+          <section>
+            <button
+              class="w-full flex items-center gap-2 pb-1.5 mb-2 border-b-2 border-black hover:bg-surface-100 -mx-1 px-1 rounded-sm transition-colors"
+              onclick={() => showOutput = !showOutput}
+            >
+              <FileJson class="w-3.5 h-3.5 text-primary-700" />
+              <span class="text-xs font-black uppercase tracking-wide text-primary-950">Output</span>
+              <span class="ml-auto">
+                {#if showOutput}<ChevronUp class="w-3.5 h-3.5 text-gray-500"/>{:else}<ChevronDown class="w-3.5 h-3.5 text-gray-500"/>{/if}
+              </span>
+            </button>
+            {#if showOutput}
+              <div class="bg-surface-50 rounded-base border-2 border-black shadow-small text-xs overflow-hidden">
+                <CodeBlock
+                  code={JSON.stringify(parsedOutput, null, 2)}
+                  showLineNumbers={false}
+                  lang="json"
+                  prePadding="p-2"
+                />
+              </div>
+            {/if}
+          </section>
+        {/key}
+      {/if}
+
+      <!-- Attributes -->
+      <section>
+        <div class="flex items-center gap-2 pb-1.5 mb-2 border-b-2 border-black">
+          <Tags class="w-3.5 h-3.5" color="#8059b6" />
+          <span class="text-xs font-black uppercase tracking-wide text-primary-950">Attributes</span>
+          <span class="ml-auto px-1.5 py-0.5 text-xs font-bold bg-primary-100 border border-primary-700 rounded text-primary-800">
+            {span.attributes.length}
+          </span>
+        </div>
+        {#if span.attributes.length > 0}
+          <div class="flex flex-col gap-1">
+            {#each span.attributes as attr}
+              <Pill key={attr.key} value={formatAttributeValue(attr.value)} textSize="text-xs"/>
+            {/each}
+          </div>
+        {:else}
+          <p class="text-xs text-gray-400 italic">No attributes recorded</p>
+        {/if}
+      </section>
+
+      <!-- Events -->
+      <SpanEvents events={span.events} />
+
+      <!-- Links -->
+      {#if span.links.length > 0}
+        <section>
+          <div class="flex items-center gap-2 pb-1.5 mb-2 border-b-2 border-black">
+            <Link2 class="w-3.5 h-3.5" color="#8059b6" />
+            <span class="text-xs font-black uppercase tracking-wide text-primary-950">Links</span>
+            <span class="ml-auto px-1.5 py-0.5 text-xs font-bold bg-primary-100 border border-primary-700 rounded text-primary-800">
+              {span.links.length}
+            </span>
+          </div>
+          <div class="space-y-2">
+            {#each span.links as link}
+              <div class="bg-surface-50 border-2 border-black rounded-base p-2.5 shadow-small">
+                <div class="flex flex-col gap-1">
+                  <Pill key="Trace ID" value={link.trace_id} textSize="text-xs"/>
+                  <Pill key="Span ID" value={link.span_id} textSize="text-xs"/>
+                  {#if link.trace_state}
+                    <Pill key="State" value={link.trace_state} textSize="text-xs"/>
+                  {/if}
+                </div>
+                {#if link.dropped_attributes_count > 0}
+                  <div class="text-xs text-warning-600 mt-2 flex items-center gap-1 font-bold">
+                    <AlertCircle class="w-3 h-3" />
+                    {link.dropped_attributes_count} attributes dropped
+                  </div>
                 {/if}
               </div>
+            {/each}
+          </div>
+        </section>
+      {/if}
 
-              {#if link.dropped_attributes_count > 0}
-                <div class="text-xs text-warning-500 mt-2 flex items-center gap-1">
-                  <AlertCircle size={12}/>
-                  {link.dropped_attributes_count} attributes dropped
-                </div>
-              {/if}
-            </div>
-          {/each}
-        </div>
-      </section>
-    {/if}
-
-    <!-- Error Details -->
-    {#if spanHasError && span.status_message}
-      <section>
-        <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-error-600">
-          <AlertCircle color="#d93025"/>
-          <header class="pl-2 text-error-600 text-sm font-bold">Error Details</header>
-        </div>
-
-        <div class="bg-surface-50 border-2 border-error-600 rounded-base p-3 shadow-small">
-          <p class="text-sm text-error-600">{span.status_message}</p>
-        </div>
-      </section>
-    {/if}
-
+    </div>
   </div>
 </div>

@@ -20171,7 +20171,7 @@ class Experiment:
 
     def register_card(
         self,
-        card: Union[DataCard, ModelCard, PromptCard],
+        card: Union[DataCard, ModelCard, PromptCard, ServiceCard],
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
