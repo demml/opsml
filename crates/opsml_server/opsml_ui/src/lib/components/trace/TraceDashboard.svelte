@@ -194,35 +194,105 @@
 
 </script>
 
-<div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
-  <div class="flex items-center justify-between m2-4">
-    <h1 class="text-2xl font-bold text-primary-800 inline-flex items-center">
-      Trace Dashboard
-      {#if isUpdating}
-        <span class="text-sm font-normal text-gray-500 ml-2">Updating...</span>
-      {/if}
-      {#if pollInterval}
-        <span class="inline-flex items-center gap-1 ml-2 px-2 py-1 text-xs font-bold bg-error-600 text-white rounded-full animate-pulse">
-          🔴 LIVE
-        </span>
-      {/if}
-    </h1>
-    <div class="flex justify-end">
-      <TimeRangeFilter
-        onRangeChange={handleTimeRangeChange}
-        selectedRange={selectedTimeRange}
-      />
+<div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+
+  <!-- Page Header -->
+  <div class="rounded-base border-2 border-black shadow bg-surface-50">
+    <!-- Top bar: title + controls -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4 border-b-2 border-black bg-white rounded-t-base">
+      <div class="flex items-center gap-3">
+        <div class="w-1 h-8 rounded-sm bg-primary-500 flex-shrink-0"></div>
+        <div>
+          <h1 class="text-2xl font-black tracking-tight text-primary-800 leading-none">
+            Trace Dashboard
+          </h1>
+          <p class="text-xs text-gray-500 font-mono mt-0.5">
+            Distributed trace observability
+          </p>
+        </div>
+
+        {#if pollInterval}
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-black uppercase tracking-wide bg-error-600 text-white border-2 border-black shadow-small rounded-base animate-pulse ml-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+            Live
+          </span>
+        {/if}
+
+        {#if isUpdating}
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-gray-600 bg-surface-200 border-2 border-black shadow-small rounded-base ml-1">
+            <span class="w-3 h-3 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></span>
+            Updating
+          </span>
+        {/if}
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          onclick={() => refreshData(false)}
+          disabled={isUpdating}
+          class="flex items-center gap-1.5 px-3 py-2 text-sm font-bold bg-white border-2 border-black shadow-small shadow-hover rounded-base text-primary-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="Refresh data"
+        >
+          <svg class="w-3.5 h-3.5 {isUpdating ? 'animate-spin' : ''}" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Refresh
+        </button>
+
+        <TimeRangeFilter
+          onRangeChange={handleTimeRangeChange}
+          selectedRange={selectedTimeRange}
+        />
+      </div>
+    </div>
+
+    <!-- Summary stats bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 divide-x-2 divide-black rounded-b-base overflow-hidden">
+      <div class="px-5 py-3">
+        <div class="text-xs font-black uppercase tracking-wider text-gray-500">Loaded Traces</div>
+        <div class="text-2xl font-black text-primary-800 font-mono mt-0.5">
+          {tracePage.items?.length ?? '—'}
+        </div>
+      </div>
+      <div class="px-5 py-3">
+        <div class="text-xs font-black uppercase tracking-wider text-gray-500">Range</div>
+        <div class="text-base font-black text-primary-800 mt-0.5 truncate">{selectedTimeRange.label}</div>
+      </div>
+      <div class="px-5 py-3">
+        <div class="text-xs font-black uppercase tracking-wider text-gray-500">Interval</div>
+        <div class="text-base font-black text-primary-800 font-mono mt-0.5">{selectedTimeRange.bucketInterval}</div>
+      </div>
+      <div class="px-5 py-3">
+        <div class="text-xs font-black uppercase tracking-wider text-gray-500">Status</div>
+        <div class="text-base font-black mt-0.5 {pollInterval ? 'text-error-600' : 'text-secondary-600'}">
+          {pollInterval ? 'Live · 30s poll' : 'Static'}
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 gap-4 pt-4">
-    {#key tableKey}
+  {#key tableKey}
+    <!-- Charts Section -->
+    <div>
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-xs font-black uppercase tracking-widest text-black">Metrics</span>
+        <div class="flex-1 h-px bg-black opacity-10"></div>
+      </div>
       <TraceCharts buckets={traceMetrics} />
+    </div>
+
+    <!-- Traces Section -->
+    <div>
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-xs font-black uppercase tracking-widest text-black">Traces</span>
+        <div class="flex-1 h-px bg-black opacity-10"></div>
+      </div>
       <TraceTable
         trace_page={tracePage}
         filters={filters}
         onFiltersChange={handleFiltersChange}
       />
-    {/key}
-  </div>
+    </div>
+  {/key}
+
 </div>

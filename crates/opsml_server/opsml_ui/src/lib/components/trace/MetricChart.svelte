@@ -43,17 +43,20 @@
 </script>
 
 
-<div class="bg-white p-1 border-2 border-black shadow-small min-h-[12rem] h-full">
-  <div class="flex flex-col h-full">
-    <div class="flex flex-row flex-wrap gap-2 pb-2 items-center justify-between w-full px-2">
-      <div class="items-center text-lg mr-2 font-bold text-primary-800">{title}</div>
-      <button class="btn text-sm flex items-center gap-2 bg-primary-500 shadow shadow-hover border-black border-2 rounded-lg self-center" onclick={() => resetZoomClicked()}>
-        <div class="text-black">Reset Zoom</div>
-      </button>
-    </div>
+<div class="rounded-base border-2 border-black shadow bg-white overflow-hidden min-h-[12rem] h-full flex flex-col">
+  <!-- Chart header -->
+  <div class="flex items-center justify-between px-4 py-2.5 border-b-2 border-black bg-surface-50">
+    <span class="text-sm font-black uppercase tracking-wide text-primary-800">{title}</span>
+    <button
+      onclick={() => resetZoomClicked()}
+      class="text-xs font-bold px-2.5 py-1 bg-white border-2 border-black shadow-small shadow-hover-small rounded-base text-primary-800"
+    >
+      Reset Zoom
+    </button>
+  </div>
 
-    <div class="flex-1 min-h-0">
-      <canvas bind:this={canvas}></canvas>
-    </div>
+  <!-- Chart canvas -->
+  <div class="flex-1 min-h-0 p-2">
+    <canvas bind:this={canvas}></canvas>
   </div>
 </div>
