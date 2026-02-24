@@ -16,7 +16,7 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
     const filters: TraceFilters = await request.json();
     const response: TracePaginationResponse = await getTracePage(
       fetch,
-      filters
+      filters,
     );
 
     return json({ response, error: null });
@@ -29,7 +29,7 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
         error:
           error instanceof Error ? error.message : "Failed to fetch traces",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 };
