@@ -100,14 +100,14 @@
     />
   </div>
 
-  <div class="col-span-1 lg:col-span-4 gap-1 py-2 px-4 flex-1 flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50">
+  <div class="col-span-1 lg:col-span-4 pt-2 flex-1 flex-col bg-primary-500 border-2 border-black shadow-small">
     <div class="flex flex-col h-full">
-      <div class="items-center mr-2 font-bold text-primary-800 text-lg mb-2">Traces</div>
+      <div class="items-center mr-2 font-bold text-white text-lg mb-2 ml-4">Traces</div>
 
-      <div class="flex-1 overflow-x-auto border-2 border-black rounded-lg">
+      <div class="flex-1 overflow-x-auto">
         <div class="h-full flex flex-col min-w-[900px]">
 
-          <div class="bg-white border-b-2 border-black sticky top-0 z-10">
+          <div class="bg-white border-y-2 border-black sticky top-0 z-10">
             <div class="grid grid-cols-[64px_180px_1fr_1fr_100px_100px_80px_120px] gap-2 text-black text-sm font-heading px-2 py-2">
               <div class="text-center">
                 <span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800">Id</span>
