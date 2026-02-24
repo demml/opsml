@@ -6377,7 +6377,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6400,7 +6400,7 @@ dependencies = [
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
@@ -6409,7 +6409,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "futures",
  "pyo3",
@@ -6424,12 +6424,12 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "chrono",
  "futures",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "numpy",
@@ -6450,10 +6450,10 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "chrono",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "owo-colors",
@@ -6477,7 +6477,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6512,14 +6512,14 @@ dependencies = [
 [[package]]
 name = "scouter-http"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "pyo3",
  "reqwest 0.12.28",
  "scouter-settings",
  "scouter-types",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "thiserror 2.0.18",
  "tracing",
 ]
@@ -6527,7 +6527,7 @@ dependencies = [
 [[package]]
 name = "scouter-macro"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "thiserror 2.0.18",
 ]
@@ -6535,9 +6535,9 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6552,11 +6552,11 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6574,7 +6574,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "pyo3",
  "semver",
@@ -6585,7 +6585,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -6599,7 +6599,7 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -6609,7 +6609,7 @@ dependencies = [
 [[package]]
 name = "scouter-tonic"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "prost",
  "prost-types",
@@ -6628,7 +6628,7 @@ dependencies = [
 [[package]]
 name = "scouter-tracing"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6654,7 +6654,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=status-code#df9111306391a96b3a0cf219a949a454b5466d8a"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#da82864de7a48c33c1afa6d7739b27c3ea1c9281"
 dependencies = [
  "base64 0.22.1",
  "chrono",
