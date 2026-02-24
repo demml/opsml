@@ -80,15 +80,14 @@
                 <AlertCircle class="text-error-600" size={14} />
                 <span class="text-xs font-bold text-error-600">Exception Traceback</span>
               </div>
-              
+
               <!-- Traceback Code Block -->
-              <div class="max-h-64 overflow-y-auto bg-surface-100 rounded-base border-2 border-error-600 p-1 shadow-small text-xs">
+              <div class="max-h-64 overflow-y-auto bg-surface-100 rounded-base border-2 border-error-600 shadow-small text-xs">
                 <CodeBlock
                   code={traceback}
                   showLineNumbers={false}
                   lang="python"
                   theme="traceback-theme"
-                  prePadding="p-1"
                 />
               </div>
             </div>
