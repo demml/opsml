@@ -37,30 +37,30 @@
 </script>
 
 <!-- Main container with strict width constraints -->
-<div class="pt-4 min-w-0 flex flex-col items-stretch max-h-full mx-auto w-sm sm:w-xl md:w-3xl lg:w-5xl xl:w-6xl">
+<div class="pt-4 min-w-0 flex flex-col items-stretch max-h-full mx-auto max-w-6xl w-full px-4">
   <!-- Breadcrumb navigation -->
-  <div class="w-full rounded-lg border-2 border-black shadow bg-primary-500 py-2 mb-4 px-4">
-    <div class="flex items-center flex-wrap">
+  <div class="w-full rounded-base border-2 border-black shadow-small bg-primary-100 py-2 mb-4 px-4">
+    <div class="flex items-center flex-wrap gap-1">
       {#each splitPath as path, index}
         {#if index < 3}
           <div class="flex items-center">
-            <span class="font-semibold text-black hover:text-secondary-500 whitespace-nowrap">{path}</span>
-            <span class="mx-0.5 text-gray-800">/</span>
+            <span class="font-mono text-sm font-medium text-primary-800 whitespace-nowrap">{path}</span>
+            <span class="mx-1 text-black/40 font-bold">/</span>
           </div>
         {:else}
           {#if index == splitPath.length - 1}
             <div class="flex items-center">
-              <span class="font-semibold text-black hover:text-secondary-500 whitespace-nowrap">{path}</span>
+              <span class="font-mono text-sm font-bold text-black whitespace-nowrap">{path}</span>
             </div>
           {:else}
             <div class="flex items-center">
               <button 
-                class="btn bg-white border-2 border-black shadow-small shadow-hover-small text-black rounded-lg mx-2 whitespace-nowrap" 
+                class="btn bg-surface-50 border-2 border-black shadow-small shadow-hover-small text-primary-800 rounded-base mx-1 whitespace-nowrap text-sm font-medium font-mono" 
                 onclick={() => gotoPath(index)}
               >
                 {path}
               </button>
-              <span class="mx-0.5 text-gray-800">/</span>
+              <span class="mx-1 text-black/40 font-bold">/</span>
             </div>
           {/if}
         {/if}
@@ -68,7 +68,7 @@
     </div>
   </div>
 
-  <div class="w-full rounded-lg border-2 border-black shadow bg-white overflow-auto">
+  <div class="w-full rounded-base border-2 border-black shadow bg-surface-50 overflow-auto">
     <FileViewer {file} />
   </div>
 
