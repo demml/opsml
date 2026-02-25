@@ -22,7 +22,6 @@
 {:else}
   <div class="flex-1 mx-auto w-11/12 pt-6 px-4 pb-10">
 
-    <!-- ── Hero Header ── -->
     <div class="mb-8 border-2 border-black shadow bg-primary-100 p-5 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-4">
         <div class="p-3 bg-primary-500 border-2 border-black shadow-small rounded-base">
