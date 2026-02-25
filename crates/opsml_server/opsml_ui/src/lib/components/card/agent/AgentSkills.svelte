@@ -13,67 +13,62 @@
   }
 </script>
 
-<div class="rounded-lg border-2 border-black shadow-small bg-surface-50 p-4">
+<div class="rounded-base border-2 border-black shadow bg-surface-50 p-4">
   <div class="flex items-center gap-2 mb-4 pb-3 border-b-2 border-black">
-    <div class="p-2 bg-secondary-100 rounded-lg border-2 border-black">
-      <Wrench class="w-5 h-5 text-secondary-900" />
+    <div class="p-1.5 bg-secondary-300 border-2 border-black rounded-base">
+      <Wrench class="w-4 h-4 text-black" />
     </div>
-    <h3 class="text-lg font-bold text-primary-950">Skills ({skills.length})</h3>
+    <h3 class="font-black text-primary-950 uppercase tracking-wide text-sm">Skills</h3>
+    <span class="badge bg-primary-100 text-primary-800 border border-black text-xs font-bold shadow-small px-2">{skills.length}</span>
   </div>
 
   {#if skills.length === 0}
-    <div class="text-center py-8 text-gray-500">
-      <BookOpen class="w-12 h-12 mx-auto mb-2 opacity-50" />
-      <p class="text-sm">No skills configured</p>
+    <div class="text-center py-8 text-black/40">
+      <BookOpen class="w-10 h-10 mx-auto mb-2 opacity-40" />
+      <p class="text-sm font-bold">No skills configured</p>
     </div>
   {:else}
     <div class="space-y-3">
       {#each skills as skill}
         {#if isStandardSkill(skill)}
           <!-- Standard Skill -->
-          <div class="p-4 rounded-lg border-2 border-black bg-white">
-            <div class="flex items-start justify-between gap-2 mb-2">
+          <div class="p-4 rounded-base border-2 border-black bg-surface-50 shadow-small">
+            <div class="flex items-start gap-3 mb-3">
+              <span class="mt-0.5 px-2 py-0.5 bg-tertiary-100 text-tertiary-950 border-2 border-black text-xs font-black uppercase tracking-wider shadow-small flex-shrink-0 rounded-base">
+                STD
+              </span>
               <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="badge text-tertiary-950 border-tertiary-950 border-1 bg-tertiary-100 text-xs">
-                    STANDARD
-                  </span>
-                  <h4 class="text-sm font-bold text-gray-900">{skill.name}</h4>
-                </div>
-                <p class="text-xs text-gray-600 mt-1">{skill.description}</p>
+                <h4 class="text-sm font-black text-primary-950">{skill.name}</h4>
+                <p class="text-xs text-black/60 mt-0.5">{skill.description}</p>
               </div>
             </div>
 
-            <div class="flex flex-wrap gap-2 mt-3">
+            <div class="flex flex-wrap gap-2">
               {#if skill.license}
-                <span class="badge text-gray-700 border-gray-400 border-1 bg-surface-100 text-xs">
-                  📄 {skill.license}
+                <span class="badge text-black border border-black bg-surface-200 text-xs font-bold shadow-small">
+                  {skill.license}
                 </span>
               {/if}
-              
               {#if skill.compatibility}
-                <span class="badge text-gray-700 border-gray-400 border-1 bg-surface-100 text-xs">
-                  🔧 {skill.compatibility}
+                <span class="badge text-black border border-black bg-surface-200 text-xs font-bold shadow-small">
+                  {skill.compatibility}
                 </span>
               {/if}
-
               {#if skill.allowedTools && skill.allowedTools.length > 0}
-                <span class="badge text-primary-900 border-primary-800 border-1 bg-primary-100 text-xs">
-                  🛠️ {skill.allowedTools.length} tools
+                <span class="badge text-primary-900 border border-black bg-primary-100 text-xs font-bold shadow-small">
+                  {skill.allowedTools.length} tools
                 </span>
               {/if}
             </div>
 
             {#if skill.metadata}
-              <details class="mt-3">
-                <summary class="text-xs font-bold text-gray-700 cursor-pointer hover:text-primary-800">
-                  View Metadata
-                </summary>
-                <div class="mt-2 p-2 bg-surface-100 rounded border border-gray-300">
+              <details class="mt-3 rounded-base border border-black overflow-hidden">
+                <summary class="px-3 py-1.5 text-xs font-bold text-primary-700 cursor-pointer hover:bg-primary-50 transition-colors duration-100">View Metadata</summary>
+                <div class="p-2 bg-surface-100 border-t border-black">
                   {#each Object.entries(skill.metadata) as [key, value]}
                     <div class="flex gap-2 text-xs py-1">
-                      <span class="font-bold text-gray-700">{key}:</span>
-                      <span class="text-gray-600">{value}</span>
+                      <span class="font-black text-primary-700">{key}:</span>
+                      <span class="text-black/70">{value}</span>
                     </div>
                   {/each}
                 </div>
@@ -81,67 +76,56 @@
             {/if}
 
             {#if skill.body}
-              <details class="mt-3">
-                <summary class="text-xs font-bold text-gray-700 cursor-pointer hover:text-primary-800">
-                  View Skill Body
-                </summary>
-                <div class="mt-2 p-3 bg-surface-100 rounded border border-gray-300 prose prose-sm max-w-none">
-                  <pre class="text-xs overflow-x-auto whitespace-pre-wrap">{skill.body}</pre>
-                </div>
+              <details class="mt-3 rounded-base border border-black overflow-hidden">
+                <summary class="px-3 py-1.5 text-xs font-bold text-primary-700 cursor-pointer hover:bg-primary-50 transition-colors duration-100">View Skill Body</summary>
+                <pre class="p-3 bg-surface-100 text-xs overflow-x-auto whitespace-pre-wrap font-mono border-t border-black">{skill.body}</pre>
               </details>
             {/if}
           </div>
 
         {:else if isA2ASkill(skill)}
           <!-- A2A Skill -->
-          <div class="p-4 rounded-lg border-2 border-black bg-white">
-            <div class="flex items-start justify-between gap-2 mb-2">
+          <div class="p-4 rounded-base border-2 border-black bg-surface-50 shadow-small">
+            <div class="flex items-start gap-3 mb-3">
+              <span class="mt-0.5 px-2 py-0.5 bg-secondary-300 text-black border-2 border-black text-xs font-black uppercase tracking-wider shadow-small flex-shrink-0 rounded-base">
+                A2A
+              </span>
               <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="badge text-secondary-900 border-secondary-800 border-1 bg-secondary-100 text-xs">
-                    A2A
-                  </span>
-                  <h4 class="text-sm font-bold text-gray-900">{skill.name}</h4>
-                  <span class="text-xs text-gray-500 font-mono">#{skill.id}</span>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <h4 class="text-sm font-black text-black">{skill.name}</h4>
+                  <span class="text-xs text-primary-600 font-mono">#{skill.id}</span>
                 </div>
-                <p class="text-xs text-gray-600 mt-1">{skill.description}</p>
+                <p class="text-xs text-black/60 mt-0.5">{skill.description}</p>
               </div>
             </div>
 
             <!-- Tags -->
             {#if skill.tags.length > 0}
-              <div class="flex flex-wrap gap-1 mt-3">
+              <div class="flex flex-wrap gap-1 mb-3">
                 {#each skill.tags as tag}
-                  <span class="badge text-gray-700 border-gray-400 border-1 bg-surface-100 text-xs">
-                    {tag}
-                  </span>
+                  <span class="badge text-black border border-black bg-surface-200 text-xs font-bold">{tag}</span>
                 {/each}
               </div>
             {/if}
 
             <!-- Input/Output Modes -->
-            <div class="grid grid-cols-2 gap-3 mt-3">
+            <div class="grid grid-cols-2 gap-3">
               {#if skill.inputModes && skill.inputModes.length > 0}
                 <div class="space-y-1">
-                  <span class="text-xs font-bold text-gray-600 uppercase">Input Modes</span>
+                  <span class="text-xs font-black text-primary-700 uppercase tracking-wide">Input</span>
                   <div class="flex flex-wrap gap-1">
                     {#each skill.inputModes as mode}
-                      <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100 text-xs">
-                        {mode}
-                      </span>
+                      <span class="badge text-primary-900 border border-black shadow-small bg-primary-100 text-xs font-bold">{mode}</span>
                     {/each}
                   </div>
                 </div>
               {/if}
-
               {#if skill.outputModes && skill.outputModes.length > 0}
                 <div class="space-y-1">
-                  <span class="text-xs font-bold text-gray-600 uppercase">Output Modes</span>
+                  <span class="text-xs font-black text-primary-700 uppercase tracking-wide">Output</span>
                   <div class="flex flex-wrap gap-1">
                     {#each skill.outputModes as mode}
-                      <span class="badge text-secondary-900 border-black border-1 shadow-small bg-secondary-100 text-xs">
-                        {mode}
-                      </span>
+                      <span class="badge text-black border border-black shadow-small bg-secondary-100 text-xs font-bold">{mode}</span>
                     {/each}
                   </div>
                 </div>
@@ -150,15 +134,15 @@
 
             <!-- Examples -->
             {#if skill.examples.length > 0}
-              <details class="mt-3">
-                <summary class="text-xs font-bold text-gray-700 cursor-pointer hover:text-primary-800">
-                  View Examples ({skill.examples.length})
+              <details class="mt-3 rounded-base border border-black overflow-hidden">
+                <summary class="px-3 py-1.5 text-xs font-bold text-primary-800 cursor-pointer hover:bg-primary-50 transition-colors duration-100">
+                  Examples ({skill.examples.length})
                 </summary>
-                <div class="mt-2 space-y-2">
+                <div class="p-2 space-y-2 bg-surface-100 border-t border-black">
                   {#each skill.examples as example, idx}
-                    <div class="p-2 bg-surface-100 rounded border border-gray-300">
-                      <span class="text-xs font-bold text-gray-600">Example {idx + 1}:</span>
-                      <pre class="text-xs mt-1 text-black whitespace-pre-wrap">{example}</pre>
+                    <div class="p-2 bg-surface-50 rounded-base border border-black">
+                      <span class="text-xs font-black text-primary-800">#{idx + 1}</span>
+                      <pre class="text-xs mt-1 text-black/80 whitespace-pre-wrap font-mono">{example}</pre>
                     </div>
                   {/each}
                 </div>
@@ -167,11 +151,11 @@
 
             <!-- Security Requirements -->
             {#if skill.securityRequirements && skill.securityRequirements.length > 0}
-              <div class="mt-3 p-2 bg-warning-100 border-2 border-warning-600 rounded-lg">
+              <div class="mt-3 p-2 warn-color border-2 border-black rounded-base shadow-small">
                 <div class="flex items-center gap-2">
-                  <Shield class="w-4 h-4 text-warning-800" />
-                  <span class="text-xs font-bold text-warning-900">
-                    Security Required: {skill.securityRequirements.map(r => r.schemes.join(', ')).join('; ')}
+                  <Shield class="w-4 h-4 text-black flex-shrink-0" />
+                  <span class="text-xs font-black text-black uppercase tracking-wide">
+                    Security: {skill.securityRequirements.map(r => r.schemes.join(', ')).join('; ')}
                   </span>
                 </div>
               </div>
