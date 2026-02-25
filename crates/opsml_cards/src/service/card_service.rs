@@ -5,7 +5,7 @@ use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
 use opsml_service::OpsmlServiceSpec;
-use opsml_types::contracts::{Card, CardEntry, ServiceConfig};
+use opsml_types::contracts::{AgentSpec, Card, CardEntry, ServiceConfig};
 use opsml_types::{
     RegistryType, SaveName, Suffix,
     contracts::{
@@ -486,7 +486,7 @@ impl ServiceCard {
         Ok(service)
     }
 
-    fn agent_card<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, CardError> {
+    fn agent_card<'py>(&self, py: Python<'py>) -> Result<Bound<'py, AgentSpec>, CardError> {
         if let Some(config) = &self.service_config {
             if let Some(agent) = &config.agent {
                 return Ok(agent.to_a2a_card(py)?);

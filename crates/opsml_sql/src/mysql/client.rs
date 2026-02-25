@@ -82,13 +82,13 @@ mod tests {
     use opsml_settings::config::DatabaseSettings;
     use opsml_types::CommonKwargs;
     use opsml_types::SqlType;
-    use opsml_types::contracts::VersionCursor;
     use opsml_types::contracts::agent::{
         AgentCapabilities, AgentInterface, AgentProvider, AgentSkill, AgentSpec,
         SecurityRequirement,
     };
     use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
     use opsml_types::contracts::{ArtifactKey, ArtifactQueryArgs, AuditEvent, SpaceNameEvent};
+    use opsml_types::contracts::{ProtocolBinding, VersionCursor};
     use opsml_types::{
         RegistryType,
         cards::CardTable,
@@ -111,7 +111,7 @@ mod tests {
             "1.0.0".to_string(),
             vec![AgentInterface::new(
                 "http://localhost:8000".to_string(),
-                "HTTP".to_string(),
+                ProtocolBinding::HttpJson,
                 "1.0".to_string(),
                 Some("tenant1".to_string()),
             )],
