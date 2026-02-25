@@ -29,7 +29,7 @@ export interface InferredEndpoint {
   /** Full URL path */
   path: string;
 
-  /** Protocol (http, https, ws, wss, grpc) */
+  /** Protocol binding identifier (jsonrpc, http+json, grpc, websocket) */
   protocol: string;
 
   /** Supported request content types */
@@ -109,22 +109,28 @@ export interface AgentContract {
 }
 
 /**
- * Standard A2A protocol endpoints based on protocol binding
+ * Standard A2A protocol endpoint paths per spec section 5.3 (Method Mapping Reference)
+ * and section 11.3 (HTTP+JSON/REST URL Patterns).
  */
 const A2A_ENDPOINTS = {
-  http: {
-    invoke: "/v1/agent/invoke",
-    tasks: "/v1/agent/tasks",
-    stream: "/v1/agent/stream",
+  // HTTP+JSON/REST binding (Section 11.3)
+  httpJson: {
+    send: "/message:send",
+    stream: "/message:stream",
+    getTask: "/tasks",
     health: "/health",
   },
-  grpc: {
-    invoke: "agent.v1.AgentService/Invoke",
-    tasks: "agent.v1.AgentService/GetTask",
-    stream: "agent.v1.AgentService/InvokeStream",
+  // JSON-RPC 2.0 binding (Section 9) — single base URL, method name differentiates
+  jsonrpc: {
+    sendMethod: "SendMessage",
+    streamMethod: "SendStreamingMessage",
+    getTaskMethod: "GetTask",
   },
-  websocket: {
-    connect: "/v1/agent/ws",
+  // gRPC binding (Section 10)
+  grpc: {
+    send: "AgentService/SendMessage",
+    stream: "AgentService/SendStreamingMessage",
+    getTask: "AgentService/GetTask",
   },
 };
 
@@ -149,23 +155,34 @@ export function inferHealthEndpoint(config: DeploymentConfig[]): string[] {
 }
 
 /**
- * Map modality strings to MIME types
+ * Normalise a protocolBinding string to a canonical key.
+ * The spec defines open-form strings; common values are "JSONRPC", "HTTP+JSON", "GRPC".
  */
-function modalityToContentType(modality: string): string[] {
-  const mapping: Record<string, string[]> = {
-    text: ["text/plain", "application/json"],
-    json: ["application/json"],
-    image: ["image/png", "image/jpeg", "image/webp", "image/gif"],
-    audio: ["audio/mpeg", "audio/wav", "audio/ogg"],
-    video: ["video/mp4", "video/webm"],
-    binary: ["application/octet-stream"],
-  };
-
-  return mapping[modality.toLowerCase()] || ["application/json"];
+function normaliseBinding(
+  binding: string,
+): "jsonrpc" | "http+json" | "grpc" | "websocket" | "unknown" {
+  const b = binding.toLowerCase();
+  if (b === "jsonrpc" || b === "json-rpc" || b === "json_rpc") return "jsonrpc";
+  if (b === "http+json" || b === "http" || b === "https" || b === "rest")
+    return "http+json";
+  if (b === "grpc" || b === "grpc+proto") return "grpc";
+  if (b === "websocket" || b === "ws" || b === "wss") return "websocket";
+  return "unknown";
 }
 
 /**
- * Infer endpoints from an agent interface and skill
+ * Strip a trailing slash from a URL.
+ */
+function trimTrailingSlash(url: string): string {
+  return url.endsWith("/") ? url.slice(0, -1) : url;
+}
+
+/**
+ * Infer endpoints from an agent interface.
+ * Per the A2A spec (Section 5.3), ALL skills share the same message endpoints:
+ *   HTTP+JSON: POST /message:send  |  POST /message:stream
+ *   JSON-RPC:  POST <baseUrl>  (method distinguished by JSON-RPC method name)
+ *   gRPC:      AgentService/SendMessage  |  AgentService/SendStreamingMessage
  */
 function inferEndpointsForSkill(
   agentInterface: AgentInterface,
@@ -173,93 +190,89 @@ function inferEndpointsForSkill(
   capabilities: AgentSpec["capabilities"],
 ): InferredEndpoint[] {
   const endpoints: InferredEndpoint[] = [];
-  const protocol = agentInterface.protocolBinding.toLowerCase();
-  const baseUrl = agentInterface.url;
+  const binding = normaliseBinding(agentInterface.protocolBinding);
+  const baseUrl = trimTrailingSlash(agentInterface.url);
 
-  // Determine input/output content types from modes
-  const inputModes = skill.inputModes || [];
-  const outputModes = skill.outputModes || [];
-
-  const requestContentTypes = inputModes.flatMap(modalityToContentType);
-  const responseContentTypes = outputModes.flatMap(modalityToContentType);
-
-  // Standard invocation endpoint (JSON-RPC 2.0 for A2A)
-  if (protocol === "http" || protocol === "https") {
+  if (binding === "jsonrpc") {
+    // JSON-RPC 2.0 — single URL, method name in the body
     endpoints.push({
       method: "POST",
-      path: baseUrl, // A2A uses base URL for JSON-RPC
-      protocol,
+      path: baseUrl,
+      protocol: "jsonrpc",
       requestContentTypes: ["application/json"],
       responseContentTypes: ["application/json"],
       streaming: false,
-      description: `Invoke ${skill.name} skill`,
+      description: `Send message to ${skill.name} (JSON-RPC SendMessage)`,
       examples: skill.examples,
     });
-
-    // Streaming endpoint if supported
-    if (capabilities.streaming && outputModes.includes("text")) {
+    if (capabilities.streaming) {
       endpoints.push({
         method: "POST",
-        path: `${baseUrl}${A2A_ENDPOINTS.http.stream}`,
-        protocol,
-        requestContentTypes:
-          requestContentTypes.length > 0
-            ? requestContentTypes
-            : ["application/json"],
-        responseContentTypes: ["text/event-stream", "application/x-ndjson"],
+        path: baseUrl,
+        protocol: "jsonrpc",
+        requestContentTypes: ["application/json"],
+        responseContentTypes: ["text/event-stream"],
         streaming: true,
-        description: `Stream ${skill.name} skill responses`,
+        description: `Stream messages to ${skill.name} (JSON-RPC SendStreamingMessage)`,
         examples: skill.examples,
       });
     }
-
-    // Task status endpoint for async operations
-    endpoints.push({
-      method: "GET",
-      path: `${baseUrl}${A2A_ENDPOINTS.http.tasks}/{taskId}`,
-      protocol,
-      requestContentTypes: [],
-      responseContentTypes: ["application/json"],
-      streaming: false,
-      description: `Get status of async ${skill.name} task`,
-    });
-  } else if (protocol === "grpc") {
+  } else if (binding === "http+json" || binding === "unknown") {
+    // HTTP+JSON/REST — standardised subpaths per Section 11.3.1
     endpoints.push({
       method: "POST",
-      path: `${baseUrl}/${A2A_ENDPOINTS.grpc.invoke}`,
-      protocol,
+      path: `${baseUrl}${A2A_ENDPOINTS.httpJson.send}`,
+      protocol: "http+json",
+      requestContentTypes: ["application/json"],
+      responseContentTypes: ["application/json"],
+      streaming: false,
+      description: `Send message to ${skill.name} (POST /message:send)`,
+      examples: skill.examples,
+    });
+    if (capabilities.streaming) {
+      endpoints.push({
+        method: "POST",
+        path: `${baseUrl}${A2A_ENDPOINTS.httpJson.stream}`,
+        protocol: "http+json",
+        requestContentTypes: ["application/json"],
+        responseContentTypes: ["text/event-stream"],
+        streaming: true,
+        description: `Stream messages to ${skill.name} (POST /message:stream)`,
+        examples: skill.examples,
+      });
+    }
+  } else if (binding === "grpc") {
+    endpoints.push({
+      method: "POST",
+      path: `${baseUrl}/${A2A_ENDPOINTS.grpc.send}`,
+      protocol: "grpc",
       requestContentTypes: ["application/grpc+proto"],
       responseContentTypes: ["application/grpc+proto"],
       streaming: false,
-      description: `Invoke ${skill.name} skill via gRPC`,
+      description: `Send message to ${skill.name} via gRPC`,
       examples: skill.examples,
     });
-
     if (capabilities.streaming) {
       endpoints.push({
         method: "POST",
         path: `${baseUrl}/${A2A_ENDPOINTS.grpc.stream}`,
-        protocol,
+        protocol: "grpc",
         requestContentTypes: ["application/grpc+proto"],
         responseContentTypes: ["application/grpc+proto"],
         streaming: true,
-        description: `Stream ${skill.name} skill responses via gRPC`,
+        description: `Stream messages to ${skill.name} via gRPC`,
         examples: skill.examples,
       });
     }
-  } else if (
-    protocol === "websocket" ||
-    protocol === "ws" ||
-    protocol === "wss"
-  ) {
+  } else if (binding === "websocket") {
     endpoints.push({
       method: "GET",
-      path: `${baseUrl}${A2A_ENDPOINTS.websocket.connect}`,
-      protocol,
+      path: baseUrl,
+      protocol: "websocket",
       requestContentTypes: ["application/json"],
       responseContentTypes: ["application/json"],
       streaming: true,
-      description: `Connect to ${skill.name} skill via WebSocket`,
+      description: `Connect to ${skill.name} via WebSocket`,
       examples: skill.examples,
     });
   }
@@ -278,22 +291,22 @@ function extractA2ASkill(skillFormat: SkillFormat): AgentSkill | null {
 }
 
 /**
- * Infer complete agent contract from AgentSpec
+ * Infer complete agent contract from AgentSpec.
+ * By the time AgentSpec reaches the frontend, supportedInterfaces URLs are already
+ * populated by the Rust backend (from deploy config if needed).
  */
 export function inferAgentContract(spec: AgentSpec): AgentContract {
   const skills: AgentSkillContract[] = [];
 
-  // Process each skill and infer its contract
   for (const skillFormat of spec.skills) {
     const skill = extractA2ASkill(skillFormat);
-    if (!skill) continue; // Skip non-A2A skills for now
+    if (!skill) continue;
 
     const inputModes = (skill.inputModes ||
       spec.defaultInputModes) as Modality[];
     const outputModes = (skill.outputModes ||
       spec.defaultOutputModes) as Modality[];
 
-    // Infer endpoints for each supported interface
     const endpoints: InferredEndpoint[] = [];
     for (const iface of spec.supportedInterfaces) {
       endpoints.push(

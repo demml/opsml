@@ -1,7 +1,8 @@
 /**
- * Agent Client for A2A Protocol
+ * Agent Client for A2A Protocol (spec v1.0)
  *
- * Provides a type-safe client for interacting with agents based on inferred contracts.
+ * Implements the full A2A operation set per https://a2a-protocol.org/latest/specification/
+ * Sections 3, 9 (JSON-RPC), and 11 (HTTP+JSON).
  */
 
 import type {
@@ -11,12 +12,21 @@ import type {
 } from "./agentInference";
 import { buildAuthHeaders } from "./agentInference";
 import type {
+  CancelTaskRequest,
+  GetTaskRequest,
+  ListTasksRequest,
+  ListTasksResponse,
   Part,
   SendMessageRequest,
   SendMessageResponse,
+  StreamResponse,
   Struct,
+  SubscribeToTaskRequest,
   Task,
 } from "./a2a-types";
+
+/** A2A protocol version sent in every request (§3.6.1). */
+const A2A_VERSION = "1.0";
 
 export interface InvokeSkillResult {
   request: SendMessageRequest;
@@ -47,6 +57,19 @@ export interface InvokeSkillOptions {
   /** Pre-generated message ID to associate this exchange */
   messageId?: string;
 
+  /**
+   * Server-generated task ID from a previous response.
+   * Include this for multi-turn interactions to continue an existing task.
+   * Per A2A spec §4.1.4: "If set, the message will be associated with the given task."
+   */
+  taskId?: string;
+
+  /**
+   * Context ID from a previous response.
+   * Include this to continue a conversational context (A2A spec §3.4.1).
+   */
+  contextId?: string;
+
   /** Input data (text, image URL, audio URL, etc.) or array of message parts */
   input?: unknown;
 
@@ -60,19 +83,9 @@ export interface InvokeSkillOptions {
   signal?: AbortSignal;
 }
 
-export interface StreamChunk {
-  /** Chunk data */
-  data: string;
-
-  /** Whether this is the final chunk */
-  done: boolean;
-
-  /** Metadata about the chunk */
-  metadata?: Record<string, unknown>;
-}
-
 /**
- * Agent client for executing skills based on inferred contracts
+ * Agent client implementing all A2A protocol operations (spec §3.1).
+ * Supports JSON-RPC (§9) and HTTP+JSON/REST (§11) bindings.
  */
 export class AgentClient {
   private contract: AgentContract;
@@ -86,9 +99,8 @@ export class AgentClient {
     };
   }
 
-  /**
-   * Check health of the agent by calling a healthcheck endpoint if available
-   */
+  // ─── Health check ───────────────────────────────────────────────────────────
+
   async checkHealth(url: string): Promise<boolean> {
     try {
       const response = await fetch(url, {
@@ -101,41 +113,85 @@ export class AgentClient {
     }
   }
 
-  /**
-   * Select the best endpoint for a skill based on capabilities
-   */
+  // ─── Private utilities ───────────────────────────────────────────────────────
+
   private selectEndpoint(
     skill: AgentSkillContract,
     streaming: boolean,
   ): InferredEndpoint | null {
-    if (streaming) {
-      return skill.endpoints.find((e) => e.streaming) || null;
-    }
-    return skill.endpoints.find((e) => !e.streaming) || null;
+    return streaming
+      ? (skill.endpoints.find((e) => e.streaming) ?? null)
+      : (skill.endpoints.find((e) => !e.streaming) ?? null);
   }
 
   /**
-   * Build complete headers with auth and custom headers
+   * Standard headers per spec §3.6.1 (A2A-Version) and §7.3 (auth).
    */
-  private buildHeaders(): Record<string, string> {
+  private buildHeaders(extra?: Record<string, string>): Record<string, string> {
     const authHeaders = buildAuthHeaders(
       this.contract.security.schemes,
       this.config.authConfig,
     );
-
     return {
+      "Content-Type": "application/json",
+      "A2A-Version": A2A_VERSION,
       ...authHeaders,
       ...this.config.customHeaders,
+      ...extra,
     };
   }
 
   /**
-   * Type guard to check if an object is a valid Part
+   * Resolve the first usable interface to a base URL and normalised binding.
+   * Returns `{ baseUrl, isJsonRpc }` for task-level operations.
    */
-  private isPart(obj: unknown): obj is Part {
-    if (typeof obj !== "object" || obj === null) {
-      return false;
+  private resolveInterface(): { baseUrl: string; isJsonRpc: boolean } {
+    const iface = this.contract.interfaces[0];
+    if (!iface) throw new Error("No agent interface configured");
+    const baseUrl = iface.url.endsWith("/")
+      ? iface.url.slice(0, -1)
+      : iface.url;
+    const b = iface.protocolBinding.toLowerCase();
+    const isJsonRpc = b === "jsonrpc" || b === "json-rpc" || b === "json_rpc";
+    return { baseUrl, isJsonRpc };
+  }
+
+  private isJsonRpcEndpoint(endpoint: InferredEndpoint): boolean {
+    return endpoint.protocol === "jsonrpc";
+  }
+
+  private buildSendBody(
+    sendRequest: SendMessageRequest,
+    endpoint: InferredEndpoint,
+    requestId: string,
+    streaming: boolean,
+  ): string {
+    if (this.isJsonRpcEndpoint(endpoint)) {
+      return JSON.stringify({
+        jsonrpc: "2.0",
+        id: requestId,
+        method: streaming ? "SendStreamingMessage" : "SendMessage",
+        params: sendRequest,
+      });
     }
+    return JSON.stringify(sendRequest);
+  }
+
+  private async parseJsonOrRpcResponse<T>(
+    response: Response,
+    isJsonRpc: boolean,
+  ): Promise<T> {
+    const body = await response.json();
+    if (isJsonRpc) {
+      if (body.error)
+        throw new Error(body.error.message ?? `RPC error ${body.error.code}`);
+      return body.result as T;
+    }
+    return body as T;
+  }
+
+  private isPart(obj: unknown): obj is Part {
+    if (typeof obj !== "object" || obj === null) return false;
     const p = obj as Record<string, unknown>;
     return (
       typeof p.text === "string" ||
@@ -145,399 +201,135 @@ export class AgentClient {
     );
   }
 
-  /**
-   * Build A2A spec Parts from task text and optional supplementary input.
-   */
   private buildParts(
     task: string,
     input: unknown,
     skill: AgentSkillContract,
   ): Part[] {
     const parts: Part[] = [];
+    if (task) parts.push({ text: task });
 
-    if (task) {
-      parts.push({ text: task });
-    }
-
-    if (!input) {
-      return parts;
-    }
+    if (!input) return parts;
 
     if (Array.isArray(input)) {
-      const validParts = input.filter((item) => this.isPart(item)) as Part[];
-      return [...parts, ...validParts];
+      return [...parts, ...(input.filter((i) => this.isPart(i)) as Part[])];
     }
 
     if (typeof input === "string") {
       const trimmed = input.trim();
-      const isUrl =
-        trimmed.startsWith("http://") || trimmed.startsWith("https://");
-
-      if (isUrl) {
-        if (
-          skill.inputModes.includes("image") &&
-          this.looksLikeImage(trimmed)
-        ) {
-          parts.push({ url: trimmed, mediaType: "image/*" });
-        } else if (
-          skill.inputModes.includes("audio") &&
-          this.looksLikeAudio(trimmed)
-        ) {
-          parts.push({ url: trimmed, mediaType: "audio/*" });
-        } else if (
-          skill.inputModes.includes("video") &&
-          this.looksLikeVideo(trimmed)
-        ) {
-          parts.push({ url: trimmed, mediaType: "video/*" });
-        } else {
-          parts.push({ url: trimmed });
-        }
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        const mediaType = this.inferMediaType(trimmed, skill);
+        parts.push(mediaType ? { url: trimmed, mediaType } : { url: trimmed });
       } else {
         parts.push({ text: trimmed });
       }
     } else if (typeof input === "object" && input !== null) {
-      if (this.isPart(input)) {
-        parts.push(input);
-      } else {
-        parts.push({ data: input, mediaType: "application/json" });
-      }
+      parts.push(
+        this.isPart(input)
+          ? (input as Part)
+          : { data: input, mediaType: "application/json" },
+      );
     }
 
     return parts;
   }
 
-  /**
-   * Check if URL looks like an image
-   */
-  private looksLikeImage(url: string): boolean {
-    const imageExtensions = [
-      ".jpg",
-      ".jpeg",
-      ".png",
-      ".gif",
-      ".webp",
-      ".svg",
-      ".bmp",
-    ];
-    const lowerUrl = url.toLowerCase();
-    return imageExtensions.some((ext) => lowerUrl.includes(ext));
+  private inferMediaType(
+    url: string,
+    skill: AgentSkillContract,
+  ): string | undefined {
+    const lower = url.toLowerCase();
+    const img = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".bmp"];
+    const aud = [".mp3", ".wav", ".ogg", ".m4a", ".flac", ".aac"];
+    const vid = [".mp4", ".webm", ".mov", ".avi", ".mkv"];
+    if (
+      skill.inputModes.includes("image") &&
+      img.some((e) => lower.includes(e))
+    )
+      return "image/*";
+    if (
+      skill.inputModes.includes("audio") &&
+      aud.some((e) => lower.includes(e))
+    )
+      return "audio/*";
+    if (
+      skill.inputModes.includes("video") &&
+      vid.some((e) => lower.includes(e))
+    )
+      return "video/*";
+    return undefined;
   }
 
-  /**
-   * Check if URL looks like audio
-   */
-  private looksLikeAudio(url: string): boolean {
-    const audioExtensions = [".mp3", ".wav", ".ogg", ".m4a", ".flac", ".aac"];
-    const lowerUrl = url.toLowerCase();
-    return audioExtensions.some((ext) => lowerUrl.includes(ext));
-  }
+  // ─── SSE / streaming helpers ─────────────────────────────────────────────────
 
   /**
-   * Check if URL looks like video
+   * Parse a raw SSE data line into a `StreamResponse`.
+   * Handles both plain HTTP+JSON (`data: {...}`) and JSON-RPC wrapped events
+   * (`data: {"jsonrpc":"2.0","result":{...}}`).
    */
-  private looksLikeVideo(url: string): boolean {
-    const videoExtensions = [".mp4", ".webm", ".mov", ".avi", ".mkv"];
-    const lowerUrl = url.toLowerCase();
-    return videoExtensions.some((ext) => lowerUrl.includes(ext));
-  }
-
-  /**
-   * Build the A2A SendMessageRequest from the given options
-   * This can be used for debugging or for custom invocation scenarios
-   */
-  buildSendMessageRequest(options: InvokeSkillOptions): SendMessageRequest {
-    const { skill, task, input, context } = options;
-    const stream = options.stream || false;
-
-    const endpoint = this.selectEndpoint(skill, stream);
-    if (!endpoint) {
-      throw new Error(`No suitable endpoint found for skill: ${skill.name}`);
-    }
-
-    const parts = this.buildParts(task, input, skill);
-    const messageId =
-      options.messageId ?? crypto.randomUUID().replace(/-/g, "");
-
-    const sendRequest: SendMessageRequest = {
-      message: {
-        messageId,
-        role: "user",
-        parts,
-        ...(context && { metadata: context as Record<string, unknown> }),
-      },
-      ...(this.config.tenant && { tenant: this.config.tenant }),
-    };
-
-    return sendRequest;
-  }
-
-  async invokeSkillWithRequest(
-    sendRequest: SendMessageRequest,
-    options: InvokeSkillOptions,
-  ): Promise<SendMessageResponse> {
-    const { skill, signal } = options;
-    const stream = options.stream || false;
-    const requestId = crypto.randomUUID();
-
-    const jsonRpcPayload = {
-      id: requestId,
-      jsonrpc: "2.0",
-      method: "message/send",
-      params: sendRequest,
-    };
-
-    const endpoint = this.selectEndpoint(skill, stream);
-    if (!endpoint) {
-      throw new Error(`No suitable endpoint found for skill: ${skill.name}`);
-    }
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
-
+  private parseStreamEvent(
+    data: string,
+    isJsonRpc: boolean,
+  ): StreamResponse | null {
     try {
-      const response = await fetch(endpoint.path, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Message-ID": sendRequest.message.messageId,
-          "X-Request-ID": requestId,
-          ...this.buildHeaders(),
-        },
-        body: JSON.stringify(jsonRpcPayload),
-        signal: signal || controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          message: response.statusText,
-        }));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
+      const parsed = JSON.parse(data) as Record<string, unknown>;
+      if (isJsonRpc) {
+        if (parsed.error) {
+          throw new Error(
+            String(
+              (parsed.error as Record<string, unknown>).message ??
+                "RPC stream error",
+            ),
+          );
+        }
+        return (parsed.result ?? parsed) as StreamResponse;
       }
-
-      const jsonRpcResponse = await response.json();
-
-      if (jsonRpcResponse.error) {
-        throw new Error(
-          jsonRpcResponse.error.message ||
-            `RPC error ${jsonRpcResponse.error.code}`,
-        );
-      }
-
-      return jsonRpcResponse.result as SendMessageResponse;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new Error("Request timed out");
-      }
-      throw error;
+      return parsed as StreamResponse;
+    } catch {
+      return null;
     }
   }
 
   /**
-   * Invoke a skill and return the typed A2A request/response pair.
-   * Throws on HTTP errors, JSON-RPC errors, and network failures.
+   * Read an SSE response body and yield each `StreamResponse` event.
+   * Per spec §11.7 and §9.4.2.
    */
-  async invokeSkill(options: InvokeSkillOptions): Promise<InvokeSkillResult> {
-    const { skill, task, input, context, signal } = options;
-    const stream = options.stream || false;
-
-    const endpoint = this.selectEndpoint(skill, stream);
-    if (!endpoint) {
-      throw new Error(`No suitable endpoint found for skill: ${skill.name}`);
-    }
-
-    const parts = this.buildParts(task, input, skill);
-    const messageId =
-      options.messageId ?? crypto.randomUUID().replace(/-/g, "");
-    const requestId = crypto.randomUUID();
-
-    const sendRequest: SendMessageRequest = {
-      message: {
-        messageId,
-        role: "user",
-        parts,
-        ...(context && { metadata: context as Record<string, unknown> }),
-      },
-      ...(this.config.tenant && { tenant: this.config.tenant }),
-    };
-
-    const jsonRpcPayload = {
-      id: requestId,
-      jsonrpc: "2.0",
-      method: "message/send",
-      params: sendRequest,
-    };
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
-
-    try {
-      const response = await fetch(endpoint.path, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Message-ID": messageId,
-          "X-Request-ID": requestId,
-          ...this.buildHeaders(),
-        },
-        body: JSON.stringify(jsonRpcPayload),
-        signal: signal || controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({
-          message: response.statusText,
-        }));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
-      }
-
-      const jsonRpcResponse = await response.json();
-
-      if (jsonRpcResponse.error) {
-        throw new Error(
-          jsonRpcResponse.error.message ||
-            `RPC error ${jsonRpcResponse.error.code}`,
-        );
-      }
-
-      return {
-        request: sendRequest,
-        response: jsonRpcResponse.result as SendMessageResponse,
-      };
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new Error("Request timed out");
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Invoke a skill with streaming response
-   */
-  async *invokeSkillStream(
-    options: InvokeSkillOptions,
-  ): AsyncGenerator<StreamChunk> {
-    const { skill, task, input, context, signal } = options;
-
-    const endpoint = this.selectEndpoint(skill, true);
-
-    if (!endpoint) {
-      throw new Error(`No streaming endpoint found for skill: ${skill.name}`);
-    }
-
-    // Build message parts based on input type and skill capabilities
-    const messageParts = this.buildParts(task, input, skill);
-
-    // Build JSON-RPC 2.0 request for A2A protocol (with streaming enabled)
-    const messageId = crypto.randomUUID().replace(/-/g, "");
-    const requestId = crypto.randomUUID();
-
-    const jsonRpcPayload = {
-      id: requestId,
-      jsonrpc: "2.0",
-      method: "message/send",
-      params: {
-        message: {
-          kind: "message",
-          message_id: messageId,
-          parts: messageParts,
-          role: "user",
-          ...(context && { context }),
-        },
-        stream: true, // Enable streaming
-      },
-    };
-
-    const response = await fetch(endpoint.path, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...this.buildHeaders(),
-      },
-      body: JSON.stringify(jsonRpcPayload),
-      signal,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Request failed: ${response.statusText}`);
-    }
-
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error("Response body is not readable");
-    }
-
+  private async *readSseStream(
+    body: ReadableStream<Uint8Array>,
+    isJsonRpc: boolean,
+    signal?: AbortSignal,
+  ): AsyncGenerator<StreamResponse> {
+    const reader = body.getReader();
     const decoder = new TextDecoder();
     let buffer = "";
 
     try {
       while (true) {
+        if (signal?.aborted) break;
         const { done, value } = await reader.read();
-
-        if (done) {
-          if (buffer.trim()) {
-            yield {
-              data: buffer.trim(),
-              done: true,
-            };
-          }
-          break;
-        }
+        if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-
-        // Process complete lines (for SSE or NDJSON)
         const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
+        buffer = lines.pop() ?? "";
 
         for (const line of lines) {
           const trimmed = line.trim();
-          if (!trimmed) continue;
+          if (!trimmed.startsWith("data:")) continue;
+          const raw = trimmed.slice(5).trim();
+          if (raw === "[DONE]" || raw === "") continue;
 
-          // Handle Server-Sent Events format
-          if (trimmed.startsWith("data: ")) {
-            const data = trimmed.slice(6);
-            if (data === "[DONE]") {
-              yield { data: "", done: true };
-              return;
-            }
+          const event = this.parseStreamEvent(raw, isJsonRpc);
+          if (event) yield event;
+        }
+      }
 
-            try {
-              const parsed = JSON.parse(data);
-              yield {
-                data: parsed.content || parsed.data || data,
-                done: false,
-                metadata: parsed.metadata,
-              };
-            } catch {
-              yield { data, done: false };
-            }
-          }
-          // Handle NDJSON format
-          else {
-            try {
-              const parsed = JSON.parse(trimmed);
-              yield {
-                data: parsed.content || parsed.data || trimmed,
-                done: false,
-                metadata: parsed.metadata,
-              };
-            } catch {
-              yield { data: trimmed, done: false };
-            }
-          }
+      // flush remaining buffer
+      if (buffer.trim().startsWith("data:")) {
+        const raw = buffer.trim().slice(5).trim();
+        if (raw && raw !== "[DONE]") {
+          const event = this.parseStreamEvent(raw, isJsonRpc);
+          if (event) yield event;
         }
       }
     } finally {
@@ -545,64 +337,340 @@ export class AgentClient {
     }
   }
 
-  /**
-   * Get task status (for async operations)
-   */
-  async getTaskStatus(taskId: string): Promise<Task> {
-    const endpoint = this.contract.skills[0]?.endpoints.find((e) =>
-      e.path.includes("/tasks/"),
-    );
+  // ─── Public: build request ────────────────────────────────────────────────────
 
+  buildSendMessageRequest(options: InvokeSkillOptions): SendMessageRequest {
+    const { skill, task, input, context, taskId, contextId } = options;
+    const parts = this.buildParts(task, input, skill);
+    const messageId = options.messageId ?? crypto.randomUUID();
+
+    return {
+      message: {
+        messageId,
+        role: "user",
+        parts,
+        ...(taskId && { taskId }),
+        ...(contextId && { contextId }),
+        ...(context && { metadata: context as Struct }),
+      },
+      ...(this.config.tenant && { tenant: this.config.tenant }),
+    };
+  }
+
+  // ─── Operation: Send Message (§3.1.1) ────────────────────────────────────────
+
+  async invokeSkillWithRequest(
+    sendRequest: SendMessageRequest,
+    options: InvokeSkillOptions,
+  ): Promise<SendMessageResponse> {
+    const { skill, signal } = options;
+    const requestId = crypto.randomUUID();
+
+    const endpoint = this.selectEndpoint(skill, false);
     if (!endpoint) {
-      throw new Error("No task status endpoint available");
+      throw new Error(
+        `No send endpoint found for skill "${skill.name}". ` +
+          `Check that the agent's supportedInterfaces has a recognised protocolBinding (JSONRPC, HTTP+JSON, GRPC).`,
+      );
     }
 
-    const path = endpoint.path.replace("{taskId}", taskId);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.config.timeout);
 
-    const response = await fetch(path, {
-      method: "GET",
-      headers: this.buildHeaders(),
+    try {
+      const response = await fetch(endpoint.path, {
+        method: "POST",
+        headers: this.buildHeaders({ "X-Request-ID": requestId }),
+        body: this.buildSendBody(sendRequest, endpoint, requestId, false),
+        signal: signal ?? controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: response.statusText }));
+        throw new Error(
+          errorData.detail ??
+            errorData.message ??
+            `HTTP ${response.status}: ${response.statusText}`,
+        );
+      }
+
+      return this.parseJsonOrRpcResponse<SendMessageResponse>(
+        response,
+        this.isJsonRpcEndpoint(endpoint),
+      );
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error instanceof Error && error.name === "AbortError")
+        throw new Error("Request timed out");
+      throw error;
+    }
+  }
+
+  async invokeSkill(options: InvokeSkillOptions): Promise<InvokeSkillResult> {
+    const sendRequest = this.buildSendMessageRequest(options);
+    const response = await this.invokeSkillWithRequest(sendRequest, options);
+    return { request: sendRequest, response };
+  }
+
+  // ─── Operation: Send Streaming Message (§3.1.2) ───────────────────────────────
+
+  /**
+   * Send a message with real-time streaming via SSE.
+   * Yields `StreamResponse` objects (§3.2.3): task, message, statusUpdate, or artifactUpdate.
+   */
+  async *invokeSkillStream(
+    options: InvokeSkillOptions,
+  ): AsyncGenerator<StreamResponse> {
+    const { skill, signal } = options;
+
+    const endpoint = this.selectEndpoint(skill, true);
+    if (!endpoint) {
+      throw new Error(
+        `No streaming endpoint found for skill "${skill.name}". ` +
+          `Ensure the agent declares streaming capability and the interface binding is supported.`,
+      );
+    }
+
+    const sendRequest = this.buildSendMessageRequest({
+      ...options,
+      stream: true,
+    });
+    const requestId = crypto.randomUUID();
+    const isJsonRpc = this.isJsonRpcEndpoint(endpoint);
+
+    const response = await fetch(endpoint.path, {
+      method: "POST",
+      headers: this.buildHeaders({
+        Accept: "text/event-stream",
+        "X-Request-ID": requestId,
+      }),
+      body: this.buildSendBody(sendRequest, endpoint, requestId, true),
+      signal,
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to get task status: ${response.statusText}`);
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: response.statusText }));
+      throw new Error(
+        errorData.detail ??
+          errorData.message ??
+          `Streaming request failed: ${response.status} ${response.statusText}`,
+      );
     }
 
-    const jsonRpcResponse = await response.json();
-    return jsonRpcResponse.result as Task;
+    if (!response.body) throw new Error("Response body is not readable");
+
+    yield* this.readSseStream(response.body, isJsonRpc, signal);
   }
 
+  // ─── Operation: Get Task (§3.1.3) ─────────────────────────────────────────────
+
   /**
-   * List all available skills
+   * Retrieve the current state of a task.
+   * HTTP+JSON: `GET /tasks/{id}` (§11.3.2)
+   * JSON-RPC:  `POST <baseUrl>` method `GetTask` (§9.4.3)
    */
+  async getTask(params: GetTaskRequest): Promise<Task> {
+    const { baseUrl, isJsonRpc } = this.resolveInterface();
+
+    if (isJsonRpc) {
+      const response = await fetch(baseUrl, {
+        method: "POST",
+        headers: this.buildHeaders(),
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: crypto.randomUUID(),
+          method: "GetTask",
+          params,
+        }),
+      });
+      if (!response.ok)
+        throw new Error(`GetTask failed: ${response.statusText}`);
+      return this.parseJsonOrRpcResponse<Task>(response, true);
+    }
+
+    const qs =
+      params.historyLength !== undefined
+        ? `?historyLength=${params.historyLength}`
+        : "";
+    const response = await fetch(
+      `${baseUrl}/tasks/${encodeURIComponent(params.id)}${qs}`,
+      { method: "GET", headers: this.buildHeaders() },
+    );
+    if (!response.ok) throw new Error(`GetTask failed: ${response.statusText}`);
+    return response.json() as Promise<Task>;
+  }
+
+  // ─── Operation: List Tasks (§3.1.4) ───────────────────────────────────────────
+
+  /**
+   * List tasks with optional filtering and pagination.
+   * HTTP+JSON: `GET /tasks` (§11.3.2, §11.5)
+   * JSON-RPC:  `POST <baseUrl>` method `ListTasks` (§9.4.4)
+   */
+  async listTasks(params: ListTasksRequest = {}): Promise<ListTasksResponse> {
+    const { baseUrl, isJsonRpc } = this.resolveInterface();
+
+    if (isJsonRpc) {
+      const response = await fetch(baseUrl, {
+        method: "POST",
+        headers: this.buildHeaders(),
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: crypto.randomUUID(),
+          method: "ListTasks",
+          params,
+        }),
+      });
+      if (!response.ok)
+        throw new Error(`ListTasks failed: ${response.statusText}`);
+      return this.parseJsonOrRpcResponse<ListTasksResponse>(response, true);
+    }
+
+    // Build query string from params (§11.5 camelCase query params)
+    const qs = new URLSearchParams();
+    if (params.contextId) qs.set("contextId", params.contextId);
+    if (params.status) qs.set("status", params.status);
+    if (params.pageSize !== undefined)
+      qs.set("pageSize", String(params.pageSize));
+    if (params.pageToken) qs.set("pageToken", params.pageToken);
+    if (params.historyLength !== undefined)
+      qs.set("historyLength", String(params.historyLength));
+    if (params.statusTimestampAfter)
+      qs.set("statusTimestampAfter", params.statusTimestampAfter);
+    if (params.includeArtifacts !== undefined)
+      qs.set("includeArtifacts", String(params.includeArtifacts));
+
+    const query = qs.toString();
+    const response = await fetch(
+      `${baseUrl}/tasks${query ? `?${query}` : ""}`,
+      { method: "GET", headers: this.buildHeaders() },
+    );
+    if (!response.ok)
+      throw new Error(`ListTasks failed: ${response.statusText}`);
+    return response.json() as Promise<ListTasksResponse>;
+  }
+
+  // ─── Operation: Cancel Task (§3.1.5) ──────────────────────────────────────────
+
+  /**
+   * Request cancellation of an ongoing task.
+   * HTTP+JSON: `POST /tasks/{id}:cancel` (§11.3.2)
+   * JSON-RPC:  `POST <baseUrl>` method `CancelTask` (§9.4.5)
+   */
+  async cancelTask(params: CancelTaskRequest): Promise<Task> {
+    const { baseUrl, isJsonRpc } = this.resolveInterface();
+
+    if (isJsonRpc) {
+      const response = await fetch(baseUrl, {
+        method: "POST",
+        headers: this.buildHeaders(),
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: crypto.randomUUID(),
+          method: "CancelTask",
+          params,
+        }),
+      });
+      if (!response.ok)
+        throw new Error(`CancelTask failed: ${response.statusText}`);
+      return this.parseJsonOrRpcResponse<Task>(response, true);
+    }
+
+    const response = await fetch(
+      `${baseUrl}/tasks/${encodeURIComponent(params.id)}:cancel`,
+      {
+        method: "POST",
+        headers: this.buildHeaders(),
+        body: JSON.stringify({ metadata: params.metadata }),
+      },
+    );
+    if (!response.ok)
+      throw new Error(`CancelTask failed: ${response.statusText}`);
+    return response.json() as Promise<Task>;
+  }
+
+  // ─── Operation: Subscribe to Task (§3.1.6) ────────────────────────────────────
+
+  /**
+   * Subscribe to real-time updates for an existing task via SSE.
+   * HTTP+JSON: `POST /tasks/{id}:subscribe` (§11.3.2)
+   * JSON-RPC:  `POST <baseUrl>` method `SubscribeToTask` (§9.4.6)
+   *
+   * Stream MUST begin with the current Task state, then yield
+   * TaskStatusUpdateEvent / TaskArtifactUpdateEvent until terminal state.
+   */
+  async *subscribeToTask(
+    params: SubscribeToTaskRequest,
+  ): AsyncGenerator<StreamResponse> {
+    const { baseUrl, isJsonRpc } = this.resolveInterface();
+
+    let path: string;
+    let body: string;
+
+    if (isJsonRpc) {
+      path = baseUrl;
+      body = JSON.stringify({
+        jsonrpc: "2.0",
+        id: crypto.randomUUID(),
+        method: "SubscribeToTask",
+        params,
+      });
+    } else {
+      path = `${baseUrl}/tasks/${encodeURIComponent(params.id)}:subscribe`;
+      body = "{}";
+    }
+
+    const response = await fetch(path, {
+      method: "POST",
+      headers: this.buildHeaders({ Accept: "text/event-stream" }),
+      body,
+    });
+
+    if (!response.ok) {
+      const errorData = await response
+        .json()
+        .catch(() => ({ message: response.statusText }));
+      throw new Error(
+        errorData.detail ??
+          errorData.message ??
+          `SubscribeToTask failed: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    if (!response.body) throw new Error("Response body is not readable");
+
+    yield* this.readSseStream(response.body, isJsonRpc);
+  }
+
+  // ─── Helpers ──────────────────────────────────────────────────────────────────
+
   getSkills(): AgentSkillContract[] {
     return this.contract.skills;
   }
 
-  /**
-   * Find skill by ID
-   */
   findSkill(skillId: string): AgentSkillContract | undefined {
     return this.contract.skills.find((s) => s.skillId === skillId);
   }
 
-  /**
-   * Find skills by tag
-   */
   findSkillsByTag(tag: string): AgentSkillContract[] {
     return this.contract.skills.filter((s) => s.tags.includes(tag));
   }
 }
 
-/**
- * Create an agent client from an inferred contract
- */
 export function createAgentClient(
   contract: AgentContract,
   config: AgentClientConfig,
 ): AgentClient {
   return new AgentClient(contract, config);
 }
+
+// ─── ADK metadata helpers (Google Agent Developer Kit) ────────────────────────
 
 export interface PromptTokensDetails {
   modality: string;
@@ -635,10 +703,7 @@ export interface AdkMetadata extends Struct {
   adk_actions: AdkActions;
 }
 
-/** Checks if adk_ is found in metadata keys */
 export function isAdkMetadata(metadata: Struct): metadata is AdkMetadata {
-  if (typeof metadata !== "object" || metadata === null) {
-    return false;
-  }
+  if (typeof metadata !== "object" || metadata === null) return false;
   return Object.keys(metadata).some((key) => key.startsWith("adk_"));
 }
