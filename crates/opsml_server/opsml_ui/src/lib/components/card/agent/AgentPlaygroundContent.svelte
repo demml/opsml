@@ -347,16 +347,16 @@
   />
 {/if}
 
-<div class="flex flex-col flex-1 bg-surface-50 rounded-base">
+<div class="flex flex-col flex-1 bg-surface-50">
   <!-- Header -->
-  <div class="flex items-center justify-between gap-2 p-6 border-b-2 border-black bg-gradient-primary flex-shrink-0">
+  <div class="flex items-center justify-between gap-2 p-6 border-b-2 border-black bg-primary-100 flex-shrink-0">
     <div class="flex items-center gap-3">
-      <div class="p-2 bg-white rounded-lg border-2 border-black shadow-small">
-        <Zap class="w-5 h-5 text-primary-800" />
+      <div class="p-3 bg-primary-500 border-2 border-black shadow-small rounded-base">
+        <Zap class="w-7 h-7 text-white" />
       </div>
       <div>
-        <h3 class="text-lg text-primary-950 font-bold">Agent Playground</h3>
-        <p class="text-xs text-primary-800">{agentName}</p>
+        <h3 class="text-2xl text-black font-bold">Agent Playground</h3>
+        <p class="text-sm font-mono text-primary-700 font-bold">{agentName}</p>
       </div>
     </div>
 
@@ -372,7 +372,7 @@
 
       <button
         onclick={openAuthConfig}
-        class="text-black px-3 py-1 text-xs bg-white rounded-lg border-2 border-black shadow-small shadow-hover transition-all font-bold"
+        class="text-black px-3 py-1 text-xs bg-primary-500 rounded-lg border-2 border-black shadow-small shadow-hover transition-all font-bold"
       >
         Configure Auth
       </button>
@@ -423,19 +423,19 @@
       <div class="flex flex-col sm:flex-row sm:items-start gap-3">
         <!-- Description -->
         <div class="flex-1 min-w-0">
-          <p class="text-xs font-bold text-gray-700 mb-1">What this skill does:</p>
+          <p class="text-sm font-bold text-black mb-1">What this skill does:</p>
           <p class="text-sm text-gray-900">{selectedSkill.description}</p>
 
           <!-- Input/Output Modes -->
           <div class="flex flex-wrap gap-2 mt-2">
             {#each selectedSkill.inputModes as mode}
-              <span class="inline-flex items-center rounded border-2 border-black shadow-small bg-tertiary-100 text-tertiary-950 px-2 py-0.5 text-xs">
+              <span class="inline-flex items-center rounded border-2 border-black shadow-small bg-primary-100 text-primary-950 px-2 py-0.5 text-xs">
                 <span class="font-bold">Input:</span>
                 <span class="ml-1">{mode}</span>
               </span>
             {/each}
             {#each selectedSkill.outputModes as mode}
-              <span class="inline-flex items-center rounded border-2 border-black shadow-small bg-secondary-100 text-secondary-950 px-2 py-0.5 text-xs">
+              <span class="inline-flex items-center rounded border-2 border-black shadow-small bg-secondary-100 text-black px-2 py-0.5 text-xs">
                 <span class="font-bold">Output:</span>
                 <span class="ml-1">{mode}</span>
               </span>
@@ -451,7 +451,7 @@
               {#each formatExamplesForDisplay(selectedSkill.examples) as example}
                 <button
                   onclick={() => useExample(example.value)}
-                  class="text-black w-full text-left px-2 py-1 text-xs bg-white rounded border-2 border-black hover:bg-primary-50 transition-colors"
+                  class="text-black w-full text-left px-2 py-1 text-xs bg-white rounded border-2 border-black hover:bg-primary-200 transition-colors"
                 >
                   {example.value}
                 </button>

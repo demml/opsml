@@ -16,6 +16,6 @@
   }>();
 </script>
 
-<div class="rounded-lg border-2 border-black shadow-small bg-surface-50 flex flex-col {fullscreen ? 'h-screen' : 'mx-auto w-11/12 my-6 min-h-[600px]'}">
+<div class="border-2 border-black shadow bg-surface-50 flex flex-col {fullscreen ? 'h-screen' : 'mx-auto w-11/12 my-6 min-h-[600px]'}">
   <AgentPlaygroundContent {agentSpec} {agentName} {deploymentConfig} showCloseButton={false} />
 </div>
