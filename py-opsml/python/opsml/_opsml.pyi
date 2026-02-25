@@ -14,6 +14,7 @@ from typing import (
     Iterator,
     List,
     Literal,
+    Mapping,
     Optional,
     ParamSpec,
     Protocol,
@@ -26,6 +27,18 @@ from typing import (
 )
 
 from typing_extensions import TypeVar
+
+AttributeValue = Union[
+    str,
+    bool,
+    int,
+    float,
+    Sequence[str],
+    Sequence[bool],
+    Sequence[int],
+    Sequence[float],
+]
+Attributes = Optional[Mapping[str, AttributeValue]]
 
 SerializedType: TypeAlias = Union[str, int, float, dict, list]
 CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]  # type: ignore[name-defined]
@@ -19331,6 +19344,11 @@ class ServiceCard:
     def service_config(self) -> Optional[ServiceConfig]:
         """Return the service configuration for the service card if it exists"""
 
+    def agent_card(self) -> Any:
+        """If the service card contains an agent, returns the a2a AgentCard type
+        If the service card does not contain an agent, returns an error
+        """
+
 # Define a TypeVar that can only be one of our card types
 CardT = TypeVar(
     "CardT",
@@ -23082,6 +23100,35 @@ class AppState:
         This is a destructive operation and will attempt to close all background threads
         associated with the `ScouterQueue` and reloader. Only use this method with graceful
         shutdown procedures in mind.
+        """
+
+    def instrument(
+        self,
+        transport_config: Optional[Any] = None,
+        exporter: Optional[Any] = None,
+        batch_config: Optional[BatchConfig] = None,
+        sample_ratio: Optional[float] = None,
+        scouter_queue: Optional[Any] = None,
+        attributes: Optional[Attributes] = None,
+        **kwargs,
+    ) -> None:
+        """
+        Instrument with Scouter tracing and set as global OpenTelemetry provider.
+        If ScouterQueue is provided, the tracer can also be used to record monitoring
+        and evaluation events via `add_queue_item` method on the tracer.
+
+        Args:
+            transport_config (Optional[Any]):
+                Export configuration (OtelExportConfig, etc.)
+            exporter (Optional[Any]):
+                Custom span exporter instance
+            batch_config (Optional[BatchConfig]):
+                Batch processing configuration
+            sample_ratio (Optional[float]):
+                Sampling ratio (0.0 to 1.0)
+            attributes (Optional[Attributes]):
+                Optional attributes to set on every span created by this tracer
+
         """
 
 ########################################################################################

@@ -20,7 +20,7 @@
 <div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8">
   {#if scouterEnabled}
     {#if trace && traceSpans}
-      <div class="border-black border-2 rounded-lg shadow">
+      <div class="border-black border-2 shadow">
         <TraceDetailContent
           trace={trace}
           traceSpans={traceSpans}

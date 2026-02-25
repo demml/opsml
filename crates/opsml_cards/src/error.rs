@@ -3,6 +3,7 @@ use opsml_interfaces::error::{DataInterfaceError, ModelInterfaceError};
 use opsml_state::error::StateError;
 use opsml_storage::storage::error::StorageError;
 use opsml_types::RegistryType;
+use opsml_types::error::AgentConfigError;
 use opsml_types::error::TypeError;
 use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
@@ -15,6 +16,9 @@ use tracing::error;
 
 #[derive(Error, Debug)]
 pub enum CardError {
+    #[error(transparent)]
+    AgentConfigError(#[from] AgentConfigError),
+
     #[error(transparent)]
     TypeError(#[from] TypeError),
 
@@ -119,6 +123,9 @@ pub enum CardError {
 
     #[error("{0}")]
     ProfileNotSupportedError(String),
+
+    #[error("Agent config not found in service config")]
+    AgentConfigNotFoundError,
 }
 
 impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for CardError {

@@ -113,6 +113,12 @@ pub enum AppError {
 
     #[error("{0}")]
     ScouterQueueRuntimeError(String),
+
+    #[error("Event attributes must be a mapping type (e.g. dict, pydantic BaseModel)")]
+    AttributesMustBeMapping,
+
+    #[error(transparent)]
+    ScouterTypeError(#[from] scouter_client::TypeError),
 }
 
 impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for AppError {

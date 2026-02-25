@@ -1,7 +1,7 @@
 space: opsml
 name: pattern-recognizer
 prompt:
-  model: gemini-2.5-flash
+  model: gemini-2.5-flash-lite
   provider: Gemini
   messages:
     - |
