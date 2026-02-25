@@ -1,7 +1,7 @@
 space: opsml
 name: search-specialist
 prompt:
-  model: gemini-2.5-flash
+  model: gemini-2.5-flash-lite
   provider: Gemini
   messages:
     - |
@@ -48,11 +48,11 @@ prompt:
       required: ["artist", "song", "similarity_score", "why_it_fits"]
       additionalProperties: false
 evaluation:
-  alias: check_search_results
+  alias: search
   tasks:
     - task_type: Assertion
       id: validate_artist_exists
-      context_path: search_results
+      context_path: candidate_tracks
       item_context_path: artist
       operator: IsNotEmpty
       expected_value: true
@@ -62,7 +62,7 @@ evaluation:
 
     - task_type: Assertion
       id: validate_song_exists
-      context_path: search_results
+      context_path: candidate_tracks
       item_context_path: song
       operator: IsNotEmpty
       expected_value: true
@@ -72,7 +72,7 @@ evaluation:
 
     - task_type: Assertion
       id: validate_similarity_score
-      context_path: search_results
+      context_path: candidate_tracks
       item_context_path: similarity_score
       operator: GreaterThan
       expected_value: 0.7

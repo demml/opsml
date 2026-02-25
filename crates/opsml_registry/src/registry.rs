@@ -786,7 +786,7 @@ impl CardRegistry {
         if registry_type == &RegistryType::Prompt {
             // ensure scouter integration is enabled before uploading artifacts
             debug!("Checking if Scouter service is enabled for integration");
-            if registry.check_service_health(IntegratedService::Scouter)? {
+            if registry.check_service_health(IntegratedService::Scouter)? && card.has_profile() {
                 let profile_uid =
                     Self::upload_scouter_artifacts_rs(registry, card, None, registry_type)?;
                 card.set_profile_uid(profile_uid)?;

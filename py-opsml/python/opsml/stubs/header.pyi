@@ -11,6 +11,7 @@ from typing import (
     Iterator,
     List,
     Literal,
+    Mapping,
     Optional,
     ParamSpec,
     Protocol,
@@ -23,6 +24,18 @@ from typing import (
 )
 
 from typing_extensions import TypeVar
+
+AttributeValue = Union[
+    str,
+    bool,
+    int,
+    float,
+    Sequence[str],
+    Sequence[bool],
+    Sequence[int],
+    Sequence[float],
+]
+Attributes = Optional[Mapping[str, AttributeValue]]
 
 SerializedType: TypeAlias = Union[str, int, float, dict, list]
 CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]  # type: ignore[name-defined]

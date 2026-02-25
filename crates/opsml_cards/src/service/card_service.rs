@@ -486,6 +486,16 @@ impl ServiceCard {
         Ok(service)
     }
 
+    fn agent_card<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, CardError> {
+        if let Some(config) = &self.service_config {
+            if let Some(agent) = &config.agent {
+                return Ok(agent.to_a2a_card(py)?);
+            }
+        }
+
+        Err(CardError::AgentConfigNotFoundError)
+    }
+
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
@@ -783,6 +793,10 @@ impl ProfileExt for ServiceCard {
         Err(CardError::ProfileNotSupportedError(
             "ServiceCard does not support profiling".to_string(),
         ))
+    }
+
+    fn has_profile(&self) -> bool {
+        false
     }
 }
 
