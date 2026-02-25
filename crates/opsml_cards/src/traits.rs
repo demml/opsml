@@ -36,4 +36,6 @@ pub trait OpsmlCard {
 
 pub trait ProfileExt {
     fn get_profile_request(&self) -> Result<ProfileRequest, CardError>;
+
+    fn has_profile(&self) -> bool;
 }

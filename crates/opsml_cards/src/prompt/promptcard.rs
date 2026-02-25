@@ -106,6 +106,10 @@ impl ProfileExt for PromptCard {
             Err(CardError::DriftProfileNotFoundError)
         }
     }
+
+    fn has_profile(&self) -> bool {
+        self.eval_profile.is_some()
+    }
 }
 
 impl OpsmlCard for PromptCard {

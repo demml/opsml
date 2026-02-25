@@ -12,7 +12,9 @@ use pyo3::PyTraverseError;
 use pyo3::PyVisit;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
+use scouter_client::BatchConfig;
 use scouter_client::ScouterQueue;
+use scouter_client::is_pydantic_basemodel;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
@@ -20,6 +22,8 @@ use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio::time::sleep;
 use tokio_util::sync::CancellationToken;
 use tracing::{Instrument, debug, error, info, info_span};
+
+pub const OPSML_SERVICE_KEY: &str = "opsml.service";
 
 /// Load a card map from path
 fn load_card_map(path: &Path) -> Result<ServiceCardMapping, AppError> {
@@ -396,6 +400,89 @@ impl AppState {
 
         Ok(())
     }
+
+    /// Convience wrapper for OTEL instrumentation with Scouter
+    /// This is the same as calling ScouterInstrumentor().instrument() in Python but allows users to call it from the same AppState instance
+    /// # Arguments
+    /// * `transport_config` - The transport config to use with the ScouterQueue. If not provided, will attempt to use transport config from existing queue if it exists
+    /// * `exporter` - The exporter to use with the ScouterQueue. If not provided, will attempt to use exporter from existing queue if it exists
+    /// * `batch_config` - The batch config to use with the ScouterQueue. If not provided, will attempt to use batch config from existing queue if it exists
+    /// * `sample_ratio` - The sample ratio to use with the ScouterQueue. If not provided, will attempt to use sample ratio from existing queue if it exists
+    /// * `attributes` - The attributes to use with the ScouterQueue. If not provided, will attempt to use attributes from existing queue if it exists
+    /// * `kwargs` - Additional keyword arguments to pass to the ScouterInstrumentor.instrument() method
+    #[pyo3(signature = (transport_config=None, exporter=None, batch_config=None, sample_ratio=None, attributes=None, **kwargs))]
+    pub fn instrument(
+        &self,
+        py: Python,
+        transport_config: Option<&Bound<'_, PyAny>>,
+        exporter: Option<&Bound<'_, PyAny>>,
+        batch_config: Option<Py<BatchConfig>>,
+        sample_ratio: Option<f64>,
+        attributes: Option<Bound<'_, PyAny>>,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Result<(), AppError> {
+        let instrumentor = py
+            .import("opsml")?
+            .getattr("scouter")?
+            .getattr("tracing")?
+            .getattr("ScouterInstrumentor")?
+            .call0()?;
+
+        let scouter_queue = match &self.queue {
+            Some(queue) => Some(queue.read().unwrap().get_queue(py)),
+            None => None,
+        };
+
+        // add service uid to attributes
+        let uid = self
+            .service
+            .read()
+            .unwrap()
+            .getattr(py, "uid")?
+            .extract::<String>(py)?;
+
+        let attributes = add_uid_to_attributes(py, OPSML_SERVICE_KEY, &uid, attributes)?;
+        let instrument_kwargs = match kwargs {
+            Some(kw) => kw.clone(),
+            None => PyDict::new(py),
+        };
+
+        // add kwargs
+        instrument_kwargs.set_item("transport_config", transport_config)?;
+        instrument_kwargs.set_item("exporter", exporter)?;
+        instrument_kwargs.set_item("batch_config", batch_config)?;
+        instrument_kwargs.set_item("sample_ratio", sample_ratio)?;
+        instrument_kwargs.set_item("scouter_queue", scouter_queue)?;
+        instrument_kwargs.set_item("attributes", attributes.clone())?;
+
+        // call instrumentor with provided arguments and kwargs
+        let _instrumented = instrumentor.call_method("instrument", (), Some(&instrument_kwargs))?;
+        Ok(())
+    }
+}
+
+fn add_uid_to_attributes<'py>(
+    py: Python<'py>,
+    key: &str,
+    value: &str,
+    attributes: Option<Bound<'py, PyAny>>,
+) -> Result<Bound<'py, PyDict>, AppError> {
+    let attributes = match attributes {
+        Some(attrs) => {
+            if is_pydantic_basemodel(py, &attrs)? {
+                let dumped = attrs.call_method0("model_dump")?;
+                dumped.cast::<PyDict>()?.clone()
+            } else if attrs.is_instance_of::<PyDict>() {
+                attrs.cast::<PyDict>()?.clone()
+            } else {
+                return Err(AppError::AttributesMustBeMapping);
+            }
+        }
+        None => PyDict::new(py),
+    };
+    attributes.set_item(key, value)?;
+
+    Ok(attributes.clone())
 }
 
 impl AppState {
