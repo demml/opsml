@@ -6,7 +6,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from opsml import PromptCard
 from opsml.app import AppState
 from opsml.scouter.tracing import GrpcSpanExporter, BatchConfig
-from a2a.types import AgentCard
 
 
 class LifespanConfig(BaseSettings):
@@ -49,8 +48,6 @@ def get_app_state() -> tuple[AppState, Prompts]:
         recommendation=cast(PromptCard, app.service["recommendation_prompt"]),
         search=cast(PromptCard, app.service["search_prompt"]),
     )
-
-    agent_card = service.agent_card()
 
     return (app, prompts)
 

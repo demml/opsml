@@ -27,7 +27,8 @@
     showCloseButton?: boolean;
   }>();
 
-  // Infer contract from agent spec
+  // Infer contract from agent spec.
+  // supportedInterfaces URLs are already populated server-side from deploy config.
   let contract = $state<AgentContract>(inferAgentContract(agentSpec));
   let client = $state<AgentClient | null>(null);
 
@@ -48,6 +49,11 @@
 
   // Error state
   let lastError = $state<string | null>(null);
+
+  // Multi-turn conversation state (A2A spec §3.4)
+  // Persisted across turns to continue the same task/context.
+  let currentTaskId = $state<string | undefined>(undefined);
+  let currentContextId = $state<string | undefined>(undefined);
 
   // Debug sidebar state
   let showDebugSidebar = $state(false);
@@ -203,21 +209,36 @@
   async function handleStreamingResponse(userMessage: string): Promise<void> {
     if (!client || !selectedSkill) return;
 
-    // Add empty agent message for streaming
     addAgentMessage('');
 
     const streamGenerator = client.invokeSkillStream({
       skill: selectedSkill,
       task: userMessage,
+      taskId: currentTaskId,
+      contextId: currentContextId,
     });
 
     let accumulatedContent = '';
-    for await (const chunk of streamGenerator) {
-      accumulatedContent += chunk.data;
+    for await (const event of streamGenerator) {
+      if (event.message) {
+        const text = event.message.parts.filter(p => p.text).map(p => p.text!).join('');
+        accumulatedContent += text;
+        if (event.message.contextId) currentContextId = event.message.contextId;
+      } else if (event.task) {
+        const extracted = extractTextFromTask(event.task);
+        if (extracted) accumulatedContent = extracted;
+        if (event.task.id) currentTaskId = event.task.id;
+        if (event.task.contextId) currentContextId = event.task.contextId;
+      } else if (event.artifactUpdate?.artifact) {
+        for (const part of event.artifactUpdate.artifact.parts) {
+          if (part.text) accumulatedContent += part.text;
+        }
+      } else if (event.statusUpdate) {
+        if (event.statusUpdate.taskId) currentTaskId = event.statusUpdate.taskId;
+        if (event.statusUpdate.contextId) currentContextId = event.statusUpdate.contextId;
+      }
       streamingContent = accumulatedContent;
       updateLastMessage(accumulatedContent);
-
-      if (chunk.done) break;
     }
   }
 
@@ -256,6 +277,9 @@
       skill: selectedSkill,
       task: userMessage,
       messageId,
+      // Pass persisted task/context IDs for multi-turn (A2A spec §3.4)
+      taskId: currentTaskId,
+      contextId: currentContextId,
     });
 
     // Add user message with debug payload before sending the request, so it's included in the debug sidebar
@@ -269,8 +293,18 @@
       skill: selectedSkill,
       task: userMessage,
       messageId,
+      taskId: currentTaskId,
+      contextId: currentContextId,
     });
 
+    // Persist task/context IDs from the response for the next turn
+    if (isTask(response)) {
+      if (response.id) currentTaskId = response.id;
+      if (response.contextId) currentContextId = response.contextId;
+    } else if (isMessage(response)) {
+      if (response.taskId) currentTaskId = response.taskId;
+      if (response.contextId) currentContextId = response.contextId;
+    }
 
     const cleanContent = extractCleanResponse(response);
     addAgentMessage(cleanContent, {

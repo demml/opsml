@@ -19,7 +19,7 @@ prompt:
       Rules:
         - There must be at least one genre, either explicitly mentioned or inferred from listening history.
         - Mood and context should be inferred from the request if not explicitly stated.
-        - If era is not mentioned, leave it as an empty string.
+        - If era is not mentioned, leave it as an empty string
 
       Output *only* the JSON. No other text.
       Example:
