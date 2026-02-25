@@ -1,13 +1,11 @@
 use crate::RegistryType;
+use crate::contracts::AgentSpec;
 use crate::contracts::mcp::McpConfig;
-use crate::contracts::{AgentSpec, SkillFormat};
 use crate::error::{AgentConfigError, TypeError};
 use opsml_semver::VersionType;
-use opsml_utils::convert_keys_to_snake_case;
 use opsml_utils::extract_py_attr;
 use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -508,43 +506,15 @@ pub enum AgentConfig {
 }
 
 impl AgentConfig {
-    pub fn to_a2a_card<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, AgentConfigError> {
-        // import from a2a.types import AgentCard
-        //let agent_card_type = py.import("a2a.types")?.getattr("AgentCard")?;
+    pub fn to_a2a_card<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> Result<Bound<'py, AgentSpec>, AgentConfigError> {
         match self {
             AgentConfig::Spec(spec) => {
-                // filter skills for a2a enum variant
-                let mut cloned_config = spec.clone();
-                // mutate the skills to only include those with format A2A
-                let filtered_skills: Vec<SkillFormat> = cloned_config
-                    .skills
-                    .iter()
-                    .filter_map(|skill| {
-                        match skill {
-                            SkillFormat::A2A(_) => Some(skill.clone()),
-                            SkillFormat::Standard(_) => None, // skip standard format skills
-                        }
-                    })
-                    .collect::<Vec<_>>();
-
-                cloned_config.skills = filtered_skills;
-
-                // create py dict
-                let camel_case_json = serde_json::to_value(cloned_config)?;
-                let snake_case_json = convert_keys_to_snake_case(camel_case_json);
-                let pythonized_config = pythonize::pythonize(py, &snake_case_json)?;
-
-                //extrace to dict
-                let agent_card_kwargs = pythonized_config.cast::<PyDict>()?;
-                // iterate over skills
-                // if skill key format is a2a then do nothing
-                // if skill key format is standard, then remove that skill
-                let agent_card = py.import("a2a.types")?.getattr("AgentCard")?;
-                let agent_capabilities = py.import("a2a.types")?.getattr("AgentCapabilities")?;
-
-                let agent_card_instance = agent_card.call((), Some(agent_card_kwargs))?;
-
-                Ok(agent_card_instance)
+                let agent_card = Py::new(py, spec.as_ref().clone())?;
+                let bound_card = agent_card.bind(py).clone();
+                Ok(bound_card)
             }
             AgentConfig::Path(_) => Err(AgentConfigError::InvalidAgentConfig),
         }
@@ -568,11 +538,15 @@ impl AgentConfig {
     }
 
     /// This will perform conversion of String path to AgentSpec and validate AgentSpec if provided as path. If AgentSpec is already provided, it will just validate it.
-    pub fn validate(&self, root_path: &Path) -> Result<(), AgentConfigError> {
+    pub fn validate(
+        &mut self,
+        root_path: &Path,
+        deploy_config: &Option<Vec<DeploymentConfig>>,
+    ) -> Result<(), AgentConfigError> {
         // validates the agent configuration
         match self {
             AgentConfig::Spec(spec) => {
-                spec.validate(root_path)?;
+                spec.validate(root_path, deploy_config)?;
                 Ok(())
             }
             AgentConfig::Path(_) => Err(AgentConfigError::InvalidAgentConfig), // Path should have been resolved at this point
@@ -604,6 +578,7 @@ impl ServiceConfig {
         root_path: &Path,
         service_space: &str,
         service_type: &ServiceType,
+        deployment_config: &Option<Vec<DeploymentConfig>>,
     ) -> Result<(), TypeError> {
         // validate cards and set space if not provided
         if let Some(cards) = &mut self.cards {
@@ -623,10 +598,10 @@ impl ServiceConfig {
         }
 
         // Validate agent config if present
-        if let Some(agent_config) = &self.agent {
+        if let Some(agent_config) = &mut self.agent {
             // currently validates:
             // 1. Agent Skills (if provided)
-            agent_config.validate(root_path)?;
+            agent_config.validate(root_path, deployment_config)?;
         }
         Ok(())
     }

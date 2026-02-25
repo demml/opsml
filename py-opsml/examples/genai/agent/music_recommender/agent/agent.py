@@ -15,6 +15,7 @@ from starlette.responses import JSONResponse
 from google.adk.agents.sequential_agent import SequentialAgent
 from google.adk.a2a.utils.agent_to_a2a import to_a2a
 from starlette.middleware.cors import CORSMiddleware
+from .lifespan import app
 from agent.sub_agents import (
     preference_analyzer,
     pattern_recognizer,
@@ -22,8 +23,12 @@ from agent.sub_agents import (
     recommendation_generator,
 )
 
+
+agent_card = app.service.agent_card()
+
+
 root_agent = SequentialAgent(
-    name="music_recommendation",
+    name=agent_card.skills[0].id,  # Use the first skill's ID as the agent name
     sub_agents=[
         preference_analyzer,
         pattern_recognizer,
@@ -33,9 +38,14 @@ root_agent = SequentialAgent(
     description="Chain-of-Thought music recommender using sequential agent pipeline.",
 )
 
-
 # Convert to A2A-compatible Starlette app
-a2a_app = to_a2a(root_agent, host="localhost", port=8888, protocol="http")
+a2a_app = to_a2a(
+    root_agent,
+    host="localhost",
+    port=8888,
+    protocol="http",
+)
+
 
 # Add CORS middleware to allow requests from the UI
 a2a_app.add_middleware(

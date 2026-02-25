@@ -34,7 +34,7 @@ service:
     name: "Prompt Chaining Agent"
     skills:
       - format: a2a # Using A2A skill format
-        id: "music-recommendation"
+        id: "music_recommendation"
         name: "Music Recommendation"
         description: "Recommends music based on user preferences, including genre, mood, and artist."
         input_modes: ["text/plain"]

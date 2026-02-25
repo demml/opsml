@@ -39,6 +39,7 @@ from .opsml import (
 )
 from .scouter.evaluate import *
 from .scouter.scouter import *
+from .service.agent import AgentSpec
 from .types import VersionType
 
 CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]
@@ -1521,7 +1522,7 @@ class ServiceCard:
     def service_config(self) -> Optional[ServiceConfig]:
         """Return the service configuration for the service card if it exists"""
 
-    def agent_card(self) -> Any:
+    def agent_card(self) -> AgentSpec:
         """If the service card contains an agent, returns the a2a AgentCard type
         If the service card does not contain an agent, returns an error
         """
