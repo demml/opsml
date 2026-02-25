@@ -44,3 +44,8 @@ service:
           - "Recommend a playlist for a workout session"
           - "Suggest some relaxing music for studying"
           - "Find upbeat songs for a party"
+
+deploy:
+  - environment: "development"
+    urls: ["http://localhost:8888"]
+    healthcheck: "/health"

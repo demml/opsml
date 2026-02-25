@@ -1521,6 +1521,11 @@ class ServiceCard:
     def service_config(self) -> Optional[ServiceConfig]:
         """Return the service configuration for the service card if it exists"""
 
+    def agent_card(self) -> Any:
+        """If the service card contains an agent, returns the a2a AgentCard type
+        If the service card does not contain an agent, returns an error
+        """
+
 # Define a TypeVar that can only be one of our card types
 CardT = TypeVar(
     "CardT",

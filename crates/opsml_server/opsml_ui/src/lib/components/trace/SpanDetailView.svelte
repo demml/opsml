@@ -227,7 +227,7 @@
         {#key span.span_id}
           <section>
             <button
-              class="w-full flex items-center gap-2 pb-1.5 mb-2 border-b-2 border-black hover:bg-surface-100 -mx-1 px-1 rounded-sm transition-colors"
+              class="w-full flex items-center gap-2 py-1 mb-2 border-1 border-primary-500 px-1 rounded-sm cursor-pointer transition-opacity hover:bg-slate-100 text-primary-800 hover:text-primary-800"
               onclick={() => showOutput = !showOutput}
             >
               <FileJson class="w-3.5 h-3.5 text-primary-700" />
@@ -237,7 +237,7 @@
               </span>
             </button>
             {#if showOutput}
-              <div class="bg-surface-50 rounded-base border-2 border-black shadow-small text-xs overflow-hidden">
+              <div class="bg-surface-50 rounded-base border-1 border-black shadow-small text-xs overflow-hidden">
                 <CodeBlock
                   code={JSON.stringify(parsedOutput, null, 2)}
                   showLineNumbers={false}

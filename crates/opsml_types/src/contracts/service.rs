@@ -508,7 +508,7 @@ pub enum AgentConfig {
 }
 
 impl AgentConfig {
-    pub fn to_a2a_card<'py>(&self, py: Python<'py>) -> Result<(), AgentConfigError> {
+    pub fn to_a2a_card<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, AgentConfigError> {
         // import from a2a.types import AgentCard
         //let agent_card_type = py.import("a2a.types")?.getattr("AgentCard")?;
         match self {
@@ -540,9 +540,11 @@ impl AgentConfig {
                 // if skill key format is a2a then do nothing
                 // if skill key format is standard, then remove that skill
                 let agent_card = py.import("a2a.types")?.getattr("AgentCard")?;
-                let _agent_card_instance = agent_card.call((), Some(agent_card_kwargs))?;
+                let agent_capabilities = py.import("a2a.types")?.getattr("AgentCapabilities")?;
 
-                Ok(())
+                let agent_card_instance = agent_card.call((), Some(agent_card_kwargs))?;
+
+                Ok(agent_card_instance)
             }
             AgentConfig::Path(_) => Err(AgentConfigError::InvalidAgentConfig),
         }
