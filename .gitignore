@@ -142,3 +142,6 @@ py-opsml/python/opsml/stubs.pyi
 py-opsml/examples/genai/agent/opsml_service/
 py-opsml/examples/genai/agent/music_recommender/opsml_service
 /.github/instructions
+/py-opsml/examples/genai/agent/recipe_generator/agent/.adk
+/py-opsml/examples/genai/agent/recipe_generator/opsml_service
+py-opsml/examples/genai/agent/recipe_generator/opsml.lock

@@ -9,7 +9,7 @@
   } from './utils';
   import {
     Info, Tags, Activity, Link2, AlertCircle, FileJson,
-    ChevronDown, ChevronUp, Copy, Check, Search, Server
+    ChevronDown, ChevronUp, Copy, Check, Search, Server, ArrowLeftRight
   } from 'lucide-svelte';
   import Pill from '$lib/components/utils/Pill.svelte';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
@@ -39,7 +39,6 @@
   const spanMap = $derived(new Map(allSpans.map(s => [s.span_id, s])));
   const isSlowest = $derived(slowestSpan && span.span_id === slowestSpan.span_id);
   let copied = $state(false);
-
   // LLM-specific attributes
   const tokenAttrs = $derived((() => {
     const map: Record<string, string> = {};
@@ -60,6 +59,48 @@
   }));
 
   const errorCount = $derived(spanHasError ? Math.max(1, errorEvents.length) : 0);
+
+  // ─── Request / Response extraction ─────────────────────────────────────────
+  // Scan all span attributes for keys containing "request" or "response".
+  // Values may be raw JSON strings — attempt to parse them for pretty display.
+
+  type ReqResEntry = { key: string; label: string; kind: 'request' | 'response'; parsed: unknown };
+
+  function tryParseJson(val: unknown): unknown {
+    if (typeof val === 'string') {
+      try { return JSON.parse(val); } catch { /* not JSON */ }
+    }
+    return val;
+  }
+
+  function keyLabel(key: string): string {
+    // e.g. "gcp.vertex.agent.llm_request" → "LLM Request"
+    const segment = key.split('.').pop() ?? key;
+    return segment.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  const reqResEntries = $derived((() => {
+    const entries: ReqResEntry[] = [];
+    for (const attr of span.attributes) {
+      const k = attr.key.toLowerCase();
+      if (k.includes('request')) {
+        entries.push({ key: attr.key, label: keyLabel(attr.key), kind: 'request', parsed: tryParseJson(attr.value) });
+      } else if (k.includes('response')) {
+        entries.push({ key: attr.key, label: keyLabel(attr.key), kind: 'response', parsed: tryParseJson(attr.value) });
+      }
+    }
+    // requests first, then responses
+    return entries.sort((a, b) => a.kind === b.kind ? 0 : a.kind === 'request' ? -1 : 1);
+  })());
+
+  // Collapsed state per req/res entry key
+  let collapsedReqRes = $state<Set<string>>(new Set());
+
+  function toggleReqRes(key: string) {
+    const next = new Set(collapsedReqRes);
+    if (next.has(key)) next.delete(key); else next.add(key);
+    collapsedReqRes = next;
+  }
 
   // Attributes search
   let attrSearch = $state('');
@@ -96,9 +137,18 @@
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
   })());
 
-  // Track collapsed state per group namespace
+  // Track collapsed state per group namespace — reset when span changes
   let collapsedGroups = $state<Set<string>>(new Set());
   let collapsedResourceGroups = $state<Set<string>>(new Set());
+
+  $effect(() => {
+    // Access span.span_id to track span identity; reset all per-span UI state on change
+    span.span_id;
+    collapsedGroups = new Set();
+    collapsedResourceGroups = new Set();
+    collapsedReqRes = new Set();
+    attrSearch = '';
+  });
 
   function toggleGroup(ns: string) {
     const next = new Set(collapsedGroups);
@@ -120,15 +170,16 @@
 
   // ─── Tab state ─────────────────────────────────────────────────────────────
 
-  type Tab = 'overview' | 'errors' | 'attributes' | 'events' | 'resources';
+  type Tab = 'overview' | 'errors' | 'attributes' | 'reqres' | 'events' | 'resources';
   let activeTab = $state<Tab>('overview');
 
   const tabs = $derived([
-    { id: 'overview'   as Tab, label: 'Overview',   Icon: Info,        count: null as number | null },
-    { id: 'errors'     as Tab, label: 'Errors',     Icon: AlertCircle, count: errorCount > 0 ? errorCount : null as number | null },
-    { id: 'attributes' as Tab, label: 'Attributes', Icon: Tags,        count: span.attributes.length > 0 ? span.attributes.length : null as number | null },
-    { id: 'events'     as Tab, label: 'Events',     Icon: Activity,    count: span.events.length > 0 ? span.events.length : null as number | null },
-    { id: 'resources'  as Tab, label: 'Resources',  Icon: Server,      count: resourceAttributes.length > 0 ? resourceAttributes.length : null as number | null },
+    { id: 'overview'   as Tab, label: 'Overview',    Icon: Info,            count: null as number | null },
+    { id: 'errors'     as Tab, label: 'Errors',      Icon: AlertCircle,     count: errorCount > 0 ? errorCount : null as number | null },
+    { id: 'attributes' as Tab, label: 'Attributes',  Icon: Tags,            count: span.attributes.length > 0 ? span.attributes.length : null as number | null },
+    { id: 'reqres'     as Tab, label: 'Req / Res',   Icon: ArrowLeftRight,  count: reqResEntries.length > 0 ? reqResEntries.length : null as number | null },
+    { id: 'events'     as Tab, label: 'Events',      Icon: Activity,        count: span.events.length > 0 ? span.events.length : null as number | null },
+    { id: 'resources'  as Tab, label: 'Resources',   Icon: Server,          count: resourceAttributes.length > 0 ? resourceAttributes.length : null as number | null },
   ]);
 
   // ─── UI helpers ────────────────────────────────────────────────────────────
@@ -479,6 +530,7 @@
 
     <!-- ATTRIBUTES TAB -->
     {#if activeTab === 'attributes'}
+      {#key span.span_id}
       <div class="p-4 space-y-3">
         <!-- Search -->
         <div class="relative">
@@ -537,6 +589,73 @@
           </div>
         {/if}
       </div>
+      {/key}
+    {/if}
+
+    <!-- REQ / RES TAB -->
+    {#if activeTab === 'reqres'}
+      {#key span.span_id}
+      <div class="p-4 space-y-3">
+        {#if reqResEntries.length === 0}
+          <div class="flex flex-col items-center justify-center py-16 text-center gap-3">
+            <div class="w-12 h-12 border-2 border-black bg-surface-200 rounded-base shadow-small flex items-center justify-center">
+              <ArrowLeftRight class="w-6 h-6 text-primary-300" />
+            </div>
+            <p class="text-sm font-bold text-primary-600 uppercase tracking-wide">No request or response data</p>
+          </div>
+        {:else}
+          <div class="space-y-2">
+            {#each reqResEntries as entry}
+              {@const isCollapsed = collapsedReqRes.has(entry.key)}
+              {@const isRequest = entry.kind === 'request'}
+              <div class="border-2 border-black rounded-base overflow-hidden shadow-small">
+                <!-- Entry header -->
+                <button
+                  onclick={() => toggleReqRes(entry.key)}
+                  class="w-full flex items-center justify-between px-3 py-2 transition-colors duration-100 border-b-2 border-black
+                    {isRequest ? 'bg-primary-100 hover:bg-primary-200' : 'bg-secondary-100 hover:bg-secondary-200'}"
+                >
+                  <div class="flex items-center gap-2">
+                    <ArrowLeftRight class="w-3.5 h-3.5 {isRequest ? 'text-primary-700' : 'text-secondary-700'}" />
+                    <span class="text-xs font-black uppercase tracking-wide {isRequest ? 'text-primary-900' : 'text-secondary-900'}">{entry.label}</span>
+                    <span class="px-1.5 py-0.5 rounded-sm text-[10px] font-bold border
+                      {isRequest
+                        ? 'bg-primary-200 border-primary-400 text-primary-800'
+                        : 'bg-secondary-200 border-secondary-500 text-secondary-800'}">
+                      {isRequest ? 'request' : 'response'}
+                    </span>
+                    <span class="text-[10px] font-mono text-primary-400 truncate max-w-32">{entry.key}</span>
+                  </div>
+                  {#if isCollapsed}
+                    <ChevronDown class="w-3.5 h-3.5 {isRequest ? 'text-primary-600' : 'text-secondary-600'}" />
+                  {:else}
+                    <ChevronUp class="w-3.5 h-3.5 {isRequest ? 'text-primary-600' : 'text-secondary-600'}" />
+                  {/if}
+                </button>
+                <!-- JSON / value body -->
+                {#if !isCollapsed}
+                  {@const displayJson = typeof entry.parsed === 'string'
+                    ? entry.parsed
+                    : JSON.stringify(entry.parsed, null, 2)}
+                  <div class="bg-surface-50 text-xs overflow-hidden relative">
+                    <button
+                      class="absolute p-2 top-2 right-4 btn btn-sm bg-white border-2 border-black shadow-small z-20 hover:bg-slate-50 active:translate-y-[2px] active:shadow-none transition-all"
+                      onclick={() => copyJson(displayJson)}
+                      aria-label="Copy JSON"
+                    >
+                      <Copy class="w-4 h-4" color="black" />
+                    </button>
+                    <div class="bg-surface-50 text-xs overflow-hidden">
+                      <CodeBlock code={displayJson} showLineNumbers={false} lang="json" prePadding="p-3" />
+                    </div>
+                  </div>
+                {/if}
+              </div>
+            {/each}
+          </div>
+        {/if}
+      </div>
+      {/key}
     {/if}
 
     <!-- EVENTS TAB -->
