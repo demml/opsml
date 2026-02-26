@@ -46,6 +46,7 @@
   class="fixed top-14 inset-0 z-50 flex justify-end transition-opacity duration-200 ease-out {visible ? 'opacity-100' : 'opacity-0'}"
   onkeydown={handleKeydown}
   onclick={handleBackdropClick}
+  onmousedown={(e) => { if (e.target === e.currentTarget) e.preventDefault(); }}
   style="background: rgba(0,0,0,0.35);"
   tabindex=0
 >
@@ -55,6 +56,7 @@
     style="width: 80%;"
     role="presentation"
     onclick={(e) => e.stopPropagation()}
+    onmousedown={(e) => e.stopPropagation()}
   >
     <TraceDetailContent {trace} {traceSpans} onClose={handleClose} showCloseButton={true} />
   </div>

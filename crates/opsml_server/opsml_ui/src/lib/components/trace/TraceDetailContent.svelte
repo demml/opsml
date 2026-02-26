@@ -73,7 +73,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-  class="flex flex-col h-full overflow-hidden bg-surface-50 select-none"
+  class="flex flex-col h-full overflow-hidden bg-surface-50"
   bind:this={containerEl}
   onmousemove={onMouseMove}
   onmouseup={onMouseUp}
@@ -183,7 +183,7 @@
         </div>
       {:else}
         <div class="h-full bg-surface-50 p-3 overflow-auto">
-          <div class="bg-surface-50 p-8 overflow-y-scroll">
+          <div class="bg-surface-50 p-8overflow-y-scroll">
             <SpanGraph spans={spans} slowestSpan={slowestSpan()} onSpanSelect={handleSpanSelect} />
           </div>
         </div>
