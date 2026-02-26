@@ -331,7 +331,7 @@
       <!-- Hover cursor line -->
       {#if hoverX !== null}
         <div
-          class="absolute top-0 bottom-0 w-px bg-black/30 pointer-events-none z-20"
+          class="absolute h-full w-px bg-black/30 pointer-events-none z-20"
           style="left: {hoverX}%;"
         ></div>
       {/if}

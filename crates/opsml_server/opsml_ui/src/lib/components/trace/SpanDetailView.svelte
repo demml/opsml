@@ -199,11 +199,12 @@
     <!-- OVERVIEW TAB -->
     {#if activeTab === 'overview'}
       <div class="flex flex-col gap-0 h-full divide-y-2 divide-black">
-        <div class="w-2 flex-shrink-0 {accentBarColor}"></div>
+
 
         <!-- Core span metadata -->
         <div class="p-4 space-y-3">
           <!-- Span name + status row -->
+       
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">
               <h3 class="text-sm font-black text-black leading-tight truncate">{span.span_name}</h3>
