@@ -2,6 +2,13 @@
   import type { TraceSpan } from './types';
   import { formatDuration, hasSpanError } from './utils';
   import { CircleX, Clock, Timer } from 'lucide-svelte';
+  import { onMount } from 'svelte';
+
+  // Scroll sync refs
+  let spanScrollContainer: HTMLDivElement;
+  let timelineScrollContainer: HTMLDivElement;
+  let isSpanScrolling = false;
+  let isTimelineScrolling = false;
 
   let {
     spans,
@@ -148,6 +155,29 @@
 
   const sortedSpans = $derived(sortSpansDepthFirst(spans));
   const parentChildMap = $derived(buildParentChildMap(sortedSpans));
+
+  // Synchronize vertical scroll between span and timeline columns
+  function onSpanScroll() {
+    if (isTimelineScrolling) return;
+    isSpanScrolling = true;
+    if (timelineScrollContainer) {
+      timelineScrollContainer.scrollTop = spanScrollContainer.scrollTop;
+    }
+    requestAnimationFrame(() => {
+      isSpanScrolling = false;
+    });
+  }
+
+  function onTimelineScroll() {
+    if (isSpanScrolling) return;
+    isTimelineScrolling = true;
+    if (spanScrollContainer) {
+      spanScrollContainer.scrollTop = timelineScrollContainer.scrollTop;
+    }
+    requestAnimationFrame(() => {
+      isTimelineScrolling = false;
+    });
+  }
 </script>
 
 <div class="flex flex-col h-full bg-white text-sm overflow-hidden">
@@ -181,8 +211,14 @@
   </div>
 
   <!-- Span Rows -->
-  <div class="flex-1 overflow-auto">
-    {#each sortedSpans as span (span.span_id)}
+  <div class="flex-1 flex overflow-hidden">
+    <!-- Left column: Span names (scrollable x and y) -->
+    <div
+      bind:this={spanScrollContainer}
+      onscroll={onSpanScroll}
+      class="w-[44%] min-w-[260px] flex-shrink-0 overflow-auto border-r border-black pb-2"
+    >
+      {#each sortedSpans as span (span.span_id)}
       {@const position = getSpanPosition(span)}
       {@const isSelected = selectedSpan?.span_id === span.span_id}
       {@const indent = span.depth * INDENT_PX}
@@ -191,22 +227,16 @@
       {@const isSlowestSpan = slowestSpan && span.span_id === slowestSpan.span_id}
       {@const isLast = isLastSibling(span, sortedSpans, parentChildMap)}
 
-      <div
-        class="flex group cursor-pointer transition-colors border-b border-gray-100
-          {isSelected
-            ? 'bg-primary-50 border-l-4 border-l-primary-500'
-            : 'hover:bg-surface-200 border-l-4 border-l-transparent'}"
-        style="height: {ROW_HEIGHT}px"
-        onclick={() => onSpanSelect(span)}
-        onkeydown={(e) => e.key === 'Enter' && onSpanSelect(span)}
-        role="button"
-        tabindex="0"
-      >
-
-        <!-- Left column: name and badges -->
-        <div
-          class="w-[38%] min-w-[260px] flex items-center gap-1.5 px-2 border-r border-gray-200 overflow-hidden flex-shrink-0 relative"
-          style="padding-left: calc({indent}px + 0.5rem);"
+              <div
+          class="flex items-center gap-1.5 px-2 cursor-pointer transition-colors border-b border-gray-100 relative min-w-max
+            {isSelected
+              ? 'bg-primary-50 border-l-4 border-l-primary-500'
+              : 'hover:bg-surface-200 border-l-4 border-l-transparent'}"
+          style="height: {ROW_HEIGHT}px; padding-left: calc({indent}px + 0.5rem);"
+          onclick={() => onSpanSelect(span)}
+          onkeydown={(e) => e.key === 'Enter' && onSpanSelect(span)}
+          role="button"
+          tabindex="0"
         >
           <!-- Tree connector lines -->
           {#if span.depth > 0}
@@ -247,7 +277,7 @@
           {/if}
 
           <!-- Span name badge -->
-          <span class="border px-1.5 py-0.5 text-xs flex-shrink-0 max-w-[200px] truncate {badgeClasses}">
+          <span class="border px-1.5 py-0.5 text-xs flex-shrink-0 whitespace-nowrap {badgeClasses}">
             {span.span_name}
           </span>
 
@@ -261,9 +291,29 @@
             <CircleX class="w-3.5 h-3.5 text-error-600 flex-shrink-0" />
           {/if}
         </div>
+      {/each}
+    </div>
 
-        <!-- Right column: timeline bar + duration -->
-        <div class="flex-1 flex items-center gap-2 px-2 min-w-0">
+    <!-- Right column: Timeline (scrollable y only) -->
+    <div
+      bind:this={timelineScrollContainer}
+      onscroll={onTimelineScroll}
+      class="flex-1 overflow-y-auto overflow-x-hidden pb-2"
+    >
+      {#each sortedSpans as span (span.span_id)}
+        {@const position = getSpanPosition(span)}
+        {@const isSelected = selectedSpan?.span_id === span.span_id}
+        {@const spanHasError = hasSpanError(span)}
+
+        <div
+          class="flex items-center gap-2 px-2 cursor-pointer transition-colors border-b border-gray-100
+            {isSelected ? 'bg-primary-50' : 'hover:bg-surface-200'}"
+          style="height: {ROW_HEIGHT}px"
+          onclick={() => onSpanSelect(span)}
+          onkeydown={(e) => e.key === 'Enter' && onSpanSelect(span)}
+          role="button"
+          tabindex="0"
+        >
           <div class="relative flex-1 h-[18px] min-w-0">
             <div
               class={getSpanBarClasses(span, isSelected)}
@@ -284,9 +334,8 @@
             {formatDuration(span.duration_ms)}
           </span>
         </div>
-
-      </div>
     {/each}
+    </div>
   </div>
 
 </div>
