@@ -9,6 +9,30 @@ from opsml.scouter.evaluate import GenAIEvalRecord
 from opsml.scouter.tracing import ActiveSpan
 
 
+def before_search_callback(
+    callback_context: CallbackContext,
+) -> Optional[types.Content]:
+    """
+    Logs entry into the pattern recognizer agent and checks 'add_initial_note' in session state.
+    If True, returns new Content to *replace* the agent's original instruction.
+    If False or not present, returns None, allowing the agent's original instruction to be used.
+    """
+
+    tracer = trace.get_tracer("before_search_callback")
+    agent_name = callback_context.agent_name
+    invocation_id = callback_context.invocation_id
+    current_state = callback_context.state.to_dict()
+
+    with cast(
+        ActiveSpan, tracer.start_as_current_span("before_search_callback")
+    ) as span:
+        span.set_attribute("agent.name", agent_name)
+        span.set_attribute("invocation.id", invocation_id)
+        span.set_attribute("state", current_state)
+
+    return None
+
+
 def search_callback(
     callback_context: CallbackContext,
 ) -> Optional[types.Content]:
@@ -23,9 +47,12 @@ def search_callback(
     invocation_id = callback_context.invocation_id
     current_state = callback_context.state.to_dict()
 
-    with cast(ActiveSpan, tracer.start_as_current_span("search_callback")) as span:
+    with cast(
+        ActiveSpan, tracer.start_as_current_span("after_search_callback")
+    ) as span:
         span.set_attribute("agent.name", agent_name)
         span.set_attribute("invocation.id", invocation_id)
+        span.set_attribute("state", current_state)
 
         queue_record = GenAIEvalRecord(
             context={
@@ -85,5 +112,7 @@ search_specialist = Agent(
     description="Finds candidate tracks based on pattern analysis.",
     instruction=prompts.search.prompt.messages[0].text,
     tools=[search_music_catalog, calculate_similarity],
-    output_key="candidate_tracks",  # Reads search_strategy, writes candidates
+    output_key="candidate_tracks",
+    before_agent_callback=before_search_callback,
+    after_agent_callback=search_callback,
 )

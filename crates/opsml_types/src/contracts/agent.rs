@@ -23,7 +23,7 @@ static SKILL_NAME_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 });
 
 fn a2a_current_version() -> String {
-    "1.0.0".to_string()
+    "0.3.0".to_string()
 }
 fn agent_current_version() -> String {
     "0.0.0".to_string()
@@ -1162,7 +1162,9 @@ impl AgentSpec {
                 .into_iter()
                 .map(|url| AgentInterface {
                     url,
-                    ..Default::default()
+                    protocol_binding: ProtocolBinding::HttpJson,
+                    protocol_version: a2a_current_version(),
+                    tenant: String::new(),
                 })
                 .collect();
         }
