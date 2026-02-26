@@ -166,6 +166,8 @@
     for (const a of attrs) obj[a.key] = a.value;
     return JSON.stringify(obj, null, 2);
   }
+
+  const accentBarColor = $derived(spanHasError ? 'bg-error-600' : span.status_code === 1 ? 'bg-secondary-500' : 'bg-gray-400');
 </script>
 
 <div class="flex flex-col h-full bg-surface-50 overflow-hidden">
@@ -197,6 +199,7 @@
     <!-- OVERVIEW TAB -->
     {#if activeTab === 'overview'}
       <div class="flex flex-col gap-0 h-full divide-y-2 divide-black">
+        <div class="w-2 flex-shrink-0 {accentBarColor}"></div>
 
         <!-- Core span metadata -->
         <div class="p-4 space-y-3">
