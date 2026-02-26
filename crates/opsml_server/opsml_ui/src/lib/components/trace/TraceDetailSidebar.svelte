@@ -38,16 +38,16 @@
   }
 </script>
 
-<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <!-- Backdrop -->
 <div
   role="dialog"
   aria-modal="true"
   aria-label="Trace detail"
-  class="fixed inset-0 z-50 flex justify-end transition-opacity duration-200 ease-out {visible ? 'opacity-100' : 'opacity-0'}"
+  class="fixed top-14 inset-0 z-50 flex justify-end transition-opacity duration-200 ease-out {visible ? 'opacity-100' : 'opacity-0'}"
   onkeydown={handleKeydown}
   onclick={handleBackdropClick}
   style="background: rgba(0,0,0,0.35);"
+  tabindex=0
 >
   <!-- Right-side drawer panel — 80% width -->
   <div
