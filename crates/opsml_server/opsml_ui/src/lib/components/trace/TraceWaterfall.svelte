@@ -188,7 +188,7 @@
   }
 </script>
 
-<div class="flex flex-col h-full bg-white text-sm overflow-hidden">
+<div class="flex flex-col h-full bg-surface-50 text-sm overflow-hidden">
 
   <!-- Column Headers / Axis -->
   <div class="flex-shrink-0 bg-surface-50 border-b-2 border-black z-10">
@@ -208,7 +208,7 @@
             style="left: {pct}%; transform: translateX({i === 0 ? '0' : i === AXIS_MARKS.length - 1 ? '-100%' : '-50%'});"
           >
             <div class="w-px bg-black/20" style="height: 6px;"></div>
-            <span class="text-[10px] font-mono text-gray-500 leading-tight mt-0.5 whitespace-nowrap">
+            <span class="text-[10px] font-mono text-primary-500 leading-tight mt-0.5 whitespace-nowrap">
               {formatDuration(totalDuration * mark)}
             </span>
           </div>
@@ -243,10 +243,10 @@
         {@const hasChildren = (parentChildMap.get(span.span_id) || []).length > 0}
 
         <div
-          class="flex items-center gap-1.5 pr-2 cursor-pointer transition-colors border-b border-gray-100 relative min-w-max
+          class="flex items-center gap-1.5 pr-2 cursor-pointer transition-colors border-b border-black/10 relative min-w-max
             {isSelected
               ? 'bg-primary-50 border-l-4 border-l-primary-600'
-              : 'hover:bg-surface-100 border-l-4 border-l-transparent'}"
+              : 'hover:bg-surface-200 border-l-4 border-l-transparent'}"
           style="height: {ROW_HEIGHT}px; padding-left: calc({indent}px + 0.5rem);"
           onclick={() => onSpanSelect(span)}
           onkeydown={(e) => e.key === 'Enter' && onSpanSelect(span)}
@@ -266,19 +266,19 @@
               >
                 {#if isCurrentLevel}
                   <div class="relative w-full h-full">
-                    <div class="absolute top-0 left-0 w-full bg-gray-300" style="height: {ROW_HEIGHT / 2}px;"></div>
-                    <div class="absolute left-0 bg-gray-300" style="top: {ROW_HEIGHT / 2}px; height: 1px; width: {INDENT_PX / 2}px;"></div>
+                    <div class="absolute top-0 left-0 w-full bg-black/20" style="height: {ROW_HEIGHT / 2}px;"></div>
+                    <div class="absolute left-0 bg-black/20" style="top: {ROW_HEIGHT / 2}px; height: 1px; width: {INDENT_PX / 2}px;"></div>
                     {#if !isLast}
-                      <div class="absolute left-0 w-full bg-gray-300" style="top: {ROW_HEIGHT / 2}px; height: {ROW_HEIGHT / 2}px;"></div>
+                      <div class="absolute left-0 w-full bg-black/20" style="top: {ROW_HEIGHT / 2}px; height: {ROW_HEIGHT / 2}px;"></div>
                     {:else if span.parent_span_id}
                       {@const parent = sortedSpans.find(s => s.span_id === span.parent_span_id)}
                       {#if parent && !isLastSibling(parent, sortedSpans, parentChildMap)}
-                        <div class="absolute left-0 w-full bg-gray-300" style="top: {ROW_HEIGHT / 2}px; height: {ROW_HEIGHT / 2}px;"></div>
+                        <div class="absolute left-0 w-full bg-black/20" style="top: {ROW_HEIGHT / 2}px; height: {ROW_HEIGHT / 2}px;"></div>
                       {/if}
                     {/if}
                   </div>
                 {:else if shouldDrawLine}
-                  <div class="w-full bg-gray-300" style="height: {ROW_HEIGHT}px;"></div>
+                  <div class="w-full bg-black/20" style="height: {ROW_HEIGHT}px;"></div>
                 {/if}
               </div>
             {/each}
@@ -289,11 +289,11 @@
 
           <!-- Child chevron indicator -->
           {#if hasChildren}
-            <ChevronRight class="w-3 h-3 text-gray-400 flex-shrink-0 -mx-0.5" />
+            <ChevronRight class="w-3 h-3 text-primary-400 flex-shrink-0 -mx-0.5" />
           {/if}
 
           <!-- Span name -->
-          <span class="text-xs font-mono truncate {isSelected ? 'text-primary-900 font-bold' : 'text-gray-800'}" style="max-width: 180px;">
+          <span class="text-xs font-mono truncate {isSelected ? 'text-primary-900 font-bold' : 'text-primary-800'}" style="max-width: 180px;">
             {span.span_name}
           </span>
 
@@ -317,7 +317,7 @@
       onmousemove={onTimelineMouseMove}
       onmouseleave={onTimelineMouseLeave}
       role="presentation"
-      class="flex-1 overflow-y-auto overflow-x-hidden relative"
+      class="flex-1 overflow-y-auto overflow-x-hidden relative bg-surface-50"
     >
       <!-- Vertical tick grid lines behind rows -->
       {#each AXIS_MARKS.slice(1) as mark}
@@ -343,8 +343,8 @@
         {@const barColor = getBarColor(type, isSelected)}
 
         <div
-          class="flex items-center px-2 cursor-pointer transition-colors border-b border-gray-100 relative z-10
-            {isSelected ? 'bg-primary-50' : 'hover:bg-surface-100'}"
+          class="flex items-center px-2 cursor-pointer transition-colors border-b border-black/10 relative z-10
+            {isSelected ? 'bg-primary-50' : 'hover:bg-surface-200'}"
           style="height: {ROW_HEIGHT}px;"
           onclick={() => onSpanSelect(span)}
           onkeydown={(e) => e.key === 'Enter' && onSpanSelect(span)}
@@ -367,7 +367,7 @@
           </div>
 
           <!-- Duration label outside bar (always visible, right-aligned) -->
-          <span class="w-14 text-[10px] font-mono text-gray-500 text-right flex-shrink-0 whitespace-nowrap">
+          <span class="w-14 text-[10px] font-mono text-primary-500 text-right flex-shrink-0 whitespace-nowrap">
             {formatDuration(span.duration_ms)}
           </span>
         </div>
