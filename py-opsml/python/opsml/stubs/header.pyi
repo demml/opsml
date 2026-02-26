@@ -4,6 +4,7 @@ import datetime
 from pathlib import Path
 from types import TracebackType
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -45,6 +46,12 @@ Context: TypeAlias = Union[Dict[str, Any], "BaseModel"]
 
 P = ParamSpec("P")
 R = TypeVar("R")
+
+if TYPE_CHECKING:
+    from opentelemetry.trace import SpanContext
+else:
+    class SpanContext:
+        pass
 
 class BaseModel(Protocol):
     """Protocol for pydantic BaseModel to ensure compatibility with context"""

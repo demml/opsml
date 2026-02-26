@@ -44,6 +44,9 @@ service:
           - "Recommend a playlist for a workout session"
           - "Suggest some relaxing music for studying"
           - "Find upbeat songs for a party"
+    supported_interfaces:
+      - protocol_binding: "JSONRPC"
+        url: "http://localhost:8888"
 
 deploy:
   - environment: "development"

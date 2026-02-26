@@ -28,7 +28,7 @@ agent_card = app.service.agent_card()
 
 
 root_agent = SequentialAgent(
-    name=agent_card.skills[0].id,  # Use the first skill's ID as the agent name
+    name=agent_card.skills[0].id,
     sub_agents=[
         preference_analyzer,
         pattern_recognizer,
@@ -60,4 +60,6 @@ a2a_app.add_middleware(
 @a2a_app.route("/health", methods=["GET"])
 async def health_check(request):
     """Basic health check endpoint for load balancers."""
-    return JSONResponse({"status": "healthy", "service": "music-recommender-agent", "version": "1.0.0"})
+    return JSONResponse(
+        {"status": "healthy", "service": "music-recommender-agent", "version": "1.0.0"}
+    )
