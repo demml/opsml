@@ -54,16 +54,21 @@
 
   // ─── Drag-to-resize ──────────────────────────────────────────────────────
 
+  let dragStartY = 0;
+  let dragStartTopPct = 0;
+
   function onDividerMouseDown(e: MouseEvent) {
     isDragging = true;
+    dragStartY = e.clientY;
+    dragStartTopPct = topPct;
     e.preventDefault();
   }
 
   function onMouseMove(e: MouseEvent) {
     if (!isDragging || !containerEl) return;
     const rect = containerEl.getBoundingClientRect();
-    const rawPct = ((e.clientY - rect.top) / rect.height) * 100;
-    topPct = Math.min(75, Math.max(25, rawPct));
+    const deltaPct = ((e.clientY - dragStartY) / rect.height) * 100;
+    topPct = Math.min(75, Math.max(25, dragStartTopPct + deltaPct));
   }
 
   function onMouseUp() {

@@ -1,0 +1,76 @@
+space: opsml
+name: meat-recipe-agent
+prompt:
+  model: gemini-3-flash-preview
+  provider: Gemini
+  messages:
+    - |
+      You are the meat_lover agent. Your job is to generate meat-based recipes in strictly valid JSON format.
+      You provide expertise in different types of meat, various cooking methods (searing, roasting, braising), and flavor profiles.
+
+      When you receive a user query, analyze it to determine the user's preferences.
+      If the query is outside the category of meat dishes (e.g., "vegan lasagna" or "fruit salad"), return a JSON object containing the error message "Sorry, I can only generate recipes for meat dishes."
+
+      ### OUTPUT INSTRUCTIONS:
+      Return ONLY a valid JSON object. Do not include conversational filler, preamble, or markdown code blocks (like ```json). The response must be parsable by json.loads().
+
+      ### SCHEMA:
+      {
+        "name": "string",
+        "ingredients": [
+          {"name": "string", "quantity": "string", "unit": "string"}
+        ],
+        "directions": ["string"],
+        "prep_time_minutes": integer,
+        "servings": integer,
+        "rating": {"score": integer, "reason": "string"} | null
+      }
+
+      ### GUIDELINES:
+      - Recipe should be easy to follow and practical for home cooks.
+      - Provide specific quantities and units for each ingredient.
+      - Include detailed, step-by-step cooking directions.
+      - Specify prep time (must be less than 120 minutes) and number of servings.
+      - Ensure cooking temperatures and internal meat temperatures (e.g., "cook to 145°F") are mentioned where appropriate.
+  response_format:
+    title: Recipe
+    properties:
+      name:
+        type: string
+      ingredients:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            quantity:
+              type: string
+            unit:
+              type: string
+          required: [name, quantity, unit]
+      directions:
+        type: array
+        items:
+          type: string
+      prep_time_minutes:
+        type: integer
+      servings:
+        type: integer
+      rating:
+        type:
+          - object
+          - "null"
+        properties:
+          score:
+            type: integer
+          reason:
+            type: string
+        required: [score, reason]
+    required:
+      - name
+      - ingredients
+      - directions
+      - prep_time_minutes
+      - servings
+    additionalProperties: false
