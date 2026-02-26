@@ -13,39 +13,49 @@
     onClose: () => void;
   } = $props();
 
-  let isClosing = $state(false);
-
-  function handleClose() {
-    isClosing = true;
-    setTimeout(() => {
-      onClose();
-    }, 20);
-  }
+  let visible = $state(false);
 
   onMount(() => {
     document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => { visible = true; });
   });
 
   onDestroy(() => {
     document.body.style.overflow = '';
   });
+
+  function handleClose() {
+    visible = false;
+    setTimeout(onClose, 200);
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') handleClose();
+  }
+
+  function handleBackdropClick(e: MouseEvent) {
+    if (e.target === e.currentTarget) handleClose();
+  }
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <!-- Backdrop -->
 <div
-  class="fixed inset-x-0 bottom-0 top-14 bg-black/30 z-40 transition-opacity duration-300"
-  class:opacity-0={isClosing}
-  onclick={handleClose}
-  onkeydown={(e) => e.key === 'Escape' && handleClose()}
-  role="button"
-  tabindex="-1"
-  aria-label="Close panel backdrop"
-></div>
-
-<!-- Side Panel -->
-<div
-  class="fixed top-14 right-0 h-[calc(100%-3.5rem)] w-full lg:w-4/5 xl:w-4/5 bg-white border-l-4 border-black shadow-2xl z-50 flex flex-col transition-transform duration-300"
-  class:translate-x-full={isClosing}
+  role="dialog"
+  aria-modal="true"
+  aria-label="Trace detail"
+  class="fixed inset-0 z-50 flex justify-end transition-opacity duration-200 ease-out {visible ? 'opacity-100' : 'opacity-0'}"
+  onkeydown={handleKeydown}
+  onclick={handleBackdropClick}
+  style="background: rgba(0,0,0,0.35);"
 >
-  <TraceDetailContent {trace} {traceSpans} onClose={handleClose} showCloseButton={true} />
+  <!-- Right-side drawer panel — 80% width -->
+  <div
+    class="flex flex-col h-full bg-surface-50 border-l-4 border-black shadow transition-transform duration-200 ease-out {visible ? 'translate-x-0' : 'translate-x-full'}"
+    style="width: 80%;"
+    role="presentation"
+    onclick={(e) => e.stopPropagation()}
+  >
+    <TraceDetailContent {trace} {traceSpans} onClose={handleClose} showCloseButton={true} />
+  </div>
 </div>
