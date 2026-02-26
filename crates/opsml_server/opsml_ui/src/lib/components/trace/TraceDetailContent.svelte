@@ -183,7 +183,7 @@
         </div>
       {:else}
         <div class="h-full bg-surface-50 p-3 overflow-auto">
-          <div class="bg-surface-50 border-2 border-black rounded-base shadow-small h-full overflow-hidden">
+          <div class="bg-surface-50 p-8 overflow-y-scroll">
             <SpanGraph spans={spans} slowestSpan={slowestSpan()} onSpanSelect={handleSpanSelect} />
           </div>
         </div>

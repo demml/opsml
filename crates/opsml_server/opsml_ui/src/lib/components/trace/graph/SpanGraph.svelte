@@ -93,6 +93,7 @@
       minZoom: 0.2,
       maxZoom: 1.0,
     }}
+
     minZoom={0.3}
     maxZoom={1.5}
     defaultEdgeOptions={{
