@@ -11,6 +11,11 @@ import type {
   InferredEndpoint,
 } from "./agentInference";
 import { buildAuthHeaders } from "./agentInference";
+import {
+  A2AOperation,
+  createOperationResolver,
+  type A2AOperationResolver,
+} from "./a2aOperations";
 import type {
   CancelTaskRequest,
   GetTaskRequest,
@@ -90,6 +95,13 @@ export interface InvokeSkillOptions {
 export class AgentClient {
   private contract: AgentContract;
   private config: AgentClientConfig;
+  /**
+   * Version-aware operation resolver
+   * Handles protocol version differences (v0.3.0 vs v1.0):
+   * - v0.3.0: message/send, tasks/get, etc.
+   * - v1.0: SendMessage, GetTask, etc.
+   */
+  private resolver: A2AOperationResolver;
 
   constructor(contract: AgentContract, config: AgentClientConfig) {
     this.contract = contract;
@@ -97,6 +109,12 @@ export class AgentClient {
       timeout: 30000,
       ...config,
     };
+    // Create resolver from first interface (primary)
+    const primaryInterface = contract.interfaces[0];
+    if (!primaryInterface) {
+      throw new Error("No agent interface configured");
+    }
+    this.resolver = createOperationResolver(primaryInterface);
   }
 
   // ─── Health check ───────────────────────────────────────────────────────────
@@ -167,13 +185,17 @@ export class AgentClient {
     streaming: boolean,
   ): string {
     if (this.isJsonRpcEndpoint(endpoint)) {
+      const operation = streaming
+        ? A2AOperation.SendStreamingMessage
+        : A2AOperation.SendMessage;
       return JSON.stringify({
         jsonrpc: "2.0",
         id: requestId,
-        method: streaming ? "SendStreamingMessage" : "SendMessage",
+        method: this.resolver.getMethodName(operation),
         params: sendRequest,
       });
     }
+
     return JSON.stringify(sendRequest);
   }
 
@@ -485,7 +507,7 @@ export class AgentClient {
         body: JSON.stringify({
           jsonrpc: "2.0",
           id: crypto.randomUUID(),
-          method: "GetTask",
+          method: this.resolver.getMethodName(A2AOperation.GetTask),
           params,
         }),
       });
@@ -523,7 +545,7 @@ export class AgentClient {
         body: JSON.stringify({
           jsonrpc: "2.0",
           id: crypto.randomUUID(),
-          method: "ListTasks",
+          method: this.resolver.getMethodName(A2AOperation.ListTasks),
           params,
         }),
       });
@@ -573,7 +595,7 @@ export class AgentClient {
         body: JSON.stringify({
           jsonrpc: "2.0",
           id: crypto.randomUUID(),
-          method: "CancelTask",
+          method: this.resolver.getMethodName(A2AOperation.CancelTask),
           params,
         }),
       });
@@ -618,7 +640,7 @@ export class AgentClient {
       body = JSON.stringify({
         jsonrpc: "2.0",
         id: crypto.randomUUID(),
-        method: "SubscribeToTask",
+        method: this.resolver.getMethodName(A2AOperation.SubscribeToTask),
         params,
       });
     } else {

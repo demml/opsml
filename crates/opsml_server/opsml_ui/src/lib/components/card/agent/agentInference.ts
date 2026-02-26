@@ -111,20 +111,18 @@ export interface AgentContract {
 /**
  * Standard A2A protocol endpoint paths per spec section 5.3 (Method Mapping Reference)
  * and section 11.3 (HTTP+JSON/REST URL Patterns).
+ *
+ * Note: For version-specific operation names, use A2AOperationResolver from a2aOperations.ts
+ * This maintains backward compatibility between v0.3.0 (message/send) and v1.0 (SendMessage).
  */
 const A2A_ENDPOINTS = {
   // HTTP+JSON/REST binding (Section 11.3)
+  // Note: v1.0 uses /message:send, v0.3.0 uses /v1/message:send
   httpJson: {
     send: "/message:send",
     stream: "/message:stream",
     getTask: "/tasks",
     health: "/health",
-  },
-  // JSON-RPC 2.0 binding (Section 9) — single base URL, method name differentiates
-  jsonrpc: {
-    sendMethod: "SendMessage",
-    streamMethod: "SendStreamingMessage",
-    getTaskMethod: "GetTask",
   },
   // gRPC binding (Section 10)
   grpc: {
@@ -163,7 +161,13 @@ function normaliseBinding(
 ): "jsonrpc" | "http+json" | "grpc" | "websocket" | "unknown" {
   const b = binding.toLowerCase();
   if (b === "jsonrpc" || b === "json-rpc" || b === "json_rpc") return "jsonrpc";
-  if (b === "http+json" || b === "http" || b === "https" || b === "rest")
+  if (
+    b === "http+json" ||
+    b === "http" ||
+    b === "https" ||
+    b === "rest" ||
+    b === "httpjson"
+  )
     return "http+json";
   if (b === "grpc" || b === "grpc+proto") return "grpc";
   if (b === "websocket" || b === "ws" || b === "wss") return "websocket";

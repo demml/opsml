@@ -2,6 +2,39 @@ from agent.lifespan import prompts
 from google.adk.agents.llm_agent import Agent
 
 
+from google.adk.agents.callback_context import CallbackContext
+from typing import Optional, cast
+from google.genai import types  # For types.Content
+from opentelemetry import trace
+from opsml.scouter.tracing import ActiveSpan
+
+
+def before_preference_callback(
+    callback_context: CallbackContext,
+) -> Optional[types.Content]:
+    """
+    Logs entry into the preference analyzer agent and checks 'add_initial_note' in session state.
+    If True, returns new Content to *replace* the agent's original instruction.
+    If False or not present, returns None, allowing the agent's original instruction to be used.
+    """
+
+    tracer = trace.get_tracer("before_preference_callback")
+    agent_name = callback_context.agent_name
+    invocation_id = callback_context.invocation_id
+    current_state = callback_context.state.to_dict()
+
+    print("Preference keys: ", current_state.keys())
+
+    with cast(
+        ActiveSpan, tracer.start_as_current_span("before_preference_callback")
+    ) as span:
+        span.set_attribute("agent.name", agent_name)
+        span.set_attribute("invocation.id", invocation_id)
+        span.set_attribute("state", current_state)
+
+    return None
+
+
 def get_listening_history(user_id: str = "demo_user") -> dict:
     """Retrieves user's recent listening history from streaming service."""
     return {
@@ -34,5 +67,6 @@ preference_analyzer = Agent(
     description="Extracts musical preferences from user input and listening history.",
     instruction=prompts.preference.prompt.messages[0].text,
     tools=[get_listening_history],
-    output_key="user_preferences",  # Stores result in shared state
+    output_key="user_preferences",
+    before_agent_callback=before_preference_callback,
 )

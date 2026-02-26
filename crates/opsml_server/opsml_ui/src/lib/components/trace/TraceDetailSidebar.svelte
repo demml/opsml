@@ -44,7 +44,7 @@
 
 <!-- Side Panel -->
 <div
-  class="fixed top-14 right-0 h-[calc(100%-3.5rem)] w-full lg:w-4/5 xl:w-3/4 bg-white border-l-4 border-black shadow-2xl z-50 flex flex-col transition-transform duration-300"
+  class="fixed top-14 right-0 h-[calc(100%-3.5rem)] w-full lg:w-4/5 xl:w-4/5 bg-white border-l-4 border-black shadow-2xl z-50 flex flex-col transition-transform duration-300"
   class:translate-x-full={isClosing}
 >
   <TraceDetailContent {trace} {traceSpans} onClose={handleClose} showCloseButton={true} />

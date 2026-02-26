@@ -1550,9 +1550,9 @@ dependencies = [
 
 [[package]]
 name = "const-hex"
-version = "1.17.0"
+version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bb320cac8a0750d7f25280aa97b09c26edfe161164238ecbbb31092b079e735"
+checksum = "af9a108e542ddf1de36743a6126e94d6659dccda38fc8a77e80b915102ac784a"
 dependencies = [
  "cfg-if",
  "cpufeatures",
@@ -6377,7 +6377,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6409,7 +6409,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "futures",
  "pyo3",
@@ -6424,7 +6424,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "chrono",
  "futures",
@@ -6450,7 +6450,7 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "chrono",
  "itertools 0.14.0",
@@ -6477,7 +6477,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6512,7 +6512,7 @@ dependencies = [
 [[package]]
 name = "scouter-http"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "pyo3",
  "reqwest 0.12.28",
@@ -6527,7 +6527,7 @@ dependencies = [
 [[package]]
 name = "scouter-macro"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "thiserror 2.0.18",
 ]
@@ -6535,7 +6535,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6552,7 +6552,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6574,7 +6574,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "pyo3",
  "semver",
@@ -6585,7 +6585,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -6599,7 +6599,7 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -6609,7 +6609,7 @@ dependencies = [
 [[package]]
 name = "scouter-tonic"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "prost",
  "prost-types",
@@ -6628,7 +6628,7 @@ dependencies = [
 [[package]]
 name = "scouter-tracing"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6654,7 +6654,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#be24a6f4ae9e98b6fd1524fe49ea78d504043e74"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
 dependencies = [
  "base64 0.22.1",
  "chrono",
