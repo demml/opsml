@@ -156,7 +156,7 @@
   <div class="sticky top-0 z-10 flex-shrink-0 bg-surface-50 border-b-2 border-black">
     <div class="flex">
       <!-- Left column label -->
-      <div class="w-[38%] min-w-[260px] flex items-center px-3 py-1.5 border-r-1 border-black">
+      <div class="w-[44%] min-w-[260px] flex items-center px-3 py-1.5 border-r-1 border-black">
         <span class="text-xs font-black uppercase tracking-widest text-black">Span</span>
       </div>
       <!-- Timeline marks -->

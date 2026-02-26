@@ -71,23 +71,6 @@ a2a_app.add_middleware(
 )
 
 
-# Custom middleware to extract headers and log them
-@a2a_app.middleware("http")
-async def log_request_headers(request, call_next):
-    """Log incoming headers for debugging."""
-    if request.method == "POST":
-        message_id = request.headers.get("x-message-id")
-        request_id = request.headers.get("x-request-id")
-
-        if message_id or request_id:
-            print(f"\n=== Incoming Request ===")
-            print(f"Headers - Message-ID: {message_id}, Request-ID: {request_id}")
-            print(f"Path: {request.url.path}")
-
-    response = await call_next(request)
-    return response
-
-
 # Add custom healthcheck endpoints for production deployment
 @a2a_app.route("/health", methods=["GET"])
 async def health_check(request):
