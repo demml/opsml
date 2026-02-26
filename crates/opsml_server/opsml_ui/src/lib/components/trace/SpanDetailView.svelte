@@ -38,6 +38,7 @@
   const parsedOutput = $derived(parseSpanJson(span.output));
   const spanMap = $derived(new Map(allSpans.map(s => [s.span_id, s])));
   const isSlowest = $derived(slowestSpan && span.span_id === slowestSpan.span_id);
+  let copied = $state(false);
 
   // LLM-specific attributes
   const tokenAttrs = $derived((() => {
@@ -109,6 +110,12 @@
     const next = new Set(collapsedResourceGroups);
     if (next.has(ns)) next.delete(ns); else next.add(ns);
     collapsedResourceGroups = next;
+  }
+
+  function copyJson(rawJson: string) {
+    navigator.clipboard.writeText(rawJson);
+    copied = true;
+    setTimeout(() => copied = false, 2000);
   }
 
   // ─── Tab state ─────────────────────────────────────────────────────────────
@@ -365,6 +372,7 @@
                   <div class="bg-surface-50 rounded-base border-2 border-black shadow-small text-xs overflow-hidden">
                     <CodeBlock code={JSON.stringify(parsedOutput, null, 2)} showLineNumbers={false} lang="json" prePadding="p-2" />
                   </div>
+
                 {/if}
               </div>
             {/key}
@@ -511,8 +519,17 @@
                 </button>
                 <!-- JSON codeblock -->
                 {#if !isCollapsed}
-                  <div class="bg-surface-50 text-xs overflow-hidden">
-                    <CodeBlock code={attrsToJson(attrs)} showLineNumbers={false} lang="json" prePadding="p-3" />
+                  <div class="bg-surface-50 text-xs overflow-hidden relative">
+                    <button
+                      class="absolute p-2 top-4 right-4 btn btn-sm bg-white border-2 border-black shadow-small z-20 hover:bg-slate-50 active:translate-y-[2px] active:shadow-none transition-all"
+                      onclick={() => copyJson(attrsToJson(attrs))}
+                      aria-label="Copy JSON"
+                    >
+                        <Copy class="w-4 h-4" color="black"/>
+                    </button>
+                    <div class="bg-surface-50 text-xs overflow-hidden">
+                      <CodeBlock code={attrsToJson(attrs)} showLineNumbers={false} lang="json" prePadding="p-3" />
+                    </div>
                   </div>
                 {/if}
               </div>
@@ -570,8 +587,17 @@
                   {/if}
                 </button>
                 {#if !isCollapsed}
-                  <div class="bg-surface-50 text-xs overflow-hidden">
-                    <CodeBlock code={attrsToJson(attrs)} showLineNumbers={false} lang="json" prePadding="p-3" />
+                  <div class="bg-surface-50 text-xs overflow-hidden relative">
+                    <button
+                      class="absolute p-2 top-4 right-4 btn btn-sm bg-white border-2 border-black shadow-small z-20 hover:bg-slate-50 active:translate-y-[2px] active:shadow-none transition-all"
+                      onclick={() => copyJson(attrsToJson(attrs))}
+                      aria-label="Copy JSON"
+                    >
+                        <Copy class="w-4 h-4" color="black"/>
+                    </button>
+                    <div class="bg-surface-50 text-xs overflow-hidden">
+                      <CodeBlock code={attrsToJson(attrs)} showLineNumbers={false} lang="json" prePadding="p-3" />
+                    </div>
                   </div>
                 {/if}
               </div>
