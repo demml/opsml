@@ -10,13 +10,99 @@ import {
   type MonitoringErrorKind,
 } from "$lib/components/scouter/dashboard/utils";
 import { getDriftProfileExists } from "$lib/components/scouter/utils";
+import { RegistryType } from "$lib/utils";
+import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
+import type { AgentPromptEvalData } from "$lib/components/card/agent/evaluation/types";
 
 export const load: PageLoad = async ({ parent, fetch }) => {
   const parentData = await parent();
-  const { registryType, metadata, eval_profile, settings } = parentData;
+  const { registryType, metadata, eval_profile, promptCardsWithEval, settings } = parentData;
 
   const timeRange = getTimeRange();
 
+  // ── Agent registry: load evaluation data for each prompt card ──
+  if (registryType === RegistryType.Agent) {
+    const cards = (promptCardsWithEval ?? []) as PromptCard[];
+
+    const agentPromptEvals: AgentPromptEvalData[] = await Promise.all(
+      cards.map(async (promptCard) => {
+        const profile = promptCard.eval_profile!;
+
+        if (!settings?.scouter_enabled) {
+          const errorData: Extract<GenAIMonitoringPageData, { status: "error" }> = {
+            status: "error",
+            uid: promptCard.uid,
+            registryType,
+            selectedTimeRange: timeRange,
+            errorMsg: "Scouter is not enabled.",
+            errorKind: "not_enabled",
+            profile,
+          };
+          return { promptCard, monitoringData: errorData };
+        }
+
+        const profileExists = await getDriftProfileExists(fetch, {
+          name: promptCard.name,
+          space: promptCard.space,
+          version: promptCard.version,
+          drift_type: DriftType.GenAI,
+        });
+
+        if (!profileExists) {
+          const errorData: Extract<GenAIMonitoringPageData, { status: "error" }> = {
+            status: "error",
+            uid: promptCard.uid,
+            registryType,
+            selectedTimeRange: timeRange,
+            errorMsg: "No evaluation profile found for this prompt.",
+            errorKind: "not_found",
+            profile,
+          };
+          return { promptCard, monitoringData: errorData };
+        }
+
+        try {
+          const selectedData = await loadGenAIData(fetch, profile, timeRange);
+          const monitoringData: Extract<GenAIMonitoringPageData, { status: "success" }> = {
+            status: "success",
+            profile,
+            profileUri: "",
+            selectedData,
+            uid: promptCard.uid,
+            registryType,
+            selectedTimeRange: timeRange,
+          };
+          return { promptCard, monitoringData };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Unknown monitoring error";
+          console.error(`[Agent Eval Load Error] ${promptCard.name}: ${message}`, err);
+          const errorKind: MonitoringErrorKind = classifyError(err);
+          const errorData: Extract<GenAIMonitoringPageData, { status: "error" }> = {
+            status: "error",
+            uid: promptCard.uid,
+            registryType,
+            selectedTimeRange: timeRange,
+            errorMsg: message,
+            errorKind,
+            profile,
+          };
+          return { promptCard, monitoringData: errorData };
+        }
+      })
+    );
+
+    return {
+      registryType,
+      metadata,
+      driftType: DriftType.GenAI,
+      // Agent-specific
+      agentPromptEvals,
+      // Not used for agents
+      monitoringData: undefined,
+    };
+  }
+
+  // ── Prompt registry: existing single-card evaluation flow ──
   if (!settings?.scouter_enabled) {
     const errorData: Extract<GenAIMonitoringPageData, { status: "error" }> = {
       status: "error",
@@ -32,6 +118,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       driftType: DriftType.GenAI,
       metadata,
       registryType,
+      agentPromptEvals: undefined,
     };
   }
 
@@ -59,6 +146,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       driftType: DriftType.GenAI,
       metadata,
       registryType,
+      agentPromptEvals: undefined,
     };
   }
 
@@ -83,6 +171,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       metadata,
       driftType: DriftType.GenAI,
       registryType,
+      agentPromptEvals: undefined,
     };
   } catch (err) {
     const message =
@@ -106,6 +195,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       driftType: DriftType.GenAI,
       metadata,
       registryType,
+      agentPromptEvals: undefined,
     };
   }
 };

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { IdCard, FolderTree, Tag, Search, MessageSquare } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Search, MessageSquare, Activity } from 'lucide-svelte';
   import { page } from '$app/state';
   import { getRegistryPath } from '$lib/utils';
   import type { RegistryType } from '$lib/utils';
@@ -17,16 +17,22 @@
     metadata: ServiceMetadata;
     registryType: RegistryType;
     children: Snippet;
+    /** Whether any associated prompt cards have eval profiles (agent registry only) */
+    hasEvalProfiles?: boolean;
   }
 
-  let { metadata, registryType, children }: ServiceLayoutProps = $props();
+  let { metadata, registryType, children, hasEvalProfiles = false }: ServiceLayoutProps = $props();
 
   /**
    * Determines the active tab based on the current URL path
    * Service-specific tabs: card, files, versions (minimal set for service management)
    */
   let activeTab = $derived.by(() => {
-    const last = page.url.pathname.split('/').pop() ?? '';
+    const parts = page.url.pathname.split('/');
+    const last = parts[parts.length - 1] ?? '';
+    const secondLast = parts[parts.length - 2] ?? '';
+    // evaluation may have nested routes
+    if (secondLast === 'evaluation' || last === 'evaluation') return 'evaluation';
     if (['card', 'files', 'observability', 'versions', 'view', 'playground'].includes(last)) return last;
     return 'card';
   });
@@ -79,24 +85,40 @@
   ];
 
   /**
-   * Conditionally add Playground tab for agent registry type
+   * Conditionally add Playground and Evaluation tabs for agent registry type.
+   * Evaluation tab is only shown when scouter is enabled and prompt cards have eval profiles.
    */
-  const navItems = $derived(
-    registryType === 'agent'
-      ? [
-          baseNavItems[0], // Card
-          {
-            key: 'playground',
-            label: 'Playground',
-            icon: MessageSquare,
-            isActive: (tab: string) => tab === 'playground',
-            iconProps: undefined,
-            description: 'Interact with the agent'
-          },
-          ...baseNavItems.slice(1) // Files, Observability, Versions
-        ]
-      : baseNavItems
-  );
+  const navItems = $derived.by(() => {
+    if (registryType !== 'agent') return baseNavItems;
+
+    const agentItems = [
+      baseNavItems[0], // Card
+      {
+        key: 'playground',
+        label: 'Playground',
+        icon: MessageSquare,
+        isActive: (tab: string) => tab === 'playground',
+        iconProps: undefined,
+        description: 'Interact with the agent'
+      },
+      ...baseNavItems.slice(1) // Files, Observability, Versions
+    ];
+
+    // Insert Evaluation tab after Playground when conditions are met
+    if (hasEvalProfiles && (uiSettingsStore.scouterEnabled || dev)) {
+      agentItems.splice(2, 0, {
+        key: 'evaluation',
+        label: 'Evaluation',
+        icon: Activity,
+        //@ts-ignore
+        isActive: (tab: string) => tab === 'evaluation',
+        iconProps: undefined,
+        description: 'View prompt evaluation dashboards'
+      });
+    }
+
+    return agentItems;
+  });
 
   const iconColor = '#8059b6';
 </script>

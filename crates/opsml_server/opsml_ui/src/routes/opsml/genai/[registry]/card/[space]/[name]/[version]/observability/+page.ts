@@ -13,20 +13,31 @@ import {
   calculateTimeRange,
 } from "$lib/components/trace/utils";
 import { getEvalProfileOrUid } from "$lib/components/card/card_interfaces/enum";
+import type { CardMetadata } from "$lib/server/card/layout";
+import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
+import type { ServiceCard } from "$lib/components/card/card_interfaces/servicecard";
+import { RegistryType } from "$lib/utils";
 
 export const ssr = false;
 
 export const load: PageLoad = async ({ fetch, depends, parent }) => {
   const parentData = await parent();
-  const { metadata } = parentData;
-
-  // entity uid is based on eval profile
-  // TODO - how can we make it based on card in the future
+  const metadata = parentData.metadata as CardMetadata;
 
   try {
     depends("trace:data");
 
-    const entity_uid = getEvalProfileOrUid(metadata);
+    if (
+      metadata.registry_type !== RegistryType.Prompt &&
+      metadata.registry_type !== RegistryType.Service
+    ) {
+      throw new Error(
+        `Observability is not supported for ${metadata.registry_type} cards`,
+      );
+    }
+    const card = metadata as PromptCard | ServiceCard;
+
+    const entity_uid = getEvalProfileOrUid(card);
     const selectedRange = getCookie("trace_range") || "15min";
 
     const { startTime, endTime, bucketInterval } =
