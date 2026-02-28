@@ -11,39 +11,51 @@
     onClose: () => void;
   } = $props();
 
-  let isClosing = $state(false);
-
-  function handleClose() {
-    isClosing = true;
-    setTimeout(() => {
-      onClose();
-    }, 20);
-  }
+  let visible = $state(false);
 
   onMount(() => {
     document.body.style.overflow = 'hidden';
+    requestAnimationFrame(() => { visible = true; });
   });
 
   onDestroy(() => {
     document.body.style.overflow = '';
   });
+
+  function handleClose() {
+    visible = false;
+    setTimeout(onClose, 200);
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') handleClose();
+  }
+
+  function handleBackdropClick(e: MouseEvent) {
+    if (e.target === e.currentTarget) handleClose();
+  }
 </script>
 
-<!-- Backdrop -->
+<!-- Backdrop: starts below navbar, overlays subnav like trace sidebar -->
 <div
-  class="fixed inset-0 bg-opacity-30 z-40 transition-opacity duration-300"
-  class:opacity-0={isClosing}
-  onclick={handleClose}
-  onkeydown={(e) => e.key === 'Escape' && handleClose()}
-  role="button"
-  tabindex="-1"
-  aria-label="Close panel backdrop"
-></div>
-
-<!-- Side Panel -->
-<div
-  class="fixed top-0 right-0 h-full w-full lg:w-3/5 xl:w-2/4 bg-white border-l-4 border-black shadow-2xl z-50 flex flex-col transition-transform duration-300"
-  class:translate-x-full={isClosing}
+  role="dialog"
+  aria-modal="true"
+  aria-label="Record detail"
+  class="fixed top-14 inset-0 z-50 flex justify-end transition-opacity duration-200 ease-out {visible ? 'opacity-100' : 'opacity-0'}"
+  onkeydown={handleKeydown}
+  onclick={handleBackdropClick}
+  onmousedown={(e) => { if (e.target === e.currentTarget) e.preventDefault(); }}
+  style="background: rgba(0,0,0,0.35);"
+  tabindex=0
 >
-  <GenAIEvalRecordContent record={selectedRecord} onClose={handleClose} showCloseButton={true} />
+  <!-- Right-side drawer panel -->
+  <div
+    class="flex flex-col h-full bg-surface-50 border-l-4 border-black shadow transition-transform duration-200 ease-out {visible ? 'translate-x-0' : 'translate-x-full'}"
+    style="width: 80%;"
+    role="presentation"
+    onclick={(e) => e.stopPropagation()}
+    onmousedown={(e) => e.stopPropagation()}
+  >
+    <GenAIEvalRecordContent record={selectedRecord} onClose={handleClose} showCloseButton={true} />
+  </div>
 </div>
