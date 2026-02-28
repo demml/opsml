@@ -83,7 +83,7 @@ export interface ServiceCard {
   opsml_version: string;
   app_env: string;
   is_card: boolean;
-  registry_type: RegistryType;
+  registry_type: RegistryType.Service | RegistryType.Mcp | RegistryType.Agent;
   experimentcard_uid?: string;
   service_type: ServiceType;
   metadata?: ServiceMetadata;
