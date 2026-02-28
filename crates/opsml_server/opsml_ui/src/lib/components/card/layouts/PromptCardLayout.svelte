@@ -44,22 +44,6 @@
     (metadata.eval_profile && uiSettingsStore.scouterEnabled) || dev
   );
 
-  /// determine base path for evaluation links
-  // if metadata.metadata.drift_profile_uri_map exists and scouter is enabled, get the first drift type from the map
-  // example profile map: {"genai":{"drift_type":"GenAI","root_dir":"drift","uri":"drift/genai.json"}}
-  // iterate over map and get first drift type at key "drift_type"
-  let evaluationBasePath = $derived(() => {
-    if (metadata.metadata.drift_profile_uri_map && uiSettingsStore.scouterEnabled) {
-      const driftTypes = Object.values(metadata.metadata.drift_profile_uri_map).map(
-        (profile: any) => profile.drift_type.toLowerCase()
-      );
-      if (driftTypes.length > 0) {
-        return `evaluation/${driftTypes[0]}`;
-      }
-    }
-    return 'evaluation';
-  });
-
   /**
    * Base path for navigation links
    */

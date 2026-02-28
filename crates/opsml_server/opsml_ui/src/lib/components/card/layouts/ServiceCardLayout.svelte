@@ -4,6 +4,8 @@
   import { page } from '$app/state';
   import { getRegistryPath } from '$lib/utils';
   import type { RegistryType } from '$lib/utils';
+  import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
+  import { dev } from '$app/environment';
 
   interface ServiceMetadata {
     space: string;
@@ -28,6 +30,10 @@
     if (['card', 'files', 'observability', 'versions', 'view', 'playground'].includes(last)) return last;
     return 'card';
   });
+
+  let showObservability = $derived(
+    uiSettingsStore.scouterEnabled || dev
+  );
 
   /**
    * Base path for navigation links
@@ -130,16 +136,20 @@
     >
       {#each navItems as item}
         {@const isActive = item.isActive(activeTab)}
-        <a
-          href={`${basePath}/${item.key}`}
-          class="flex items-center gap-x-2 border-b-3 {isActive ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors"
-          data-sveltekit-preload-data="hover"
-          aria-current={isActive ? 'page' : undefined}
-          title={item.description}
-        >
-          <item.icon color={iconColor} size={16} {...(item.iconProps || {})} />
-          <span>{item.label}</span>
-        </a>
+        {#if item.key === 'observability' && !showObservability}
+          <!-- Skip rendering Observability tab if scouter is not enabled -->
+        {:else}
+          <a
+            href={`${basePath}/${item.key}`}
+            class="flex items-center gap-x-2 border-b-3 {isActive ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors"
+            data-sveltekit-preload-data="hover"
+            aria-current={isActive ? 'page' : undefined}
+            title={item.description}
+          >
+            <item.icon color={iconColor} size={16} {...(item.iconProps || {})} />
+            <span>{item.label}</span>
+          </a>
+        {/if}
       {/each}
     </nav>
   </div>
