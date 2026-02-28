@@ -6,22 +6,12 @@
   import { getRegistryPath } from '$lib/utils';
   import { dev } from '$app/environment';
   import type { RegistryType } from '$lib/utils';
+  import type { CardMetadata } from '$lib/server/card/layout';
+  import type { ModelCard } from '../card_interfaces/modelcard';
 
-  interface CardMetadata {
-    space: string;
-    name: string;
-    version: string;
-    metadata: {
-      interface_metadata: {
-        save_metadata: {
-          drift_profile_uri_map?: any;
-        };
-      };
-    };
-  }
-
+  
   interface CardLayoutProps {
-    metadata: CardMetadata;
+    metadata: ModelCard;
     registryType: RegistryType;
     children: Snippet;
   }
