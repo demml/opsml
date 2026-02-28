@@ -24,7 +24,7 @@
     expanded?: boolean;
   }
 
-  let { promptCard, monitoringData: initialData, expanded = true }: Props = $props();
+  let { promptCard, monitoringData: initialData, expanded = false }: Props = $props();
 
   let monitoringData = $state<GenAIMonitoringPageData>(initialData);
   let isRefreshing = $state(false);
