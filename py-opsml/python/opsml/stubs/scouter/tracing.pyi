@@ -460,6 +460,15 @@ class ActiveSpan:
                 The attribute value.
         """
 
+    def set_entity(self, entity_id: str) -> None:
+        """Convenience method to set attributes on the active span for a specific entity.
+        This allows for easy indexing and querying of spans associated with specific entities in the backend.
+
+        Args:
+            entity_id (str):
+                The unique identifier for the entity.
+        """
+
     def set_tag(self, key: str, value: str) -> None:
         """Set a tag on the active span. Tags are similar to attributes
         except they are often used for indexing and searching spans/traces.

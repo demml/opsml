@@ -40,6 +40,10 @@
     (metadata.eval_profile && uiSettingsStore.scouterEnabled) || dev
   );
 
+  let showObservability = $derived(
+    (metadata.eval_profile && uiSettingsStore.scouterEnabled) || dev
+  );
+
   /// determine base path for evaluation links
   // if metadata.metadata.drift_profile_uri_map exists and scouter is enabled, get the first drift type from the map
   // example profile map: {"genai":{"drift_type":"GenAI","root_dir":"drift","uri":"drift/genai.json"}}
@@ -118,15 +122,17 @@
         </a>
       {/if}
 
-      <a
-        class="flex items-center gap-x-2 border-b-3 {activeTab === 'observability' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-        href={`${basePath}/observability`}
-        data-sveltekit-preload-data="hover"
-        aria-current={activeTab === 'observability' ? 'page' : undefined}
-      >
-        <Search color="#8059b6" size={16} />
-        <span>Observability</span>
-      </a>
+      {#if showObservability}
+        <a
+          class="flex items-center gap-x-2 border-b-3 {activeTab === 'observability' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
+          href={`${basePath}/observability`}
+          data-sveltekit-preload-data="hover"
+          aria-current={activeTab === 'observability' ? 'page' : undefined}
+        >
+          <Search color="#8059b6" size={16} />
+          <span>Observability</span>
+        </a>
+      {/if}
 
       <a
         class="flex items-center gap-x-2 border-b-3 {activeTab === 'files' || activeTab === 'view' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors"

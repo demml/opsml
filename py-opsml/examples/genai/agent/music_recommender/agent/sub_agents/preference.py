@@ -25,9 +25,7 @@ def before_preference_callback(
 
     print("Preference keys: ", current_state.keys())
 
-    with cast(
-        ActiveSpan, tracer.start_as_current_span("before_preference_callback")
-    ) as span:
+    with cast(ActiveSpan, tracer.start_as_current_span("before_preference_callback")) as span:
         span.set_attribute("agent.name", agent_name)
         span.set_attribute("invocation.id", invocation_id)
         span.set_attribute("state", current_state)

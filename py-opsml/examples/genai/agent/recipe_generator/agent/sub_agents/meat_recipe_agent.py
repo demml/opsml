@@ -1,21 +1,27 @@
 from agent.lifespan import prompts
 from google.adk.agents.llm_agent import Agent
 from google.adk.agents.callback_context import CallbackContext
-from typing import Optional
+from typing import Optional, cast
 from google.adk.models import LlmResponse
 from .models import Recipe
+from opentelemetry import trace
+from opsml.scouter.tracing import ActiveSpan
+from opsml.card import PromptCard
 
 
 def after_model_callback(
     callback_context: CallbackContext,
     llm_response: LlmResponse,
 ) -> Optional[LlmResponse]:
-    """Example of an after_agent_callback that could be used to log or process the output of the meat_recipe_agent."""
-    agent_name = callback_context.agent_name
-    print(f"[Meat Callback] After model call for agent: {agent_name}")
-    print(f"[Meat Callback] Original LLM response: {llm_response.model_dump_json()}")
+    """Example of an after_agent_callback that could be used to log or process the output of the vegan_recipe_agent."""
 
-    return None  # Return None to keep the original output, or return new Content to replace it
+    tracer = trace.get_tracer("meat_recipe")
+
+    with cast(ActiveSpan, tracer.start_as_current_span("meat_id")) as span:
+        meat_card = cast(PromptCard, prompts.meat)
+        if meat_card.eval_profile:
+            span.set_entity(meat_card.eval_profile.uid)
+        return None
 
 
 meat_recipe_agent = Agent(

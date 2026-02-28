@@ -37,10 +37,7 @@ def get_app_state() -> tuple[AppState, Prompts]:
     assert service is not None, f"Service config not found in app at {config.app_path}"
 
     # instrument with Scouter tracing for monitoring and evaluation of lifespan events
-    app.instrument(
-        exporter=GrpcSpanExporter(),
-        batch_config=BatchConfig(scheduled_delay_ms=200),
-    )
+    app.instrument(batch_config=BatchConfig(scheduled_delay_ms=200))
 
     prompts = Prompts(
         pattern=cast(PromptCard, app.service["pattern_prompt"]),

@@ -29,12 +29,11 @@
 
   async function getTraceMetrics(): Promise<TraceMetricBucket[]> {
     const metricsRequest: TraceMetricsRequest = {
-      service_name: filters.filters.service_name,
-      start_time: filters.filters.start_time,
-      end_time: filters.filters.end_time,
       bucket_interval: filters.bucket_interval,
-      attribute_filters: filters.filters.attribute_filters,
+      ...filters.filters,
     };
+
+    console.log('Fetching trace metrics with request:', metricsRequest);
 
     let traceMetrics = await getServerTraceMetrics(fetch, metricsRequest);
     return traceMetrics.metrics;
@@ -71,6 +70,7 @@
           },
         };
       }
+
       [traceMetrics, tracePage] = await Promise.all([
         getTraceMetrics(),
         getTracePage()
@@ -278,9 +278,8 @@
         <span class="text-xs font-black uppercase tracking-widest text-black">Metrics</span>
         <div class="flex-1 h-px bg-black opacity-10"></div>
       </div>
-      <TraceCharts buckets={traceMetrics} />
+        <TraceCharts buckets={traceMetrics} />
     </div>
-
     <!-- Traces Section -->
     <div>
       <div class="flex items-center gap-2 mb-3">

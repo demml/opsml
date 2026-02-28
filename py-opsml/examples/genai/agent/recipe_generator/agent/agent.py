@@ -21,21 +21,6 @@ from agent.sub_agents import (
     vegan_recipe_agent,
     dessert_recipe_agent,
 )
-from google.adk.agents.callback_context import CallbackContext
-from typing import Optional
-from google.adk.models import LlmResponse
-
-
-def after_model_callback(
-    callback_context: CallbackContext,
-    llm_response: LlmResponse,
-) -> Optional[LlmResponse]:
-    """Example of an after_agent_callback that could be used to log or process the output of the root recipe agent."""
-    agent_name = callback_context.agent_name
-    print(f"[Recipe Callback] After model call for agent: {agent_name}")
-    print(f"[Recipe Callback] Original LLM response: {llm_response.model_dump_json()}")
-
-    return None  # Return None to keep the original output, or return new Content to replace it
 
 
 agent_card = app.service.agent_card()
@@ -48,7 +33,6 @@ root_agent = LlmAgent(
     ],
     description="Recipe generator agent that creates meal and dessert recipes based on user preferences and dietary restrictions.",
     instruction=prompts.recipe.prompt.messages[0].text,
-    after_model_callback=after_model_callback,
 )
 
 # Convert to A2A-compatible Starlette app
@@ -73,6 +57,4 @@ a2a_app.add_middleware(
 @a2a_app.route("/health", methods=["GET"])
 async def health_check(request):
     """Basic health check endpoint for load balancers."""
-    return JSONResponse(
-        {"status": "healthy", "service": "music-recommender-agent", "version": "1.0.0"}
-    )
+    return JSONResponse({"status": "healthy", "service": "music-recommender-agent", "version": "1.0.0"})

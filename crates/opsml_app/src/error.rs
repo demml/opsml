@@ -119,6 +119,9 @@ pub enum AppError {
 
     #[error(transparent)]
     ScouterTypeError(#[from] scouter_client::TypeError),
+
+    #[error("Transport config not found in app kwargs or queue")]
+    TransportConfigNotFound,
 }
 
 impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for AppError {
