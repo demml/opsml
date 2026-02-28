@@ -6,22 +6,17 @@
   import type { RegistryType } from '$lib/utils';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
   import { dev } from '$app/environment';
-
-  interface ServiceMetadata {
-    space: string;
-    name: string;
-    version: string;
-  }
+  import type { ServiceCard } from '../card_interfaces/servicecard';
 
   interface ServiceLayoutProps {
-    metadata: ServiceMetadata;
+    data: any; // from parent
     registryType: RegistryType;
     children: Snippet;
-    /** Whether any associated prompt cards have eval profiles (agent registry only) */
-    hasEvalProfiles?: boolean;
   }
 
-  let { metadata, registryType, children, hasEvalProfiles = false }: ServiceLayoutProps = $props();
+  let { data, registryType, children }: ServiceLayoutProps = $props();
+  let metadata: ServiceCard = data.metadata;
+  let showEvalTab: boolean = data.showEvalTab;
 
   /**
    * Determines the active tab based on the current URL path
@@ -105,7 +100,7 @@
     ];
 
     // Insert Evaluation tab after Playground when conditions are met
-    if (hasEvalProfiles && (uiSettingsStore.scouterEnabled || dev)) {
+    if (showEvalTab && (uiSettingsStore.scouterEnabled || dev)) {
       agentItems.splice(2, 0, {
         key: 'evaluation',
         label: 'Evaluation',

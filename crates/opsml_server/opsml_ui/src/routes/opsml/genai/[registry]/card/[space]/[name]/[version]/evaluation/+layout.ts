@@ -36,31 +36,13 @@ async function fetchPromptCardMetadata(
 
 export const load: LayoutLoad = async ({ parent, fetch }) => {
   const parentData = await parent();
-  const { registryType, metadata } = parentData;
+  const { registryType, metadata, promptCardsWithEval } = parentData;
 
   // ── Agent registry: collect all associated prompt cards that have eval profiles ──
   if (registryType === RegistryType.Agent) {
-    const serviceCard = metadata as ServiceCard;
-    const associatedCards: Card[] = serviceCard.cards?.cards ?? [];
-
-    console.log(`Cards: ${JSON.stringify(associatedCards)}`); // Debug log
-
-    // Fetch metadata for all associated prompt cards in parallel
-    const promptCardResults = await Promise.all(
-      associatedCards
-        .filter((c) => c.registry_type === "Prompt")
-        .map((c) => fetchPromptCardMetadata(fetch, c)),
-    );
-
     console.log(
-      `Successfully fetched metadata for ${promptCardResults.filter(Boolean).length} prompt cards`,
-    ); // Debug log
-
-    // Collect prompt cards that have eval profiles
-    const promptCardsWithEval: PromptCard[] = promptCardResults.filter(
-      (card): card is PromptCard => card !== null && !!card.eval_profile,
+      "Agent card layout load - checking associated prompt cards for eval profiles",
     );
-
     if (promptCardsWithEval.length === 0) {
       throw redirect(
         303,
@@ -71,9 +53,7 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
     return {
       registryType,
       metadata,
-      // Agent-specific: list of prompt cards with their eval profiles
       promptCardsWithEval,
-      // Not used for agents but kept for type compatibility with prompt route
       eval_profile: undefined,
     };
   }
@@ -99,6 +79,6 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
     registryType,
     metadata,
     eval_profile,
-    promptCardsWithEval: undefined,
+    promptCardsWithEval,
   };
 };
