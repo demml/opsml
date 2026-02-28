@@ -1162,20 +1162,20 @@ class PromptCard:
         """
 
     @property
-    def eval_profile(self) -> "DriftProfileMap":
-        """Return the drift profile map from the model interface.
+    def eval_profile(self) -> "Optional[GenAIEvalProfile]":
+        """Returns the GenAIEvalProfile associated with this prompt card, if it exists.
 
         Returns:
-            DriftProfileMap
+            Optional[GenAIEvalProfile]
         """
 
     @eval_profile.setter
-    def eval_profile(self, eval_profile: "DriftProfileMap") -> None:
+    def eval_profile(self, eval_profile: "GenAIEvalProfile") -> None:
         """Set the drift profile map for the prompt card.
 
         Args:
-            eval_profile (DriftProfileMap):
-                The drift profile map to set.
+            eval_profile (GenAIEvalProfile):
+                The GenAIEvalProfile to set for the prompt card.
         """
 
 class Card:

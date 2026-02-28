@@ -23,9 +23,7 @@ def before_recommendation_callback(
     invocation_id = callback_context.invocation_id
     current_state = callback_context.state.to_dict()
 
-    with cast(
-        ActiveSpan, tracer.start_as_current_span("pre_recommendation_callback")
-    ) as span:
+    with cast(ActiveSpan, tracer.start_as_current_span("pre_recommendation_callback")) as span:
         span.set_attribute("agent.name", agent_name)
         span.set_attribute("invocation.id", invocation_id)
         span.set_attribute("state", current_state)
@@ -47,9 +45,7 @@ def after_recommendation_callback(
     invocation_id = callback_context.invocation_id
     current_state = callback_context.state.to_dict()
 
-    with cast(
-        ActiveSpan, tracer.start_as_current_span("recommendation_callback")
-    ) as span:
+    with cast(ActiveSpan, tracer.start_as_current_span("recommendation_callback")) as span:
         span.set_attribute("agent.name", agent_name)
         span.set_attribute("invocation.id", invocation_id)
 

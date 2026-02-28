@@ -74,3 +74,32 @@ prompt:
       - prep_time_minutes
       - servings
     additionalProperties: false
+evaluation:
+  alias: dessert_eval
+  tasks:
+    - task_type: Assertion
+      id: validate_ingredients
+      context_path: recipe.ingredients
+      operator: HasLengthGreaterThan
+      expected_value: 0
+      description: "Verifies recipe contains at least one ingredient"
+      depends_on: []
+      condition: false
+
+    - task_type: Assertion
+      id: validate_directions
+      context_path: recipe.directions
+      operator: HasLengthGreaterThan
+      expected_value: 0
+      description: "Verifies recipe contains at least one direction step"
+      depends_on: []
+      condition: false
+
+    - task_type: Assertion
+      id: validate_prep_time
+      context_path: recipe.prep_time_minutes
+      operator: LessThan
+      expected_value: 120
+      description: "Verifies recipe prep time is less than 120 minutes"
+      depends_on: []
+      condition: false

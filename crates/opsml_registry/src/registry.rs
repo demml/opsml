@@ -754,12 +754,37 @@ impl CardRegistry {
         let create_response = self._register_card_rs(card, version_type)?;
 
         // Update card attributes
-        debug!("Updating card with server response");
-        Self::update_card_with_server_response_rs(&create_response, card)?;
+        if let Err(e) = self.update_card_and_save_rs(card, &create_response) {
+            Self::rollback_card(&self.registry, &create_response)?;
 
-        //register promptcard drift profile with scouter if integration is enabled and registry type is prompt
+            // raise error
+            return Err(e);
+        }
+
+        debug!("Successfully registered card");
+        Ok(())
+    }
+
+    fn update_card_and_save_rs<T>(
+        &self,
+        card: &mut T,
+        response: &CreateCardResponse,
+    ) -> Result<(), RegistryError>
+    where
+        T: OpsmlCard + ProfileExt,
+    {
+        // Update card attributes
+        debug!("Updating card with server response");
+        Self::update_card_with_server_response_rs(response, card)?;
+
+        // Helper function for handling integrations with other services
+        // For example, Opsml will allow a user to register and store a Scouter drift profile
+        // with a modelcard. However, this drift profile still needs to be registered with Scouter
+        // so we can preform model monitoring and drift detection
+        // This method also needs to be called before saving the card artifacts because Scouter will
+        // set the drift profile uid on the modelcard
         debug!("Uploading integration artifacts");
-        Self::upload_integration_artifacts_rs(&self.registry, &self.registry_type, card)?;
+        self.upload_integration_artifacts_rs(card)?;
 
         // Save card artifacts to temp path
         debug!("Saving card artifacts");
@@ -767,28 +792,26 @@ impl CardRegistry {
 
         // Save artifacts
         debug!("Uploading card artifacts");
-        upload_card_artifacts(tmp_path, &create_response.key)?;
+        upload_card_artifacts(tmp_path, &response.key)?;
 
-        debug!("Successfully registered card");
         Ok(())
     }
 
     #[instrument(skip_all)]
-    fn upload_integration_artifacts_rs<T>(
-        registry: &OpsmlCardRegistry,
-        registry_type: &RegistryType,
-        card: &mut T,
-    ) -> Result<(), RegistryError>
+    fn upload_integration_artifacts_rs<T>(&self, card: &mut T) -> Result<(), RegistryError>
     where
         T: OpsmlCard + ProfileExt,
     {
         // Can only upload profile for Prompt types when using cli
-        if registry_type == &RegistryType::Prompt {
+        if self.registry_type == RegistryType::Prompt {
             // ensure scouter integration is enabled before uploading artifacts
             debug!("Checking if Scouter service is enabled for integration");
-            if registry.check_service_health(IntegratedService::Scouter)? && card.has_profile() {
-                let profile_uid =
-                    Self::upload_scouter_artifacts_rs(registry, card, None, registry_type)?;
+            if self
+                .registry
+                .check_service_health(IntegratedService::Scouter)?
+                && card.has_profile()
+            {
+                let profile_uid = self.upload_scouter_artifacts_rs(card, None)?;
                 card.set_profile_uid(profile_uid)?;
             }
         }
@@ -797,10 +820,9 @@ impl CardRegistry {
 
     #[instrument(skip_all)]
     fn upload_scouter_artifacts_rs<T>(
-        registry: &OpsmlCardRegistry,
+        &self,
         card: &mut T,
         drift_args: Option<&DriftArgs>,
-        registry_type: &RegistryType,
     ) -> Result<String, RegistryError>
     where
         T: OpsmlCard + ProfileExt,
@@ -808,7 +830,7 @@ impl CardRegistry {
         // update drift config args before uploading profiles to scouter and saving
         card.update_drift_config_args()?;
 
-        match registry_type {
+        match self.registry_type {
             RegistryType::Prompt => {
                 let mut profile_request = card.get_profile_request()?;
 
@@ -822,7 +844,7 @@ impl CardRegistry {
                     profile_request.deactivate_others = true;
                 }
 
-                let registered_response = registry.insert_scouter_profile(&profile_request)?;
+                let registered_response = self.registry.insert_scouter_profile(&profile_request)?;
                 debug!("Successfully uploaded scouter profile");
 
                 Ok(registered_response.uid)
@@ -834,7 +856,7 @@ impl CardRegistry {
     }
 
     #[instrument(skip_all)]
-    fn save_card_artifacts_rs<T>(card: &T) -> Result<PathBuf, RegistryError>
+    fn save_card_artifacts_rs<T>(card: &mut T) -> Result<PathBuf, RegistryError>
     where
         T: OpsmlCard,
     {
