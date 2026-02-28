@@ -28,7 +28,9 @@ def after_model_callback(
     """Example of an after_agent_callback that could be used to log or process the output of the vegan_recipe_agent."""
 
     tracer = trace.get_tracer("vegan_callback")
-    with cast(ActiveSpan, tracer.start_as_current_span("vegan_recipe_evaluation")) as span:
+    with cast(
+        ActiveSpan, tracer.start_as_current_span("vegan_recipe_evaluation")
+    ) as span:
         recipe = parse_model_recipe_output(llm_response)
         if recipe:
             span.add_queue_item(
