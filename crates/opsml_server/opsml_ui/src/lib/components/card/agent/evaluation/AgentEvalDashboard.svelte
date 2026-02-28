@@ -60,7 +60,6 @@
       <AgentPromptEvalPanel
         promptCard={evalData.promptCard}
         monitoringData={evalData.monitoringData}
-        expanded={index === 0}
       />
     {/each}
   </div>
