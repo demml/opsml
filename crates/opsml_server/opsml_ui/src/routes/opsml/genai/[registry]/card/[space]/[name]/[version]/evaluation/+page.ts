@@ -16,20 +16,27 @@ import type { AgentPromptEvalData } from "$lib/components/card/agent/evaluation/
 
 export const load: PageLoad = async ({ parent, fetch }) => {
   const parentData = await parent();
-  const { registryType, metadata, eval_profile, promptCardsWithEval, settings } = parentData;
+  const {
+    registryType,
+    metadata,
+    eval_profile,
+    promptCardsWithEval,
+    settings,
+  } = parentData;
 
   const timeRange = getTimeRange();
 
   // ── Agent registry: load evaluation data for each prompt card ──
   if (registryType === RegistryType.Agent) {
-    const cards = (promptCardsWithEval ?? []) as PromptCard[];
-
     const agentPromptEvals: AgentPromptEvalData[] = await Promise.all(
-      cards.map(async (promptCard) => {
+      promptCardsWithEval.map(async (promptCard) => {
         const profile = promptCard.eval_profile!;
 
         if (!settings?.scouter_enabled) {
-          const errorData: Extract<GenAIMonitoringPageData, { status: "error" }> = {
+          const errorData: Extract<
+            GenAIMonitoringPageData,
+            { status: "error" }
+          > = {
             status: "error",
             uid: promptCard.uid,
             registryType,
@@ -49,7 +56,10 @@ export const load: PageLoad = async ({ parent, fetch }) => {
         });
 
         if (!profileExists) {
-          const errorData: Extract<GenAIMonitoringPageData, { status: "error" }> = {
+          const errorData: Extract<
+            GenAIMonitoringPageData,
+            { status: "error" }
+          > = {
             status: "error",
             uid: promptCard.uid,
             registryType,
@@ -63,7 +73,10 @@ export const load: PageLoad = async ({ parent, fetch }) => {
 
         try {
           const selectedData = await loadGenAIData(fetch, profile, timeRange);
-          const monitoringData: Extract<GenAIMonitoringPageData, { status: "success" }> = {
+          const monitoringData: Extract<
+            GenAIMonitoringPageData,
+            { status: "success" }
+          > = {
             status: "success",
             profile,
             profileUri: "",
@@ -74,10 +87,17 @@ export const load: PageLoad = async ({ parent, fetch }) => {
           };
           return { promptCard, monitoringData };
         } catch (err) {
-          const message = err instanceof Error ? err.message : "Unknown monitoring error";
-          console.error(`[Agent Eval Load Error] ${promptCard.name}: ${message}`, err);
+          const message =
+            err instanceof Error ? err.message : "Unknown monitoring error";
+          console.error(
+            `[Agent Eval Load Error] ${promptCard.name}: ${message}`,
+            err,
+          );
           const errorKind: MonitoringErrorKind = classifyError(err);
-          const errorData: Extract<GenAIMonitoringPageData, { status: "error" }> = {
+          const errorData: Extract<
+            GenAIMonitoringPageData,
+            { status: "error" }
+          > = {
             status: "error",
             uid: promptCard.uid,
             registryType,
@@ -88,7 +108,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
           };
           return { promptCard, monitoringData: errorData };
         }
-      })
+      }),
     );
 
     return {

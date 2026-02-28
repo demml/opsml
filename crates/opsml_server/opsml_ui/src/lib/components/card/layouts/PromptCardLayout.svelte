@@ -9,12 +9,14 @@
 
 
   interface PromptLayoutProps {
-    metadata: PromptCard;
+    data: any; // from parent
     registryType: string;
     children: Snippet;
   }
 
-  let { metadata, registryType, children }: PromptLayoutProps = $props();
+  let { data, registryType, children }: PromptLayoutProps = $props();
+  let metadata: PromptCard = data.metadata;
+  let showEvalTab: boolean = data.showEvalTab;
 
   /**
    * Determines the active tab based on the current URL path
@@ -37,11 +39,11 @@
    * Determines if evaluation tab should be shown based on metadata and settings
    */
   let showEvaluation = $derived(
-    (metadata.eval_profile && uiSettingsStore.scouterEnabled) || dev
+    showEvalTab && (uiSettingsStore.scouterEnabled || dev)
   );
 
   let showObservability = $derived(
-    (metadata.eval_profile && uiSettingsStore.scouterEnabled) || dev
+    showEvalTab && (uiSettingsStore.scouterEnabled || dev)
   );
 
   /**

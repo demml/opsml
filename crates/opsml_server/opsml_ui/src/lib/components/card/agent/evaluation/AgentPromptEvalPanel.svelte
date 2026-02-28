@@ -29,21 +29,26 @@
   let monitoringData = $state<GenAIMonitoringPageData>(initialData);
   let isRefreshing = $state(false);
   let isExpanded = $state(expanded);
+  let lastSeenSignal = $state(timeRangeState.refreshSignal);
 
   // Prompt card link to its own evaluation page
   let promptEvalPath = $derived(
     `/opsml/${getRegistryPath(RegistryType.Prompt)}/card/${promptCard.space}/${promptCard.name}/${promptCard.version}/evaluation`
   );
 
-  // React to global time range changes
+  // React to global time range changes and manual refresh signals
   $effect(() => {
+    if (isRefreshing) return;
     const newRange = timeRangeState.selectedTimeRange;
+    const signal = timeRangeState.refreshSignal;
     if (newRange && monitoringData.status === 'success') {
       const currentRange = monitoringData.selectedTimeRange;
-      if (
+      const rangeChanged =
         currentRange.startTime !== newRange.startTime ||
-        currentRange.endTime !== newRange.endTime
-      ) {
+        currentRange.endTime !== newRange.endTime;
+      const signalFired = signal !== lastSeenSignal;
+      if (rangeChanged || signalFired) {
+        lastSeenSignal = signal;
         monitoringData.selectedTimeRange = newRange;
         performRefresh();
       }

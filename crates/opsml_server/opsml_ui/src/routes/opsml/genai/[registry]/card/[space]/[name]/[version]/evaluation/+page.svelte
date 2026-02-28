@@ -21,16 +21,21 @@
   );
   let isRefreshing = $state(false);
   let currentMaxPoints = $state(typeof window !== 'undefined' ? getMaxDataPoints() : 0);
+  let lastSeenSignal = $state(timeRangeState.refreshSignal);
 
   $effect(() => {
     if (isAgent) return;
+    if (isRefreshing) return;
     const newRange = timeRangeState.selectedTimeRange;
+    const signal = timeRangeState.refreshSignal;
     if (newRange && monitoringData?.status === 'success') {
       const currentRange = monitoringData.selectedTimeRange;
-      if (
+      const rangeChanged =
         currentRange.startTime !== newRange.startTime ||
-        currentRange.endTime !== newRange.endTime
-      ) {
+        currentRange.endTime !== newRange.endTime;
+      const signalFired = signal !== lastSeenSignal;
+      if (rangeChanged || signalFired) {
+        lastSeenSignal = signal;
         monitoringData.selectedTimeRange = newRange;
         performRefresh();
       }

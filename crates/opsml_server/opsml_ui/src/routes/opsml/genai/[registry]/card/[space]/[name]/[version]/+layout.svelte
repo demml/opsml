@@ -37,7 +37,7 @@
 
 {#if data.metadata}
   <SelectedLayout
-    metadata={data.metadata as any}
+    data={data}
     registryType={data.registryType}
   >
     {@render children()}

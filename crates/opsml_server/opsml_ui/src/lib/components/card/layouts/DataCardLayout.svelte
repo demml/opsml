@@ -4,20 +4,17 @@
   import { page } from '$app/state';
   import { getRegistryPath } from '$lib/utils';
   import type { RegistryType } from '$lib/utils';
+  import type { DataCard } from '../card_interfaces/datacard';
 
-  interface DataMetadata {
-    space: string;
-    name: string;
-    version: string;
-  }
-
+  
   interface DataLayoutProps {
-    metadata: DataMetadata;
+    data: any; // from parent
     registryType: RegistryType;
     children: Snippet;
   }
 
-  let { metadata, registryType, children }: DataLayoutProps = $props();
+  let { data, registryType, children }: DataLayoutProps = $props();
+  let metadata: DataCard= data.metadata;
 
   /**
    * Determines the active tab based on the current URL path
