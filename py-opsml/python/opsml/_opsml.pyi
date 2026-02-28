@@ -10168,6 +10168,15 @@ class ActiveSpan:
                 The attribute value.
         """
 
+    def set_entity(self, entity_id: str) -> None:
+        """Convenience method to set attributes on the active span for a specific entity.
+        This allows for easy indexing and querying of spans associated with specific entities in the backend.
+
+        Args:
+            entity_id (str):
+                The unique identifier for the entity.
+        """
+
     def set_tag(self, key: str, value: str) -> None:
         """Set a tag on the active span. Tags are similar to attributes
         except they are often used for indexing and searching spans/traces.
@@ -19069,20 +19078,20 @@ class PromptCard:
         """
 
     @property
-    def eval_profile(self) -> "DriftProfileMap":
-        """Return the drift profile map from the model interface.
+    def eval_profile(self) -> "Optional[GenAIEvalProfile]":
+        """Returns the GenAIEvalProfile associated with this prompt card, if it exists.
 
         Returns:
-            DriftProfileMap
+            Optional[GenAIEvalProfile]
         """
 
     @eval_profile.setter
-    def eval_profile(self, eval_profile: "DriftProfileMap") -> None:
+    def eval_profile(self, eval_profile: "GenAIEvalProfile") -> None:
         """Set the drift profile map for the prompt card.
 
         Args:
-            eval_profile (DriftProfileMap):
-                The drift profile map to set.
+            eval_profile (GenAIEvalProfile):
+                The GenAIEvalProfile to set for the prompt card.
         """
 
 class Card:
@@ -23104,6 +23113,7 @@ class AppState:
         path: Path,
         transport_config: Optional[
             Union[
+                GrpcConfig,
                 KafkaConfig,
                 RabbitMQConfig,
                 RedisConfig,
@@ -23193,7 +23203,6 @@ class AppState:
         exporter: Optional[Any] = None,
         batch_config: Optional[BatchConfig] = None,
         sample_ratio: Optional[float] = None,
-        scouter_queue: Optional[Any] = None,
         attributes: Optional[Attributes] = None,
         **kwargs,
     ) -> None:
@@ -23213,6 +23222,8 @@ class AppState:
                 Sampling ratio (0.0 to 1.0)
             attributes (Optional[Attributes]):
                 Optional attributes to set on every span created by this tracer
+            **kwargs:
+                Additional kwargs to pass to the exporter or transport configuration
 
         """
 

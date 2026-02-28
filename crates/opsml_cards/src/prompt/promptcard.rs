@@ -149,7 +149,7 @@ impl OpsmlCard for PromptCard {
         self.is_card
     }
 
-    fn save(&self, path: PathBuf) -> Result<(), CardError> {
+    fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
         self.save_card(path)
     }
 
@@ -214,8 +214,8 @@ impl PromptCard {
         self.tags.extend(tags);
     }
 
-    #[pyo3(signature = (path))]
-    pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
+    #[pyo3(signature = (path), name = "save")]
+    pub fn save_card(&mut self, path: PathBuf) -> Result<(), CardError> {
         debug!("Saving PromptCard to path: {:?}", path);
 
         let eval_profile_uri_map = if let Some(_eval_profile) = &mut self.eval_profile {
@@ -258,13 +258,6 @@ impl PromptCard {
         };
 
         Ok(CardRecord::Prompt(record))
-    }
-
-    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
-        let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        PyHelperFuncs::save_to_json(self, &card_save_path)?;
-
-        Ok(())
     }
 
     /// Create drift profile

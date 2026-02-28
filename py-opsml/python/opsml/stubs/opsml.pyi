@@ -2753,6 +2753,7 @@ class AppState:
         path: Path,
         transport_config: Optional[
             Union[
+                GrpcConfig,
                 KafkaConfig,
                 RabbitMQConfig,
                 RedisConfig,
@@ -2842,7 +2843,6 @@ class AppState:
         exporter: Optional[Any] = None,
         batch_config: Optional[BatchConfig] = None,
         sample_ratio: Optional[float] = None,
-        scouter_queue: Optional[Any] = None,
         attributes: Optional[Attributes] = None,
         **kwargs,
     ) -> None:
@@ -2862,6 +2862,8 @@ class AppState:
                 Sampling ratio (0.0 to 1.0)
             attributes (Optional[Attributes]):
                 Optional attributes to set on every span created by this tracer
+            **kwargs:
+                Additional kwargs to pass to the exporter or transport configuration
 
         """
 

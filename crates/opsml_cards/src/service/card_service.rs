@@ -304,8 +304,8 @@ impl ServiceCard {
         Ok(())
     }
 
-    #[pyo3(signature = (path))]
-    pub fn save(&self, path: PathBuf) -> Result<(), CardError> {
+    #[pyo3(signature = (path), name = "save")]
+    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         PyHelperFuncs::save_to_json(self, &card_save_path)?;
 
@@ -430,7 +430,7 @@ impl ServiceCard {
         }
 
         // save ServiceCard to path
-        self.save(base_path)?;
+        self.save_card(base_path)?;
 
         Ok(())
     }
@@ -775,8 +775,8 @@ impl OpsmlCard for ServiceCard {
         self.app_env = app_env;
     }
 
-    fn save(&self, path: PathBuf) -> Result<(), CardError> {
-        self.save(path)
+    fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
+        self.save_card(path)
     }
 
     fn update_drift_config_args(&mut self) -> Result<(), CardError> {

@@ -119,7 +119,7 @@
       <div class="h-full flex flex-col min-w-[900px]">
 
         <!-- Column Headers -->
-        <div class="bg-surface-100 border-b-2 border-black sticky top-0 z-10">
+        <div class="bg-surface-100 border-b-2 border-black sticky top-0 z-5">
           <div class="grid grid-cols-[64px_180px_1fr_1fr_100px_100px_80px_120px] gap-2 text-black text-xs font-black uppercase tracking-wide px-3 py-2">
             <div class="text-center text-gray-500">ID</div>
             <div class="text-left">

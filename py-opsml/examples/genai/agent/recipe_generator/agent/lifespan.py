@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from opsml import PromptCard
 from opsml.app import AppState
+from opsml.scouter.transport import GrpcConfig
 from opsml.scouter.tracing import GrpcSpanExporter, BatchConfig
 
 
@@ -32,7 +33,10 @@ config = LifespanConfig()
 
 def get_app_state() -> tuple[AppState, Prompts]:
     """Helper function to load the AppState for the agent."""
-    app = AppState.from_path(path=config.app_path)
+    app = AppState.from_path(
+        path=config.app_path,
+        transport_config=GrpcConfig(),
+    )
     service = app.service
     assert service is not None, f"Service config not found in app at {config.app_path}"
 
