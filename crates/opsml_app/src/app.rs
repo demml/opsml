@@ -13,6 +13,7 @@ use pyo3::PyVisit;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use scouter_client::BatchConfig;
+use scouter_client::SCOUTER_ENTITY;
 use scouter_client::ScouterQueue;
 use scouter_client::is_pydantic_basemodel;
 use std::path::{Path, PathBuf};
@@ -22,8 +23,6 @@ use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio::time::sleep;
 use tokio_util::sync::CancellationToken;
 use tracing::{Instrument, debug, error, info, info_span};
-
-pub const OPSML_SERVICE_KEY: &str = "opsml.service";
 
 /// Load a card map from path
 fn load_card_map(path: &Path) -> Result<ServiceCardMapping, AppError> {
@@ -429,8 +428,26 @@ impl AppState {
             .call0()?;
 
         let scouter_queue = match &self.queue {
-            Some(queue) => Some(queue.read().unwrap().get_queue(py)),
+            Some(queue) => {
+                debug!("Using existing queue for instrumentation");
+                Some(queue.read().unwrap().get_queue(py))
+            }
             None => None,
+        };
+
+        // if transport_config is not provided, attempt to get from existing queue
+        // This allows users to call instrument without having to provide another transport config
+        // if they have already provided one during AppState initialization
+        let transport_config = match transport_config {
+            Some(config) => config.clone(),
+            None => match &self.queue {
+                Some(queue) => {
+                    let config = queue.read().unwrap().transport_config.bind(py).clone();
+                    debug!("Using transport config from existing queue: {:?}", config);
+                    config
+                }
+                None => return Err(AppError::TransportConfigNotFound),
+            },
         };
 
         // add service uid to attributes
@@ -441,7 +458,7 @@ impl AppState {
             .getattr(py, "uid")?
             .extract::<String>(py)?;
 
-        let attributes = add_uid_to_attributes(py, OPSML_SERVICE_KEY, &uid, attributes)?;
+        let attributes = add_uid_to_attributes(py, SCOUTER_ENTITY, &uid, attributes)?;
         let instrument_kwargs = match kwargs {
             Some(kw) => kw.clone(),
             None => PyDict::new(py),

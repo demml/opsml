@@ -4790,6 +4790,7 @@ __all__ = [
     "Metrics",
     "EntityType",
     "GenAIEvalRecord",
+    "GrpcConfig",
     "HttpConfig",
     "KafkaConfig",
     "RabbitMQConfig",

@@ -1790,9 +1790,9 @@ checksum = "d7a1e2f27636f116493b8b860f5546edb47c8d8f8ea73e1d2a20be88e28d1fea"
 
 [[package]]
 name = "deflate64"
-version = "0.1.10"
+version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "26bf8fc351c5ed29b5c2f0cbbac1b209b74f60ecd62e675a998df72c49af5204"
+checksum = "807800ff3288b621186fe0a8f3392c4652068257302709c24efd918c3dffcdc2"
 
 [[package]]
 name = "der"
@@ -3220,9 +3220,9 @@ dependencies = [
 
 [[package]]
 name = "jsonschema"
-version = "0.42.1"
+version = "0.42.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6103dcd3815c9bd04239a6d0343dac2b7a18ee260e800d0a6e3eb5b9333504fb"
+checksum = "a44c9bb95f6ac9270bf4fd38d71c2f8704b9fe0323a293af7a5284cbd60a39b2"
 dependencies = [
  "ahash",
  "bytecount",
@@ -3352,7 +3352,7 @@ checksum = "3d0b95e02c851351f877147b7deea7b1afb1df71b63aa5f8270716e0c5720616"
 dependencies = [
  "bitflags 2.11.0",
  "libc",
- "redox_syscall 0.7.2",
+ "redox_syscall 0.7.3",
 ]
 
 [[package]]
@@ -4859,18 +4859,18 @@ dependencies = [
 
 [[package]]
 name = "pin-project"
-version = "1.1.10"
+version = "1.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "677f1add503faace112b9f1373e43e9e054bfdd22ff1a63c1bc485eaec6a6a8a"
+checksum = "f1749c7ed4bcaf4c3d0a3efc28538844fb29bcdd7d2b67b2be7e20ba861ff517"
 dependencies = [
  "pin-project-internal",
 ]
 
 [[package]]
 name = "pin-project-internal"
-version = "1.1.10"
+version = "1.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e918e4ff8c4549eb882f14b3a4bc8c8bc93de829416eacf579f1207a8fbf861"
+checksum = "d9b20ed30f105399776b9c883e68e536ef602a16ae6f596d2c473591d6ad64c6"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4879,9 +4879,9 @@ dependencies = [
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.16"
+version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b3cff922bd51709b605d9ead9aa71031d81447142d828eb4a6eba76fe619f9b"
+checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
 name = "pin-utils"
@@ -5856,9 +5856,9 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
-version = "0.7.2"
+version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d94dd2f7cd932d4dc02cc8b2b50dfd38bd079a4e5d79198b99743d7fcf9a4b4"
+checksum = "6ce70a74e890531977d37e532c34d45e9055d2409ed08ddba14529471ed0be16"
 dependencies = [
  "bitflags 2.11.0",
 ]
@@ -5896,9 +5896,9 @@ dependencies = [
 
 [[package]]
 name = "referencing"
-version = "0.42.1"
+version = "0.42.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a76b0c93f3dd49da2900cfb3c6b883602471a0e3e34b1578a3310ca1269d418"
+checksum = "97d4124f489451bb67c59d67fa16f3ae9b5690b290406a7538e38458632666df"
 dependencies = [
  "ahash",
  "fluent-uri",
@@ -6377,7 +6377,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6409,7 +6409,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "futures",
  "pyo3",
@@ -6424,7 +6424,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "chrono",
  "futures",
@@ -6450,7 +6450,7 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "chrono",
  "itertools 0.14.0",
@@ -6477,7 +6477,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6512,7 +6512,7 @@ dependencies = [
 [[package]]
 name = "scouter-http"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "pyo3",
  "reqwest 0.12.28",
@@ -6527,7 +6527,7 @@ dependencies = [
 [[package]]
 name = "scouter-macro"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "thiserror 2.0.18",
 ]
@@ -6535,7 +6535,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6552,7 +6552,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6574,7 +6574,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "pyo3",
  "semver",
@@ -6585,7 +6585,7 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -6599,7 +6599,7 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -6609,7 +6609,7 @@ dependencies = [
 [[package]]
 name = "scouter-tonic"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "prost",
  "prost-types",
@@ -6628,7 +6628,7 @@ dependencies = [
 [[package]]
 name = "scouter-tracing"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6654,7 +6654,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.17.0"
-source = "git+https://github.com/demml/scouter.git?branch=encode-path#2f687067520243a047c8024bb3b788a269997b66"
+source = "git+https://github.com/demml/scouter.git?branch=encode-path#7d3b493cb3cdca3b4b318f515086fa0582bd82b6"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -9103,18 +9103,18 @@ dependencies = [
 
 [[package]]
 name = "zerocopy"
-version = "0.8.39"
+version = "0.8.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db6d35d663eadb6c932438e763b262fe1a70987f9ae936e60158176d710cae4a"
+checksum = "a789c6e490b576db9f7e6b6d661bcc9799f7c0ac8352f56ea20193b2681532e5"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.39"
+version = "0.8.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4122cd3169e94605190e77839c9a40d40ed048d305bfdc146e7df40ab0f3e517"
+checksum = "f65c489a7071a749c849713807783f70672b28094011623e200cb86dcb835953"
 dependencies = [
  "proc-macro2",
  "quote",

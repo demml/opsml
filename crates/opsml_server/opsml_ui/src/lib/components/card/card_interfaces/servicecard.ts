@@ -91,3 +91,21 @@ export interface ServiceCard {
   service_config: ServiceConfig;
   tags: string[];
 }
+
+export function isServiceCard(obj: any): boolean {
+  return (
+    obj &&
+    obj.registry_type === "Service" &&
+    typeof obj.service_type === "string" &&
+    obj.service_type === "Service"
+  );
+}
+
+export function isAgentCard(obj: any): boolean {
+  return (
+    obj &&
+    obj.registry_type === "Service" &&
+    typeof obj.service_type === "string" &&
+    obj.service_type === "Agent"
+  );
+}

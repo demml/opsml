@@ -25,7 +25,7 @@ pub trait OpsmlCard {
 
     fn is_card(&self) -> bool;
 
-    fn save(&self, path: PathBuf) -> Result<(), CardError>;
+    fn save(&mut self, path: PathBuf) -> Result<(), CardError>;
 
     fn registry_type(&self) -> &RegistryType;
 
