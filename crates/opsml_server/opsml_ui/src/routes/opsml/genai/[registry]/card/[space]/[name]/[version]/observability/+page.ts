@@ -24,12 +24,18 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
   const parentData = await parent();
   const metadata = parentData.metadata as CardMetadata;
 
+  console.log(
+    "metadata.registry_type in observability page load:",
+    metadata.registry_type,
+  );
+
   try {
     depends("trace:data");
 
+    const registryTypeLower = metadata.registry_type.toLowerCase();
     if (
-      metadata.registry_type !== RegistryType.Prompt &&
-      metadata.registry_type !== RegistryType.Service
+      registryTypeLower !== RegistryType.Prompt &&
+      registryTypeLower !== RegistryType.Agent
     ) {
       throw new Error(
         `Observability is not supported for ${metadata.registry_type} cards`,

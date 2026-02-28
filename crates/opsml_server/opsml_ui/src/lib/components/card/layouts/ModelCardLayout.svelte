@@ -11,14 +11,15 @@
 
   
   interface CardLayoutProps {
-    metadata: ModelCard;
+    data: any; // from parent
     registryType: RegistryType;
     children: Snippet;
   }
 
-  let { metadata, registryType, children }: CardLayoutProps = $props();
+  let { data, registryType, children }: CardLayoutProps = $props();
 
   let scouterEnabled: boolean = $state(uiSettingsStore.scouterEnabled);
+  let metadata: ModelCard = data.metadata;
 
   /**
    * Determines the active tab based on the current URL path

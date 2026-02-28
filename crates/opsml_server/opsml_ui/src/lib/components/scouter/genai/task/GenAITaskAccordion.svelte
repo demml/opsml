@@ -30,7 +30,7 @@
     <Accordion collapsible>
       <Accordion.Item
         value="tasks"
-        controlBase="w-full flex items-center justify-between px-5 py-3.5 border-b-2 border-black cursor-pointer transition-opacity hover:bg-slate-100 text-primary-800 hover:text-primary-800"
+        controlBase="bg-secondary-200 w-full flex items-center justify-between px-5 py-3.5 border-b-2 border-black cursor-pointer transition-opacity hover:bg-slate-100 text-primary-800 hover:text-primary-800"
         panelBase="p-0"
         spaceY=""
       >
