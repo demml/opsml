@@ -27,11 +27,18 @@ Cards are one of the primary data structures of opsml. All cards store specific 
   - Requires a `Prompt` 
   - Registered in the `PromptRegistry`
 
-<span class="text-secondary">**ServiceCard**</span>: 
+<span class="text-secondary">**ServiceCard**</span>:
 
   - Stores a collection of cards
   - Requires a list of `Card`
   - Registered in the `ServiceCardRegistry`
+
+<span class="text-secondary">**AgentCard**</span>:
+
+  - Stores an A2A-compliant agent specification (`AgentSpec`)
+  - Extends `ServiceCard` — supports all card grouping and YAML spec/CLI workflows
+  - Includes built-in UI: playground, evaluation dashboard, and trace waterfall
+  - Registered in the `AgentRegistry`
 
 ### Card Arguments
 
@@ -82,6 +89,14 @@ experiment_registry = CardRegistry(registry_name=RegistryType.Experiment)
 from opsml import CardRegistry, RegistryType
 prompt_registry = CardRegistry(registry_name="prompt")
 prompt_registry = CardRegistry(registry_name=RegistryType.Prompt)
+```
+
+**AgentRegistry**:
+
+```python
+from opsml import CardRegistry, RegistryType
+agent_registry = CardRegistry(registry_name="agent")
+agent_registry = CardRegistry(registry_name=RegistryType.Agent)
 ```
 
 **All Registries**:
@@ -250,4 +265,6 @@ model_registry.delete_card(card)
 - [ModelCard](/opsml/docs/cards/modelcard/)
 - [ExperimentCard](/opsml/docs/cards/experimentcard/)
 - [PromptCard](/opsml/docs/cards/promptcard/)
+- [ServiceCard](/opsml/docs/cards/servicecard/)
+- [AgentCard](/opsml/docs/cards/agentcard/)
 
