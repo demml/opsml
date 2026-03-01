@@ -40,9 +40,6 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
 
   // ── Agent registry: collect all associated prompt cards that have eval profiles ──
   if (registryType === RegistryType.Agent) {
-    console.log(
-      "Agent card layout load - checking associated prompt cards for eval profiles",
-    );
     if (promptCardsWithEval.length === 0) {
       throw redirect(
         303,
