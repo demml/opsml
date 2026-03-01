@@ -487,10 +487,10 @@ impl ServiceCard {
     }
 
     fn agent_card<'py>(&self, py: Python<'py>) -> Result<Bound<'py, AgentSpec>, CardError> {
-        if let Some(config) = &self.service_config {
-            if let Some(agent) = &config.agent {
-                return Ok(agent.to_a2a_card(py)?);
-            }
+        if let Some(config) = &self.service_config
+            && let Some(agent) = &config.agent
+        {
+            return Ok(agent.to_a2a_card(py)?);
         }
 
         Err(CardError::AgentConfigNotFoundError)
