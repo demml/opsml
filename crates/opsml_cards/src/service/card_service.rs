@@ -419,12 +419,10 @@ impl ServiceCard {
                 RegistryType::Data | RegistryType::Model => {
                     bound.call_method1("download_artifacts", (Some(card_path),))?;
                 }
-                RegistryType::Experiment => {
+                RegistryType::Experiment | RegistryType::Prompt => {
                     bound.call_method1("save", (card_path,))?;
                 }
-                RegistryType::Prompt => {
-                    bound.call_method1("save_card", (card_path,))?;
-                }
+
                 _ => continue,
             }
         }
