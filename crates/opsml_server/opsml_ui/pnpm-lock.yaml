@@ -29,6 +29,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.38.5
         version: 6.38.8
+      '@fontsource/roboto':
+        specifier: ^5.2.10
+        version: 5.2.10
       '@tanstack/svelte-virtual':
         specifier: ^3.13.12
         version: 3.13.12(svelte@5.43.14)
@@ -521,6 +524,9 @@ packages:
 
   '@floating-ui/utils@0.2.10':
     resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
+
+  '@fontsource/roboto@5.2.10':
+    resolution: {integrity: sha512-8HlA5FtSfz//oFSr2eL7GFXAiE7eIkcGOtx7tjsLKq+as702x9+GU7K95iDeWFapHC4M2hv9RrpXKRTGGBI8Zg==}
 
   '@fortawesome/fontawesome-common-types@6.7.2':
     resolution: {integrity: sha512-Zs+YeHUC5fkt7Mg1l6XTniei3k4bwG/yo3iFUtZWd/pMx9g3fdvkSK9E0FOC+++phXOka78uJcYb8JaFkW52Xg==}
@@ -3078,6 +3084,8 @@ snapshots:
       '@floating-ui/utils': 0.2.10
 
   '@floating-ui/utils@0.2.10': {}
+
+  '@fontsource/roboto@5.2.10': {}
 
   '@fortawesome/fontawesome-common-types@6.7.2': {}
 
