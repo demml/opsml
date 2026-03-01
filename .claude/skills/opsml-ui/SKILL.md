@@ -515,3 +515,9 @@ Use these cues to reduce cognitive load without sacrificing density:
 5. **Fatigue-aware** — no heavy textures, rotations, or strong gradients in reading zones;
    structural/decorative areas only
 6. **Explain briefly** — one to two sentences on what changed and why; no over-documentation
+
+---
+
+## Additional resources
+
+- For UI component questions and mapping, refer to [components.md](components.md)
