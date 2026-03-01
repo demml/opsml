@@ -26,6 +26,7 @@
   } = $props();
 
   let selectedRecord = $state<RecordWithAgent | null>(null);
+  let isSelected = $state(false);
 
   function fmt(ts: string): string {
     return new Date(ts).toLocaleString('en-US', {
@@ -57,110 +58,130 @@
     return map[status] ?? 'bg-surface-200';
   }
 
-  const thClass = 'px-3 py-2 text-center text-xss font-black uppercase tracking-wider text-primary-700 whitespace-nowrap';
-  const tdClass = 'px-3 py-2.5 text-center align-middle';
+  function selectRecord(record: RecordWithAgent) {
+    selectedRecord = record;
+    isSelected = true;
+  }
+
+  function handleClosePanel() {
+    selectedRecord = null;
+    isSelected = false;
+  }
+
+  // Prompt column added before ID; 1fr on Entity Type consumes whitespace
+  const gridLayout = "grid-template-columns: 120px 80px 140px 100px 1fr 140px 140px 100px;";
 </script>
 
-<div class="overflow-auto max-h-[500px] transition-opacity duration-200 {isRefreshing ? 'opacity-60 pointer-events-none' : ''}">
-  {#if records.length === 0}
-    <div class="flex items-center justify-center py-12">
-      <p class="text-sm font-bold text-black/50">No evaluation records to display</p>
+<div class="pt-2 h-full flex flex-col min-h-0 transition-opacity duration-200 {isRefreshing ? 'opacity-60 pointer-events-none' : ''}">
+  <div class="border-2 border-black rounded-lg bg-white flex flex-col h-full max-h-[500px] overflow-hidden">
+
+    <div class="overflow-auto flex-1 w-full relative">
+      {#if records.length === 0}
+        <div class="flex items-center justify-center p-8 bg-white h-full">
+          <p class="text-sm font-bold text-black/50">No evaluation records to display</p>
+        </div>
+      {:else}
+        <div class="min-w-[1000px] w-full">
+
+          <div class="bg-white border-b-2 border-black sticky top-0 z-20 w-full">
+            <div class="grid gap-3 text-black text-xs font-bold px-4 py-3 items-center" style={gridLayout}>
+              <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">Prompt</span></div>
+              <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">ID</span></div>
+              <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">Created</span></div>
+              <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">Status</span></div>
+              <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">Entity Type</span></div>
+              <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">Processing Started</span></div>
+              <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">Processing Ended</span></div>
+              <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">Duration</span></div>
+            </div>
+          </div>
+
+          <div class="bg-white w-full">
+            {#each records as record, i}
+              <button
+                class="grid gap-3 items-center w-full px-4 py-3 border-b border-gray-200 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-100 cursor-pointer text-left group"
+                style={gridLayout}
+                onclick={() => selectRecord(record)}
+              >
+                <div class="flex justify-center">
+                  <span class="px-2 py-0.5 rounded-base border border-black bg-primary-100 text-primary-950
+                               text-xss font-black uppercase tracking-wider truncate max-w-[110px]"
+                        title={record._agentName}>
+                    {record._agentName}
+                  </span>
+                </div>
+
+                <div class="text-center">
+                  <span class="text-xs font-mono text-gray-600 group-hover:text-black font-bold">{record.uid.slice(0, 8)}</span>
+                </div>
+
+                <div class="flex items-center justify-center gap-2 min-w-0">
+                  <div class={`w-1.5 h-4 rounded-sm flex-shrink-0 ${statusBar(record.status)}`}></div>
+                  <span class="text-xs text-black font-mono truncate">{fmt(record.created_at)}</span>
+                </div>
+
+                <div class="flex justify-center">
+                  <span class="px-2 py-1 rounded border-1 text-xs font-bold {statusBadge(record.status)}">
+                    {record.status.toUpperCase()}
+                  </span>
+                </div>
+
+                <div class="text-center">
+                  <span class="px-2 py-1 rounded border-1 bg-primary-100 border-primary-900 text-primary-900 text-xs font-bold">
+                    {record.entity_type}
+                  </span>
+                </div>
+
+                <div class="text-center">
+                  <span class="text-xs font-mono text-gray-600">
+                    {record.processing_started_at ? fmt(record.processing_started_at) : 'N/A'}
+                  </span>
+                </div>
+
+                <div class="text-center">
+                  <span class="text-xs font-mono text-gray-600">
+                    {record.processing_ended_at ? fmt(record.processing_ended_at) : 'N/A'}
+                  </span>
+                </div>
+
+                <div class="text-center">
+                  <span class="text-xs font-medium text-gray-700">
+                    {fmtDur(record.processing_duration)}
+                  </span>
+                </div>
+              </button>
+            {/each}
+          </div>
+
+        </div>
+      {/if}
     </div>
-  {:else}
-    <table class="min-w-max w-full text-sm border-collapse">
-      <thead class="bg-surface-200 border-b-2 border-black sticky top-0 z-10">
-        <tr>
-          <th class={thClass}>Prompt</th>
-          <th class={thClass}>ID</th>
-          <th class={thClass}>Created</th>
-          <th class={thClass}>Status</th>
-          <th class={thClass}>Entity Type</th>
-          <th class={thClass}>Proc. Started</th>
-          <th class={thClass}>Proc. Ended</th>
-          <th class={thClass}>Duration</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-black/10">
-        {#each records as record, i}
-          <tr
-            class="cursor-pointer transition-colors duration-100 group
-                   {i % 2 === 0 ? 'bg-surface-50' : 'bg-surface-100'} hover:bg-primary-50"
-            onclick={() => { selectedRecord = record; }}
-          >
-            <td class={tdClass}>
-              <span class="px-2 py-0.5 rounded-base border border-black bg-primary-100 text-primary-950
-                           text-xss font-black uppercase tracking-wider inline-block max-w-[150px] truncate"
-                    title={record._agentName}>
-                {record._agentName}
-              </span>
-            </td>
-            <td class={tdClass}>
-              <span class="text-xs font-mono text-black/60 group-hover:text-black font-bold">
-                {record.uid.slice(0, 8)}
-              </span>
-            </td>
-            <td class={tdClass}>
-              <div class="flex items-center justify-center gap-1.5">
-                <div class="w-1.5 h-4 rounded-sm flex-shrink-0 {statusBar(record.status)}"></div>
-                <span class="text-xs text-black font-mono whitespace-nowrap">{fmt(record.created_at)}</span>
-              </div>
-            </td>
-            <td class={tdClass}>
-              <span class="px-2 py-0.5 rounded-base border text-xss font-black uppercase {statusBadge(record.status)}">
-                {record.status}
-              </span>
-            </td>
-            <td class={tdClass}>
-              <span class="px-2 py-0.5 rounded-base border border-primary-900 bg-primary-100 text-primary-900 text-xss font-bold">
-                {record.entity_type}
-              </span>
-            </td>
-            <td class={tdClass}>
-              <span class="text-xs font-mono text-black/60 whitespace-nowrap">
-                {record.processing_started_at ? fmt(record.processing_started_at) : '—'}
-              </span>
-            </td>
-            <td class={tdClass}>
-              <span class="text-xs font-mono text-black/60 whitespace-nowrap">
-                {record.processing_ended_at ? fmt(record.processing_ended_at) : '—'}
-              </span>
-            </td>
-            <td class={tdClass}>
-              <span class="text-xs font-mono text-black">{fmtDur(record.processing_duration)}</span>
-            </td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
+
+    {#if records.length > 0}
+      <div class="border-t-2 border-black bg-gray-50 p-2 flex justify-center gap-2 items-center">
+        <button
+          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
+          onclick={() => onPageChange('previous')}
+          disabled={!hasPrevious}
+        >
+          <ArrowLeft class="w-4 h-4" color="#5948a3"/>
+        </button>
+        <button
+          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
+          onclick={() => onPageChange('next')}
+          disabled={!hasNext}
+        >
+          <ArrowRight class="w-4 h-4" color="#5948a3"/>
+        </button>
+      </div>
+    {/if}
+
+  </div>
+
+  {#if selectedRecord && isSelected}
+    <GenAIEvalRecordSideBar
+      selectedRecord={selectedRecord}
+      onClose={handleClosePanel}
+    />
   {/if}
 </div>
-
-{#if records.length > 0}
-  <div class="border-t-2 border-black bg-surface-200 p-2 flex justify-center gap-2 items-center">
-    <button
-      class="btn bg-surface-50 border-black border-2 shadow-small shadow-click-small h-9 px-3
-             flex items-center justify-center transition-transform duration-100 ease-out
-             disabled:opacity-40 disabled:pointer-events-none"
-      onclick={() => onPageChange('previous')}
-      disabled={!hasPrevious}
-    >
-      <ArrowLeft class="w-4 h-4 text-primary-700" />
-    </button>
-    <button
-      class="btn bg-surface-50 border-black border-2 shadow-small shadow-click-small h-9 px-3
-             flex items-center justify-center transition-transform duration-100 ease-out
-             disabled:opacity-40 disabled:pointer-events-none"
-      onclick={() => onPageChange('next')}
-      disabled={!hasNext}
-    >
-      <ArrowRight class="w-4 h-4 text-primary-700" />
-    </button>
-  </div>
-{/if}
-
-{#if selectedRecord}
-  <GenAIEvalRecordSideBar
-    selectedRecord={selectedRecord}
-    onClose={() => { selectedRecord = null; }}
-  />
-{/if}
