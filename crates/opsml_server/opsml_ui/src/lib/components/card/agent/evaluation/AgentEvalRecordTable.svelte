@@ -4,6 +4,10 @@
   Displays merged evaluation records from all agent-associated prompt cards.
   Receives a flat sorted list + pagination booleans from AgentEvalDashboard.
   Manages its own row-detail sidebar.
+
+  Structure mirrors GenAIEvalRecordTable exactly (the proven working pattern):
+    overflow-hidden outer → overflow-auto flex-1 scroll container → min-w forced inner
+  The parent (AgentEvalDashboard) must supply flex flex-col on the wrapper div.
 -->
 <script lang="ts">
   import type { RecordWithAgent } from './types';
@@ -68,12 +72,13 @@
     isSelected = false;
   }
 
-  // Prompt column added before ID; 1fr on Entity Type consumes whitespace
-  const gridLayout = "grid-template-columns: 120px 80px 140px 100px 1fr 140px 140px 100px;";
+  // Prompt column prepended before ID; 1fr on Entity Type consumes whitespace.
+  // min-w-[1050px] = GenAIEvalRecordTable's 900px + ~150px for the Prompt column.
+  const gridLayout = "grid-template-columns: 140px 80px 140px 100px 1fr 140px 140px 100px;";
 </script>
 
-<div class="pt-2 h-full flex flex-col min-h-0 transition-opacity duration-200 {isRefreshing ? 'opacity-60 pointer-events-none' : ''}">
-  <div class="border-2 border-black rounded-lg bg-white flex flex-col h-full max-h-[500px] overflow-hidden">
+<div class="pt-2 h-full flex flex-col min-h-0">
+  <div class="border-2 border-black rounded-base bg-white flex flex-col h-full max-h-[500px] overflow-hidden">
 
     <div class="overflow-auto flex-1 w-full relative">
       {#if records.length === 0}
@@ -81,8 +86,9 @@
           <p class="text-sm font-bold text-black/50">No evaluation records to display</p>
         </div>
       {:else}
-        <div class="min-w-[1000px] w-full">
+        <div class="min-w-[1050px] w-full">
 
+          <!-- Sticky header -->
           <div class="bg-white border-b-2 border-black sticky top-0 z-20 w-full">
             <div class="grid gap-3 text-black text-xs font-bold px-4 py-3 items-center" style={gridLayout}>
               <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">Prompt</span></div>
@@ -96,6 +102,7 @@
             </div>
           </div>
 
+          <!-- Rows -->
           <div class="bg-white w-full">
             {#each records as record, i}
               <button
@@ -103,47 +110,55 @@
                 style={gridLayout}
                 onclick={() => selectRecord(record)}
               >
+                <!-- Prompt name -->
                 <div class="flex justify-center">
                   <span class="px-2 py-0.5 rounded-base border border-black bg-primary-100 text-primary-950
-                               text-xss font-black uppercase tracking-wider truncate max-w-[110px]"
+                               text-xss font-black uppercase tracking-wider truncate max-w-[128px]"
                         title={record._agentName}>
                     {record._agentName}
                   </span>
                 </div>
 
+                <!-- UID -->
                 <div class="text-center">
                   <span class="text-xs font-mono text-gray-600 group-hover:text-black font-bold">{record.uid.slice(0, 8)}</span>
                 </div>
 
+                <!-- Created -->
                 <div class="flex items-center justify-center gap-2 min-w-0">
                   <div class={`w-1.5 h-4 rounded-sm flex-shrink-0 ${statusBar(record.status)}`}></div>
                   <span class="text-xs text-black font-mono truncate">{fmt(record.created_at)}</span>
                 </div>
 
+                <!-- Status badge -->
                 <div class="flex justify-center">
                   <span class="px-2 py-1 rounded border-1 text-xs font-bold {statusBadge(record.status)}">
                     {record.status.toUpperCase()}
                   </span>
                 </div>
 
+                <!-- Entity type -->
                 <div class="text-center">
                   <span class="px-2 py-1 rounded border-1 bg-primary-100 border-primary-900 text-primary-900 text-xs font-bold">
                     {record.entity_type}
                   </span>
                 </div>
 
+                <!-- Processing started -->
                 <div class="text-center">
                   <span class="text-xs font-mono text-gray-600">
                     {record.processing_started_at ? fmt(record.processing_started_at) : 'N/A'}
                   </span>
                 </div>
 
+                <!-- Processing ended -->
                 <div class="text-center">
                   <span class="text-xs font-mono text-gray-600">
                     {record.processing_ended_at ? fmt(record.processing_ended_at) : 'N/A'}
                   </span>
                 </div>
 
+                <!-- Duration -->
                 <div class="text-center">
                   <span class="text-xs font-medium text-gray-700">
                     {fmtDur(record.processing_duration)}
@@ -157,6 +172,7 @@
       {/if}
     </div>
 
+    <!-- Pagination footer -->
     {#if records.length > 0}
       <div class="border-t-2 border-black bg-gray-50 p-2 flex justify-center gap-2 items-center">
         <button
