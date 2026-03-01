@@ -1071,7 +1071,7 @@ impl AgentSpec {
         PyHelperFuncs::__str__(self)
     }
 
-    pub fn supports_authenticated_extended_card(&self) -> () {}
+    pub fn supports_authenticated_extended_card(&self) {}
 
     #[getter]
     pub fn get_skills<'py>(

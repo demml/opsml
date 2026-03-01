@@ -583,11 +583,10 @@ impl CardRegistry {
         registry_type: &RegistryType,
     ) -> Result<PathBuf, RegistryError> {
         let tmp_dir = TempDir::new()?;
-
         let tmp_path = tmp_dir.keep();
 
         match registry_type {
-            RegistryType::Experiment | RegistryType::Service => {
+            RegistryType::Experiment | RegistryType::Service | RegistryType::Prompt => {
                 card.call_method1("save", (tmp_path.to_path_buf(),))
                     .inspect_err(|e| {
                         error!("Failed to save card: {e}");
