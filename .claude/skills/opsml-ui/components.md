@@ -1,95 +1,6 @@
----
-name: opsml-ui-components
-description: Use this skill whenever a user asks about building, editing, styling, or designing any UI component, page, layout, dashboard, or interface in the OpsML project. Triggers include any mention of Svelte components, SvelteKit pages, Tailwind classes, analytics dashboards, trace views, data tables, cards, modals, buttons, badges, or any visual element. Also activate when the user says "how should I style", "what component should I use", "fix the UI", "make this "look better", "create a page for", or references the OpsML aesthetic.
----
-
-You are an expert in the OpsML SvelteKit UI codebase. Use this reference map to quickly locate the right component, understand patterns, and apply the correct design system without reading every file from scratch.
+# OpsML UI Component Reference
 
 **UI root**: `crates/opsml_server/opsml_ui/src/`
-
----
-
-## Design System (Non-Negotiable Rules)
-
-OpsML uses a **Neo-Brutalist** aesthetic via Tailwind CSS v4 + `opsml-theme.css` + Skeleton Labs.
-
-### Core CSS Conventions
-- **Borders**: `border-2 border-black` or `border-primary-800` — never `border-gray-*`
-- **Shadows**: Hard-offset, never soft or blurred
-  - `.shadow` → `5px 5px 0px 0px black`
-  - `.shadow-small` → `2px 2px 0px 0px black`
-  - `.shadow-primary` → same, primary color
-  - `.shadow-hover` → translate on hover (removes shadow illusion)
-  - `.shadow-click` → translate on active
-  - `.reverse-shadow-*` → negative-direction offsets
-- **Border radius**: `rounded-base` (0.375rem max) — no `rounded-xl`, no `rounded-full` except avatars
-- **Backgrounds**: `bg-surface-50` for cards/pages; theme palette for accents — no arbitrary hex
-- **Transitions**: `duration-100` or `duration-200` with `ease-out` only — no slow/elastic animations
-- **No**: `backdrop-blur`, soft shadows, `border-gray-*`, arbitrary hex colors
-
-### Color Palette
-- `primary-*` — Purple brand (#5948a3 range)
-- `success-*` — Green for positive/active states
-- `error-*` — Red for errors/alerts
-- `warning-*` — Yellow for warnings
-- `surface-50/100` — Page and card backgrounds
-
-### Standard Card Pattern
-```svelte
-<div class="bg-surface-50 border-2 border-black shadow rounded-base p-4">
-  ...
-</div>
-```
-
-### Standard Two-Column Layout
-```svelte
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-  <div class="lg:col-span-2"><!-- main content --></div>
-  <div class="lg:col-span-1"><!-- sidebar --></div>
-</div>
-```
-
-### Buttons
-```svelte
-<button class="btn bg-primary-500 text-black border-2 border-black shadow shadow-hover">
-```
-
-### Typography
-- Font: Roboto (Google Fonts, already loaded)
-- `font-bold` / `font-black` for hero text
-- `font-mono` for IDs, versions, code
-
-### Grid Responsive Breakpoints
-- Mobile → `grid-cols-1`
-- `md:grid-cols-2` → `lg:grid-cols-3` → `2xl:grid-cols-4`
-
----
-
-## Svelte 5 Patterns (Required — No Legacy Syntax)
-
-```svelte
-<script lang="ts">
-  // Props
-  let { name, items = $bindable() } = $props<{ name: string; items: string[] }>();
-
-  // State
-  let count = $state(0);
-
-  // Derived
-  let doubled = $derived(count * 2);
-  let sorted = $derived.by(() => [...items].sort());
-
-  // Effects
-  $effect(() => {
-    console.log(count);
-  });
-</script>
-
-<!-- Events: use direct handlers, not on:click= -->
-<button onclick={() => count++}>Click</button>
-```
-
-**Banned patterns**: `$:`, `writable()`, `on:click=`, `createEventDispatcher`
 
 ---
 
@@ -273,13 +184,12 @@ Five two-column layout wrappers: `DataCardLayout`, `ModelCardLayout`, `Experimen
 ## Key Types — `lib/components/card/card_interfaces/`
 
 ```typescript
-// Types live here:
-datacard.ts     // DataCard + nested interface types
-modelcard.ts    // ModelCard + save metadata
+datacard.ts        // DataCard + nested interface types
+modelcard.ts       // ModelCard + save metadata
 experimentcard.ts  // ExperimentCard + params/metrics
-promptcard.ts   // PromptCard + eval profile
-servicecard.ts  // ServiceCard
-enum.ts         // AnyCard union type, RegistryType enum
+promptcard.ts      // PromptCard + eval profile
+servicecard.ts     // ServiceCard
+enum.ts            // AnyCard union type, RegistryType enum
 ```
 
 **Pagination types** — `lib/components/card/types.ts`:
