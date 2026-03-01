@@ -480,11 +480,11 @@
         </span>
       </div>
       <div class="p-2 w-full flex-grow bg-slate-50 min-h-0">
-        <AgentEvalRecordTable
-          records={recordPage.items}
-          hasNext={recordPage.hasNext}
-          hasPrevious={recordPage.hasPrevious}
-          onPageChange={handleRecordPageChange}
+        <AgentEvalWorkflowTable
+          workflows={workflowPage.items}
+          hasNext={workflowPage.hasNext}
+          hasPrevious={workflowPage.hasPrevious}
+          onPageChange={handleWorkflowPageChange}
           {isRefreshing}
         />
       </div>
