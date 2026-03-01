@@ -24,17 +24,31 @@ Teams use OpsML to bring structure and governance to AI systems: consistent vers
 - <span class="text-alert">**Monitoring & Observability**</span>: Drift detection, data profiling, GenAI evaluations, and OpenTelemetry trace ingestion — available across the platform when integrated with [Scouter](https://github.com/demml/scouter).
 - <span class="text-alert">**No Hidden Magic**</span>: Abstractions are thin and documented. You can read the code and understand exactly what's happening.
 
-## Status
+## v3.0.0 Release
 
-Some features are still in active development or beta. Test them and share feedback via [GitHub Issues](https://github.com/demml/opsml/issues).
+v3.0.0 is generally available and ready for use in existing ML workflows.
 
-| Feature | Status |
+**Stable** — no breaking changes planned:
+
+| Component | Status |
 |---|---|
-| Agent registry | Beta — functional, seeking feedback |
-| Evaluation system | Beta — functional, seeking feedback |
-| Observability system | Beta — functional, seeking feedback |
-| Agent playground | Coming soon — not fully functional |
-| Admin dashboard + RBAC policy management | Coming soon |
+| `DataCard` | Stable |
+| `ModelCard` | Stable |
+| `ExperimentCard` | Stable |
+
+*Anything ported from OpsML v2 is considered stable unless explicitly marked as beta.* Let us know if you encounter any issues
+
+**Beta** — breaking changes possible in versions before 3.1.0:
+
+| Component | Status |
+|---|---|
+| `PromptCard` | Beta |
+| `ServiceCard` / `AgentCard` | Beta |
+| Agent UI | Beta |
+| Prompt UI | Beta |
+| Observability UI | Beta |
+
+If you depend on beta components, pin to a specific version and review the changelog before upgrading to any release before 3.1.0. Share feedback via [GitHub Issues](https://github.com/demml/opsml/issues).
 
 ## See it in Action
 
