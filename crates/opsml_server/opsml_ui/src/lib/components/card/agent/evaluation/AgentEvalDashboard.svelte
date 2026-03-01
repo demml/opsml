@@ -22,14 +22,14 @@
   import AgentEvalWorkflowTable from './AgentEvalWorkflowTable.svelte';
   import { refreshGenAIMonitoringData } from '$lib/components/scouter/dashboard/utils';
   import { timeRangeState } from '$lib/components/utils/timeState.svelte';
-  import { getRegistryPath, RegistryType } from '$lib/utils';
+  import { getRegistryPath, RegistryType,  getMaxDataPoints  } from '$lib/utils';
   import { generateColors } from '$lib/components/viz/utils';
   import { Chart } from 'chart.js/auto';
   import { Filler } from 'chart.js';
   import zoomPlugin from 'chartjs-plugin-zoom';
   import annotationPlugin from 'chartjs-plugin-annotation';
   import 'chartjs-adapter-date-fns';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import {
     Bot, TableProperties, ArrowRightLeft,
     Loader2, TrendingUp, KeySquare
@@ -319,6 +319,29 @@
       return { items, hasNext, hasPrevious } satisfies AgentWorkflowPage;
     })()
   );
+
+
+   let currentMaxPoints = $state(typeof window !== 'undefined' ? getMaxDataPoints() : 0);
+
+    onMount(() => {
+      currentMaxPoints = getMaxDataPoints();
+      let timeoutId: ReturnType<typeof setTimeout>;
+      const handleResize = () => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          const newMax = getMaxDataPoints();
+          if (newMax !== currentMaxPoints) {
+            currentMaxPoints = newMax;
+            buildChart();
+          }
+        }, 400);
+      };
+      window.addEventListener('resize', handleResize);
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        clearTimeout(timeoutId);
+      };
+    });
 </script>
 
 <div class="mx-auto w-full max-w-full px-4 sm:px-6 lg:px-8 pb-12 space-y-6 overflow-hidden">
@@ -444,6 +467,30 @@
       </div>
     </div>
   {/if}
+
+  {#if workflowPage.items.length > 0 || workflowPage.hasPrevious}
+    <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl overflow-hidden flex flex-col h-full">
+      <div class="bg-primary-100 border-b-2 border-black px-5 py-3 flex items-center justify-between flex-shrink-0">
+        <div class="flex items-center gap-2">
+          <ArrowRightLeft class="w-4 h-4 text-primary-700"/>
+          <h2 class="font-black text-sm uppercase tracking-wider text-primary-950">Workflow Results</h2>
+        </div>
+        <span class="badge rounded-base border border-black bg-surface-50 text-primary-800 text-xs font-bold px-2 py-0.5">
+          {workflowPage.items.length}
+        </span>
+      </div>
+      <div class="p-2 w-full flex-grow bg-slate-50 min-h-0">
+        <AgentEvalRecordTable
+          records={recordPage.items}
+          hasNext={recordPage.hasNext}
+          hasPrevious={recordPage.hasPrevious}
+          onPageChange={handleRecordPageChange}
+          {isRefreshing}
+        />
+      </div>
+    </div>
+  {/if}
+  
   </div>
 
  
