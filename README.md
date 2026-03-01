@@ -24,11 +24,38 @@ OpsML is an open-source developer-first ML operations platform focused on inject
 <br>
 
 <div align="left">
-  <b>Current status:</b> v3.0.0 pre-release (check release tags for latest 3.0.0-rc.* version)
+  <b>Current status:</b> v3.0.0 — generally available
 </div>
+
+## v3.0.0 Release
+
+v3.0.0 is the first stable release of OpsML. It is ready for use in existing ML workflows.
+
+**Stable components** — no breaking changes planned:
+
+| Component | Status |
+|-----------|--------|
+| `DataCard` | Stable |
+| `ModelCard` | Stable |
+| `ExperimentCard` | Stable |
+
+*Anything ported from OpsML v2 is considered stable unless explicitly marked as beta.* Let us know if you encounter any issues
+
+**Beta components** — breaking changes possible in versions before 3.1.0:
+
+| Component | Status |
+|-----------|--------|
+| `PromptCard` | Beta |
+| `ServiceCard` / `AgentCard` | Beta |
+| Agent UI | Beta |
+| Prompt UI | Beta |
+| Observability UI | Beta |
+
+If you depend on beta components, pin to a specific version and review the changelog before upgrading to any release before 3.1.0.
 
 
 ## Table of Contents
+- [v3.0.0 Release](#v300-release)
 - [Table of Contents](#table-of-contents)
 - [Why OpsML?](#why-opsml)
   - [What makes OpsML different](#what-makes-opsml-different)
@@ -64,12 +91,12 @@ Building reliable ML systems shouldn't require gluing together dozens of dispara
 
 ### Includes client and server components
 ```bash
-pip install "opsml==3.0.0rc15"
+pip install "opsml>=3.0.0"
 ```
 
 ### For when you only need the client
 ```bash
-pip install "opsml-client==3.0.0rc15"
+pip install "opsml-client>=3.0.0"
 ```
 
 ## Demo
