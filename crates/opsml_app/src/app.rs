@@ -409,6 +409,7 @@ impl AppState {
     /// * `sample_ratio` - The sample ratio to use with the ScouterQueue. If not provided, will attempt to use sample ratio from existing queue if it exists
     /// * `attributes` - The attributes to use with the ScouterQueue. If not provided, will attempt to use attributes from existing queue if it exists
     /// * `kwargs` - Additional keyword arguments to pass to the ScouterInstrumentor.instrument() method
+    #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (transport_config=None, exporter=None, batch_config=None, sample_ratio=None, attributes=None, **kwargs))]
     pub fn instrument(
         &self,
