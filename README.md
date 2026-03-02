@@ -35,6 +35,33 @@ Teams use OpsML to bring structure and governance to AI systems: consistent vers
 - **Observability** *(beta)* — OpenTelemetry trace ingestion and span visualization for any instrumented service, not just agents
 - **Evaluations** *(beta)* — offline and online GenAI evaluation tied to versioned prompt cards
 
+## Status
+
+v3.0.0 is generally available and ready for use in existing ML workflows.
+
+**Stable components** — no breaking changes planned:
+
+| Component | Status |
+|-----------|--------|
+| `DataCard` | Stable |
+| `ModelCard` | Stable |
+| `ExperimentCard` | Stable |
+
+*Anything ported from OpsML v2 is considered stable unless explicitly marked as beta.* Let us know if you encounter any issues.
+
+**Beta components** — breaking changes possible in versions before 3.1.0:
+
+| Component | Status |
+|-----------|--------|
+| `PromptCard` | Beta |
+| `ServiceCard` / `AgentCard` | Beta |
+| Agent UI | Beta |
+| Prompt UI | Beta |
+| Observability UI | Beta |
+
+If you depend on beta components, pin to a specific version and review the changelog before upgrading to any release before 3.1.0.
+
+
 ## Quick Start
 
 ```bash
@@ -199,32 +226,6 @@ Supported backends:
 | Isolated environments | ✅ | ❌ |
 | Single Python dependency | ✅ | ❌ |
 | Open source | ✅ | ❌ (some) |
-
-## Status
-
-v3.0.0 is the first stable release of OpsML. It is ready for use in existing ML workflows.
-
-**Stable components** — no breaking changes planned:
-
-| Component | Status |
-|-----------|--------|
-| `DataCard` | Stable |
-| `ModelCard` | Stable |
-| `ExperimentCard` | Stable |
-
-*Anything ported from OpsML v2 is considered stable unless explicitly marked as beta.* Let us know if you encounter any issues.
-
-**Beta components** — breaking changes possible in versions before 3.1.0:
-
-| Component | Status |
-|-----------|--------|
-| `PromptCard` | Beta |
-| `ServiceCard` / `AgentCard` | Beta |
-| Agent UI | Beta |
-| Prompt UI | Beta |
-| Observability UI | Beta |
-
-If you depend on beta components, pin to a specific version and review the changelog before upgrading to any release before 3.1.0.
 
 ## Contributing
 
