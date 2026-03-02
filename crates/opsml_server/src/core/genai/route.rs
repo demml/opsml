@@ -31,12 +31,13 @@ pub async fn list_mcp_servers(
     let params: ServiceQueryArgs = match uri.query() {
         Some(query) => serde_qs::from_str(query).map_err(|e| {
             error!("Failed to parse query string: {e}");
-            internal_server_error(e, "Failed to parse query string")
+            internal_server_error(e, "Failed to parse query string", None)
         })?,
         None => {
             return Err(internal_server_error(
                 "No query string found",
                 "No query string found",
+                None,
             ));
         }
     };
@@ -49,7 +50,7 @@ pub async fn list_mcp_servers(
         .await
         .map_err(|e| {
             error!("Failed to list mcp servers: {e}");
-            internal_server_error(e, "Failed to list mcp servers")
+            internal_server_error(e, "Failed to list mcp servers", None)
         })?;
 
     let audit_context = AuditContext {
@@ -77,6 +78,7 @@ pub async fn list_mcp_servers(
             Err(internal_server_error(
                 e,
                 "Failed to convert service to MCP server",
+                None,
             ))
         }
     }

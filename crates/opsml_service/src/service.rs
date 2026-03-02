@@ -258,6 +258,7 @@ impl OpsmlServiceSpec {
                 &self.root_path,
                 self.space_config.get_space(),
                 &self.service_type,
+                &self.deploy,
             )?;
         }
 

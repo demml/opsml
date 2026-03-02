@@ -405,14 +405,36 @@ pub fn extract_drift_profile(
         let mut profiles = DriftProfileMap::new();
 
         for (alias, profile) in py_profiles.iter() {
-            // For each profile in the list, get its profile attribute
             let alias = alias.extract::<String>()?;
             profiles.add_profile(py, alias, profile)?;
         }
 
         Ok(profiles)
+    } else if py_profiles.is_instance_of::<PyList>() {
+        let py_profiles = py_profiles.cast::<PyList>()?;
+        let mut profiles = DriftProfileMap::new();
+
+        for profile in py_profiles.iter() {
+            let alias = profile.getattr("alias")?.extract::<Option<String>>()?;
+            if let Some(alias) = alias {
+                profiles.add_profile(py, alias, profile)?;
+            } else {
+                return Err(ModelInterfaceError::DriftProfileAliasMustBeSet);
+            }
+        }
+
+        Ok(profiles)
+    } else if py_profiles.getattr("alias").is_ok() {
+        let alias = py_profiles.getattr("alias")?.extract::<Option<String>>()?;
+        if let Some(alias) = alias {
+            let mut profiles = DriftProfileMap::new();
+            profiles.add_profile(py, alias, py_profiles.clone())?;
+            Ok(profiles)
+        } else {
+            Err(ModelInterfaceError::DriftProfileAliasMustBeSet)
+        }
     } else {
-        Err(ModelInterfaceError::DriftProfileMustBeDictionary)
+        Err(ModelInterfaceError::DriftProfileNotFound)
     }
 }
 

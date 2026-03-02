@@ -11,6 +11,7 @@ from .._opsml import (
     ExtraMetadata,
     Feature,
     FeatureSchema,
+    PromptSaveKwargs,
     SaveName,
     SaverPath,
     ScouterDataType,
@@ -34,4 +35,5 @@ __all__ = [
     "FeatureSchema",
     "ExtraMetadata",
     "CommonKwargs",
+    "PromptSaveKwargs",
 ]

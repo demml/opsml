@@ -3191,14 +3191,14 @@ class GenAIEvalProfile:
         >>> tasks = [
         ...     AssertionTask(
         ...         id="response_length",
-        ...         field_path="response",
+        ...         context_path="response",
         ...         operator=ComparisonOperator.HasLength,
         ...         expected_value={"min": 10, "max": 500},
         ...         description="Ensure response is reasonable length"
         ...     ),
         ...     AssertionTask(
         ...         id="confidence_threshold",
-        ...         field_path="metadata.confidence",
+        ...         context_path="metadata.confidence",
         ...         operator=ComparisonOperator.GreaterThanOrEqual,
         ...         expected_value=0.7,
         ...         description="Require minimum confidence"
@@ -3225,7 +3225,7 @@ class GenAIEvalProfile:
         ...         id="relevance_judge",
         ...         prompt=relevance_prompt,
         ...         expected_value=7,
-        ...         field_path="score",
+        ...         context_path="score",
         ...         operator=ComparisonOperator.GreaterThanOrEqual,
         ...         description="Ensure relevance score >= 7"
         ...     )
@@ -3242,7 +3242,7 @@ class GenAIEvalProfile:
         >>> assertion_tasks = [
         ...     AssertionTask(
         ...         id="not_empty",
-        ...         field_path="response",
+        ...         context_path="response",
         ...         operator=ComparisonOperator.HasLength,
         ...         expected_value={"min": 1},
         ...         description="Response must not be empty"
@@ -3263,7 +3263,7 @@ class GenAIEvalProfile:
         ...         id="quality_judge",
         ...         prompt=quality_prompt,
         ...         expected_value=8,
-        ...         field_path="score",
+        ...         context_path="score",
         ...         operator=ComparisonOperator.GreaterThanOrEqual,
         ...         depends_on=["not_empty"],  # Only run if assertion passes
         ...         description="Quality assessment after validation"
@@ -3282,7 +3282,7 @@ class GenAIEvalProfile:
         ...     id="relevance",
         ...     prompt=relevance_prompt,
         ...     expected_value=7,
-        ...     field_path="score",
+        ...     context_path="score",
         ...     operator=ComparisonOperator.GreaterThanOrEqual
         ... )
         >>>
@@ -3292,7 +3292,7 @@ class GenAIEvalProfile:
         ...     id="toxicity",
         ...     prompt=toxicity_prompt,
         ...     expected_value=0.2,
-        ...     field_path="relevance.score",
+        ...     context_path="relevance.score",
         ...     operator=ComparisonOperator.LessThan,
         ...     depends_on=["relevance"]  # Chain evaluations
         ... )
@@ -3302,7 +3302,7 @@ class GenAIEvalProfile:
         ...     id="quality",
         ...     prompt=quality_prompt,
         ...     expected_value=8,
-        ...     field_path="toxicity.score",
+        ...     context_path="toxicity.score",
         ...     operator=ComparisonOperator.GreaterThanOrEqual,
         ...     depends_on=["relevance", "toxicity"]  # Multiple deps
         ... )
@@ -3355,7 +3355,7 @@ class GenAIEvalProfile:
         >>> # Fast assertions first
         >>> response_check = AssertionTask(
         ...     id="not_empty",
-        ...     field_path="response",
+        ...     context_path="response",
         ...     operator=ComparisonOperator.IsNotEmpty,
         ...     expected_value=True,
         ...     description="Response must not be empty"
@@ -3380,7 +3380,7 @@ class GenAIEvalProfile:
         ...     id="quality",
         ...     prompt=quality_prompt,
         ...     expected_value=8,
-        ...     field_path="score",
+        ...     context_path="score",
         ...     operator=ComparisonOperator.GreaterThanOrEqual,
         ...     depends_on=["not_empty", "verify_workflow"],
         ...     description="Quality assessment after validation"
@@ -3911,7 +3911,7 @@ class Drifter:
             ...         id="response_relevance",
             ...         prompt=relevance_prompt,
             ...         expected_value=7,
-            ...         field_path="score",
+            ...         context_path="score",
             ...         operator=ComparisonOperator.GreaterThanOrEqual,
             ...         description="Ensure relevance score >= 7"
             ...     )
@@ -4034,8 +4034,8 @@ class GenAIEvalTaskResult:
         """Get the evaluated value from the task"""
 
     @property
-    def field_path(self) -> Optional[str]:
-        """Get the field path used for value extraction, if any"""
+    def context_path(self) -> Optional[str]:
+        """Get the context path used for value extraction, if any"""
 
     @property
     def operator(self) -> ComparisonOperator:
@@ -4790,6 +4790,7 @@ __all__ = [
     "Metrics",
     "EntityType",
     "GenAIEvalRecord",
+    "GrpcConfig",
     "HttpConfig",
     "KafkaConfig",
     "RabbitMQConfig",

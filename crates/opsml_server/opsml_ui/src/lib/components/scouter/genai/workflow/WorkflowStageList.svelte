@@ -14,8 +14,6 @@
     onTaskSelect: (task: GenAIEvalTaskResult) => void;
   } = $props();
 
-  const ROW_HEIGHT = 32;
-
   function getTaskById(taskId: string): GenAIEvalTaskResult | undefined {
     return tasks.find(t => t.task_id === taskId);
   }
@@ -25,19 +23,14 @@
     return task.passed ? CheckCircle2 : XCircle;
   }
 
-  function getStatusColor(task: GenAIEvalTaskResult): string {
-    if (task.condition) return 'text-tertiary-600';
-    return task.passed ? 'text-secondary-600' : 'text-error-600';
+  function getStatusBarColor(task: GenAIEvalTaskResult): string {
+    if (task.condition) return 'bg-tertiary-500';
+    return task.passed ? 'bg-secondary-500' : 'bg-error-600';
   }
 
-  function getTaskBadgeClasses(task: GenAIEvalTaskResult): string {
-    if (task.condition) {
-      return 'border-tertiary-900 bg-tertiary-100 text-tertiary-900';
-    }
-    if (task.passed) {
-      return 'border-secondary-900 bg-secondary-100 text-secondary-900';
-    }
-    return 'border-error-900 bg-error-100 text-error-900';
+  function getStatusIconColor(task: GenAIEvalTaskResult): string {
+    if (task.condition) return 'text-tertiary-600';
+    return task.passed ? 'text-secondary-600' : 'text-error-600';
   }
 
   function formatDuration(startTime: string, endTime: string): string {
@@ -54,69 +47,84 @@
         .map(taskId => getTaskById(taskId))
         .filter((task): task is GenAIEvalTaskResult => task !== undefined)
         .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-
-      return {
-        stageIndex,
-        tasks: stageTasks
-      };
+      return { stageIndex, tasks: stageTasks };
     })
   );
 </script>
 
-<div class="flex flex-col h-full bg-white text-sm overflow-hidden">
-  <div class="sticky top-0 bg-surface-50 border-b-2 border-gray-300 flex-shrink-0 px-4 py-3">
-    <h3 class="text-sm font-bold text-primary-800">Execution Timeline</h3>
-    <p class="text-xs text-gray-600 mt-1">{tasks.length} tasks across {executionPlan.stages.length} stages</p>
+<div class="flex flex-col h-full bg-surface-50 overflow-hidden text-sm">
+
+  <!-- Section header -->
+  <div class="flex-shrink-0 sticky top-0 z-10 bg-surface-50 border-b-2 border-black px-4 py-2.5">
+    <h3 class="text-xs font-black uppercase tracking-wider text-primary-950">Execution Timeline</h3>
+    <p class="text-xs font-mono text-primary-700 mt-0.5">
+      {tasks.length} tasks across {executionPlan.stages.length} stages
+    </p>
   </div>
 
   <div class="flex-1 overflow-auto">
     {#each sortedStages as { stageIndex, tasks: stageTasks }}
-      <div class="border-b-2 border-gray-200">
-        <div class="sticky top-0 bg-tertiary-100 border-b border-tertiary-300 px-4 py-2">
+
+      <!-- Stage group -->
+      <div class="border-b border-black/10">
+
+        <!-- Stage header: sticky top-0 because section header is outside the scroll container -->
+        <div class="sticky top-0 z-[5] bg-primary-50 border-b border-black/20 px-4 py-1.5">
           <div class="flex items-center gap-2">
-            <span class="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-tertiary-950 text-white rounded-full text-xs font-bold">
+            <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-primary-800 text-white rounded-base text-[10px] font-black shadow-small">
               {stageIndex + 1}
             </span>
-            <span class="text-xs font-bold text-tertiary-950">
+            <span class="text-xs font-black uppercase tracking-wider text-primary-950">
               Stage {stageIndex + 1}
             </span>
-            <span class="text-xs text-gray-600">
+            <span class="text-xs font-mono text-primary-700">
               ({stageTasks.length} {stageTasks.length === 1 ? 'task' : 'tasks'})
             </span>
           </div>
         </div>
 
+        <!-- Task rows -->
         {#each stageTasks as task}
           {@const isSelected = selectedTask?.task_id === task.task_id}
           {@const StatusIcon = getStatusIcon(task)}
-          {@const badgeClasses = getTaskBadgeClasses(task)}
 
           <button
-            class="flex group cursor-pointer hover:bg-surface-100 transition-all w-full border-b border-gray-100 relative"
-            style="height: {ROW_HEIGHT}px"
-            class:bg-primary-50={isSelected}
+            class="relative flex items-center gap-3 px-4 pl-5 w-full h-9 border-b border-black/10
+                   transition-colors duration-100 ease-out text-left
+                   {isSelected ? 'bg-primary-100' : 'bg-surface-50 hover:bg-primary-50'}"
             onclick={() => onTaskSelect(task)}
           >
-            <div class={`absolute left-0 top-0 bottom-0 w-1 ${getStatusColor(task).replace('text-', 'bg-')}`}></div>
+            <!-- Left status bar -->
+            <div class="absolute left-0 top-0 bottom-0 w-1 {getStatusBarColor(task)}"></div>
 
-            <div class="flex items-center gap-3 px-4 pl-6 w-full overflow-hidden">
-              <StatusIcon class="w-4 h-4 flex-shrink-0 {getStatusColor(task)}" />
+            <!-- Status icon -->
+            <StatusIcon class="w-3.5 h-3.5 flex-shrink-0 {getStatusIconColor(task)}" />
 
-              <span class="text-xs truncate text-gray-900 flex-1 min-w-0 text-left {isSelected ? 'font-bold' : 'font-medium'}" title={task.task_id}>
-                {task.task_id}
+            <!-- Task name -->
+            <span
+              class="flex-1 text-xs truncate text-primary-950 min-w-0 {isSelected ? 'font-bold' : 'font-medium'}"
+              title={task.task_id}
+            >
+              {task.task_id}
+            </span>
+
+            <!-- Fail badge -->
+            {#if !task.passed && !task.condition}
+              <span class="flex-shrink-0 text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-error-100 text-error-900 border border-black rounded-base shadow-small">
+                Fail
               </span>
+            {/if}
 
-              {#if !task.passed && !task.condition}
-                <span class="text-[10px] bg-error-100 text-error-800 px-1.5 rounded font-bold uppercase tracking-wider">Fail</span>
-              {/if}
-
-              <span class="w-16 text-[10px] font-mono text-gray-500 text-right flex-shrink-0">
-                {formatDuration(task.start_time, task.end_time)}
-              </span>
-            </div>
+            <!-- Duration -->
+            <span class="flex-shrink-0 w-14 text-[10px] font-mono text-primary-700 text-right">
+              {formatDuration(task.start_time, task.end_time)}
+            </span>
           </button>
+
         {/each}
       </div>
+
     {/each}
   </div>
+
 </div>

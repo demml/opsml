@@ -83,11 +83,29 @@ export interface ServiceCard {
   opsml_version: string;
   app_env: string;
   is_card: boolean;
-  registry_type: RegistryType;
+  registry_type: RegistryType.Service | RegistryType.Mcp | RegistryType.Agent;
   experimentcard_uid?: string;
   service_type: ServiceType;
   metadata?: ServiceMetadata;
   deploy?: DeploymentConfig[];
   service_config: ServiceConfig;
   tags: string[];
+}
+
+export function isServiceCard(obj: any): boolean {
+  return (
+    obj &&
+    obj.registry_type === "Service" &&
+    typeof obj.service_type === "string" &&
+    obj.service_type === "Service"
+  );
+}
+
+export function isAgentCard(obj: any): boolean {
+  return (
+    obj &&
+    obj.registry_type === "Service" &&
+    typeof obj.service_type === "string" &&
+    obj.service_type === "Agent"
+  );
 }

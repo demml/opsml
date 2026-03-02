@@ -310,7 +310,7 @@ def crud_service_card(model_uid: str, prompt_uid: str):
     created_path = Path("service")
     assert created_path.exists()
     assert created_path.is_dir()
-    assert len(list(created_path.iterdir())) == 3
+    assert len(list(created_path.iterdir())) == 4
 
     # test loading from path with onnx
     load_kwargs = {

@@ -31,9 +31,18 @@ pub async fn get_paginated_traces(
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<TraceFilters>,
 ) -> Result<Json<TracePaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let response = state
@@ -43,7 +52,7 @@ pub async fn get_paginated_traces(
             RequestType::Post,
             Some(serde_json::to_value(&req).map_err(|e| {
                 error!("Failed to serialize trace filter request: {e}");
-                internal_server_error(e, "Failed to serialize trace filter request")
+                internal_server_error(e, "Failed to serialize trace filter request", None)
             })?),
             None,
             None,
@@ -52,7 +61,7 @@ pub async fn get_paginated_traces(
         .await
         .map_err(|e| {
             error!("Failed to acknowledge drift alerts: {e}");
-            internal_server_error(e, "Failed to acknowledge drift alerts")
+            internal_server_error(e, "Failed to acknowledge drift alerts", None)
         })?;
 
     let status_code = response.status();
@@ -63,14 +72,14 @@ pub async fn get_paginated_traces(
                 .await
                 .map_err(|e| {
                     error!("Failed to parse scouter pagination response: {e}");
-                    internal_server_error(e, "Failed to parse scouter response")
+                    internal_server_error(e, "Failed to parse scouter response", None)
                 })?;
             Ok(Json(body))
         }
         false => {
             let body = response.json::<ScouterServerError>().await.map_err(|e| {
                 error!("Failed to parse scouter error response: {e}");
-                internal_server_error(e, "Failed to parse scouter error response")
+                internal_server_error(e, "Failed to parse scouter error response", None)
             })?;
             Err((status_code, Json(OpsmlServerError::new(body.error))))
         }
@@ -84,14 +93,23 @@ pub async fn get_trace_spans(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<TraceRequest>,
 ) -> Result<Json<TraceSpansResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let query_string = serde_qs::to_string(&params).map_err(|e| {
         error!("Failed to serialize query string: {e}");
-        internal_server_error(e, "Failed to serialize query string")
+        internal_server_error(e, "Failed to serialize query string", None)
     })?;
 
     let response = state
@@ -107,7 +125,7 @@ pub async fn get_trace_spans(
         .await
         .map_err(|e| {
             error!("Failed to get trace spans: {e}");
-            internal_server_error(e, "Failed to get trace spans")
+            internal_server_error(e, "Failed to get trace spans", None)
         })?;
 
     let status_code = response.status();
@@ -115,14 +133,14 @@ pub async fn get_trace_spans(
         true => {
             let body = response.json::<TraceSpansResponse>().await.map_err(|e| {
                 error!("Failed to parse scouter pagination response: {e}");
-                internal_server_error(e, "Failed to parse scouter response")
+                internal_server_error(e, "Failed to parse scouter response", None)
             })?;
             Ok(Json(body))
         }
         false => {
             let body = response.json::<ScouterServerError>().await.map_err(|e| {
                 error!("Failed to parse scouter error response: {e}");
-                internal_server_error(e, "Failed to parse scouter error response")
+                internal_server_error(e, "Failed to parse scouter error response", None)
             })?;
             Err((status_code, Json(OpsmlServerError::new(body.error))))
         }
@@ -136,10 +154,19 @@ pub async fn trace_metrics(
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<TraceMetricsRequest>,
 ) -> Result<Json<TraceMetricsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     debug!("Getting trace metrics with params: {:?}", &body);
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let response = state
@@ -149,7 +176,7 @@ pub async fn trace_metrics(
             RequestType::Post,
             Some(serde_json::to_value(&body).map_err(|e| {
                 error!("Failed to serialize trace metrics request: {e}");
-                internal_server_error(e, "Failed to serialize trace metrics request")
+                internal_server_error(e, "Failed to serialize trace metrics request", None)
             })?),
             None,
             None,
@@ -158,7 +185,7 @@ pub async fn trace_metrics(
         .await
         .map_err(|e| {
             error!("Failed to get trace metrics: {e}");
-            internal_server_error(e, "Failed to get trace metrics")
+            internal_server_error(e, "Failed to get trace metrics", None)
         })?;
 
     let status_code = response.status();
@@ -166,7 +193,7 @@ pub async fn trace_metrics(
         true => {
             let body = response.json::<TraceMetricsResponse>().await.map_err(|e| {
                 error!("Failed to parse scouter pagination response: {e}");
-                internal_server_error(e, "Failed to parse scouter response")
+                internal_server_error(e, "Failed to parse scouter response", None)
             })?;
             debug!("Trace metrics response: {:?}", &body);
             Ok(Json(body))
@@ -174,7 +201,7 @@ pub async fn trace_metrics(
         false => {
             let body = response.json::<ScouterServerError>().await.map_err(|e| {
                 error!("Failed to parse scouter error response: {e}");
-                internal_server_error(e, "Failed to parse scouter error response")
+                internal_server_error(e, "Failed to parse scouter error response", None)
             })?;
             Err((status_code, Json(OpsmlServerError::new(body.error))))
         }

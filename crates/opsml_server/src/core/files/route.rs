@@ -90,6 +90,7 @@ pub async fn create_multipart_upload(
             return Err(internal_server_error(
                 e,
                 "Failed to create multipart upload",
+                None,
             ));
         }
     };
@@ -168,7 +169,11 @@ pub async fn generate_presigned_url(
             Ok(url) => url,
             Err(e) => {
                 error!("Failed to generate presigned url: {e}");
-                return Err(internal_server_error(e, "Failed to generate presigned url"));
+                return Err(internal_server_error(
+                    e,
+                    "Failed to generate presigned url",
+                    None,
+                ));
             }
         };
         return Ok(Json(PresignedUrl { url }));
@@ -180,7 +185,11 @@ pub async fn generate_presigned_url(
         Ok(url) => url,
         Err(e) => {
             error!("Failed to generate presigned url: {e}");
-            return Err(internal_server_error(e, "Failed to generate presigned url"));
+            return Err(internal_server_error(
+                e,
+                "Failed to generate presigned url",
+                None,
+            ));
         }
     };
 
@@ -206,7 +215,7 @@ pub async fn complete_multipart_upload(
         .await
         .map_err(|e| {
             error!("Failed to complete multipart upload: {e}");
-            internal_server_error(e, "Failed to complete multipart upload")
+            internal_server_error(e, "Failed to complete multipart upload", None)
         })?;
 
     Ok(Json(UploadResponse {
@@ -225,7 +234,7 @@ pub async fn upload_multipart(
         let file_name = field.file_name().unwrap().to_string();
         let data = field.bytes().await.map_err(|e| {
             error!("Failed to read file: {e}");
-            internal_server_error(e, "Failed to read file")
+            internal_server_error(e, "Failed to read file", None)
         })?;
         let bucket = state.config.opsml_storage_uri.to_owned();
 
@@ -236,17 +245,17 @@ pub async fn upload_multipart(
         if let Some(parent) = rpath.parent() {
             tokio::fs::create_dir_all(parent).await.map_err(|e| {
                 error!("Failed to create directory: {e}");
-                internal_server_error(e, "Failed to create directory")
+                internal_server_error(e, "Failed to create directory", None)
             })?;
         }
 
         let mut file = File::create(&rpath).await.map_err(|e| {
             error!("Failed to create file: {e}");
-            internal_server_error(e, "Failed to create file")
+            internal_server_error(e, "Failed to create file", None)
         })?;
         file.write_all(&data).await.map_err(|e| {
             error!("Failed to write file: {e}");
-            internal_server_error(e, "Failed to write file")
+            internal_server_error(e, "Failed to write file", None)
         })?;
     }
 
@@ -270,7 +279,7 @@ pub async fn list_files(
         Ok(files) => files,
         Err(e) => {
             error!("Failed to list files: {e}");
-            return Err(internal_server_error(e, "Failed to list files"));
+            return Err(internal_server_error(e, "Failed to list files", None));
         }
     };
 
@@ -304,7 +313,7 @@ pub async fn list_file_info(
         Ok(files) => files,
         Err(e) => {
             error!("Failed to list files: {e}");
-            return Err(internal_server_error(e, "Failed to list files"));
+            return Err(internal_server_error(e, "Failed to list files", None));
         }
     };
 
@@ -335,7 +344,7 @@ pub async fn file_tree(
         Ok(files) => files,
         Err(e) => {
             error!("Failed to list files: {e}");
-            return Err(internal_server_error(e, "Failed to list files"));
+            return Err(internal_server_error(e, "Failed to list files", None));
         }
     };
 
@@ -419,7 +428,7 @@ pub async fn get_file_for_ui(
     .await
     .map_err(|e| {
         error!("Failed to get content from file: {e}");
-        internal_server_error(e, "Failed to get content from file")
+        internal_server_error(e, "Failed to get content from file", None)
     })?;
 
     // get first item
@@ -455,7 +464,7 @@ pub async fn get_files_for_ui(
     // check if path exists
     let exists = state.storage_client.exists(&file_path).await.map_err(|e| {
         error!("Failed to check if file exists: {e}");
-        internal_server_error(e, "Failed to check if file exists")
+        internal_server_error(e, "Failed to check if file exists", None)
     })?;
 
     // return empty if not exists
@@ -473,7 +482,7 @@ pub async fn get_files_for_ui(
     .await
     .map_err(|e| {
         error!("Failed to get content from file: {e}");
-        internal_server_error(e, "Failed to get content from file")
+        internal_server_error(e, "Failed to get content from file", None)
     })?;
 
     Ok(Json(files))
@@ -510,7 +519,7 @@ pub async fn delete_file(
     if let Err(e) = files {
         return Err({
             error!("Failed to delete files: {e}");
-            internal_server_error(e, "Failed to delete files")
+            internal_server_error(e, "Failed to delete files", None)
         });
     }
 
@@ -528,7 +537,11 @@ pub async fn delete_file(
         }
         Err(e) => {
             error!("Failed to check if file exists: {e}");
-            Err(internal_server_error(e, "Failed to check if file exists"))
+            Err(internal_server_error(
+                e,
+                "Failed to check if file exists",
+                None,
+            ))
         }
     }
 }
@@ -557,7 +570,7 @@ pub async fn download_file(
         Ok(file) => file,
         Err(e) => {
             error!("Failed to open file: {e}");
-            return internal_server_error(e, "Failed to open file").into_response();
+            return internal_server_error(e, "Failed to open file", None).into_response();
         }
     };
 
@@ -579,7 +592,7 @@ pub async fn get_artifact_key(
         .await
         .map_err(|e| {
             error!("Failed to get artifact key: {e}");
-            internal_server_error(e, "Failed to get artifact key")
+            internal_server_error(e, "Failed to get artifact key", None)
         })?;
 
     Ok(Json(key))
@@ -613,7 +626,7 @@ pub async fn create_artifact_record(
         .await
         .map_err(|e| {
             error!("Failed to get next version: {e}");
-            internal_server_error(e, "Failed to get next version")
+            internal_server_error(e, "Failed to get next version", None)
         })?;
 
     let artifact_record = ArtifactSqlRecord::new(
@@ -630,7 +643,7 @@ pub async fn create_artifact_record(
         .await
         .map_err(|e| {
             error!("Failed to create artifact record: {e}");
-            internal_server_error(e, "Failed to create artifact record")
+            internal_server_error(e, "Failed to create artifact record", None)
         })?;
 
     let metadata = artifact_record.get_metadata();
@@ -672,7 +685,7 @@ pub async fn query_artifact_records(
         .await
         .map_err(|e| {
             error!("Failed to query artifact records: {e}");
-            internal_server_error(e, "Failed to query artifact records")
+            internal_server_error(e, "Failed to query artifact records", None)
         })?;
 
     let mut response = Json(records).into_response();

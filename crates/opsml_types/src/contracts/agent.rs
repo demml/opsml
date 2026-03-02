@@ -1,5 +1,7 @@
+use crate::contracts::DeploymentConfig;
 use crate::error::AgentConfigError;
-use pyo3::{IntoPyObjectExt, prelude::*};
+use opsml_utils::{PyHelperFuncs, convert_keys_to_snake_case};
+use pyo3::{IntoPyObjectExt, prelude::*, types::PyDict};
 use pythonize::depythonize;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -7,7 +9,6 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
-
 // Validation constants per Agent Skills Spec
 const MAX_SKILL_NAME_LENGTH: usize = 64;
 const MAX_DESCRIPTION_LENGTH: usize = 1024;
@@ -23,6 +24,9 @@ static SKILL_NAME_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 
 fn a2a_current_version() -> String {
     "0.3.0".to_string()
+}
+fn agent_current_version() -> String {
+    "0.0.0".to_string()
 }
 
 #[pyclass]
@@ -47,6 +51,29 @@ impl AgentProvider {
     }
 }
 
+// should be all caps (JSONRPC, HTTP+JSON, GRPC) but we'll normalise it in the UI to be more flexible
+#[pyclass(eq, eq_int)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum ProtocolBinding {
+    JsonRpc,
+    #[default]
+    #[serde(alias = "HTTP+JSON")]
+    HttpJson,
+    Grpc,
+}
+
+impl From<&str> for ProtocolBinding {
+    fn from(s: &str) -> Self {
+        match s.to_uppercase().replace(&['-', ' ', '+'][..], "_").as_str() {
+            "JSONRPC" => ProtocolBinding::JsonRpc,
+            "HTTP_JSON" | "HTTP+JSON" => ProtocolBinding::HttpJson,
+            "GRPC" => ProtocolBinding::Grpc,
+            _ => ProtocolBinding::HttpJson, // default to HTTP+JSON if unrecognized
+        }
+    }
+}
+
 #[pyclass]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
@@ -56,10 +83,10 @@ pub struct AgentInterface {
 
     #[pyo3(get, set)]
     #[serde(alias = "protocol_binding")]
-    pub protocol_binding: String,
+    pub protocol_binding: ProtocolBinding,
 
     #[pyo3(get, set)]
-    #[serde(alias = "protocol_version")]
+    #[serde(alias = "protocol_version", default = "a2a_current_version")]
     pub protocol_version: String,
 
     #[pyo3(get, set)]
@@ -72,7 +99,36 @@ impl AgentInterface {
     #[pyo3(signature = (url, protocol_binding, protocol_version, tenant=None))]
     pub fn new(
         url: String,
-        protocol_binding: String,
+        protocol_binding: Bound<'_, PyAny>,
+        protocol_version: String,
+        tenant: Option<String>,
+    ) -> Self {
+        // if isinstance of ProtocolBinding, extract the value, otherwise try to convert from string
+        let protocol_binding = if protocol_binding.is_instance_of::<ProtocolBinding>() {
+            protocol_binding
+                .extract::<ProtocolBinding>()
+                .unwrap_or_default()
+        } else {
+            ProtocolBinding::from(
+                protocol_binding
+                    .extract::<String>()
+                    .unwrap_or_default()
+                    .as_str(),
+            )
+        };
+        Self {
+            url,
+            protocol_binding,
+            protocol_version,
+            tenant: tenant.unwrap_or_default(),
+        }
+    }
+}
+
+impl AgentInterface {
+    pub fn new_rs(
+        url: String,
+        protocol_binding: ProtocolBinding,
         protocol_version: String,
         tenant: Option<String>,
     ) -> Self {
@@ -912,58 +968,58 @@ impl AgentCardSignature {
 #[serde(default, rename_all = "camelCase")]
 pub struct AgentSpec {
     #[pyo3(get, set)]
-    pub capabilities: AgentCapabilities,
+    pub capabilities: AgentCapabilities, // required
 
     #[pyo3(get, set)]
     #[serde(alias = "default_output_modes")]
-    pub default_output_modes: Vec<String>,
+    pub default_output_modes: Vec<String>, // required, can be empty
 
     #[pyo3(get, set)]
     #[serde(alias = "default_input_modes")]
-    pub default_input_modes: Vec<String>,
+    pub default_input_modes: Vec<String>, // required, can be empty
 
     #[pyo3(get, set)]
-    pub description: String,
+    pub description: String, // required, non-empty
 
     #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none", alias = "documentation_url")]
-    pub documentation_url: Option<String>,
+    pub documentation_url: Option<String>, // not required
 
     #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none", alias = "icon_url")]
-    pub icon_url: Option<String>,
+    pub icon_url: Option<String>, // not required
 
     #[pyo3(get, set)]
-    pub name: String,
+    pub name: String, // required, non-empty
 
     #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub provider: Option<AgentProvider>,
+    pub provider: Option<AgentProvider>, // not required
 
     #[pyo3(get, set)]
     #[serde(
         skip_serializing_if = "Option::is_none",
         alias = "security_requirements"
     )]
-    pub security_requirements: Option<Vec<SecurityRequirement>>,
+    pub security_requirements: Option<Vec<SecurityRequirement>>, // not required
 
     #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none", alias = "security_schemes")]
-    pub security_schemes: Option<HashMap<String, SecurityScheme>>,
+    pub security_schemes: Option<HashMap<String, SecurityScheme>>, // not required
 
     #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub signatures: Option<Vec<AgentCardSignature>>,
+    pub signatures: Option<Vec<AgentCardSignature>>, // not required
 
-    #[pyo3(get, set)]
-    pub skills: Vec<SkillFormat>,
+    #[pyo3(set)]
+    pub skills: Vec<SkillFormat>, // required
 
     #[pyo3(get, set)]
     #[serde(alias = "supported_interfaces")]
-    pub supported_interfaces: Vec<AgentInterface>,
+    pub supported_interfaces: Vec<AgentInterface>, // required, non-empty
 
     #[pyo3(get, set)]
-    #[serde(default = "a2a_current_version")]
+    #[serde(default = "agent_current_version")] // required
     pub version: String,
 }
 
@@ -1035,6 +1091,47 @@ impl AgentSpec {
             signatures,
         })
     }
+
+    /// pydantic-style method needed to dump agent spec to Dictionary as part of a2a deployment
+    #[pyo3(signature = (**kwargs))]
+    #[allow(unused_variables)]
+    pub fn model_dump<'py>(
+        &self,
+        py: Python<'py>,
+        kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Result<Bound<'py, PyAny>, AgentConfigError> {
+        let cloned_config = self.clone();
+        let camel_case_json = serde_json::to_value(cloned_config)?;
+        let snake_case_json = convert_keys_to_snake_case(camel_case_json);
+        let pythonized_spec = pythonize::pythonize(py, &snake_case_json)?;
+        Ok(pythonized_spec)
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+
+    pub fn supports_authenticated_extended_card(&self) {}
+
+    #[getter]
+    pub fn get_skills<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> Result<Vec<Bound<'py, PyAny>>, AgentConfigError> {
+        self.skills
+            .iter()
+            .map(|skill| match skill {
+                SkillFormat::Standard(s) => s
+                    .clone()
+                    .into_bound_py_any(py)
+                    .map_err(|e| AgentConfigError::PyError(e.to_string())),
+                SkillFormat::A2A(s) => s
+                    .clone()
+                    .into_bound_py_any(py)
+                    .map_err(|e| AgentConfigError::PyError(e.to_string())),
+            })
+            .collect()
+    }
 }
 
 impl AgentSpec {
@@ -1075,10 +1172,39 @@ impl AgentSpec {
 
     /// Validate all skills in the agent spec
     /// For skills in Standard format, also validate their fields and check for SKILL.md file existence
-    pub(crate) fn validate(&self, root_path: &Path) -> Result<(), AgentConfigError> {
-        // Validate each skill
+    /// If supported_interfaces is empty, attempt to populate it from deploy_config URLs. If deploy_config is None or contains no URLs, return an error since supported_interfaces cannot be empty.
+    pub(crate) fn validate(
+        &mut self,
+        root_path: &Path,
+        deploy_config: &Option<Vec<DeploymentConfig>>,
+    ) -> Result<(), AgentConfigError> {
         for skill in &self.skills {
             skill.validate(root_path)?;
+        }
+
+        if self.supported_interfaces.is_empty() {
+            let Some(deploy_configs) = deploy_config else {
+                return Err(AgentConfigError::InterfaceUrlMissing);
+            };
+
+            let all_urls: Vec<String> = deploy_configs
+                .iter()
+                .flat_map(|config| config.urls.iter().cloned())
+                .collect();
+
+            if all_urls.is_empty() {
+                return Err(AgentConfigError::InterfaceUrlMissing);
+            }
+
+            self.supported_interfaces = all_urls
+                .into_iter()
+                .map(|url| AgentInterface {
+                    url,
+                    protocol_binding: ProtocolBinding::HttpJson,
+                    protocol_version: a2a_current_version(),
+                    tenant: String::new(),
+                })
+                .collect();
         }
 
         Ok(())
