@@ -6,7 +6,6 @@
   import { getRegistryPath } from '$lib/utils';
   import { dev } from '$app/environment';
   import type { RegistryType } from '$lib/utils';
-  import type { CardMetadata } from '$lib/server/card/layout';
   import type { ModelCard } from '../card_interfaces/modelcard';
 
   
