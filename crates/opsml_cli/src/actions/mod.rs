@@ -1,4 +1,3 @@
-pub mod demo;
 pub mod download;
 pub mod generate;
 pub mod ui;
