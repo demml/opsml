@@ -52,8 +52,8 @@ impl AgentProvider {
 }
 
 // should be all caps (JSONRPC, HTTP+JSON, GRPC) but we'll normalise it in the UI to be more flexible
-#[pyclass]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[pyclass(eq, eq_int)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum ProtocolBinding {
     JsonRpc,
@@ -61,6 +61,17 @@ pub enum ProtocolBinding {
     #[serde(alias = "HTTP+JSON")]
     HttpJson,
     Grpc,
+}
+
+impl From<&str> for ProtocolBinding {
+    fn from(s: &str) -> Self {
+        match s.to_uppercase().replace(&['-', ' ', '+'][..], "_").as_str() {
+            "JSONRPC" => ProtocolBinding::JsonRpc,
+            "HTTP_JSON" | "HTTP+JSON" => ProtocolBinding::HttpJson,
+            "GRPC" => ProtocolBinding::Grpc,
+            _ => ProtocolBinding::HttpJson, // default to HTTP+JSON if unrecognized
+        }
+    }
 }
 
 #[pyclass]
@@ -87,6 +98,35 @@ impl AgentInterface {
     #[new]
     #[pyo3(signature = (url, protocol_binding, protocol_version, tenant=None))]
     pub fn new(
+        url: String,
+        protocol_binding: Bound<'_, PyAny>,
+        protocol_version: String,
+        tenant: Option<String>,
+    ) -> Self {
+        // if isinstance of ProtocolBinding, extract the value, otherwise try to convert from string
+        let protocol_binding = if protocol_binding.is_instance_of::<ProtocolBinding>() {
+            protocol_binding
+                .extract::<ProtocolBinding>()
+                .unwrap_or_default()
+        } else {
+            ProtocolBinding::from(
+                protocol_binding
+                    .extract::<String>()
+                    .unwrap_or_default()
+                    .as_str(),
+            )
+        };
+        Self {
+            url,
+            protocol_binding,
+            protocol_version,
+            tenant: tenant.unwrap_or_default(),
+        }
+    }
+}
+
+impl AgentInterface {
+    pub fn new_rs(
         url: String,
         protocol_binding: ProtocolBinding,
         protocol_version: String,
