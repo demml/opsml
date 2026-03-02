@@ -39,6 +39,7 @@ from .opsml import (
 )
 from .scouter.evaluate import *
 from .scouter.scouter import *
+from .service.agent import AgentSpec
 from .types import VersionType
 
 CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]
@@ -964,7 +965,7 @@ class PromptCard:
         version: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
-        eval_profile: Optional[Dict[str, GenAIEvalProfile] | List[GenAIEvalProfile] | GenAIEvalProfile] = None,
+        eval_profile: Optional[GenAIEvalProfile] = None,
     ) -> None:
         """Creates a `PromptCard`.
 
@@ -987,9 +988,8 @@ class PromptCard:
             tags (List[str]):
                 Tags to associate with `PromptCard`. Can be a dictionary of strings or
                 a `Tags` object.
-            drift_profile:
-                Drift profile(s) to associate with the prompt. Must be a dictionary of
-                alias and drift profile, a list of drift profiles with aliases, or a single drift profile with an alias.
+            eval_profile (GenAIEvalProfile | None):
+                Evaluation profile to associate with the prompt.
         Example:
         ```python
         from opsml import Prompt, PromptCard, CardRegistry, RegistryType
@@ -1152,7 +1152,7 @@ class PromptCard:
             ...         id="response_relevance",
             ...         prompt=relevance_prompt,
             ...         expected_value=7,
-            ...         field_path="score",
+            ...         context_path="score",
             ...         operator=ComparisonOperator.GreaterThanOrEqual,
             ...         description="Ensure relevance score >= 7"
             ...     )
@@ -1162,20 +1162,20 @@ class PromptCard:
         """
 
     @property
-    def eval_profile(self) -> "DriftProfileMap":
-        """Return the drift profile map from the model interface.
+    def eval_profile(self) -> "Optional[GenAIEvalProfile]":
+        """Returns the GenAIEvalProfile associated with this prompt card, if it exists.
 
         Returns:
-            DriftProfileMap
+            Optional[GenAIEvalProfile]
         """
 
     @eval_profile.setter
-    def eval_profile(self, eval_profile: "DriftProfileMap") -> None:
+    def eval_profile(self, eval_profile: "GenAIEvalProfile") -> None:
         """Set the drift profile map for the prompt card.
 
         Args:
-            eval_profile (DriftProfileMap):
-                The drift profile map to set.
+            eval_profile (GenAIEvalProfile):
+                The GenAIEvalProfile to set for the prompt card.
         """
 
 class Card:
@@ -1521,6 +1521,11 @@ class ServiceCard:
     @property
     def service_config(self) -> Optional[ServiceConfig]:
         """Return the service configuration for the service card if it exists"""
+
+    def agent_card(self) -> AgentSpec:
+        """If the service card contains an agent, returns the a2a AgentCard type
+        If the service card does not contain an agent, returns an error
+        """
 
 # Define a TypeVar that can only be one of our card types
 CardT = TypeVar(
@@ -2361,7 +2366,7 @@ class Experiment:
 
     def register_card(
         self,
-        card: Union[DataCard, ModelCard, PromptCard],
+        card: Union[DataCard, ModelCard, PromptCard, ServiceCard],
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
@@ -2478,6 +2483,11 @@ def download_artifact(
             Local path to download the artifact to. If None, the artifact will be downloaded to the current working directory.
     """
 
+class ProtocolBinding:
+    JsonRpc: "ProtocolBinding"
+    Grpc: "ProtocolBinding"
+    HttpJson: "ProtocolBinding"
+
 __all__ = [
     "ServiceType",
     "CardRecord",
@@ -2509,4 +2519,5 @@ __all__ = [
     "get_experiment_metrics",
     "get_experiment_parameters",
     "download_artifact",
+    "ProtocolBinding",
 ]

@@ -70,6 +70,8 @@ nav:
           - Usage: "docs/cards/experiment/usage.md"
       - "docs/cards/promptcard.md"
       - "docs/cards/servicecard.md"
+      - "docs/cards/agentcard.md"
+      - "docs/cards/yaml-definitions.md"
   - Evaluation:
       - "docs/evaluation/genai.md"
   - Monitoring:

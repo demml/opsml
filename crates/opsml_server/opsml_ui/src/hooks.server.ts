@@ -1,8 +1,7 @@
 import { validateTokenOrRedirect } from "$lib/server/auth/validateToken";
-import type { Handle } from "@sveltejs/kit";
+import type { Handle, HandleFetch } from "@sveltejs/kit";
 import { logger } from "$lib/server/logger";
 import { ServerPaths, UiPaths } from "$lib/components/api/routes";
-import type { HandleFetch } from "@sveltejs/kit";
 
 // These routes do not require authentication
 const PUBLIC_ROUTES = [
@@ -52,7 +51,18 @@ export const handleFetch: HandleFetch = async ({ request, event, fetch }) => {
     request.headers.set("Authorization", `Bearer ${token}`);
   }
 
-  const response = await fetch(request);
+  let response: Response;
+  try {
+    response = await fetch(request);
+  } catch (error) {
+    logger.error(`API Error: ${error}`);
+    // Return a 503 so load functions receive a Response object rather than
+    // an unhandled throw, keeping non-backend-dependent routes functional.
+    return new Response(JSON.stringify({ error: "Backend unavailable" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   // If backend middleware refreshed the token, it will be in the Authorization header
   const newToken = response.headers.get("Authorization");

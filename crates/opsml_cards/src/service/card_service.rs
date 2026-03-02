@@ -1,11 +1,11 @@
 use crate::error::CardError;
-use crate::traits::OpsmlCard;
+use crate::traits::{OpsmlCard, ProfileExt};
 use crate::utils::BaseArgs;
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
 use opsml_service::OpsmlServiceSpec;
-use opsml_types::contracts::{Card, CardEntry, ServiceConfig};
+use opsml_types::contracts::{AgentSpec, Card, CardEntry, ServiceConfig};
 use opsml_types::{
     RegistryType, SaveName, Suffix,
     contracts::{
@@ -304,8 +304,8 @@ impl ServiceCard {
         Ok(())
     }
 
-    #[pyo3(signature = (path))]
-    pub fn save(&self, path: PathBuf) -> Result<(), CardError> {
+    #[pyo3(signature = (path), name = "save")]
+    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         PyHelperFuncs::save_to_json(self, &card_save_path)?;
 
@@ -419,18 +419,16 @@ impl ServiceCard {
                 RegistryType::Data | RegistryType::Model => {
                     bound.call_method1("download_artifacts", (Some(card_path),))?;
                 }
-                RegistryType::Experiment => {
+                RegistryType::Experiment | RegistryType::Prompt => {
                     bound.call_method1("save", (card_path,))?;
                 }
-                RegistryType::Prompt => {
-                    bound.call_method1("save_card", (card_path,))?;
-                }
+
                 _ => continue,
             }
         }
 
         // save ServiceCard to path
-        self.save(base_path)?;
+        self.save_card(base_path)?;
 
         Ok(())
     }
@@ -484,6 +482,16 @@ impl ServiceCard {
 
         let service = Self::from_path_rs(py, &path, load_kwargs)?;
         Ok(service)
+    }
+
+    fn agent_card<'py>(&self, py: Python<'py>) -> Result<Bound<'py, AgentSpec>, CardError> {
+        if let Some(config) = &self.service_config
+            && let Some(agent) = &config.agent
+        {
+            return Ok(agent.to_a2a_card(py)?);
+        }
+
+        Err(CardError::AgentConfigNotFoundError)
     }
 
     pub fn __str__(&self) -> String {
@@ -765,8 +773,28 @@ impl OpsmlCard for ServiceCard {
         self.app_env = app_env;
     }
 
-    fn save(&self, path: PathBuf) -> Result<(), CardError> {
-        self.save(path)
+    fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
+        self.save_card(path)
+    }
+
+    fn update_drift_config_args(&mut self) -> Result<(), CardError> {
+        Ok(())
+    }
+
+    fn set_profile_uid(&mut self, _profile_uid: String) -> Result<(), CardError> {
+        Ok(())
+    }
+}
+
+impl ProfileExt for ServiceCard {
+    fn get_profile_request(&self) -> Result<scouter_client::ProfileRequest, CardError> {
+        Err(CardError::ProfileNotSupportedError(
+            "ServiceCard does not support profiling".to_string(),
+        ))
+    }
+
+    fn has_profile(&self) -> bool {
+        false
     }
 }
 

@@ -6,29 +6,20 @@
   import { getRegistryPath } from '$lib/utils';
   import { dev } from '$app/environment';
   import type { RegistryType } from '$lib/utils';
+  import type { CardMetadata } from '$lib/server/card/layout';
+  import type { ModelCard } from '../card_interfaces/modelcard';
 
-  interface CardMetadata {
-    space: string;
-    name: string;
-    version: string;
-    metadata: {
-      interface_metadata: {
-        save_metadata: {
-          drift_profile_uri_map?: any;
-        };
-      };
-    };
-  }
-
+  
   interface CardLayoutProps {
-    metadata: CardMetadata;
+    data: any; // from parent
     registryType: RegistryType;
     children: Snippet;
   }
 
-  let { metadata, registryType, children }: CardLayoutProps = $props();
+  let { data, registryType, children }: CardLayoutProps = $props();
 
   let scouterEnabled: boolean = $state(uiSettingsStore.scouterEnabled);
+  let metadata: ModelCard = data.metadata;
 
   /**
    * Determines the active tab based on the current URL path

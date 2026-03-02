@@ -18,7 +18,7 @@
 
 </script>
 
-<div class="h-full text-sm overflow-auto">
+<div class="h-full text-sm overflow-auto bg-surface-50 rounded-base">
   {#if fileTypeInfo.type === 'image'}
     <ImageViewer mimeType={file.mime_type} content={file.content} />
     
@@ -26,12 +26,10 @@
     <MarkdownViewer content={file.content} />
     
   {:else if fileTypeInfo.type === 'code'}
-
     <CodeViewer content={file.content} language={fileTypeInfo.language} />
-  
     
   {:else}
-    <div class="markdown-body rounded-base px-4 pb-4 md:px-11 md:pb-11 w-full text-sm">
+    <div class="markdown-body rounded-base px-4 pb-4 md:px-11 md:pb-11 w-full text-sm text-black">
       {@html file.content}
     </div>
   {/if}

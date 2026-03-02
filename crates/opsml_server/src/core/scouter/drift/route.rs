@@ -15,6 +15,7 @@ use opsml_types::api::RequestType;
 
 use tracing::debug;
 
+use opsml_client::error::ApiClientError;
 use scouter_client::{BinnedMetrics, BinnedPsiFeatureMetrics, DriftRequest, SpcDriftFeatures};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
@@ -26,16 +27,23 @@ pub async fn get_spc_drift(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
 ) -> Result<Json<SpcDriftFeatures>, (StatusCode, Json<OpsmlServerError>)> {
-    // validate time window
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let query_string = serde_qs::to_string(&params).map_err(|e| {
         error!("Failed to serialize query string: {e}");
-        internal_server_error(e, "Failed to serialize query string")
+        internal_server_error(e, "Failed to serialize query string", None)
     })?;
 
     let response = data
@@ -51,12 +59,12 @@ pub async fn get_spc_drift(
         .await
         .map_err(|e| {
             error!("Failed to get drift features: {e}");
-            internal_server_error(e, "Failed to get drift features")
+            internal_server_error(e, "Failed to get drift features", None)
         })?;
 
     let body = response.json::<SpcDriftFeatures>().await.map_err(|e| {
         error!("Failed to parse drift features: {e}");
-        internal_server_error(e, "Failed to parse drift features")
+        internal_server_error(e, "Failed to parse drift features", None)
     })?;
 
     Ok(Json(body))
@@ -68,16 +76,23 @@ pub async fn get_psi_drift(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
 ) -> Result<Json<BinnedPsiFeatureMetrics>, (StatusCode, Json<OpsmlServerError>)> {
-    // validate time window
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let query_string = serde_qs::to_string(&params).map_err(|e| {
         error!("Failed to serialize query string: {e}");
-        internal_server_error(e, "Failed to serialize query string")
+        internal_server_error(e, "Failed to serialize query string", None)
     })?;
 
     let response = data
@@ -93,7 +108,7 @@ pub async fn get_psi_drift(
         .await
         .map_err(|e| {
             error!("Failed to get drift features: {e}");
-            internal_server_error(e, "Failed to get drift features")
+            internal_server_error(e, "Failed to get drift features", None)
         })?;
 
     // extract body into SpcDriftFeatures
@@ -103,7 +118,7 @@ pub async fn get_psi_drift(
         .await
         .map_err(|e| {
             error!("Failed to parse drift features: {e}");
-            internal_server_error(e, "Failed to parse drift features")
+            internal_server_error(e, "Failed to parse drift features", None)
         })?;
 
     Ok(Json(body))
@@ -115,16 +130,23 @@ pub async fn get_custom_drift(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
 ) -> Result<Json<BinnedMetrics>, (StatusCode, Json<OpsmlServerError>)> {
-    // validate time window
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
 
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let query_string = serde_qs::to_string(&params).map_err(|e| {
         error!("Failed to serialize query string: {e}");
-        internal_server_error(e, "Failed to serialize query string")
+        internal_server_error(e, "Failed to serialize query string", None)
     })?;
 
     let response = data
@@ -140,13 +162,13 @@ pub async fn get_custom_drift(
         .await
         .map_err(|e| {
             error!("Failed to get drift features: {e}");
-            internal_server_error(e, "Failed to get drift features")
+            internal_server_error(e, "Failed to get drift features", None)
         })?;
 
     // extract body into SpcDriftFeatures
     let body = response.json::<BinnedMetrics>().await.map_err(|e| {
         error!("Failed to parse drift features: {e}");
-        internal_server_error(e, "Failed to parse drift features")
+        internal_server_error(e, "Failed to parse drift features", None)
     })?;
 
     Ok(Json(body))
@@ -158,16 +180,25 @@ pub async fn get_genai_task_metrics(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
 ) -> Result<Json<BinnedMetrics>, (StatusCode, Json<OpsmlServerError>)> {
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     // validate time window
     debug!("Getting genai task metrics with params: {:?}", &params);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let query_string = serde_qs::to_string(&params).map_err(|e| {
         error!("Failed to serialize query string: {e}");
-        internal_server_error(e, "Failed to serialize query string")
+        internal_server_error(e, "Failed to serialize query string", None)
     })?;
 
     let response = data
@@ -180,17 +211,34 @@ pub async fn get_genai_task_metrics(
             None,
             &exchange_token,
         )
-        .await
-        .map_err(|e| {
-            error!("Failed to get genai task metrics: {e}");
-            internal_server_error(e, "Failed to get genai task metrics")
-        })?;
+        .await;
 
-    // extract body into SpcDriftFeatures
+    let response = match response {
+        Ok(resp) => resp,
+        Err(e) => {
+            if let ApiClientError::RequestError(ref req_err) = e
+                && req_err.status() == Some(StatusCode::NOT_FOUND)
+            {
+                error!("GenAI task metrics not found: {e}");
+                return Err(internal_server_error(
+                    e,
+                    "GenAI task metrics not found",
+                    Some(StatusCode::NOT_FOUND),
+                ));
+            }
+
+            error!("Failed to get genai task metrics: {e}");
+            return Err(internal_server_error(
+                e,
+                "Failed to get genai task metrics",
+                None,
+            ));
+        }
+    };
 
     let body = response.json::<BinnedMetrics>().await.map_err(|e| {
         error!("Failed to parse genai task metrics: {e}");
-        internal_server_error(e, "Failed to parse genai task metrics")
+        internal_server_error(e, "Failed to parse genai task metrics", None)
     })?;
 
     Ok(Json(body))
@@ -202,16 +250,25 @@ pub async fn get_genai_workflow_metrics(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
 ) -> Result<Json<BinnedMetrics>, (StatusCode, Json<OpsmlServerError>)> {
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     // validate time window
     debug!("Getting genai task metrics with params: {:?}", &params);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let query_string = serde_qs::to_string(&params).map_err(|e| {
         error!("Failed to serialize query string: {e}");
-        internal_server_error(e, "Failed to serialize query string")
+        internal_server_error(e, "Failed to serialize query string", None)
     })?;
 
     let response = data
@@ -224,17 +281,36 @@ pub async fn get_genai_workflow_metrics(
             None,
             &exchange_token,
         )
-        .await
-        .map_err(|e| {
+        .await;
+
+    let response = match response {
+        Ok(resp) => resp,
+        Err(e) => {
+            if let ApiClientError::RequestError(ref req_err) = e
+                && req_err.status() == Some(StatusCode::NOT_FOUND)
+            {
+                error!("GenAI workflow metrics not found: {e}");
+                return Err(internal_server_error(
+                    e,
+                    "GenAI workflow metrics not found",
+                    Some(StatusCode::NOT_FOUND),
+                ));
+            }
+
             error!("Failed to get genai workflow metrics: {e}");
-            internal_server_error(e, "Failed to get genai workflow metrics")
-        })?;
+            return Err(internal_server_error(
+                e,
+                "Failed to get genai workflow metrics",
+                None,
+            ));
+        }
+    };
 
     // extract body into SpcDriftFeatures
 
     let body = response.json::<BinnedMetrics>().await.map_err(|e| {
         error!("Failed to parse genai workflow metrics: {e}");
-        internal_server_error(e, "Failed to parse genai workflow metrics")
+        internal_server_error(e, "Failed to parse genai workflow metrics", None)
     })?;
 
     Ok(Json(body))

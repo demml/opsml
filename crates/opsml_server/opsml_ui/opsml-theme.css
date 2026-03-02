@@ -321,3 +321,136 @@
   border: 1px solid var(--retro-orange-to);     /* Dark coral border */
   color: var(--retro-orange-to);                /* Dark coral text */
 }
+
+/* ─── sRGB fallbacks for browsers without OKLCH support (Safari < 15.4) ─── */
+@supports not (color: oklch(0 0 0)) {
+  [data-theme='opsml'] {
+    /* Primary — purple/lavender */
+    --color-primary-50:  #ffffff;
+    --color-primary-100: #ece7f5;
+    --color-primary-200: #d8ceeb;
+    --color-primary-300: #c3b6e0;
+    --color-primary-400: #ab9cd4;
+    --color-primary-500: #9280c8;
+    --color-primary-600: #7762b3;
+    --color-primary-700: #5e4a9c;
+    --color-primary-800: #463585;
+    --color-primary-900: #2e206d;
+    --color-primary-950: #1c1055;
+
+    /* Secondary — teal/cyan */
+    --color-secondary-50:  #eaf8f7;
+    --color-secondary-100: #d4f2e6;
+    --color-secondary-200: #bbecda;
+    --color-secondary-300: #a2e6cd;
+    --color-secondary-400: #84dfbf;
+    --color-secondary-500: #68d8b0;
+    --color-secondary-600: #44c49b;
+    --color-secondary-700: #2daa86;
+    --color-secondary-800: #1d8e70;
+    --color-secondary-900: #13725a;
+    --color-secondary-950: #0c5644;
+
+    /* Tertiary — violet/indigo */
+    --color-tertiary-50:  #ffffff;
+    --color-tertiary-100: #eeedf8;
+    --color-tertiary-200: #dcdcf1;
+    --color-tertiary-300: #c9caeb;
+    --color-tertiary-400: #b5b6e3;
+    --color-tertiary-500: #9ea1db;
+    --color-tertiary-600: #8285ca;
+    --color-tertiary-700: #6669b8;
+    --color-tertiary-800: #4a4ea6;
+    --color-tertiary-900: #303493;
+    --color-tertiary-950: #1c207e;
+
+    /* Success — lime/chartreuse */
+    --color-success-50:  #f4fadc;
+    --color-success-100: #edf5bf;
+    --color-success-200: #e6f0a3;
+    --color-success-300: #dfec88;
+    --color-success-400: #d7e76d;
+    --color-success-500: #d0e254;
+    --color-success-600: #bace38;
+    --color-success-700: #a2b822;
+    --color-success-800: #8a9f14;
+    --color-success-900: #73860a;
+    --color-success-950: #5c6d05;
+
+    /* Warning — peach/amber */
+    --color-warning-50:  #f5fadc;
+    --color-warning-100: #f0f0c4;
+    --color-warning-200: #eae7a8;
+    --color-warning-300: #e4dd8e;
+    --color-warning-400: #ded174;
+    --color-warning-500: #d9c55c;
+    --color-warning-600: #c4ae42;
+    --color-warning-700: #ac9630;
+    --color-warning-800: #927d1e;
+    --color-warning-900: #78640f;
+    --color-warning-950: #5d4e06;
+
+    /* Error — coral/red */
+    --color-error-50:  #f5ddd5;
+    --color-error-100: #f2dbd7;
+    --color-error-200: #e8c3b8;
+    --color-error-300: #dfaa97;
+    --color-error-400: #d8907a;
+    --color-error-500: #cf775d;
+    --color-error-600: #bc5c42;
+    --color-error-700: #a24330;
+    --color-error-800: #892c1e;
+    --color-error-900: #6f1710;
+    --color-error-950: #570c08;
+
+    /* Surface — near-white neutrals */
+    --color-surface-50:  #ffffff;
+    --color-surface-100: #fefefe;
+    --color-surface-200: #fcfcfc;
+    --color-surface-300: #fbfbfb;
+    --color-surface-400: #f9f9f9;
+    --color-surface-500: #f7f7f7;
+    --color-surface-600: #e4e4e4;
+    --color-surface-700: #d0d0d0;
+    --color-surface-800: #bcbcbc;
+    --color-surface-900: #a8a8a8;
+    --color-surface-950: #939393;
+
+    /* Retro gradient stops */
+    --retro-primary-from: #dca8ef;
+    --retro-primary-mid:  #d48de8;
+    --retro-primary-to:   #c570de;
+
+    --retro-secondary-from: #bceee4;
+    --retro-secondary-mid:  #a8ead8;
+    --retro-secondary-to:   #8fe5ca;
+
+    --retro-tertiary-from: #c7caf0;
+    --retro-tertiary-mid:  #b5b9ec;
+    --retro-tertiary-to:   #a0a7e7;
+
+    --retro-success-from: #c6f0b2;
+    --retro-success-mid:  #c6ee8c;
+    --retro-success-to:   #c9ea62;
+
+    --retro-warning-from: #eeeaab;
+    --retro-warning-mid:  #ebe293;
+    --retro-warning-to:   #e4d672;
+
+    --retro-error-base: #f7edea;
+    --retro-error-from: #f5cfbf;
+    --retro-error-mid:  #efa898;
+    --retro-error-to:   #e8826d;
+
+    --retro-orange-from: #faf3ec;
+    --retro-orange-to:   #c85e20;
+  }
+
+  /* neo-glow without oklch in box-shadow */
+  [data-theme='opsml'] .neo-glow {
+    box-shadow:
+      0 0 0 2px #000,
+      3px 3px 0 0 #000,
+      0 0 12px 2px rgba(200, 120, 222, 0.55);
+  }
+}

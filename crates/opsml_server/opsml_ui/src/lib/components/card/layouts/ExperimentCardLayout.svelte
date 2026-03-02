@@ -4,20 +4,18 @@
   import { page } from '$app/state';
   import { getRegistryPath } from '$lib/utils';
   import type { RegistryType } from '$lib/utils';
+  import type { ExperimentCard } from '../card_interfaces/experimentcard';
 
-  interface ExperimentMetadata {
-    space: string;
-    name: string;
-    version: string;
-  }
+
 
   interface ExperimentLayoutProps {
-    metadata: ExperimentMetadata;
+    data: any; // from parent
     registryType: RegistryType;
     children: Snippet;
   }
 
-  let { metadata, registryType, children }: ExperimentLayoutProps = $props();
+  let { data, registryType, children }: ExperimentLayoutProps = $props();
+  let metadata: ExperimentCard = data.metadata;
 
   /**
    * Determines the active tab based on the current URL path
