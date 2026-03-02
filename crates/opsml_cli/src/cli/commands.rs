@@ -128,9 +128,6 @@ pub enum Commands {
         command: UiCommands,
     },
 
-    /// Run a demo of OpsML that populates a registry with example cards
-    Demo,
-
     /// Validate the pyproject.toml file opsml tool configuration
     Validate,
 
