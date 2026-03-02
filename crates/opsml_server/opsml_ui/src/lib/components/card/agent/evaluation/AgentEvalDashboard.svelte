@@ -17,9 +17,9 @@
   import type { AgentPromptEvalData, AgentRecordPage, AgentWorkflowPage } from './types';
   import type { RecordWithAgent, WorkflowWithAgent } from './types';
   import type { GenAIEvalProfile } from '$lib/components/scouter/genai/types';
-  import AgentEvalOverview from './AgentEvalOverview.svelte';
-  import AgentEvalRecordTable from './AgentEvalRecordTable.svelte';
-  import AgentEvalWorkflowTable from './AgentEvalWorkflowTable.svelte';
+  import AgentEvalOverview from '$lib/components/card/agent/evaluation/AgentEvalOverview.svelte';
+  import AgentEvalRecordTable from '$lib/components/card/agent/evaluation/AgentEvalRecordTable.svelte';
+  import AgentEvalWorkflowTable from '$lib/components/card/agent/evaluation/AgentEvalWorkflowTable.svelte';
   import { refreshGenAIMonitoringData } from '$lib/components/scouter/dashboard/utils';
   import { timeRangeState } from '$lib/components/utils/timeState.svelte';
   import { getRegistryPath, RegistryType,  getMaxDataPoints  } from '$lib/utils';
