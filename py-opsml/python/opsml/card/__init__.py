@@ -31,6 +31,7 @@ from .._opsml import (
     OpenIdConnectSecurityScheme,
     PassWordAuthFlow,
     PromptCard,
+    ProtocolBinding,
     RegistryMode,
     RegistryType,
     SecurityRequirement,
@@ -82,4 +83,5 @@ __all__ = [
     "PassWordAuthFlow",
     "AgentCardSignature",
     "AgentSpec",
+    "ProtocolBinding",
 ]

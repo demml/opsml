@@ -20399,6 +20399,11 @@ def download_artifact(
             Local path to download the artifact to. If None, the artifact will be downloaded to the current working directory.
     """
 
+class ProtocolBinding:
+    JsonRpc: "ProtocolBinding"
+    Grpc: "ProtocolBinding"
+    HttpJson: "ProtocolBinding"
+
 ### opsml.pyi ###
 class DriftConfig:
     def __init__(
@@ -23951,6 +23956,7 @@ __all__ = [
     "PromptFeedback",
     "PromptSaveKwargs",
     "PromptTokenDetails",
+    "ProtocolBinding",
     "Provider",
     "PsiAlertConfig",
     "PsiChiSquareThreshold",
