@@ -4,7 +4,7 @@ Run the full OpsML test suite (Rust + Python) before submitting a PR. Capture an
 
 ## Rust Workflow
 
-Work from the repo root (`/Users/stevenforrester/Documents/GitHub/opsml`).
+Work from the repo root
 
 ### Step 1 — Format
 ```
