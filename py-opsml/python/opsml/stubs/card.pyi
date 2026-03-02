@@ -2483,6 +2483,11 @@ def download_artifact(
             Local path to download the artifact to. If None, the artifact will be downloaded to the current working directory.
     """
 
+class ProtocolBinding:
+    JsonRpc: "ProtocolBinding"
+    Grpc: "ProtocolBinding"
+    HttpJson: "ProtocolBinding"
+
 __all__ = [
     "ServiceType",
     "CardRecord",
@@ -2514,4 +2519,5 @@ __all__ = [
     "get_experiment_metrics",
     "get_experiment_parameters",
     "download_artifact",
+    "ProtocolBinding",
 ]
