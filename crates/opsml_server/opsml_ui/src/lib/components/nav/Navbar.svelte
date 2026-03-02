@@ -14,7 +14,7 @@
 
 </script>
 
-<nav class="fixed left-0 top-0 z-20 mx-auto flex w-full items-center border-b-4 border-border bg-primary-700 border-b-2 border-black px-5 h-14">
+<nav class="fixed left-0 top-0 z-[60] mx-auto flex w-full items-center border-b-4 border-border bg-primary-700 border-b-2 border-black px-5 h-14">
   <div class="mx-auto flex w-full items-center justify-between px-8 lg:px-10">
 
     <div class="hidden md:block">

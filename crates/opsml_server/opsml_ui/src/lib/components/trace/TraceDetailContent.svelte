@@ -1,12 +1,10 @@
 <script lang="ts">
-  import { type Attribute, type TraceListItem, type TraceSpan, type TraceSpansResponse } from './types';
-  import { formatAttributeValue } from './types';
+  import { type TraceListItem, type TraceSpansResponse, type TraceSpan } from './types';
   import TraceWaterfall from './TraceWaterfall.svelte';
   import SpanDetailView from './SpanDetailView.svelte';
   import SpanGraph from './graph/SpanGraph.svelte';
   import { formatDuration } from './utils';
-  import { Network, List, X } from 'lucide-svelte';
-  import Pill from '../utils/Pill.svelte';
+  import { Network, List, X, ChevronLeft, Clock, Layers, AlertTriangle } from 'lucide-svelte';
 
   let {
     trace,
@@ -22,152 +20,164 @@
 
   let selectedSpan = $state<TraceSpan | null>(traceSpans.spans[0] || null);
   let spans = $state<TraceSpan[]>(traceSpans.spans);
-  let traceAttributes = $state<Attribute[]>(trace.resource_attributes || []);
-  let showWaterfall = $state(true);
-  let showSpanDetail = $state(true);
-  let showGraph = $state(false);
+  let activeTopTab = $state<'waterfall' | 'map'>('waterfall');
+
+  // Draggable divider — topPct is % height for the top (waterfall) panel
+  let topPct = $state(52);
+  let isDragging = $state(false);
+  let containerEl: HTMLDivElement;
 
   const slowestSpan = $derived(() => {
-    const childSpans = spans.filter(span => span.depth > 0);
+    const childSpans = spans.filter(s => s.depth > 0);
     if (childSpans.length === 0) return null;
-    return childSpans.reduce((max, span) =>
-      (span.duration_ms || 0) > (max.duration_ms || 0) ? span : max
+    return childSpans.reduce((max, s) =>
+      (s.duration_ms || 0) > (max.duration_ms || 0) ? s : max
     );
   });
 
-  const service_count = $derived(() => {
-    const services = new Set<string>();
-    spans.forEach(span => {
-      if (span.service_name) {
-        services.add(span.service_name);
-      }
-    });
-    return services.size;
-  });
+  const hasError = $derived(trace.error_count > 0);
 
-  function handleSpanSelect(span: TraceSpan) {
-    selectedSpan = span;
-    if (window.innerWidth < 1024) {
-      showSpanDetail = true;
+  function formatHeaderTime(dt: string): string {
+    try {
+      return new Date(dt).toLocaleString('en-US', {
+        month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true,
+      });
+    } catch {
+      return dt;
     }
   }
 
-  function getStatusColor(hasError: boolean): string {
-    return hasError ? 'bg-error-600' : 'bg-secondary-500';
+  function handleSpanSelect(span: TraceSpan) {
+    selectedSpan = span;
   }
 
-  function toggleWaterfall() {
-    showWaterfall = !showWaterfall;
-    if (!showWaterfall) showSpanDetail = true;
+  // ─── Drag-to-resize ──────────────────────────────────────────────────────
+
+  let dragStartY = 0;
+  let dragStartTopPct = 0;
+
+  function onDividerMouseDown(e: MouseEvent) {
+    isDragging = true;
+    dragStartY = e.clientY;
+    dragStartTopPct = topPct;
+    e.preventDefault();
   }
 
-  function toggleSpanDetail() {
-    showSpanDetail = !showSpanDetail;
-    if (!showSpanDetail) showWaterfall = true;
+  function onMouseMove(e: MouseEvent) {
+    if (!isDragging || !containerEl) return;
+    const rect = containerEl.getBoundingClientRect();
+    const deltaPct = ((e.clientY - dragStartY) / rect.height) * 100;
+    topPct = Math.min(75, Math.max(25, dragStartTopPct + deltaPct));
   }
 
-  function toggleGraph() {
-    showGraph = !showGraph;
+  function onMouseUp() {
+    isDragging = false;
   }
 </script>
 
-<!-- Header -->
- <div class="border-2 rounded-lg overflow-scroll">
-  <div class="flex flex-col">
-    <div class="flex items-start justify-between p-6 border-b-2 border-black bg-surface-50 gap-6 flex-shrink-0">
-      <div class="flex flex-col gap-4 flex-1 min-w-0">
-        <div class="flex items-center gap-3">
-          <div class={`w-2 h-10 rounded flex-shrink-0 ${getStatusColor(trace.error_count > 0)}`}></div>
-          <div class="min-w-0 flex-1">
-            <h2 class="text-lg font-bold text-primary-800">Trace Details</h2>
-            <p class="text-sm font-mono text-gray-600 truncate">{trace.trace_id}</p>
-          </div>
-        </div>
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+  class="flex flex-col h-full overflow-hidden bg-surface-50"
+  bind:this={containerEl}
+  onmousemove={onMouseMove}
+  onmouseup={onMouseUp}
+  onmouseleave={onMouseUp}
+>
 
-        <div class="flex flex-wrap gap-1">
-          <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100">
-            {trace.span_count} spans
-          </span>
-          <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100">
-            {service_count()} services
-          </span>
-          <span class="badge text-primary-900 border-black border-1 shadow-small bg-primary-100">
-            {formatDuration(trace.duration_ms)}
-          </span>
-          {#if trace.error_count > 0}
-            <span class="badge text-error-900 border-black border-1 shadow-small bg-error-100">
-              {trace.error_count} errors
-            </span>
-          {/if}
-        </div>
+  <!-- ─── Fixed header ────────────────────────────────────────────────────── -->
+  <header class="flex-shrink-0 flex items-center justify-between px-4 py-2.5 border-b-2 border-black bg-primary-100 z-20 gap-4">
 
-        <div class="flex flex-wrap gap-1 text-xs">
-          {#each traceAttributes as attr}
-            <Pill key={attr.key} value={formatAttributeValue(attr.value)} textSize="text-xs" />
-          {/each}
-        </div>
-      </div>
-
-      <div class="flex gap-2 flex-shrink-0">
+    <!-- Left: back nav + breadcrumb -->
+    <div class="flex items-center gap-2 min-w-0">
+      {#if showCloseButton && onClose}
         <button
-          onclick={toggleGraph}
-          class="px-3 py-2 rounded-lg transition-colors border-2 border-black shadow-small flex items-center gap-2 {showGraph ? 'bg-primary-500 text-white' : 'bg-white text-primary-800 hover:bg-primary-100'}"
-          aria-label="Toggle execution graph"
+          onclick={onClose}
+          class="flex items-center justify-center p-1.5 border-2 border-black bg-surface-50 shadow-small shadow-hover-small rounded-base transition-all duration-100 text-primary-800"
+          aria-label="Back to traces"
         >
-          <Network class="w-5 h-5" />
-          <span class="hidden md:inline text-sm font-bold">Graph</span>
+          <ChevronLeft class="w-4 h-4" />
         </button>
-
-        {#if showCloseButton && onClose}
-          <button
-            onclick={onClose}
-            class="p-2 bg-primary-800 text-white hover:bg-primary-500 rounded-lg transition-colors border-2 border-black shadow-small"
-            aria-label="Close panel"
-          >
-            <X class="w-6 h-6" />
-          </button>
-        {/if}
-      </div>
+      {/if}
+      <nav class="flex items-center gap-1.5 text-xs font-mono min-w-0" aria-label="breadcrumb">
+        <span class="text-primary-600 font-bold uppercase tracking-wide">Traces</span>
+        <span class="text-primary-400">/</span>
+        <span
+          class="font-black text-primary-950 truncate max-w-[240px] sm:max-w-sm"
+          title={trace.trace_id}
+        >{trace.trace_id}</span>
+      </nav>
     </div>
 
-    <!-- Content Area -->
-    <div class="flex-1 overflow-y-auto min-h-0">
-      <!-- Mobile Tabs -->
-      <div class="lg:hidden flex border-b-2 border-black bg-surface-200 sticky top-0 z-10">
-        <button
-          onclick={toggleWaterfall}
-          class="flex-1 py-3 text-sm font-bold transition-colors border-r-2 border-black {showWaterfall ? 'bg-primary-500 text-white' : 'bg-white text-primary-800'}"
-        >
-          <List class="w-4 h-4 inline-block mr-1" />
-          Waterfall
-        </button>
-        <button
-          onclick={toggleSpanDetail}
-          class="flex-1 py-3 text-sm font-bold transition-colors {showSpanDetail ? 'bg-primary-500 text-white' : 'bg-white text-primary-800'}"
-        >
-          Span Details
-        </button>
-      </div>
-
-      {#if showGraph}
-        <div class="border-b-2 border-black bg-surface-50 p-4">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-bold text-primary-800">Execution Flow</h3>
-            <button
-              onclick={toggleGraph}
-              class="text-xs px-2 py-1 bg-surface-200 hover:bg-surface-300 rounded border-1 border-black text-gray-700"
-            >
-              Collapse
-            </button>
-          </div>
-          <div class="bg-white">
-            <SpanGraph spans={spans} slowestSpan={slowestSpan()} onSpanSelect={handleSpanSelect} />
-          </div>
-        </div>
+    <!-- Right: metadata chips + close -->
+    <div class="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold border-2 border-black bg-surface-50 text-primary-800 rounded-base shadow-small">
+        <Clock class="w-3 h-3" />
+        {formatDuration(trace.duration_ms)}
+      </span>
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold border-2 border-black bg-surface-50 text-primary-800 rounded-base shadow-small">
+        <Layers class="w-3 h-3" />
+        {trace.span_count} spans
+      </span>
+      {#if trace.service_name}
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold border-2 border-black bg-surface-50 text-black rounded-base shadow-small font-mono truncate max-w-[140px]">
+          {trace.service_name}
+        </span>
       {/if}
+      {#if hasError}
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold border-2 border-black bg-error-100 text-error-800 rounded-base shadow-small">
+          <AlertTriangle class="w-3 h-3" />
+          {trace.error_count} {trace.error_count === 1 ? 'error' : 'errors'}
+        </span>
+      {/if}
+      <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold border-2 border-black bg-surface-50 text-primary-700 rounded-base shadow-small font-mono">
+        {formatHeaderTime(trace.start_time)}
+      </span>
 
-      <div class="flex flex-col lg:flex-row min-h-[600px] min-w-0">
-        <div class="border-b-2 lg:border-b-0 lg:border-r-2 border-black lg:flex-1 {showWaterfall ? 'block' : 'hidden'} lg:block">
+      {#if showCloseButton && onClose}
+        <button
+          onclick={onClose}
+          class="p-1.5 border-2 border-black bg-primary-800 text-white hover:bg-primary-500 shadow-small shadow-click-small rounded-base transition-all duration-100"
+          aria-label="Close"
+        >
+          <X class="w-4 h-4" />
+        </button>
+      {/if}
+    </div>
+  </header>
+
+  <!-- ─── Tab switcher (Waterfall / Map) ──────────────────────────────────── -->
+  <div class="flex-shrink-0 flex items-center gap-0 px-4 py-2 border-b-2 border-black bg-surface-50 z-10">
+    <div class="inline-flex border-2 border-black rounded-base overflow-hidden shadow-small">
+      <button
+        onclick={() => activeTopTab = 'waterfall'}
+        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase tracking-wide transition-colors duration-100 ease-out
+          {activeTopTab === 'waterfall' ? 'bg-primary-800 text-white' : 'bg-surface-50 text-primary-800 hover:bg-primary-100'}"
+      >
+        <List class="w-3.5 h-3.5" />
+        Waterfall
+      </button>
+      <button
+        onclick={() => activeTopTab = 'map'}
+        class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase tracking-wide border-l-2 border-black transition-colors duration-100 ease-out
+          {activeTopTab === 'map' ? 'bg-primary-800 text-white' : 'bg-surface-50 text-primary-800 hover:bg-primary-100'}"
+      >
+        <Network class="w-3.5 h-3.5" />
+        Map
+      </button>
+    </div>
+  </div>
+
+  <!-- ─── Resizable vertical split ────────────────────────────────────────── -->
+  <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
+
+    <!-- Top panel: Waterfall or Map -->
+    <div
+      class="flex-shrink-0 overflow-hidden"
+      style="height: {topPct}%;"
+    >
+      {#if activeTopTab === 'waterfall'}
+        <div class="h-full">
           <TraceWaterfall
             spans={spans}
             totalDuration={trace.duration_ms || 0}
@@ -176,17 +186,51 @@
             slowestSpan={slowestSpan()}
           />
         </div>
-
-        <div class="bg-surface-50 lg:flex-1 min-w-0 {showSpanDetail ? 'block' : 'hidden'} lg:block">
-          {#if selectedSpan}
-            <SpanDetailView span={selectedSpan} onSpanSelect={handleSpanSelect} allSpans={spans} slowestSpan={slowestSpan()} />
-          {:else}
-            <div class="flex items-center justify-center h-full text-gray-500 p-4 text-center">
-              Select a span to view details
-            </div>
-          {/if}
+      {:else}
+        <div class="h-full bg-surface-50 p-3 overflow-auto">
+          <div class="bg-surface-50 p-8overflow-y-scroll">
+            <SpanGraph spans={spans} slowestSpan={slowestSpan()} onSpanSelect={handleSpanSelect} />
+          </div>
         </div>
-      </div>
+      {/if}
     </div>
+
+    <!-- Draggable divider -->
+    <button
+      type="button"
+      class="flex-shrink-0 relative flex items-center justify-center border-t-2 border-b-2 border-black bg-primary-100 cursor-row-resize z-10 select-none w-full hover:bg-primary-200 transition-colors duration-100"
+      style="height: 14px;"
+      onmousedown={onDividerMouseDown}
+      aria-label="Resize panels"
+      tabindex="0"
+    >
+      <div class="flex items-center gap-0.5 pointer-events-none">
+        {#each [0,1,2,3,4] as _}
+          <div class="w-4 h-0.5 rounded-full bg-primary-700/40"></div>
+        {/each}
+      </div>
+    </button>
+
+    <!-- Bottom panel: Span detail -->
+    <div class="flex-1 min-h-0 overflow-hidden border-t-0">
+      {#if selectedSpan}
+        <SpanDetailView
+          span={selectedSpan}
+          onSpanSelect={handleSpanSelect}
+          allSpans={spans}
+          slowestSpan={slowestSpan()}
+          resourceAttributes={trace.resource_attributes}
+        />
+      {:else}
+        <div class="flex flex-col items-center justify-center h-full gap-3 text-center p-8">
+          <div class="w-12 h-12 border-2 border-black bg-surface-200 flex items-center justify-center rounded-base shadow-small">
+            <Layers class="w-6 h-6 text-primary-400" />
+          </div>
+          <p class="text-sm font-black text-primary-500 uppercase tracking-wide">Select a span to inspect</p>
+        </div>
+      {/if}
+    </div>
+
   </div>
+
 </div>

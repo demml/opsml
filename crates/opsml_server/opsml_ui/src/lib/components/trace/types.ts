@@ -40,6 +40,7 @@ export interface TraceFilters {
   direction?: "next" | "previous";
   attribute_filters?: string[];
   trace_ids?: string[];
+  entity_uid?: string;
 }
 
 export interface TraceCursor {
@@ -73,7 +74,7 @@ export interface Attribute {
 }
 
 function getAttributeValueType(
-  value: any
+  value: any,
 ): "null" | "boolean" | "number" | "string" | "array" | "object" {
   if (value === null) return "null";
   if (typeof value === "boolean") return "boolean";
@@ -160,6 +161,7 @@ export interface TraceMetricsRequest {
   end_time?: DateTime;
   bucket_interval?: string;
   attribute_filters?: string[];
+  entity_uid?: string;
 }
 
 export interface TraceMetricsResponse {
@@ -192,3 +194,4 @@ export const DATA_KEY_ATTR = "card.data.uid";
 export const PROMPT_KEY_ATTR = "card.prompt.uid";
 export const MCP_KEY_ATTR = "card.mcp.uid";
 export const AGENT_KEY_ATTR = "card.agent.uid";
+export const SCOUTER_ENTITY = "scouter.entity";

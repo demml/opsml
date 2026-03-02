@@ -4,26 +4,30 @@
     import favicon from "$lib/images/opsml-green.ico";
     import Navbar from "$lib/components/nav/Navbar.svelte";
     import { onMount } from 'svelte';
+    import { afterNavigate } from '$app/navigation';
     import { ToastProvider } from '@skeletonlabs/skeleton-svelte';
     import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
 
-
-    let { data, children} = $props();
-  
-    // initialize settings store with data from server
-    uiSettingsStore.initialize(data.settings);
-    
+    let { data, children } = $props();
     let show = $state(false);
 
+    // Initial sync: runs client-side only, after SSR hydration.
     onMount(() => {
+        uiSettingsStore.initialize(data.settings);
         setTimeout(() => {
           show = true;
         }, 50);
     });
 
+    // Re-sync on every navigation: +layout.server.ts re-fetches settings
+    // on each navigation, so data.settings always reflects latest state.
+    afterNavigate(() => {
+        uiSettingsStore.initialize(data.settings);
+    });
+
 
   </script>
-  
+
   <svelte:head>
     <link rel="icon" type="image/x-icon" href={favicon}/>
   </svelte:head>
@@ -31,10 +35,10 @@
 {#if show}
   <div class="layout flex flex-col font-sans" id="page">
     <Navbar/>
-      <ToastProvider 
-        messageBase="text-base" 
-        placement="top-end" 
-        stateError="bg-error-500 justify-center text-black border-2 border-black" 
+      <ToastProvider
+        messageBase="text-base"
+        placement="top-end"
+        stateError="bg-error-500 justify-center text-black border-2 border-black"
         stateSuccess="bg-secondary-500 text-black border-2 border-black">
         <div class="grid-background pt-14 min-h-screen">
           {@render children()}
@@ -51,7 +55,7 @@
 <style>
   .grid-background {
     background-color: #E3DFF2;
-    background-image: 
+    background-image:
       linear-gradient(to right, #CECBDB 1px, transparent 1px),
       linear-gradient(to bottom, #CECBDB 1px, transparent 1px);
     background-size: 60px 60px;

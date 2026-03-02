@@ -108,6 +108,7 @@ mod tests {
     };
     use opsml_settings::config::DatabaseSettings;
     use opsml_types::SqlType;
+    use opsml_types::contracts::ProtocolBinding;
     use opsml_types::contracts::VersionCursor;
     use opsml_types::contracts::agent::{
         AgentCapabilities, AgentInterface, AgentProvider, AgentSkill, AgentSpec,
@@ -123,6 +124,7 @@ mod tests {
         cards::CardTable,
         contracts::{ArtifactType, CardQueryArgs},
     };
+
     use opsml_utils::utils::get_utc_datetime;
     use semver::Version;
     use sqlx::types::Json;
@@ -135,9 +137,9 @@ mod tests {
             "TestAgent".to_string(),
             "A test agent for SQL integration tests".to_string(),
             "1.0.0".to_string(),
-            vec![AgentInterface::new(
+            vec![AgentInterface::new_rs(
                 "http://localhost:8000".to_string(),
-                "HTTP".to_string(),
+                ProtocolBinding::HttpJson,
                 "1.0".to_string(),
                 Some("tenant1".to_string()),
             )],

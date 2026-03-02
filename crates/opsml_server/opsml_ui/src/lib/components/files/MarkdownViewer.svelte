@@ -17,7 +17,7 @@
   </div>
 {:else}
   <div class="flex items-center justify-center p-8">
-    <div class="animate-pulse text-gray-500">Loading markdown...</div>
+    <div class="animate-pulse text-primary-700 font-medium">Loading markdown...</div>
   </div>
 {/if}
 

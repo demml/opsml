@@ -1,5 +1,5 @@
 use crate::error::CardError;
-use crate::traits::OpsmlCard;
+use crate::traits::{OpsmlCard, ProfileExt};
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_types::DriftProfileUri;
@@ -11,6 +11,7 @@ use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
 use pyo3::types::PyList;
 use scouter_client::AssertionTasks;
+use scouter_client::ProfileRequest;
 use scouter_client::TasksFile;
 use scouter_client::{DriftType, GenAIEvalConfig, GenAIEvalProfile};
 use serde::de::DeserializeOwned;
@@ -97,6 +98,20 @@ pub struct PromptCard {
     pub eval_profile: Option<GenAIEvalProfile>,
 }
 
+impl ProfileExt for PromptCard {
+    fn get_profile_request(&self) -> Result<ProfileRequest, CardError> {
+        if let Some(profile) = &self.eval_profile {
+            Ok(profile.create_profile_request()?)
+        } else {
+            Err(CardError::DriftProfileNotFoundError)
+        }
+    }
+
+    fn has_profile(&self) -> bool {
+        self.eval_profile.is_some()
+    }
+}
+
 impl OpsmlCard for PromptCard {
     fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         self.get_registry_card()
@@ -134,12 +149,20 @@ impl OpsmlCard for PromptCard {
         self.is_card
     }
 
-    fn save(&self, path: PathBuf) -> Result<(), CardError> {
+    fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
         self.save_card(path)
     }
 
     fn registry_type(&self) -> &RegistryType {
         &self.registry_type
+    }
+
+    fn update_drift_config_args(&mut self) -> Result<(), CardError> {
+        self.update_drift_config_args()
+    }
+
+    fn set_profile_uid(&mut self, profile_uid: String) -> Result<(), CardError> {
+        self.update_eval_uid(profile_uid)
     }
 }
 
@@ -191,8 +214,8 @@ impl PromptCard {
         self.tags.extend(tags);
     }
 
-    #[pyo3(signature = (path))]
-    pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
+    #[pyo3(signature = (path), name = "save")]
+    pub fn save_card(&mut self, path: PathBuf) -> Result<(), CardError> {
         debug!("Saving PromptCard to path: {:?}", path);
 
         let eval_profile_uri_map = if let Some(_eval_profile) = &mut self.eval_profile {
@@ -237,13 +260,6 @@ impl PromptCard {
         Ok(CardRecord::Prompt(record))
     }
 
-    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
-        let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        PyHelperFuncs::save_to_json(self, &card_save_path)?;
-
-        Ok(())
-    }
-
     /// Create drift profile
     ///
     /// # Arguments
@@ -252,16 +268,15 @@ impl PromptCard {
     /// * `tasks` - List of tasks (LLMJudgeTask or AssertionTask)
     /// # Returns
     ///
-    #[pyo3(signature = (alias, config, tasks))]
+    #[pyo3(signature = (alias, tasks, config=None))]
     pub fn create_eval_profile(
         &mut self,
         alias: String,
-        config: GenAIEvalConfig,
         tasks: &Bound<'_, PyList>,
+        config: Option<GenAIEvalConfig>,
     ) -> Result<(), CardError> {
         debug!("Creating eval profile");
-        self.eval_profile = Some(GenAIEvalProfile::new_py(tasks, Some(config), Some(alias))?);
-
+        self.eval_profile = Some(GenAIEvalProfile::new_py(tasks, config, Some(alias))?);
         Ok(())
     }
 
@@ -315,6 +330,11 @@ impl PromptCard {
                 config_obj.remove("version");
             }
 
+            // remove workflow if exists since it contains runtime-generated fields like id and created_at
+            if let Some(_workflow) = eval_value.get_mut("workflow") {
+                eval_value.as_object_mut().unwrap().remove("workflow");
+            }
+
             let eval_string = serde_json::to_string(&eval_value)?;
             hasher.update(eval_string.as_bytes());
         }
@@ -346,6 +366,7 @@ pub struct PromptConfig {
 }
 
 impl PromptConfig {
+    #[instrument(skip_all)]
     pub fn into_promptcard(self) -> Result<PromptCard, CardError> {
         let mut card = PromptCard::new_rs(
             self.prompt,
@@ -359,8 +380,15 @@ impl PromptConfig {
         if let Some(evaluation) = self.evaluation {
             let config = evaluation.config.unwrap_or_default();
             let tasks: AssertionTasks = AssertionTasks::from_tasks_file(evaluation.tasks);
-            let profile =
-                GenAIEvalProfile::build_from_parts(config, tasks, Some(evaluation.alias))?;
+
+            debug!(
+                "Building GenAIEvalProfile with alias and tasks: {} - tasks: {:?}",
+                evaluation.alias, tasks
+            );
+            let profile = GenAIEvalProfile::build_from_parts(config, tasks, Some(evaluation.alias))
+                .inspect_err(|e| {
+                    error!("Failed to build GenAIEvalProfile: {e}");
+                })?;
             card.eval_profile = Some(profile);
         }
 
@@ -515,7 +543,7 @@ impl PromptCard {
             .metadata
             .drift_profile_uri_map
             .as_ref()
-            .ok_or(CardError::DriftProfileNotFoundError)?;
+            .ok_or(CardError::DriftProfileNotFoundInMap)?;
 
         for (alias, drift_profile_uri) in map {
             debug!(filepath = ?drift_profile_uri.uri, tmp_path = ?path, "Loading drift profile for alias: {}", alias);

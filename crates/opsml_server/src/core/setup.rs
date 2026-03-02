@@ -10,7 +10,7 @@ use opsml_storage::storage::enums::client::{StorageClientEnum, get_storage_syste
 use password_auth::generate_hash;
 use reqwest::StatusCode;
 use rusty_logging::setup_logging;
-use tracing::{debug, info, instrument};
+use tracing::{debug, error, info, instrument};
 
 /// Initialize a default admin user if no users exist in the database
 #[instrument(skip_all)]
@@ -83,7 +83,7 @@ pub async fn initialize_default_user(
 
     info!("✅ Created default admin and guest user (change password on first login)",);
 
-    if scouter_client.enabled {
+    if scouter_client.is_enabled() {
         // send admin user to scouter
         match scouter_client
             .create_initial_user(&admin_user, &default_password)
@@ -95,19 +95,16 @@ pub async fn initialize_default_user(
                 } else if response.status().is_success() {
                     info!("✅ Created default admin user in Scouter");
                 } else {
-                    return Err(anyhow::anyhow!(
-                        "Failed to create admin user with status: {}",
+                    error!(
+                        "Failed to create admin user in Scouter with status: {} (continuing anyway)",
                         response.status()
-                    ))
-                    .context(Colorize::purple(
-                        "❌ Failed to create default admin in scouter",
-                    ));
+                    );
                 }
             }
             Err(e) => {
-                return Err(anyhow::anyhow!(e)).context(Colorize::purple(
-                    "❌ Failed to create default admin in scouter",
-                ));
+                error!(
+                    "Failed to create admin user in Scouter: {e} (Scouter may be offline, continuing anyway)"
+                );
             }
         }
 
@@ -122,19 +119,16 @@ pub async fn initialize_default_user(
                 } else if response.status().is_success() {
                     info!("✅ Created default guest user in Scouter");
                 } else {
-                    return Err(anyhow::anyhow!(
-                        "Failed to create guest user with status: {}",
+                    error!(
+                        "Failed to create guest user in Scouter with status: {} (continuing anyway)",
                         response.status()
-                    ))
-                    .context(Colorize::purple(
-                        "❌ Failed to create default guest in scouter",
-                    ));
+                    );
                 }
             }
             Err(e) => {
-                return Err(anyhow::anyhow!(e)).context(Colorize::purple(
-                    "❌ Failed to create default guest in scouter",
-                ));
+                error!(
+                    "Failed to create guest user in Scouter: {e} (Scouter may be offline, continuing anyway)"
+                );
             }
         }
 

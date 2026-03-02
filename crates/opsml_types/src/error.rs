@@ -151,6 +151,16 @@ pub enum AgentConfigError {
 
     #[error("Invalid skill format. Only AgentSkill and AgentSkillStandard are supported")]
     InvalidSkillFormat,
+
+    #[error(
+        "Interface URL is missing. An Agent url must be provided either in the agent configuration or in the deployment configuration"
+    )]
+    InterfaceUrlMissing,
+
+    #[error(
+        "Interface count mismatch: Expected {expected} interfaces to match deployment URLs, but found {actual} interfaces"
+    )]
+    InterfaceCountMismatch { expected: usize, actual: usize },
 }
 
 impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for AgentConfigError {

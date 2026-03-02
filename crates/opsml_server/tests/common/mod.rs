@@ -746,9 +746,9 @@ impl TestHelper {
             "TestAgent".to_string(),
             "A test agent for SQL integration tests".to_string(),
             "1.0.0".to_string(),
-            vec![AgentInterface::new(
+            vec![AgentInterface::new_rs(
                 "http://localhost:8000".to_string(),
-                "HTTP".to_string(),
+                ProtocolBinding::HttpJson,
                 "1.0".to_string(),
                 Some("tenant1".to_string()),
             )],

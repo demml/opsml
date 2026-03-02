@@ -2,13 +2,16 @@
   import { onMount, onDestroy } from 'svelte';
   import type { GenAIEvalWorkflowResult } from '../task';
   import GenAIEvalWorkflowContent from './GenAIEvalWorkflowContent.svelte';
+  import type { GenAIEvalProfile } from '../types';
 
   let {
     selectedWorkflow,
     onClose,
+    profile,
   }: {
     selectedWorkflow: GenAIEvalWorkflowResult;
     onClose: () => void;
+    profile: GenAIEvalProfile;
   } = $props();
 
   let isClosing = $state(false);
@@ -17,7 +20,7 @@
     isClosing = true;
     setTimeout(() => {
       onClose();
-    }, 20);
+    }, 150);
   }
 
   onMount(() => {
@@ -29,8 +32,9 @@
   });
 </script>
 
+<!-- Backdrop: starts below navbar only, overlays subnav like trace sidebar -->
 <div
-  class="fixed inset-0 bg-opacity-30 z-40 transition-opacity duration-300"
+  class="fixed inset-x-0 bottom-0 top-14 bg-black/20 z-30 transition-opacity duration-150 ease-out"
   class:opacity-0={isClosing}
   onclick={handleClose}
   onkeydown={(e) => e.key === 'Escape' && handleClose()}
@@ -39,9 +43,18 @@
   aria-label="Close panel backdrop"
 ></div>
 
+<!-- Sidebar panel: positioned below navbar, overlays subnav -->
 <div
-  class="fixed top-0 right-0 h-full w-full lg:w-4/5 xl:w-3/4 bg-white border-l-4 border-black shadow-2xl z-50 flex flex-col transition-transform duration-300"
+  class="fixed right-0 bottom-0 top-14 w-full lg:w-4/5 xl:w-3/4
+         bg-surface-50 border-l-2 border-black z-40 flex flex-col
+         transition-transform duration-150 ease-out
+         shadow-[-4px_0px_0px_0px_rgba(0,0,0,1)]"
   class:translate-x-full={isClosing}
 >
-  <GenAIEvalWorkflowContent workflow={selectedWorkflow} onClose={handleClose} showCloseButton={true} />
+  <GenAIEvalWorkflowContent
+    workflow={selectedWorkflow}
+    onClose={handleClose}
+    showCloseButton={true}
+    profile={profile}
+  />
 </div>

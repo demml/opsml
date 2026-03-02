@@ -10,12 +10,13 @@
   const iconColor = "#40328b";
 </script>
 
-<div class="rounded-lg border-2 border-black shadow-small bg-surface-50 p-4">
+<div class="rounded-base border-2 border-black shadow bg-surface-50 p-4">
   <div class="flex items-center gap-2 mb-4 pb-3 border-b-2 border-black">
-    <div class="p-2 bg-primary-100 rounded-lg border-2 border-black">
-      <Table class="w-5 h-5 text-primary-800" />
+    <div class="p-1.5 bg-primary-500 border-2 border-black rounded-base">
+      <Table class="w-4 h-4 text-white" />
     </div>
-    <h3 class="text-lg font-bold text-primary-950">Associated Cards</h3>
+    <h3 class="text-sm font-black text-primary-950 uppercase tracking-wide">Associated Cards</h3>
+    <span class="badge bg-primary-100 text-primary-800 border border-black text-xs font-bold shadow-small px-2">{cards.length}</span>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">

@@ -4,6 +4,7 @@ import datetime
 from pathlib import Path
 from types import TracebackType
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -11,6 +12,7 @@ from typing import (
     Iterator,
     List,
     Literal,
+    Mapping,
     Optional,
     ParamSpec,
     Protocol,
@@ -24,6 +26,18 @@ from typing import (
 
 from typing_extensions import TypeVar
 
+AttributeValue = Union[
+    str,
+    bool,
+    int,
+    float,
+    Sequence[str],
+    Sequence[bool],
+    Sequence[int],
+    Sequence[float],
+]
+Attributes = Optional[Mapping[str, AttributeValue]]
+
 SerializedType: TypeAlias = Union[str, int, float, dict, list]
 CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]  # type: ignore[name-defined]
 ServiceCardInterfaceType: TypeAlias = Dict[str, Union["DataInterface", "ModelInterface"]]  # type: ignore[name-defined]
@@ -32,6 +46,12 @@ Context: TypeAlias = Union[Dict[str, Any], "BaseModel"]
 
 P = ParamSpec("P")
 R = TypeVar("R")
+
+if TYPE_CHECKING:
+    from opentelemetry.trace import SpanContext
+else:
+    class SpanContext:
+        pass
 
 class BaseModel(Protocol):
     """Protocol for pydantic BaseModel to ensure compatibility with context"""

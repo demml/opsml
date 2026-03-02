@@ -1,68 +1,110 @@
+import type { PageLoad } from "./$types";
+import {
+  type TraceMetricsRequest,
+  type TracePageFilter,
+  type TraceFilters,
+  SCOUTER_ENTITY,
+} from "$lib/components/trace/types";
+
+import {
+  getServerTracePage,
+  getServerTraceMetrics,
+  getCookie,
+  calculateTimeRange,
+} from "$lib/components/trace/utils";
+import { getEvalProfileOrUid } from "$lib/components/card/card_interfaces/enum";
+import type { CardMetadata } from "$lib/server/card/layout";
+import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
+import type { ServiceCard } from "$lib/components/card/card_interfaces/servicecard";
+import { RegistryType } from "$lib/utils";
+
 export const ssr = false;
 
-import type { PageLoad } from "./$types";
-import type {
-  ScouterEntityIdResponse,
-  ScouterEntityIdTagsRequest,
-  Tag,
-} from "$lib/components/tags/types";
-import { getScouterServerEntityIdFromTags } from "$lib/components/tags/utils";
-import {
-  getCardKeyAttribute,
-  getServerTraceSpans,
-  getServerTracePage,
-} from "$lib/components/trace/utils";
+export const load: PageLoad = async ({ fetch, depends, parent }) => {
+  const parentData = await parent();
+  const metadata = parentData.metadata as CardMetadata;
 
-export const load: PageLoad = async ({ parent, fetch }) => {
-  const { metadata, registryType } = await parent();
+  console.log(
+    "metadata.registry_type in observability page load:",
+    metadata.registry_type,
+  );
 
   try {
-    const key = getCardKeyAttribute(registryType);
+    depends("trace:data");
 
-    const tag: Tag = {
-      key,
-      value: metadata.uid,
+    const registryTypeLower = metadata.registry_type.toLowerCase();
+    if (
+      registryTypeLower !== RegistryType.Prompt &&
+      registryTypeLower !== RegistryType.Agent
+    ) {
+      throw new Error(
+        `Observability is not supported for ${metadata.registry_type} cards`,
+      );
+    }
+    const card = metadata as PromptCard | ServiceCard;
+
+    const entity_uid = getEvalProfileOrUid(card);
+    const selectedRange = getCookie("trace_range") || "15min";
+
+    const { startTime, endTime, bucketInterval } =
+      calculateTimeRange(selectedRange);
+
+    const metricsRequest: TraceMetricsRequest = {
+      service_name: undefined,
+      start_time: startTime,
+      end_time: endTime,
+      bucket_interval: bucketInterval,
+      entity_uid: entity_uid,
     };
 
-    const request: ScouterEntityIdTagsRequest = {
-      entity_type: "trace",
-      tags: [tag],
-      match_all: true,
-    };
+    let traceMetrics = await getServerTraceMetrics(fetch, metricsRequest);
+    let tracePage = await getServerTracePage(fetch, {
+      start_time: startTime,
+      end_time: endTime,
+      limit: 50,
+      entity_uid: entity_uid,
+    });
 
-    const response: ScouterEntityIdResponse =
-      await getScouterServerEntityIdFromTags(fetch, request);
-
-    if (response.entity_id.length === 0) {
+    if (!tracePage.items || tracePage.items.length === 0) {
+      let filters: TraceFilters = {
+        start_time: startTime,
+        end_time: endTime,
+        entity_uid: entity_uid,
+      };
+      let initialFilters: TracePageFilter = {
+        filters: { ...filters },
+        bucket_interval: bucketInterval,
+        selected_range: selectedRange,
+      };
       return {
-        trace: null,
-        spans: null,
-        type: "not_found" as const,
+        status: "not_found" as const,
         errorMessage:
-          "No trace found for this card. Ensure that the application is generating traces with the correct tags.",
+          "No traces found for the selected time range. Try adjusting your time range or check if your application is generating traces.",
+        initialFilters: initialFilters,
       };
     }
-
-    // Fetch spans and trace page in parallel for better performance
-    const [spansDetails, tracePage] = await Promise.all([
-      getServerTraceSpans(fetch, {
-        trace_id: response.entity_id[0],
-      }),
-      getServerTracePage(fetch, {
-        trace_ids: response.entity_id,
-      }),
-    ]);
+    let traceFilter: TraceFilters = {
+      start_time: startTime,
+      end_time: endTime,
+      entity_uid: entity_uid,
+    };
+    let initialFilters: TracePageFilter = {
+      filters: { ...traceFilter },
+      bucket_interval: bucketInterval,
+      selected_range: selectedRange,
+    };
 
     return {
-      trace: tracePage.items[0],
-      spans: spansDetails,
-      errorMessage: "none",
+      status: "success" as const,
+      trace_page: tracePage,
+      trace_metrics: traceMetrics,
+      initialFilters,
     };
   } catch (error) {
-    console.error("Error loading span data:", error);
+    console.error("Error loading trace data:", error);
 
     let errorMessage =
-      "An unexpected error occurred while loading span data. Please try again.";
+      "An unexpected error occurred while loading trace data. Please try again.";
 
     if (error instanceof Error) {
       if (
@@ -85,11 +127,18 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       }
     }
 
+    let initialFilters: TracePageFilter = {
+      filters: {
+        start_time: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+        end_time: new Date().toISOString(),
+      },
+      bucket_interval: "1 minutes",
+      selected_range: "15min",
+    };
     return {
+      status: "error" as const,
       errorMessage,
-      trace: null,
-      spans: null,
-      type: "error" as const,
+      initialFilters,
     };
   }
 };

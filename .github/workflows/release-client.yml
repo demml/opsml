@@ -28,18 +28,17 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install dependencies
+      - name: Install dependencies, build stubs, update package name, and build sdist
+        working-directory: ./py-opsml
         run: |
           pip install -U twine tomli tomli-w
           make build.stubs
+          python ./scripts/update_package_name.py ./pyproject.toml "opsml-client"
 
       - name: Install build dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev pkg-config
-
-      - name: Update package name to opsml-client
-        run: python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
 
       - name: Build sdist
         uses: PyO3/maturin-action@v1
@@ -63,7 +62,7 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            manylinux: auto
+            manylinux: "2_28"
             runner-type: ubuntu-latest
             runner: ubuntu-latest
             docker-options: "-e CI"
@@ -83,9 +82,10 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Update package name to opsml-client
+        working-directory: ./py-opsml
         run: |
           pip install -U twine tomli tomli-w
-          python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
+          python ./scripts/update_package_name.py ./pyproject.toml "opsml-client"
           make build.stubs
 
       - name: Set OPENSSL_DIR environment variable
@@ -115,12 +115,30 @@ jobs:
                 apt update -y && apt-get install -y libssl-dev openssl pkg-config
             fi
 
-            # Install bindgen CLI
-            cargo install --force --locked bindgen-cli
-
             # Determine architecture and install CMake
             ARCH=$(uname -m)
             echo "Detected architecture: $ARCH"
+
+            # Install Protocol Buffers Compiler (protoc)
+            PROTOC_VERSION="33.2"
+            if [[ "$ARCH" == "x86_64" ]]; then
+                PROTOC_ARCH="linux-x86_64"
+            elif [[ "$ARCH" == "aarch64" ]]; then
+                PROTOC_ARCH="linux-aarch_64"
+            else
+                echo "Unsupported architecture for protoc: $ARCH"
+                exit 1
+            fi
+
+            echo "Installing protoc ${PROTOC_VERSION} for ${PROTOC_ARCH}"
+            curl -LO "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-${PROTOC_ARCH}.zip"
+            unzip "protoc-${PROTOC_VERSION}-${PROTOC_ARCH}.zip" -d /usr/local
+            rm "protoc-${PROTOC_VERSION}-${PROTOC_ARCH}.zip"
+            chmod +x /usr/local/bin/protoc
+            protoc --version
+
+            # Install bindgen CLI
+            cargo install --force --locked bindgen-cli
 
             if [[ "$ARCH" == "x86_64" ]]; then
                 echo "Downloading CMake for x86_64 architecture"
@@ -197,10 +215,17 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Update package name to opsml-client
+        working-directory: ./py-opsml
         run: |
           pip install -U twine tomli tomli-w
-          python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
+          python ./scripts/update_package_name.py ./pyproject.toml "opsml-client"
 
       - name: Build stubs
         run: |
@@ -251,11 +276,18 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Update package name to opsml-client
+        working-directory: ./py-opsml
         run: |
           make build.stubs
           pip install -U twine tomli tomli-w
-          python ./py-opsml/scripts/update_package_name.py ./py-opsml/pyproject.toml "opsml-client"
+          python ./scripts/update_package_name.py ./pyproject.toml "opsml-client"
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1
