@@ -65,9 +65,6 @@ pub enum CliError {
     #[error(transparent)]
     CardError(#[from] CardError),
 
-    #[error("Failed to run opsml demo")]
-    FailedToRunDemo,
-
     #[error("{0}")]
     Error(String),
 
