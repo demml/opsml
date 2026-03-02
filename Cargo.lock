@@ -3220,9 +3220,9 @@ dependencies = [
 
 [[package]]
 name = "jsonschema"
-version = "0.43.0"
+version = "0.44.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2dcfbe6df48e0121219eefc8d6a30b872ac2769c7896454bda06f7b64129fa22"
+checksum = "267fb27be492e66ab147d2ce0233d88ae465b93c3565016e73998729bf3fe60f"
 dependencies = [
  "ahash",
  "bytecount",
@@ -4458,7 +4458,6 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "password-auth",
- "rand 0.7.3",
  "rand 0.9.2",
  "reqwest 0.12.28",
  "rusty-logging",
@@ -4610,7 +4609,7 @@ dependencies = [
  "serde",
  "tempfile",
  "thiserror 2.0.18",
- "toml_edit",
+ "toml_edit 0.25.3+spec-1.1.0",
 ]
 
 [[package]]
@@ -5254,7 +5253,7 @@ version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "219cb19e96be00ab2e37d6e299658a0cfa83e52429179969b0f0121b4ac46983"
 dependencies = [
- "toml_edit",
+ "toml_edit 0.23.10+spec-1.0.0",
 ]
 
 [[package]]
@@ -5904,9 +5903,9 @@ dependencies = [
 
 [[package]]
 name = "referencing"
-version = "0.43.0"
+version = "0.44.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "37add1aa1d619a975521d262d09f100f1f767791c9386c03679450f30acd78c1"
+checksum = "12ecd0f3daefd4faff2e0821310c18e6e9d1fd00550bbd7e5a59d78184a071bc"
 dependencies = [
  "ahash",
  "fluent-uri",
@@ -6385,7 +6384,8 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e4d54a654303487ed14ac5b7be8b50c7fa157519cc0740f09f8b3915d4adac5"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6408,7 +6408,7 @@ dependencies = [
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.8.5",
+ "serde_qs 0.15.0",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
@@ -6417,7 +6417,8 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c933c5c6f199a4ddca1282a9484ab9d45bb73f4d252c3e97ec9cd572bb9ef728"
 dependencies = [
  "futures",
  "pyo3",
@@ -6432,12 +6433,13 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a390c51f08113e0dcf8452b0ea6305e00604245513243cd1afea4303f7f9f213"
 dependencies = [
  "chrono",
  "futures",
  "indicatif",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "ndarray",
  "num-traits",
  "numpy",
@@ -6458,10 +6460,11 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c14af2664977d1b9f2fd4325855255cab4f4c85ce6fb17b4871864dbdfa4f5c"
 dependencies = [
  "chrono",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "ndarray",
  "num-traits",
  "owo-colors",
@@ -6485,7 +6488,8 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ea3872eca4e0aa61bcf449ef1963f7c3c321965ec77329e0d1ca3cb69088b842"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6520,14 +6524,15 @@ dependencies = [
 [[package]]
 name = "scouter-http"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c38f21cc80b9edd82406bcccab964fcab03abe00059ea3066f2aa8a38cf638d"
 dependencies = [
  "pyo3",
  "reqwest 0.12.28",
  "scouter-settings",
  "scouter-types",
  "serde_json",
- "serde_qs 0.8.5",
+ "serde_qs 0.15.0",
  "thiserror 2.0.18",
  "tracing",
 ]
@@ -6535,7 +6540,8 @@ dependencies = [
 [[package]]
 name = "scouter-macro"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "202c37d63acaf558e2d5337c69f63b1dd949e4e04855323e9191b5759a5bb8a4"
 dependencies = [
  "thiserror 2.0.18",
 ]
@@ -6543,9 +6549,10 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e4bba85b0eb733c87d13fe540a22542c6de3c09855736860f917958c13c358d"
 dependencies = [
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6560,11 +6567,12 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "056ce8b4bf75fcd2b7b04c8500daf4da9df78faefaf00d59852d0cffdbb78cc6"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.13.0",
+ "itertools 0.14.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6582,7 +6590,8 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee0d0d107ceb3bd84c9395286588ca98727a46e582435f0a89eeb161fdedb350"
 dependencies = [
  "pyo3",
  "semver",
@@ -6593,7 +6602,8 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b57c8c25c0fecd557af20fc1efa5781098e529c47661580ee448a7c513224663"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -6607,7 +6617,8 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e4520c7d5ca5d9fe3beff7a16af3dda77432a918e1e4e4eb24aa5f4b8897a54"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -6617,7 +6628,8 @@ dependencies = [
 [[package]]
 name = "scouter-tonic"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8306bcdca858011b97e5213e028947d26c9152deaf7e2c32853654b0cc53bd06"
 dependencies = [
  "prost",
  "prost-types",
@@ -6636,7 +6648,8 @@ dependencies = [
 [[package]]
 name = "scouter-tracing"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a0ed017aa700267203ed8c927733dc6c74493176af6ad69be6169ece79864b8"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6662,7 +6675,8 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.17.1"
-source = "git+https://github.com/demml/scouter.git?branch=main#9cd3367256a08f894dc089b092cc3b558331dfe9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5336b9be38ab2d880cff64e63df5a8e7ec1edab7533a7e5cfbceef2135dbfd1c"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -7014,9 +7028,9 @@ dependencies = [
 
 [[package]]
 name = "sketches-ddsketch"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1e9a774a6c28142ac54bb25d25562e6bcf957493a184f15ad4eebccb23e410a"
+checksum = "0c6f73aeb92d671e0cc4dca167e59b2deb6387c375391bc99ee743f326994a2b"
 
 [[package]]
 name = "slab"
@@ -7749,15 +7763,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "toml_datetime"
+version = "1.0.0+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "32c2555c699578a4f59f0cc68e5116c8d7cabbd45e1409b989d4be085b53f13e"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
 name = "toml_edit"
 version = "0.23.10+spec-1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "84c8b9f757e028cee9fa244aea147aab2a9ec09d5325a9b01e0a49730c2b5269"
 dependencies = [
  "indexmap 2.13.0",
+ "toml_datetime 0.7.5+spec-1.1.0",
+ "toml_parser",
+ "winnow 0.7.14",
+]
+
+[[package]]
+name = "toml_edit"
+version = "0.25.3+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0a07913e63758bc95142d9863a5a45173b71515e68b690cad70cf99c3255ce1"
+dependencies = [
+ "indexmap 2.13.0",
  "serde_core",
  "serde_spanned",
- "toml_datetime",
+ "toml_datetime 1.0.0+spec-1.1.0",
  "toml_parser",
  "toml_writer",
  "winnow 0.7.14",
