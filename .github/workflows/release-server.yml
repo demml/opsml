@@ -32,7 +32,7 @@ jobs:
         working-directory: ./py-opsml
         run: |
           pip install -U twine tomli tomli-w
-          make build.stubs
+          python ./scripts/assemble_stubs.py
 
       - name: Install build dependencies
         run: |
@@ -89,7 +89,7 @@ jobs:
       - name: Build stubs
         working-directory: ./py-opsml
         run: |
-          make build.stubs
+          python ./scripts/assemble_stubs.py
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1
@@ -226,7 +226,7 @@ jobs:
       - name: Build stubs
         working-directory: ./py-opsml
         run: |
-          make build.stubs
+          python ./scripts/assemble_stubs.py
 
       - name: Install libomp on macOS
         run: brew install libomp curl openssl pkg-config
@@ -284,7 +284,7 @@ jobs:
       - name: Build stubs
         working-directory: ./py-opsml
         run: |
-          make build.stubs
+          python ./scripts/assemble_stubs.py
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1
