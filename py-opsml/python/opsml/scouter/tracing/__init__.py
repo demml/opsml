@@ -58,6 +58,7 @@ else:
     # Try to import OpenTelemetry, but provide fallbacks if not available
     try:
         from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
+        from opentelemetry.trace import Tracer as _OtelTracer
         from opentelemetry.trace import get_tracer_provider, set_tracer_provider
 
         HAS_OPENTELEMETRY = True
@@ -359,6 +360,7 @@ class TracerProvider(_OtelTracerProvider):
         batch_config: Optional[BatchConfig] = None,
         sample_ratio: Optional[float] = None,
         scouter_queue: Optional[Any] = None,
+        default_attributes: Optional[Attributes] = None,
     ):
         """Initialize TracerProvider and underlying Rust tracer."""
 
@@ -367,6 +369,7 @@ class TracerProvider(_OtelTracerProvider):
         self.batch_config = batch_config
         self.sample_ratio = sample_ratio
         self.scouter_queue = scouter_queue
+        self.default_attributes = default_attributes
 
     def get_tracer(
         self,
@@ -382,15 +385,18 @@ class TracerProvider(_OtelTracerProvider):
         providing the @tracer.span() decorator functionality.
 
         Args:
-            instrumenting_module_name: Module name (typically __name__)
-            instrumenting_library_version: Optional version string
-            schema_url: Optional schema URL
-            attributes: Optional attributes dict
+            instrumenting_module_name (str):
+                Module name (typically __name__)
+            instrumenting_library_version (Optional[str]):
+                Optional version string
+            schema_url (Optional[str]):
+                Optional schema URL
+            attributes (Optional[Attributes]):
+                Optional attributes dict
 
         Returns:
             Tracer: Python Tracer instance with decorator support
         """
-        # Return the Python Tracer wrapper, not the Rust BaseTracer
 
         return cast(
             _OtelTracer,
@@ -403,7 +409,8 @@ class TracerProvider(_OtelTracerProvider):
                 sample_ratio=self.sample_ratio,
                 scouter_queue=self.scouter_queue,
                 schema_url=schema_url,
-                attributes=attributes,  # type: ignore
+                scope_attributes=attributes,  # type: ignore
+                default_attributes=self.default_attributes,  # type: ignore
             ),
         )
 
@@ -476,6 +483,7 @@ class ScouterInstrumentor(BaseInstrumentor):
                 batch_config=kwargs.pop("batch_config", None),
                 sample_ratio=kwargs.pop("sample_ratio", None),
                 scouter_queue=kwargs.pop("scouter_queue", None),
+                default_attributes=kwargs.pop("attributes", None),
             )
 
         from opentelemetry import trace
@@ -484,22 +492,73 @@ class ScouterInstrumentor(BaseInstrumentor):
         trace._TRACER_PROVIDER_SET_ONCE._lock = __import__("threading").Lock()  # pylint: disable=protected-access
         set_tracer_provider(self._provider)
 
+    def instrument(
+        self,
+        transport_config: Optional[Any] = None,
+        exporter: Optional[Any] = None,
+        batch_config: Optional[BatchConfig] = None,
+        sample_ratio: Optional[float] = None,
+        scouter_queue: Optional[Any] = None,
+        attributes: Optional[Attributes] = None,
+        **kwargs,
+    ) -> None:
+        """
+        Instrument with Scouter tracing and set as global OpenTelemetry provider.
+
+        Args:
+            transport_config (Optional[Any]):
+                Export configuration (OtelExportConfig, etc.)
+            exporter (Optional[Any]):
+                Custom span exporter instance
+            batch_config (Optional[BatchConfig]):
+                Batch processing configuration
+            sample_ratio (Optional[float]):
+                Sampling ratio (0.0 to 1.0)
+            scouter_queue (Optional[Any]):
+                Optional ScouterQueue for buffering
+            attributes (Optional[Attributes]):
+                Optional attributes to set on every span created by this tracer
+            **kwargs:
+                Additional keyword arguments for TracerProvider initialization
+
+        """
+        super().instrument(
+            transport_config=transport_config,
+            exporter=exporter,
+            batch_config=batch_config,
+            sample_ratio=sample_ratio,
+            scouter_queue=scouter_queue,
+            attributes=attributes,
+            **kwargs,
+        )
+
     def _uninstrument(self, **kwargs) -> None:
         """Shutdown Scouter tracing and reset global provider."""
         if not HAS_OPENTELEMETRY:
             return
 
-        if self._provider is None:
-            return
-
-        self._provider.shutdown()
+        if self._provider is not None:
+            self._provider.shutdown()
+            self._provider = None
+        else:
+            try:
+                flush_tracer()
+            except Exception:  # noqa: BLE001 pylint: disable=broad-except
+                pass
+            try:
+                shutdown_tracer()
+            except Exception:  # noqa: BLE001 pylint: disable=broad-except
+                pass
 
         from opentelemetry import trace
 
         trace._TRACER_PROVIDER = None  # pylint: disable=protected-access
         trace._TRACER_PROVIDER_SET_ONCE._done = False  # pylint: disable=protected-access
 
-        self._provider = None
+        # Reset the singleton
+        ScouterInstrumentor._instance = None
+
+        assert self._provider is None, "Expected provider to be None after uninstrument()"
 
     @property
     def is_instrumented(self) -> bool:
@@ -514,6 +573,7 @@ def instrument(
     batch_config: Optional[BatchConfig] = None,
     sample_ratio: Optional[float] = None,
     scouter_queue: Optional[Any] = None,
+    attributes: Optional[Attributes] = None,
 ) -> None:
     """
     Convenience function to instrument with Scouter tracing.
@@ -522,11 +582,18 @@ def instrument(
         ScouterInstrumentor().instrument(**kwargs)
 
     Args:
-        transport_config: Export configuration (OtelExportConfig, etc.)
-        exporter: Custom span exporter instance
-        batch_config: Batch processing configuration
-        sample_ratio: Sampling ratio (0.0 to 1.0)
-        scouter_queue: Optional ScouterQueue for buffering
+        transport_config (Optional[Any]):
+            Export configuration (OtelExportConfig, etc.)
+        exporter (Optional[Any]):
+            Custom span exporter instance
+        batch_config (Optional[BatchConfig]):
+            Batch processing configuration
+        sample_ratio (Optional[float]):
+            Sampling ratio (0.0 to 1.0)
+        scouter_queue (Optional[Any]):
+            Optional ScouterQueue for buffering
+        attributes (Optional[Attributes]):
+            Optional attributes to set on every span created by this tracer
 
     Examples:
         >>> from scouter.tracing import instrument
@@ -546,6 +613,7 @@ def instrument(
         batch_config=batch_config,
         sample_ratio=sample_ratio,
         scouter_queue=scouter_queue,
+        attributes=attributes,
     )
 
 

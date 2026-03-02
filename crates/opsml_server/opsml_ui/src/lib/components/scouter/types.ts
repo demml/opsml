@@ -145,3 +145,10 @@ export type MetricData =
   | BinnedPsiMetric
   | BinnedMetric
   | null;
+
+export interface GetProfileExistsRequest {
+  name: string;
+  space: string;
+  version: string;
+  drift_type: DriftType;
+}

@@ -38,6 +38,12 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build Docs
         working-directory: ./py-opsml
         run: |

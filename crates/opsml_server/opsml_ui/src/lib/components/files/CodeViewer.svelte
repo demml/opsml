@@ -28,27 +28,27 @@
 
 {#if fileManager.isLargeFile && !fileManager.showFullContent}
   <!-- Large File Preview Mode -->
-  <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-2">
-    <p class="text-yellow-800 mb-2">
+  <div class="p-4 bg-warning-300 border-2 border-black rounded-base shadow-small mb-2">
+    <p class="text-black font-medium mb-2">
       This is a large file ({fileManager.fileSizeKB.toFixed(1)}KB). 
       Showing first 100 lines for performance.
     </p>
     <div class="flex gap-3 items-center">
       <button 
-        class="btn text-sm bg-primary-500 text-black shadow shadow-hover border-black border-2"
+        class="btn text-sm bg-primary-500 text-white border-2 border-black shadow-small shadow-click-small rounded-base font-bold"
         onclick={() => fileManager.toggleFullContent()}
       >
         Show Full Content
       </button>
       {#if fileManager.needsVirtualScrolling}
-        <span class="text-sm text-gray-600">
+        <span class="text-sm text-black/60">
           (Virtual scrolling will be used for smooth performance)
         </span>
       {/if}
     </div>
   </div>
   
-  <div class="rounded-lg overflow-auto">
+  <div class="rounded-base overflow-auto border border-black">
     <CodeBlock
         code={fileManager.getPreviewContent()} 
         showLineNumbers={true}
@@ -59,14 +59,14 @@
 {:else if fileManager.needsVirtualScrolling && fileManager.showFullContent}
   <div 
     bind:this={containerRef}
-    class="h-[32rem] overflow-auto border rounded-lg"
+    class="h-[32rem] overflow-auto border border-black rounded-base"
     onscroll={virtualScroll.handleScroll}
     bind:clientHeight={virtualScroll.containerHeight}
   >
     <div style="height: {virtualScroll.totalHeight}px; position: relative;">
       <div 
         style="position: absolute; top: {virtualScroll.topOffset}px; width: 100%;" 
-        class="rounded-lg overflow-hidden"
+        class="rounded-base overflow-hidden"
       >
         <CodeBlock
           code={processedContent} 
@@ -79,11 +79,11 @@
   
 {:else}
   {#if fileManager.showFullContent && fileManager.isLargeFile}
-    <div class="p-2 bg-green-50 border border-green-200 rounded-lg mb-2">
+    <div class="p-2 bg-secondary-300 border-2 border-black rounded-base shadow-small mb-2">
       <div class="flex justify-between items-center">
-        <p class="text-green-800 text-sm">Showing full content</p>
+        <p class="text-black text-sm font-medium">Showing full content</p>
         <button 
-          class="btn bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600"
+          class="btn bg-surface-50 text-primary-800 border-2 border-black shadow-small shadow-click-small rounded-base text-sm font-bold"
           onclick={() => fileManager.toggleFullContent()}
         >
           Back to Preview

@@ -3,6 +3,8 @@ import type {
   GenAIEvalTaskResult,
   GenAIEvalWorkflowResult,
   LLMJudgeTask,
+  TraceAssertion,
+  TraceAssertionTask,
 } from "./task";
 import type {
   AlertDispatchConfig,
@@ -93,11 +95,18 @@ export interface Workflow {
   agents: Record<string, Agent>;
 }
 
+export interface AssertionTasks {
+  assertion: AssertionTask[];
+  judge: LLMJudgeTask[];
+  trace: TraceAssertionTask[];
+}
+
 export interface GenAIEvalProfile {
   config: GenAIEvalConfig;
-  assertion_tasks: AssertionTask[];
-  llm_judge_tasks: LLMJudgeTask[];
+  tasks: AssertionTasks;
   task_ids: string[];
+  scouter_version: string;
+  alias?: string;
 }
 
 export interface GenAIEvalRecordPaginationRequest {

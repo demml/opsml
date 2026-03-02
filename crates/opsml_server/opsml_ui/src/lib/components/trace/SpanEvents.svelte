@@ -1,108 +1,147 @@
 <script lang="ts">
-  import { Activity, AlertCircle } from 'lucide-svelte';
+  import { Activity, AlertCircle, ChevronDown, ChevronUp, Copy, Check } from 'lucide-svelte';
   import { EXCEPTION_TRACEBACK, SPAN_ERROR, type SpanEvent } from './types';
-  import { formatTimestamp, formatAttributeValue } from './utils';
-  import Pill from '$lib/components/utils/Pill.svelte';
+  import { formatTimestamp } from './utils';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
 
-  /**
-   * Component for displaying span events, including exception tracebacks
-   */
   let { events }: { events: SpanEvent[] } = $props();
 
-  /**
-   * Check if an event represents an error/exception
-   */
   function isErrorEvent(eventName: string): boolean {
     const name = eventName.toLowerCase();
     return name.includes('exception') || name.includes(SPAN_ERROR);
   }
 
-  /**
-   * Extract traceback attribute from event attributes
-   */
   function getTraceback(attributes: Array<{ key: string; value: unknown }>): string | null {
-    const tracebackAttr = attributes.find(attr => attr.key === EXCEPTION_TRACEBACK);
-    return tracebackAttr ? String(tracebackAttr.value) : null;
+    const attr = attributes.find(a => a.key === EXCEPTION_TRACEBACK);
+    return attr ? String(attr.value) : null;
   }
 
-  /**
-   * Filter out traceback attributes for pill display
-   */
   function getNonTracebackAttributes(attributes: Array<{ key: string; value: unknown }>) {
-    return attributes.filter(attr => attr.key !== EXCEPTION_TRACEBACK);
+    return attributes.filter(a => a.key !== EXCEPTION_TRACEBACK);
+  }
+
+  function attrsToJson(attrs: Array<{ key: string; value: unknown }>): string {
+    const obj: Record<string, unknown> = {};
+    for (const a of attrs) obj[a.key] = a.value;
+    return JSON.stringify(obj, null, 2);
+  }
+
+  // Collapsed state per event index — starts empty (all expanded)
+  let collapsedEvents = $state<Set<number>>(new Set());
+  let copiedIdx = $state<number | null>(null);
+
+  function toggleEvent(idx: number) {
+    const next = new Set(collapsedEvents);
+    if (next.has(idx)) next.delete(idx); else next.add(idx);
+    collapsedEvents = next;
+  }
+
+  function copyJson(json: string, idx: number) {
+    navigator.clipboard.writeText(json);
+    copiedIdx = idx;
+    setTimeout(() => (copiedIdx = null), 2000);
   }
 </script>
 
 {#if events.length > 0}
-  <section>
-    <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-      <Activity color="#8059b6" />
-      <header class="pl-2 text-primary-950 text-sm font-bold">Events ({events.length})</header>
-    </div>
+  <div class="space-y-2">
+    {#each events as event, idx}
+      {@const isError = isErrorEvent(event.name)}
+      {@const traceback = getTraceback(event.attributes)}
+      {@const nonTracebackAttrs = getNonTracebackAttributes(event.attributes)}
+      {@const isCollapsed = collapsedEvents.has(idx)}
+      {@const json = nonTracebackAttrs.length > 0 ? attrsToJson(nonTracebackAttrs) : null}
 
-    <div class="space-y-3">
-      {#each events as event}
-        {@const isError = isErrorEvent(event.name)}
-        {@const traceback = getTraceback(event.attributes)}
-        {@const nonTracebackAttrs = getNonTracebackAttributes(event.attributes)}
+      <div class="border-2 {isError ? 'border-error-600' : 'border-black'} rounded-base overflow-hidden shadow-small">
 
-        <div class="bg-surface-50 border-2 border-black rounded-base p-2 shadow-small">
-          <!-- Event Header -->
-          <div class="flex items-center gap-2 mb-2">
+        <!-- Collapsible header -->
+        <button
+          onclick={() => toggleEvent(idx)}
+          class="w-full flex items-center justify-between px-3 py-2 transition-colors duration-100
+            {isError
+              ? 'bg-error-100 hover:bg-error-200 border-b-2 border-error-600'
+              : 'bg-primary-100 hover:bg-primary-200 border-b-2 border-black'}"
+        >
+          <div class="flex items-center gap-2 min-w-0">
             {#if isError}
-              <AlertCircle class="text-error-600" size={16} />
+              <AlertCircle class="w-3.5 h-3.5 text-error-600 flex-shrink-0" />
             {:else}
-              <Activity class="text-primary-500" size={16} />
+              <Activity class="w-3.5 h-3.5 text-primary-700 flex-shrink-0" />
             {/if}
-            <span class="text-sm font-bold text-gray-900">{event.name}</span>
+            <span class="text-xs font-black uppercase tracking-wide truncate
+              {isError ? 'text-error-900' : 'text-primary-900'}">{event.name}</span>
+            {#if nonTracebackAttrs.length > 0}
+              <span class="px-1.5 py-0.5 rounded-sm text-[10px] font-bold flex-shrink-0
+                {isError
+                  ? 'bg-error-200 border border-error-400 text-error-800'
+                  : 'bg-primary-200 border border-primary-400 text-primary-800'}">
+                {nonTracebackAttrs.length}
+              </span>
+            {/if}
+            <span class="text-[10px] font-mono flex-shrink-0
+              {isError ? 'text-error-600' : 'text-primary-400'}">
+              {formatTimestamp(event.timestamp)}
+            </span>
           </div>
+          {#if isCollapsed}
+            <ChevronDown class="w-3.5 h-3.5 flex-shrink-0 {isError ? 'text-error-600' : 'text-primary-600'}" />
+          {:else}
+            <ChevronUp class="w-3.5 h-3.5 flex-shrink-0 {isError ? 'text-error-600' : 'text-primary-600'}" />
+          {/if}
+        </button>
 
-          <!-- Timestamp -->
-          <div class="mb-1 text-sm">
-            <Pill key="Timestamp" value={formatTimestamp(event.timestamp)} textSize="text-xs" />
+        <!-- Expanded body -->
+        {#if !isCollapsed}
+          <div class="bg-surface-50">
+
+            <!-- Attributes as JSON codeblock (with copy button) -->
+            {#if json}
+              <div class="text-xs overflow-hidden relative">
+                <button
+                  class="absolute p-2 top-2 right-2 btn btn-sm bg-white border-2 border-black shadow-small z-20 hover:bg-slate-50 active:translate-y-[2px] active:shadow-none transition-all"
+                  onclick={() => copyJson(json, idx)}
+                  aria-label="Copy JSON"
+                >
+                  {#if copiedIdx === idx}
+                    <Check class="w-4 h-4 text-secondary-600" />
+                  {:else}
+                    <Copy class="w-4 h-4" color="black" />
+                  {/if}
+                </button>
+                <CodeBlock code={json} showLineNumbers={false} lang="json" prePadding="p-3" />
+              </div>
+            {/if}
+
+            <!-- Exception traceback -->
+            {#if traceback}
+              <div class="p-3 {json ? 'border-t-2 border-error-600' : ''}">
+                <div class="flex items-center gap-1.5 mb-2">
+                  <AlertCircle class="w-3.5 h-3.5 text-error-600" />
+                  <span class="text-xs font-black uppercase tracking-wide text-error-700">Exception Traceback</span>
+                </div>
+                <div class="max-h-64 overflow-y-auto border-2 border-error-600 rounded-base shadow-small text-xs overflow-hidden">
+                  <CodeBlock code={traceback} showLineNumbers={false} lang="python" theme="traceback-theme" />
+                </div>
+              </div>
+            {/if}
+
+            <!-- Dropped attributes warning -->
+            {#if event.dropped_attributes_count > 0}
+              <div class="px-3 pb-2 text-xs text-warning-600 flex items-center gap-1 font-bold">
+                <AlertCircle class="w-3 h-3" />
+                {event.dropped_attributes_count} attributes dropped
+              </div>
+            {/if}
+
+            <!-- Empty body state -->
+            {#if !json && !traceback && event.dropped_attributes_count === 0}
+              <p class="px-3 py-4 text-xs text-primary-400 italic text-center">No attributes recorded</p>
+            {/if}
+
           </div>
+        {/if}
 
-          <!-- Non-Traceback Attributes -->
-          {#if nonTracebackAttrs.length > 0}
-            <div class="flex flex-col space-y-1 text-sm">
-              {#each nonTracebackAttrs as attr}
-                <Pill key={attr.key} value={formatAttributeValue(attr.value)} textSize="text-xs" />
-              {/each}
-            </div>
-          {/if}
-
-          <!-- Traceback (if present) -->
-          {#if traceback}
-            <div class="mt-3">
-              <!-- Traceback Header -->
-              <div class="flex items-center gap-1 mb-1">
-                <AlertCircle class="text-error-600" size={14} />
-                <span class="text-xs font-bold text-error-600">Exception Traceback</span>
-              </div>
-              
-              <!-- Traceback Code Block -->
-              <div class="max-h-64 overflow-y-auto bg-surface-100 rounded-base border-2 border-error-600 p-1 shadow-small text-xs">
-                <CodeBlock
-                  code={traceback}
-                  showLineNumbers={false}
-                  lang="python"
-                  theme="traceback-theme"
-                  prePadding="p-1"
-                />
-              </div>
-            </div>
-          {/if}
-
-          <!-- Dropped Attributes Warning -->
-          {#if event.dropped_attributes_count > 0}
-            <div class="text-xs text-warning-500 mt-2 flex items-center gap-1">
-              <AlertCircle size={12} />
-              {event.dropped_attributes_count} attributes dropped
-            </div>
-          {/if}
-        </div>
-      {/each}
-    </div>
-  </section>
+      </div>
+    {/each}
+  </div>
 {/if}

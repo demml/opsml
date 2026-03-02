@@ -12,14 +12,14 @@ use axum::{
 use opsml_auth::permission::UserPermissions;
 use opsml_types::api::RequestType;
 
-use tracing::debug;
-
+use opsml_client::error::ApiClientError;
 use scouter_client::{
     GenAIEvalRecordPaginationRequest, GenAIEvalRecordPaginationResponse, GenAIEvalTaskRequest,
     GenAIEvalTaskResponse, GenAIEvalWorkflowPaginationResponse,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
+use tracing::debug;
 use tracing::{error, instrument};
 
 #[instrument(skip_all)]
@@ -28,15 +28,24 @@ pub async fn query_genai_eval_records(
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<GenAIEvalRecordPaginationRequest>,
 ) -> Result<Json<GenAIEvalRecordPaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     debug!("Getting genai eval records with params: {:?}", &body);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let request = serde_json::to_value(&body).map_err(|e| {
         error!("Failed to serialize request: {e}");
-        internal_server_error(e, "Failed to serialize request")
+        internal_server_error(e, "Failed to serialize request", None)
     })?;
 
     let response = data
@@ -49,18 +58,37 @@ pub async fn query_genai_eval_records(
             None,
             &exchange_token,
         )
-        .await
-        .map_err(|e| {
+        .await;
+
+    let response = match response {
+        Ok(resp) => resp,
+        Err(e) => {
+            if let ApiClientError::RequestError(ref req_err) = e
+                && req_err.status() == Some(StatusCode::NOT_FOUND)
+            {
+                error!("GenAI records not found: {e}");
+                return Err(internal_server_error(
+                    e,
+                    "GenAI records not found",
+                    Some(StatusCode::NOT_FOUND),
+                ));
+            }
+
             error!("Failed to get genai records: {e}");
-            internal_server_error(e, "Failed to get genai records")
-        })?;
+            return Err(internal_server_error(
+                e,
+                "Failed to get genai records",
+                None,
+            ));
+        }
+    };
 
     let body = response
         .json::<GenAIEvalRecordPaginationResponse>()
         .await
         .map_err(|e| {
             error!("Failed to parse genai records: {e}");
-            internal_server_error(e, "Failed to parse genai records")
+            internal_server_error(e, "Failed to parse genai records", None)
         })?;
 
     Ok(Json(body))
@@ -72,15 +100,24 @@ pub async fn query_genai_eval_workflow(
     Extension(perms): Extension<UserPermissions>,
     Json(body): Json<GenAIEvalRecordPaginationRequest>,
 ) -> Result<Json<GenAIEvalWorkflowPaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     debug!("Getting genai eval workflow with params: {:?}", &body);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let request = serde_json::to_value(&body).map_err(|e| {
         error!("Failed to serialize request: {e}");
-        internal_server_error(e, "Failed to serialize request")
+        internal_server_error(e, "Failed to serialize request", None)
     })?;
 
     let response = data
@@ -93,18 +130,37 @@ pub async fn query_genai_eval_workflow(
             None,
             &exchange_token,
         )
-        .await
-        .map_err(|e| {
+        .await;
+
+    let response = match response {
+        Ok(resp) => resp,
+        Err(e) => {
+            if let ApiClientError::RequestError(ref req_err) = e
+                && req_err.status() == Some(StatusCode::NOT_FOUND)
+            {
+                error!("GenAI workflow not found: {e}");
+                return Err(internal_server_error(
+                    e,
+                    "GenAI workflow not found",
+                    Some(StatusCode::NOT_FOUND),
+                ));
+            }
+
             error!("Failed to get genai workflow: {e}");
-            internal_server_error(e, "Failed to get genai workflow")
-        })?;
+            return Err(internal_server_error(
+                e,
+                "Failed to get genai workflow",
+                None,
+            ));
+        }
+    };
 
     let body = response
         .json::<GenAIEvalWorkflowPaginationResponse>()
         .await
         .map_err(|e| {
             error!("Failed to parse genai workflow: {e}");
-            internal_server_error(e, "Failed to parse genai workflow")
+            internal_server_error(e, "Failed to parse genai workflow", None)
         })?;
 
     Ok(Json(body))
@@ -116,16 +172,25 @@ pub async fn get_genai_tasks(
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<GenAIEvalTaskRequest>,
 ) -> Result<Json<GenAIEvalTaskResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !data.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
     // validate time window
     debug!("Getting genai task with params: {:?}", &params);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
-        internal_server_error(e, "Failed to exchange token for scouter")
+        internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
     let query_string = serde_qs::to_string(&params).map_err(|e| {
         error!("Failed to serialize query string: {e}");
-        internal_server_error(e, "Failed to serialize query string")
+        internal_server_error(e, "Failed to serialize query string", None)
     })?;
 
     let response = data
@@ -141,7 +206,7 @@ pub async fn get_genai_tasks(
         .await
         .map_err(|e| {
             error!("Failed to get genai task: {e}");
-            internal_server_error(e, "Failed to get genai task")
+            internal_server_error(e, "Failed to get genai task", None)
         })?;
 
     // extract body into SpcDriftFeatures
@@ -151,7 +216,7 @@ pub async fn get_genai_tasks(
         .await
         .map_err(|e| {
             error!("Failed to parse genai task: {e}");
-            internal_server_error(e, "Failed to parse genai task")
+            internal_server_error(e, "Failed to parse genai task", None)
         })?;
 
     Ok(Json(body))

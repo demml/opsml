@@ -19,6 +19,7 @@ from opsml.card import (
     PassWordAuthFlow,
     AgentCardSignature,
     AgentSpec,
+    ProtocolBinding,
 )
 
 
@@ -41,23 +42,23 @@ def test_agent_provider():
 def test_agent_interface():
     interface = AgentInterface(
         url="http://example.com/agent",
-        protocol_binding="HTTP",
+        protocol_binding=ProtocolBinding.HttpJson,
         protocol_version="1.0",
         tenant="TestTenant",
     )
 
     assert interface.url == "http://example.com/agent"
-    assert interface.protocol_binding == "HTTP"
+    assert interface.protocol_binding == ProtocolBinding.HttpJson
     assert interface.protocol_version == "1.0"
     assert interface.tenant == "TestTenant"
 
     interface.url = "https://secure.example.com/agent"
-    interface.protocol_binding = "HTTPS"
+    interface.protocol_binding = ProtocolBinding.HttpJson
     interface.protocol_version = "2.0"
     interface.tenant = "ProdTenant"
 
     assert interface.url == "https://secure.example.com/agent"
-    assert interface.protocol_binding == "HTTPS"
+    assert interface.protocol_binding == ProtocolBinding.HttpJson
     assert interface.protocol_version == "2.0"
     assert interface.tenant == "ProdTenant"
 

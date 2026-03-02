@@ -149,6 +149,12 @@ service:
 
 After you define your `ServiceCard` in the `opsmlspec.yaml`, you can run `opsml lock`, which will create an `opsml.lock` file that will contain the resolved versions of the cards in the service. You can then run `opsml install service` to install the service and its cards into your application.
 
+???tip "Content hashing — no unnecessary version bumps"
+    `ServiceCard` and `PromptCard` both implement content hashing. Running `opsml lock` on an unchanged spec will reuse the existing registered version rather than creating a new one. Only cards whose YAML content has actually changed receive a new version. See [YAML-Based Card Definitions](yaml-definitions.md#content-hashing-no-unnecessary-version-bumps) for details.
+
+???tip "Prompts and agents can be defined entirely in YAML"
+    Cards referenced in the `service.cards` list can be provided as `path` references to local YAML files rather than registry UIDs. The CLI resolves and registers them during `opsml lock`. See [YAML-Based Card Definitions](yaml-definitions.md) for the full workflow.
+
 ???tip "Naming"
     `opsmlspec.yaml` is just a standard convention for naming the spec file. You can name it whatever you want so long as its either a `yml` or `yaml` file and you provide the file path when running the CLI commands. See `opsml lock --help` for more details.
 
@@ -188,6 +194,28 @@ Here is the full specification for the `opsmlspec.yaml` file:
 |---------------|----------------|----------|-----------------------------------------------------------------------------|
 | `capabilities`| list[string]   | Yes      | List of MCP capabilities. One or more of: `resources`, `tools`, `prompts`.  |
 | `transport`   | string         | Yes      | Transport type. One of: `http`, `stdio`.                                    |
+
+#### Agent Configuration
+
+When `type` is `Agent`, the `service` section accepts an `agent` field containing the full [AgentSpec](agentcard.md#agent-specification). This spec is based on the [A2A protocol v0.3.0](https://google.github.io/A2A/) and describes the agent's capabilities, interfaces, skills, and security requirements.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | `string` | Yes | Human-readable name of the agent. |
+| `description` | `string` | Yes | Description of the agent's purpose. |
+| `version` | `string` | Yes | Semantic version of the agent spec. |
+| `capabilities` | object | Yes | Feature flags. See [AgentCapabilities](agentcard.md#agentcapabilities). |
+| `supported_interfaces` | list[object] | Yes | Communication interfaces. See [AgentInterface](agentcard.md#agentinterface). |
+| `default_input_modes` | list[string] | Yes | Default input modalities (e.g., `["text"]`). |
+| `default_output_modes` | list[string] | Yes | Default output modalities (e.g., `["text"]`). |
+| `skills` | list[object] | Yes | Agent skills/capabilities. See [AgentSkill](agentcard.md#agentskill). |
+| `provider` | object | No | Organization providing the agent (`organization`, `url`). |
+| `security_schemes` | object | No | Named security schemes. See [Security Schemes](agentcard.md#security-schemes). |
+| `security_requirements` | list[object] | No | Global security requirements. |
+| `documentation_url` | `string` | No | Link to agent documentation. |
+| `icon_url` | `string` | No | URL to the agent's icon. |
+
+See the [AgentCard documentation](agentcard.md#full-agentspec-yaml-reference) for a complete YAML example.
 
 
 #### Card fields
@@ -274,6 +302,30 @@ Here is the full specification for the `opsmlspec.yaml` file:
           - resources               # One of: resources, tools, prompts
           - tools
         transport: http             # (string, required) One of: http, stdio)
+
+    agent:                        # (object, optional, required if type is Agent)
+        name: "my-agent"            # (string, required)
+        description: "Agent description"  # (string, required)
+        version: "1.0.0"            # (string, required)
+        capabilities:               # (object, required)
+          streaming: true
+          push_notifications: false
+          extended_agent_card: false
+          extensions: []
+        supported_interfaces:       # (list of objects, required)
+          - url: "https://agent.example.com/v1"
+            protocol_binding: "HTTP+JSON"
+            protocol_version: "0.3.0"
+        default_input_modes: ["text"]
+        default_output_modes: ["text"]
+        skills:                     # (list of objects, required)
+          - id: "skill-1"
+            name: "My Skill"
+            description: "What this skill does."
+            tags: ["tag1"]
+            examples: ["Example usage"]
+            input_modes: ["text"]
+            output_modes: ["text"]
 
     deploy:                         # (list of objects, optional)
     - environment: production     # (string, required)

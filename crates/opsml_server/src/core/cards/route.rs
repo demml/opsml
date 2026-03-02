@@ -30,10 +30,25 @@ use opsml_types::{SaveName, Suffix};
 use opsml_types::{cards::*, contracts::*};
 use serde_qs;
 
+use serde::de::DeserializeOwned;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{debug, error, info, instrument};
+
+pub fn parse_qs_query<T: DeserializeOwned>(
+    uri: &OriginalUri,
+) -> Result<T, (StatusCode, Json<OpsmlServerError>)> {
+    let query = uri.query().ok_or_else(|| {
+        internal_server_error("No query string found", "No query string found", None)
+    })?;
+
+    serde_qs::from_str(query).map_err(|e| {
+        error!("Failed to parse query string: {e}");
+        internal_server_error(e, "Failed to parse query string", None)
+    })
+}
+
 /// Route for checking if a card UID exists
 #[axum::debug_handler]
 pub async fn check_card_uid(
@@ -47,7 +62,7 @@ pub async fn check_card_uid(
         .await
         .map_err(|e| {
             error!("Failed to check if UID exists: {e}");
-            internal_server_error(e, "Failed to check if UID exists")
+            internal_server_error(e, "Failed to check if UID exists", None)
         })?;
 
     Ok(Json(UidResponse { exists }))
@@ -66,7 +81,7 @@ pub async fn get_registry_spaces(
         .await
         .map_err(|e| {
             error!("Failed to get registry spaces: {e}");
-            internal_server_error(e, "Failed to get registry spaces")
+            internal_server_error(e, "Failed to get registry spaces", None)
         })?;
 
     Ok(Json(CardSpaceResponse { spaces }))
@@ -84,7 +99,7 @@ pub async fn get_registry_tags(
         .await
         .map_err(|e| {
             error!("Failed to get registry tags: {e}");
-            internal_server_error(e, "Failed to get registry tags")
+            internal_server_error(e, "Failed to get registry tags", None)
         })?;
 
     Ok(Json(CardTagsResponse { tags }))
@@ -95,7 +110,7 @@ pub async fn get_all_space_stats(
 ) -> Result<Json<SpaceStatsResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let stats = state.sql_client.get_all_space_stats().await.map_err(|e| {
         error!("Failed to get all space stats: {e}");
-        internal_server_error(e, "Failed to get all space stats")
+        internal_server_error(e, "Failed to get all space stats", None)
     })?;
 
     Ok(Json(SpaceStatsResponse { stats }))
@@ -112,7 +127,7 @@ pub async fn get_space_record(
         Ok(None) => Ok(Json(SpaceRecordResponse { spaces: vec![] })),
         Err(e) => {
             error!("Failed to get space record: {e}");
-            Err(internal_server_error(e, "Failed to get space record"))
+            Err(internal_server_error(e, "Failed to get space record", None))
         }
     }
 }
@@ -132,7 +147,7 @@ pub async fn create_space_record(
         .await
         .map_err(|e| {
             error!("Failed to create space record: {e}");
-            internal_server_error(e, "Failed to create space record")
+            internal_server_error(e, "Failed to create space record", None)
         })?;
     Ok(Json(CrudSpaceResponse { success: true }))
 }
@@ -152,7 +167,7 @@ pub async fn update_space_record(
         .await
         .map_err(|e| {
             error!("Failed to update space record: {e}");
-            internal_server_error(e, "Failed to update space record")
+            internal_server_error(e, "Failed to update space record", None)
         })?;
     Ok(Json(CrudSpaceResponse { success: true }))
 }
@@ -168,7 +183,7 @@ pub async fn delete_space_record(
         .await
         .map_err(|e| {
             error!("Failed to delete space record: {e}");
-            internal_server_error(e, "Failed to delete space record")
+            internal_server_error(e, "Failed to delete space record", None)
         })?;
     Ok(Json(CrudSpaceResponse { success: true }))
 }
@@ -191,7 +206,7 @@ pub async fn retrieve_registry_stats(
         .await
         .map_err(|e| {
             error!("Failed to get registry stats: {e}");
-            internal_server_error(e, "Failed to get registry stats")
+            internal_server_error(e, "Failed to get registry stats", None)
         })?;
 
     Ok(Json(RegistryStatsResponse { stats }))
@@ -207,7 +222,7 @@ pub async fn retrieve_dashboard_stats(
         .await
         .map_err(|e| {
             error!("Failed to get dashboard stats: {e}");
-            internal_server_error(e, "Failed to get dashboard stats")
+            internal_server_error(e, "Failed to get dashboard stats", None)
         })?;
 
     Ok(Json(DashboardStatsResponse { stats }))
@@ -243,7 +258,7 @@ pub async fn retrieve_page(
         .await
         .map_err(|e| {
             error!("Failed to query page: {e}");
-            internal_server_error(e, "Failed to query page")
+            internal_server_error(e, "Failed to query page", None)
         })?;
 
     let has_next = summaries.len() > cursor.limit as usize;
@@ -307,7 +322,7 @@ pub async fn query_version_page(
         .await
         .map_err(|e| {
             error!("Failed to get version page: {e}");
-            internal_server_error(e, "Failed to get version page")
+            internal_server_error(e, "Failed to get version page", None)
         })?;
 
     let has_next = items.len() > cursor.limit as usize;
@@ -342,20 +357,9 @@ pub async fn query_version_page(
 pub async fn list_cards(
     State(state): State<Arc<AppState>>,
     // CardQueryArgs contains Vec<String> for tags, which serde_qs can parse correctly
-    OriginalUri(uri): OriginalUri,
+    uri: OriginalUri,
 ) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
-    let params: CardQueryArgs = match uri.query() {
-        Some(query) => serde_qs::from_str(query).map_err(|e| {
-            error!("Failed to parse query string: {e}");
-            internal_server_error(e, "Failed to parse query string")
-        })?,
-        None => {
-            return Err(internal_server_error(
-                "No query string found",
-                "No query string found",
-            ));
-        }
-    };
+    let params: CardQueryArgs = parse_qs_query(&uri)?;
 
     debug!(
         "Listing cards for registry: {:?} with params: {:?}",
@@ -370,7 +374,7 @@ pub async fn list_cards(
         .await
         .map_err(|e| {
             error!("Failed to list cards: {e}");
-            internal_server_error(e, "Failed to list cards")
+            internal_server_error(e, "Failed to list cards", None)
         })?;
 
     // convert to Cards struct
@@ -435,7 +439,7 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to get next version: {e}");
-        internal_server_error(e, "Failed to get next version")
+        internal_server_error(e, "Failed to get next version", None)
     })?;
 
     info!(
@@ -456,7 +460,7 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to insert card into db: {e}");
-        internal_server_error(e, "Failed to insert card into db")
+        internal_server_error(e, "Failed to insert card into db", None)
     })?;
 
     // (3) ------- Create the artifact key for card artifact encryption
@@ -471,7 +475,7 @@ pub async fn create_card(
     .await
     .map_err(|e| {
         error!("Failed to create artifact key: {e}");
-        internal_server_error(e, "Failed to create artifact key")
+        internal_server_error(e, "Failed to create artifact key", None)
     })?;
 
     debug!("Card created successfully");
@@ -530,7 +534,7 @@ pub async fn update_card(
 
     let card = ServerCard::from_card(card_request.clone().card).map_err(|e| {
         error!("Failed to convert card: {e}");
-        internal_server_error(e, "Failed to convert card")
+        internal_server_error(e, "Failed to convert card", None)
     })?;
 
     state
@@ -539,7 +543,7 @@ pub async fn update_card(
         .await
         .map_err(|e| {
             error!("Failed to update card: {e}");
-            internal_server_error(e, "Failed to update card")
+            internal_server_error(e, "Failed to update card", None)
         })?;
 
     debug!("Card updated successfully");
@@ -584,7 +588,7 @@ pub async fn delete_card(
     .await
     .map_err(|e| {
         error!("Failed to cleanup artifacts: {e}");
-        internal_server_error(e, "Failed to cleanup artifacts")
+        internal_server_error(e, "Failed to cleanup artifacts", None)
     })?;
 
     // delete card
@@ -594,7 +598,7 @@ pub async fn delete_card(
         .await
         .map_err(|e| {
             error!("Failed to delete card: {e}");
-            internal_server_error(e, "Failed to delete card")
+            internal_server_error(e, "Failed to delete card", None)
         })?;
 
     let mut response = Json(UidResponse { exists: false }).into_response();
@@ -624,7 +628,7 @@ pub async fn delete_card(
         .await
         .map_err(|e| {
             error!("Failed to delete cards: {e}");
-            internal_server_error(e, "Failed to delete cards")
+            internal_server_error(e, "Failed to delete cards", None)
         })?;
 
     // If no cards remain in the space, delete the space name record
@@ -635,7 +639,7 @@ pub async fn delete_card(
             .await
             .map_err(|e| {
                 error!("Failed to delete space name record: {e}");
-                internal_server_error(e, "Failed to delete space name record")
+                internal_server_error(e, "Failed to delete space name record", None)
             })?;
     }
 
@@ -645,8 +649,10 @@ pub async fn delete_card(
 #[instrument(skip_all)]
 pub async fn load_card(
     State(state): State<Arc<AppState>>,
-    Query(params): Query<CardQueryArgs>,
+    uri: OriginalUri,
 ) -> Result<Json<ArtifactKey>, (StatusCode, Json<OpsmlServerError>)> {
+    let params: CardQueryArgs = parse_qs_query(&uri)?;
+
     let table = CardTable::from_registry_type(&params.registry_type);
 
     debug!(
@@ -660,7 +666,7 @@ pub async fn load_card(
         .await
         .map_err(|e| {
             error!("Failed to get card key for loading: {e}");
-            internal_server_error(e, "Failed to get card key for loading")
+            internal_server_error(e, "Failed to get card key for loading", None)
         })?;
 
     Ok(Json(key))
@@ -680,7 +686,7 @@ pub async fn get_card(
         .await
         .map_err(|e| {
             error!("Failed to get card key for loading: {e}");
-            internal_server_error(e, "Failed to get card key for loading")
+            internal_server_error(e, "Failed to get card key for loading", None)
         })?;
 
     if !perms.has_read_permission(&key.space) {
@@ -690,7 +696,7 @@ pub async fn get_card(
     // create temp dir
     let tmp_dir = tempdir().map_err(|e| {
         error!("Failed to create temp dir: {e}");
-        internal_server_error(e, "Failed to create temp dir")
+        internal_server_error(e, "Failed to create temp dir", None)
     })?;
 
     let tmp_path = tmp_dir.path();
@@ -709,27 +715,27 @@ pub async fn get_card(
         .await
         .map_err(|e| {
             error!("Failed to get card: {e}");
-            internal_server_error(e, "Failed to get card")
+            internal_server_error(e, "Failed to get card", None)
         })?;
 
     let decryption_key = key.get_decrypt_key().map_err(|e| {
         error!("Failed to get decryption key: {e}");
-        internal_server_error(e, "Failed to get decryption key")
+        internal_server_error(e, "Failed to get decryption key", None)
     })?;
 
     decrypt_directory(tmp_path, &decryption_key).map_err(|e| {
         error!("Failed to decrypt directory: {e}");
-        internal_server_error(e, "Failed to decrypt directory")
+        internal_server_error(e, "Failed to decrypt directory", None)
     })?;
 
     let card = std::fs::read_to_string(lpath).map_err(|e| {
         error!("Failed to read card from file: {e}");
-        internal_server_error(e, "Failed to read card from file")
+        internal_server_error(e, "Failed to read card from file", None)
     })?;
 
     let card = serde_json::from_str(&card).map_err(|e| {
         error!("Failed to parse card: {e}");
-        internal_server_error(e, "Failed to parse card")
+        internal_server_error(e, "Failed to parse card", None)
     })?;
 
     Ok(Json(card))
@@ -757,7 +763,7 @@ pub async fn get_readme(
 
     let tmp_dir = tempdir().map_err(|e| {
         error!("Failed to create temp dir: {e}");
-        internal_server_error(e, "Failed to create temp dir")
+        internal_server_error(e, "Failed to create temp dir", None)
     })?;
 
     let lpath = tmp_dir
@@ -830,7 +836,7 @@ pub async fn create_readme(
     .await
     .map_err(|e| {
         error!("Failed to get artifact key: {e}");
-        internal_server_error(e, "Failed to get artifact key")
+        internal_server_error(e, "Failed to get artifact key", None)
     })?;
 
     let lpath = format!("{}.{}", SaveName::ReadMe, Suffix::Md);
@@ -865,7 +871,7 @@ pub async fn compare_content_hash(
         .await
         .map_err(|e| {
             error!("Failed to compare content hash: {e}");
-            internal_server_error(e, "Failed to compare content hash")
+            internal_server_error(e, "Failed to compare content hash", None)
         })?;
 
     Ok(Json(CompareHashResponse { card }))

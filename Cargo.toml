@@ -9,7 +9,7 @@ default-members = [
 ]
 
 [workspace.package]
-version = "3.0.0-rc.17"
+version = "3.0.0"
 authors = ["Steven Forrester <sjforrester32@gmail.com>"]
 edition = "2024"
 license = "MIT"
@@ -84,7 +84,7 @@ ort = { version = "2.0.0-rc.10" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"
-potato-head = "0.14.0"
+potato-head = "0.16.1"
 pyo3 = { version = "0.27.2", features = ["abi3-py310", "extension-module", "anyhow", "serde", "chrono"] }
 rand = { version = "0.9.1"}
 rayon = "1.*"
@@ -94,7 +94,7 @@ reqwest-middleware = "0.*"
 rusty-logging = "0.*"
 pythonize = { version = "0.*" }
 # we cant use crates.io because scouter relies on a fork of linfa at the moment
-scouter-client = { git = "https://github.com/demml/scouter.git", branch = "update-serde-logic", package = "scouter-client" }
+scouter-client = { version = "0.17.1" }
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
@@ -119,7 +119,7 @@ tracing-core = "0.*"
 tracing-subscriber = {version = "0.*", features = ["json", "time"]}
 uuid = { version = "1.*", features = ["v7"] }
 walkdir = "2.*"
-zip = "2.*"
+zip = "7.*"
 
 [profile.release]
 lto = "fat"

@@ -76,33 +76,34 @@ pub async fn create_user(
     // Save to database
     if let Err(e) = state.sql_client.insert_user(&user).await {
         error!("Failed to create user: {e}");
-        return Err(internal_server_error(e, "Failed to create user"));
+        return Err(internal_server_error(e, "Failed to create user", None));
     }
 
     info!("User {} created successfully", user.username);
 
-    // pass to scouter if enabled
-    if state.scouter_client.enabled {
-        let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
-            error!("Failed to exchange token for scouter: {e}");
-            internal_server_error(e, "Failed to exchange token for scouter")
-        })?;
-
-        state
-            .scouter_client
-            .request(
-                scouter::Routes::Users,
-                RequestType::Post,
-                Some(serde_json::json!(&user)),
-                None,
-                None,
-                &exchange_token,
-            )
-            .await
-            .map_err(|e| {
-                error!("Failed to create user in scouter: {e}");
-                internal_server_error(e, "Failed to create user in scouter")
-            })?;
+    // pass to scouter if enabled — non-fatal: OpsML continues even if Scouter is unreachable
+    if state.scouter_client.is_enabled() {
+        match state.exchange_token_from_perms(&perms).await {
+            Ok(exchange_token) => {
+                if let Err(e) = state
+                    .scouter_client
+                    .request(
+                        scouter::Routes::Users,
+                        RequestType::Post,
+                        Some(serde_json::json!(&user)),
+                        None,
+                        None,
+                        &exchange_token,
+                    )
+                    .await
+                {
+                    error!("Failed to sync new user to Scouter (non-fatal): {e}");
+                }
+            }
+            Err(e) => {
+                error!("Failed to get exchange token for Scouter sync (non-fatal): {e}");
+            }
+        }
     }
 
     Ok(Json(CreateUserResponse::new(
@@ -155,7 +156,7 @@ async fn list_users(
         Ok(users) => users,
         Err(e) => {
             error!("Failed to list users: {e}");
-            return Err(internal_server_error(e, "Failed to list users"));
+            return Err(internal_server_error(e, "Failed to list users", None));
         }
     };
 
@@ -216,33 +217,36 @@ async fn update_user(
     // Save updated user to database
     if let Err(e) = state.sql_client.update_user(&user).await {
         error!("Failed to update user: {e}");
-        return Err(internal_server_error(e, "Failed to update user"));
+        return Err(internal_server_error(e, "Failed to update user", None));
     }
 
     info!("User {} updated successfully", user.username);
 
-    // pass to scouter if enabled
-    if state.scouter_client.enabled {
-        let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
-            error!("Failed to exchange token for scouter: {e}");
-            internal_server_error(e, "Failed to exchange token for scouter")
-        })?;
-        state
-            .scouter_client
-            .request(
-                scouter::Routes::Users,
-                RequestType::Put,
-                Some(serde_json::json!(&user)),
-                None,
-                None,
-                &exchange_token,
-            )
-            .await
-            .map_err(|e| {
-                error!("Failed to create user in scouter: {e}");
-                internal_server_error(e, "Failed to create user in scouter")
-            })?;
-        info!("User {} updated in scouter", user.username);
+    // pass to scouter if enabled — non-fatal: OpsML continues even if Scouter is unreachable
+    if state.scouter_client.is_enabled() {
+        match state.exchange_token_from_perms(&perms).await {
+            Ok(exchange_token) => {
+                if let Err(e) = state
+                    .scouter_client
+                    .request(
+                        scouter::Routes::Users,
+                        RequestType::Put,
+                        Some(serde_json::json!(&user)),
+                        None,
+                        None,
+                        &exchange_token,
+                    )
+                    .await
+                {
+                    error!("Failed to sync updated user to Scouter (non-fatal): {e}");
+                } else {
+                    info!("User {} updated in scouter", user.username);
+                }
+            }
+            Err(e) => {
+                error!("Failed to get exchange token for Scouter sync (non-fatal): {e}");
+            }
+        }
     }
 
     Ok(Json(UserResponse::from(user)))
@@ -271,6 +275,7 @@ async fn delete_user(
             return Err(internal_server_error(
                 e,
                 "Failed to check if user is last admin",
+                None,
             ));
         }
     };
@@ -279,30 +284,29 @@ async fn delete_user(
         return OpsmlServerError::cannot_delete_last_admin().into_response(StatusCode::FORBIDDEN);
     }
 
-    // Delete in scouter first
-    // (if we delete in opsml before scouter, we won't be able to get user and token)
-    if state.scouter_client.enabled {
-        let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
-            error!("Failed to exchange token for scouter: {e}");
-            internal_server_error(e, "Failed to exchange token for scouter")
-        })?;
-
-        state
-            .scouter_client
-            .delete_user(&username, &exchange_token)
-            .await
-            .map_err(|e| {
-                error!("Failed to delete user in scouter: {e}");
-                internal_server_error(e, "Failed to delete user in scouter")
-            })?;
-
-        info!("User {} deleted in scouter", username);
+    // Delete in scouter first if enabled — non-fatal: proceed with OpsML delete even if Scouter is unreachable
+    if state.scouter_client.is_enabled() {
+        match state.exchange_token_from_perms(&perms).await {
+            Ok(exchange_token) => {
+                match state
+                    .scouter_client
+                    .delete_user(&username, &exchange_token)
+                    .await
+                {
+                    Ok(_) => info!("User {} deleted in scouter", username),
+                    Err(e) => error!("Failed to delete user in Scouter (non-fatal): {e}"),
+                }
+            }
+            Err(e) => {
+                error!("Failed to get exchange token for Scouter delete (non-fatal): {e}");
+            }
+        }
     }
 
     // Delete the user
     if let Err(e) = state.sql_client.delete_user(&username).await {
         error!("Failed to delete user: {e}");
-        return Err(internal_server_error(e, "Failed to delete user"));
+        return Err(internal_server_error(e, "Failed to delete user", None));
     }
 
     info!("User {} deleted successfully", username);

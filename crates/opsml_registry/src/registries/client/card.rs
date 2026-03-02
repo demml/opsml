@@ -144,7 +144,9 @@ pub trait CardRegistry: Registry {
         };
 
         // serialize card to json
-        let body = serde_json::to_value(update_request)?;
+        let body = serde_json::to_value(update_request).inspect_err(|e| {
+            error!("Failed to serialize update request {}", e);
+        })?;
 
         let response = self.client().request(
             Routes::CardUpdate,
@@ -163,9 +165,9 @@ pub trait CardRegistry: Registry {
             return Err(ApiClientError::ForbiddenError(error.error).into());
         }
 
-        let updated = response
-            .json::<UpdateCardResponse>()
-            .map_err(RegistryError::RequestError)?;
+        let updated = response.json::<UpdateCardResponse>().inspect_err(|e| {
+            error!("Failed to parse update card response {}", e);
+        })?;
 
         if updated.updated {
             Ok(())
@@ -242,7 +244,6 @@ pub trait CardRegistry: Registry {
     #[instrument(skip_all)]
     fn get_key(&self, args: &CardQueryArgs) -> Result<ArtifactKey, RegistryError> {
         let query_string = serde_qs::to_string(&args)?;
-
         let response = self
             .client()
             .request(
@@ -256,9 +257,7 @@ pub trait CardRegistry: Registry {
                 error!("Failed to get artifact key {}", e);
             })?;
 
-        response
-            .json::<ArtifactKey>()
-            .map_err(RegistryError::RequestError)
+        Ok(response.json::<ArtifactKey>()?)
     }
 
     #[instrument(skip_all)]

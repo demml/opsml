@@ -86,39 +86,41 @@ async fn create_user(
     // Save to database
     if let Err(e) = state.sql_client.insert_user(&new_user).await {
         error!("Failed to create user: {e}");
-        return Err(internal_server_error(e, "Failed to create user"));
+        return Err(internal_server_error(e, "Failed to create user", None));
     }
 
     info!("User {} created successfully", user.username);
 
-    // pass to scouter if enabled
-    if state.scouter_client.enabled {
-        let exchange_token = state
+    // pass to scouter if enabled — non-fatal: SSO login proceeds even if Scouter is unreachable
+    if state.scouter_client.is_enabled() {
+        match state
             .auth_manager
             .exchange_token_for_scouter(&new_user)
             .await
-            .map_err(|e| {
-                error!("Failed to exchange token from permissions: {e}");
-                internal_server_error(e, "Failed to exchange token from permissions")
-            })?;
-
-        state
-            .scouter_client
-            .request(
-                ScouterRoutes::Users,
-                RequestType::Post,
-                Some(serde_json::json!(&new_user)),
-                None,
-                None,
-                &exchange_token,
-            )
-            .await
-            .map_err(|e| {
-                error!("Failed to create user in scouter: {e}");
-                internal_server_error(e, "Failed to create user in scouter")
-            })?;
+        {
+            Ok(exchange_token) => {
+                if let Err(e) = state
+                    .scouter_client
+                    .request(
+                        ScouterRoutes::Users,
+                        RequestType::Post,
+                        Some(serde_json::json!(&new_user)),
+                        None,
+                        None,
+                        &exchange_token,
+                    )
+                    .await
+                {
+                    error!("Failed to sync SSO user to Scouter (non-fatal): {e}");
+                } else {
+                    info!("User {} synced to scouter", user.username);
+                }
+            }
+            Err(e) => {
+                error!("Failed to get exchange token for Scouter sync (non-fatal): {e}");
+            }
+        }
     }
-    info!("User {} created in scouter", user.username);
     // return the user
     Ok(new_user)
 }
@@ -142,7 +144,7 @@ async fn validate_user_with_opsml(
         .await
         .map_err(|e| {
             error!("Failed to get user from database: {e}");
-            internal_server_error(e, "Failed to get user from database")
+            internal_server_error(e, "Failed to get user from database", None)
         })? {
         Some(opsml_user) => {
             // user exists, return it

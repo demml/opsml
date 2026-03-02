@@ -1,0 +1,54 @@
+name: "prompt-chaining-agent"
+space: "opsml"
+type: Agent
+
+metadata:
+  description: "A prompt chaining agent service"
+  language: "python"
+  tags: ["prompt-chain"]
+
+service:
+  cards:
+    - alias: pattern_prompt
+      path: "prompts/pattern.yaml"
+      registry_type: prompt
+    - alias: preference_prompt
+      path: "prompts/preference.yaml"
+      registry_type: prompt
+    - alias: recommendation_prompt
+      path: "prompts/recommendation.yaml"
+      registry_type: prompt
+    - alias: search_prompt
+      path: "prompts/search.yaml"
+      registry_type: prompt
+
+  agent:
+    version: "0.3.0"
+    capabilities:
+      streaming: false
+      push_notifications: false
+      extended_agent_card: false
+    default_output_modes: ["text/plain"]
+    default_input_modes: ["text/plain"]
+    description: "A sample agent service that demonstrates prompt chaining."
+    name: "Prompt Chaining Agent"
+    skills:
+      - format: a2a # Using A2A skill format
+        id: "music_recommendation"
+        name: "Music Recommendation"
+        description: "Recommends music based on user preferences, including genre, mood, and artist."
+        input_modes: ["text/plain"]
+        output_modes: ["text/plain", "text/markdown"]
+        tags: ["music", "recommendation", "playlist"]
+        examples:
+          - "Recommend a playlist for a workout session"
+          - "Suggest some relaxing music for studying"
+          - "Find upbeat songs for a party"
+    supported_interfaces:
+      - protocol_binding: "JSONRPC"
+        url: "http://localhost:8888"
+
+deploy:
+  - environment: "development"
+    urls: ["http://localhost:8888"]
+    healthcheck: "/health"

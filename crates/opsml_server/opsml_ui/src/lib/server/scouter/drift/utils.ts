@@ -11,6 +11,7 @@ import { RegistryType } from "$lib/utils";
 import type {
   BinnedMetricUnion,
   DriftProfileUri,
+  GetProfileExistsRequest,
 } from "$lib/components/scouter/types";
 import type {
   DriftProfile,
@@ -32,7 +33,7 @@ export async function getDriftProfiles(
   fetch: typeof globalThis.fetch,
   uid: string,
   driftMap: Record<string, DriftProfileUri>,
-  registryType: RegistryType
+  registryType: RegistryType,
 ): Promise<DriftProfileResponse> {
   const body = {
     uid: uid,
@@ -42,29 +43,29 @@ export async function getDriftProfiles(
 
   const response = await createOpsmlClient(fetch).post(
     RoutePaths.DRIFT_PROFILE_UI,
-    body
+    body,
   );
   return (await response.json()) as DriftProfileResponse;
 }
 
 export async function updateDriftProfile(
   fetch: typeof globalThis.fetch,
-  updateRequest: UpdateProfileRequest
+  updateRequest: UpdateProfileRequest,
 ): Promise<UpdateResponse> {
   const response = await createOpsmlClient(fetch).put(
     RoutePaths.DRIFT_PROFILE,
-    updateRequest
+    updateRequest,
   );
   return (await response.json()) as UpdateResponse;
 }
 
 export async function getDriftAlerts(
   fetch: typeof globalThis.fetch,
-  request: DriftAlertPaginationRequest
+  request: DriftAlertPaginationRequest,
 ): Promise<DriftAlertPaginationResponse> {
   const response = await createOpsmlClient(fetch).post(
     RoutePaths.DRIFT_ALERT,
-    request
+    request,
   );
   if (!response.ok) {
     throw new Error(`Failed to fetch drift alerts: ${response.status}`);
@@ -78,7 +79,7 @@ export async function getDriftAlerts(
 export async function acknowledgeAlert(
   fetch: typeof globalThis.fetch,
   id: number,
-  space: string
+  space: string,
 ): Promise<boolean> {
   const request: UpdateAlertStatus = {
     id: id,
@@ -88,7 +89,7 @@ export async function acknowledgeAlert(
 
   const response = await createOpsmlClient(fetch).put(
     RoutePaths.DRIFT_ALERT,
-    request
+    request,
   );
 
   if (!response.ok) {
@@ -117,7 +118,7 @@ async function getDriftMetrics(
   driftType: DriftType,
   time_range: TimeRange,
   max_data_points: number,
-  route: RoutePaths
+  route: RoutePaths,
 ): Promise<BinnedMetricUnion> {
   const time_interval = timeRangeToInterval(time_range);
 
@@ -147,7 +148,7 @@ export async function getCustomDriftMetrics(
   space: string,
   uid: string,
   time_range: TimeRange,
-  max_data_points: number
+  max_data_points: number,
 ): Promise<BinnedMetrics> {
   return (await getDriftMetrics(
     fetch,
@@ -156,7 +157,7 @@ export async function getCustomDriftMetrics(
     DriftType.Custom,
     time_range,
     max_data_points,
-    RoutePaths.CUSTOM_DRIFT
+    RoutePaths.CUSTOM_DRIFT,
   )) as BinnedMetrics;
 }
 
@@ -165,7 +166,7 @@ export async function getPsiDriftMetrics(
   space: string,
   uid: string,
   time_range: TimeRange,
-  max_data_points: number
+  max_data_points: number,
 ): Promise<BinnedPsiFeatureMetrics> {
   return (await getDriftMetrics(
     fetch,
@@ -174,7 +175,7 @@ export async function getPsiDriftMetrics(
     DriftType.Psi,
     time_range,
     max_data_points,
-    RoutePaths.PSI_DRIFT
+    RoutePaths.PSI_DRIFT,
   )) as BinnedPsiFeatureMetrics;
 }
 
@@ -183,7 +184,7 @@ export async function getSpcDriftMetrics<T extends DriftType.Spc>(
   space: string,
   uid: string,
   time_range: TimeRange,
-  max_data_points: number
+  max_data_points: number,
 ): Promise<BinnedSpcFeatureMetrics> {
   return (await getDriftMetrics(
     fetch,
@@ -192,7 +193,7 @@ export async function getSpcDriftMetrics<T extends DriftType.Spc>(
     DriftType.Spc,
     time_range,
     max_data_points,
-    RoutePaths.SPC_DRIFT
+    RoutePaths.SPC_DRIFT,
   )) as BinnedSpcFeatureMetrics;
 }
 
@@ -201,7 +202,7 @@ export async function getGenAIEvalTaskDriftMetrics(
   space: string,
   uid: string,
   time_range: TimeRange,
-  max_data_points: number
+  max_data_points: number,
 ): Promise<BinnedMetrics> {
   return (await getDriftMetrics(
     fetch,
@@ -210,7 +211,7 @@ export async function getGenAIEvalTaskDriftMetrics(
     DriftType.GenAI,
     time_range,
     max_data_points,
-    RoutePaths.GENAI_EVAL_TASK_DRIFT
+    RoutePaths.GENAI_EVAL_TASK_DRIFT,
   )) as BinnedMetrics;
 }
 
@@ -219,7 +220,7 @@ export async function getGenAIEvalWorkflowDriftMetrics(
   space: string,
   uid: string,
   time_range: TimeRange,
-  max_data_points: number
+  max_data_points: number,
 ): Promise<BinnedMetrics> {
   return (await getDriftMetrics(
     fetch,
@@ -228,6 +229,31 @@ export async function getGenAIEvalWorkflowDriftMetrics(
     DriftType.GenAI,
     time_range,
     max_data_points,
-    RoutePaths.GENAI_EVAL_WORKFLOW_DRIFT
+    RoutePaths.GENAI_EVAL_WORKFLOW_DRIFT,
   )) as BinnedMetrics;
+}
+
+export function getProfileExists(
+  fetch: typeof globalThis.fetch,
+  request: GetProfileExistsRequest,
+): Promise<boolean> {
+  return createOpsmlClient(fetch)
+    .post(RoutePaths.DRIFT_PROFILE_EXISTS, request)
+    .then((response) => {
+      if (!response.ok) {
+        console.error(
+          `Failed to check profile existence: ${response.status} ${response.statusText}`,
+        );
+        return false;
+      }
+      return response.json();
+    })
+    .catch((err) => {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Unknown error checking profile existence";
+      console.error(`[Profile Exists Error]: ${message}`, err);
+      return false;
+    });
 }

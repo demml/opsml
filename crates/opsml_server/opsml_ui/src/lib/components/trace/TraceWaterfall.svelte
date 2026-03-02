@@ -1,7 +1,14 @@
 <script lang="ts">
   import type { TraceSpan } from './types';
   import { formatDuration, hasSpanError } from './utils';
-  import { CircleX, Clock } from 'lucide-svelte';
+  import { CircleX, Clock, ChevronRight } from 'lucide-svelte';
+
+  // Scroll-sync refs
+  let spanScrollContainer: HTMLDivElement;
+  let timelineScrollContainer: HTMLDivElement;
+  let isSpanScrolling = false;
+  let isTimelineScrolling = false;
+  let hoverX = $state<number | null>(null); // cursor X as percentage within timeline column
 
   let {
     spans,
@@ -17,24 +24,48 @@
     slowestSpan?: TraceSpan | null;
   } = $props();
 
-  const ROW_HEIGHT = 28;
-  const INDENT_PX = 16;
+  const ROW_HEIGHT = 34;
+  const INDENT_PX = 14;
+  // Axis tick marks at 0%, 25%, 50%, 75%, 100%
+  const AXIS_MARKS = [0, 0.25, 0.5, 0.75, 1.0];
 
-  /** Returns badge classes based on structured coloring rules */
-  function getServiceBadgeClasses(span: TraceSpan): string {
-    if (span.depth === 0) {
-      return 'border-tertiary-950 bg-tertiary-100 text-tertiary-950';
+  // ─── Span type classification ────────────────────────────────────────────
+
+  type SpanType = 'root' | 'llm' | 'tool' | 'error' | 'slow' | 'default';
+
+  function getSpanType(span: TraceSpan): SpanType {
+    if (span.depth === 0) return 'root';
+    if (hasSpanError(span)) return 'error';
+    if (slowestSpan && span.span_id === slowestSpan.span_id) return 'slow';
+    const name = (span.span_name || '').toLowerCase();
+    const kind = (span.span_kind || '').toLowerCase();
+    if (name.includes('llm') || name.includes('completion') || name.includes('chat') || kind === 'client') return 'llm';
+    if (name.includes('tool') || name.includes('function') || name.includes('call')) return 'tool';
+    return 'default';
+  }
+
+  // Color squares for span type
+  function getTypeColor(type: SpanType): string {
+    switch (type) {
+      case 'root':    return 'bg-primary-500 border-primary-800';
+      case 'llm':     return 'bg-secondary-400 border-secondary-700';
+      case 'tool':    return 'bg-retro-orange-400 border-retro-orange-700';
+      case 'error':   return 'bg-error-500 border-error-800';
+      case 'slow':    return 'bg-warning-400 border-warning-700';
+      default:        return 'bg-gray-300 border-gray-600';
     }
+  }
 
-    if (slowestSpan && span.span_id === slowestSpan.span_id) {
-      return 'warn-color';
+  function getBarColor(type: SpanType, isSelected: boolean): string {
+    const opacity = isSelected ? '' : 'opacity-70';
+    switch (type) {
+      case 'root':    return `bg-primary-300 border-primary-600 ${opacity}`;
+      case 'llm':     return `bg-secondary-200 border-secondary-600 ${opacity}`;
+      case 'tool':    return `bg-retro-orange-200 border-retro-orange-600 ${opacity}`;
+      case 'error':   return `bg-error-200 border-error-600 ${opacity}`;
+      case 'slow':    return `bg-warning-200 border-warning-600 ${opacity}`;
+      default:        return `bg-gray-200 border-gray-500 ${opacity}`;
     }
-
-    if (hasSpanError(span)) {
-      return 'border-error-800 bg-error-100 text-error-800';
-    }
-
-    return 'border-secondary-950 bg-secondary-100 text-secondary-950';
   }
 
   function getSpanPosition(span: TraceSpan): { left: number; width: number } {
@@ -42,19 +73,16 @@
     const traceStart = new Date(spans[0].start_time).getTime();
     const offset = spanStart - traceStart;
     const duration = span.duration_ms || 0;
-
     return {
-      left: (offset / totalDuration) * 100,
-      width: Math.max((duration / totalDuration) * 100, 0.2),
+      left: totalDuration > 0 ? (offset / totalDuration) * 100 : 0,
+      width: totalDuration > 0 ? Math.max((duration / totalDuration) * 100, 0.3) : 0.3,
     };
   }
 
-  /**
-   * Build a map of parent_span_id -> array of child spans for efficient lookup
-   */
+  // ─── Tree helpers ────────────────────────────────────────────────────────
+
   function buildParentChildMap(allSpans: TraceSpan[]): Map<string, TraceSpan[]> {
     const map = new Map<string, TraceSpan[]>();
-
     for (const span of allSpans) {
       if (span.parent_span_id) {
         const existing = map.get(span.parent_span_id) || [];
@@ -62,267 +90,290 @@
         map.set(span.parent_span_id, existing);
       }
     }
-
     return map;
   }
 
-  /**
-   * Get all descendants of a span recursively
-   */
-  function getAllDescendants(
-    spanId: string,
-    parentChildMap: Map<string, TraceSpan[]>
-  ): TraceSpan[] {
+  function getAllDescendants(spanId: string, parentChildMap: Map<string, TraceSpan[]>): TraceSpan[] {
     const children = parentChildMap.get(spanId) || [];
     const descendants: TraceSpan[] = [...children];
-
     for (const child of children) {
       descendants.push(...getAllDescendants(child.span_id, parentChildMap));
     }
-
     return descendants;
   }
 
-  /**
-   * Determines if this span is the last child among its siblings
-   */
-  function isLastSibling(
-    span: TraceSpan,
-    allSpans: TraceSpan[],
-    parentChildMap: Map<string, TraceSpan[]>
-  ): boolean {
+  function isLastSibling(span: TraceSpan, allSpans: TraceSpan[], parentChildMap: Map<string, TraceSpan[]>): boolean {
     if (!span.parent_span_id) return true;
-
     const siblings = parentChildMap.get(span.parent_span_id) || [];
     if (siblings.length === 0) return true;
-
     const siblingIndices = siblings.map(s => allSpans.findIndex(sp => sp.span_id === s.span_id));
     const currentIndex = allSpans.findIndex(s => s.span_id === span.span_id);
-
     return Math.max(...siblingIndices) === currentIndex;
   }
 
-  /**
-   * For a given span and ancestor depth, determine if a vertical line should be drawn.
-   * A line should be drawn if ANY descendant of the ancestor at that depth appears
-   * AFTER the current span in the sorted list.
-   */
-  function shouldDrawVerticalLine(
-  span: TraceSpan,
-  depth: number,
-  allSpans: TraceSpan[],
-  parentChildMap: Map<string, TraceSpan[]>
-): boolean {
-  if (depth >= span.depth) return false;
-
-  let ancestor: TraceSpan | undefined = span;
-  while (ancestor && ancestor.depth > depth) {
-    ancestor = allSpans.find(s => s.span_id === ancestor!.parent_span_id);
+  function shouldDrawVerticalLine(span: TraceSpan, depth: number, allSpans: TraceSpan[], parentChildMap: Map<string, TraceSpan[]>): boolean {
+    if (depth >= span.depth) return false;
+    let ancestor: TraceSpan | undefined = span;
+    while (ancestor && ancestor.depth > depth) {
+      ancestor = allSpans.find(s => s.span_id === ancestor!.parent_span_id);
+    }
+    if (!ancestor || ancestor.depth !== depth) return false;
+    if (!ancestor.parent_span_id) return false;
+    const siblings = parentChildMap.get(ancestor.parent_span_id) || [];
+    const currentIndex = allSpans.findIndex(s => s.span_id === span.span_id);
+    for (const sibling of siblings) {
+      const siblingIndex = allSpans.findIndex(s => s.span_id === sibling.span_id);
+      if (siblingIndex > currentIndex) return true;
+      const descendantIndices = getAllDescendants(sibling.span_id, parentChildMap)
+        .map(d => allSpans.findIndex(s => s.span_id === d.span_id));
+      if (descendantIndices.some(idx => idx > currentIndex)) return true;
+    }
+    return false;
   }
 
-  if (!ancestor || ancestor.depth !== depth) return false;
-  if (!ancestor.parent_span_id) return false;
-
-  const siblings = parentChildMap.get(ancestor.parent_span_id) || [];
-  const currentIndex = allSpans.findIndex(s => s.span_id === span.span_id);
-
-  for (const sibling of siblings) {
-    const siblingIndex = allSpans.findIndex(s => s.span_id === sibling.span_id);
-    if (siblingIndex > currentIndex) return true;
-
-    const siblingDescendants = getAllDescendants(sibling.span_id, parentChildMap);
-    const descendantIndices = siblingDescendants.map(d =>
-      allSpans.findIndex(s => s.span_id === d.span_id)
-    );
-
-    if (descendantIndices.some(idx => idx > currentIndex)) return true;
-  }
-
-  return false;
-}
-
-    /**
-   * Sorts spans using depth-first traversal to maintain parent-child hierarchy
-   * while respecting chronological order within sibling groups.
-   */
   function sortSpansDepthFirst(spans: TraceSpan[]): TraceSpan[] {
-
     const childrenMap = new Map<string | null, TraceSpan[]>();
-
     for (const span of spans) {
       const parentId = span.parent_span_id || null;
-      if (!childrenMap.has(parentId)) {
-        childrenMap.set(parentId, []);
-      }
+      if (!childrenMap.has(parentId)) childrenMap.set(parentId, []);
       childrenMap.get(parentId)!.push(span);
     }
-
     for (const siblings of childrenMap.values()) {
       siblings.sort((a, b) => {
-        const timeA = new Date(a.start_time).getTime();
-        const timeB = new Date(b.start_time).getTime();
-        if (timeA !== timeB) return timeA - timeB;
-        return a.span_order - b.span_order;
+        const tA = new Date(a.start_time).getTime();
+        const tB = new Date(b.start_time).getTime();
+        return tA !== tB ? tA - tB : a.span_order - b.span_order;
       });
     }
-
     const result: TraceSpan[] = [];
-
     function traverse(parentId: string | null) {
-      const children = childrenMap.get(parentId) || [];
-      for (const child of children) {
+      for (const child of childrenMap.get(parentId) || []) {
         result.push(child);
         traverse(child.span_id);
       }
     }
-
     traverse(null);
-
     return result;
   }
 
   const sortedSpans = $derived(sortSpansDepthFirst(spans));
-
   const parentChildMap = $derived(buildParentChildMap(sortedSpans));
+
+  // ─── Scroll sync ─────────────────────────────────────────────────────────
+
+  function onSpanScroll() {
+    if (isTimelineScrolling) return;
+    isSpanScrolling = true;
+    if (timelineScrollContainer) timelineScrollContainer.scrollTop = spanScrollContainer.scrollTop;
+    requestAnimationFrame(() => { isSpanScrolling = false; });
+  }
+
+  function onTimelineScroll() {
+    if (isSpanScrolling) return;
+    isTimelineScrolling = true;
+    if (spanScrollContainer) spanScrollContainer.scrollTop = timelineScrollContainer.scrollTop;
+    requestAnimationFrame(() => { isTimelineScrolling = false; });
+  }
+
+  // ─── Hover cursor tracking ────────────────────────────────────────────────
+
+  function onTimelineMouseMove(e: MouseEvent) {
+    if (!timelineScrollContainer) return;
+    const rect = timelineScrollContainer.getBoundingClientRect();
+    hoverX = ((e.clientX - rect.left) / rect.width) * 100;
+  }
+
+  function onTimelineMouseLeave() {
+    hoverX = null;
+  }
 </script>
 
-<div class="flex flex-col h-full bg-white text-sm overflow-hidden">
-  <!-- Timeline Header -->
-  <div class="sticky top-0 bg-surface-50 border-b border-gray-300 flex-shrink-0">
-    <div class="flex">
-      <div class="w-[35%] min-w-[280px] border-r border-gray-300"></div>
-      <div class="flex-1 relative h-8 px-2">
-        {#each [0, 0.25, 0.5, 0.75, 1.0] as mark, i}
+<div class="flex flex-col h-full bg-surface-50 text-sm overflow-hidden">
+
+  <!-- Column Headers / Axis -->
+  <div class="flex-shrink-0 bg-surface-50 border-b-2 border-black z-10">
+    <div class="flex h-9">
+
+      <!-- Left column header -->
+      <div class="w-[32%] min-w-[220px] flex items-center px-3 border-r-2 border-black flex-shrink-0">
+        <span class="text-xs font-black uppercase tracking-widest text-black">Span</span>
+      </div>
+
+      <!-- Timeline axis -->
+      <div class="flex-1 relative flex items-end px-0 pb-1.5 overflow-hidden">
+        {#each AXIS_MARKS as mark, i}
+          {@const pct = mark * 100}
           <div
-            class="absolute top-0 bottom-0 flex flex-col {i === 0 ? 'items-start' : i === 4 ? 'items-end' : 'items-center'}"
-            style="left: {mark * 100}%"
+            class="absolute bottom-0 flex flex-col items-center pointer-events-none"
+            style="left: {pct}%; transform: translateX({i === 0 ? '0' : i === AXIS_MARKS.length - 1 ? '-100%' : '-50%'});"
           >
-            <div class="flex-1 border-l border-gray-300"></div>
-            <span class="text-xs text-gray-500 font-mono mt-1 {i !== 0 && i !== 4 ? '-translate-x-1/2' : ''}">
+            <div class="w-px bg-black/20" style="height: 6px;"></div>
+            <span class="text-[10px] font-mono text-primary-500 leading-tight mt-0.5 whitespace-nowrap">
               {formatDuration(totalDuration * mark)}
             </span>
           </div>
+          <!-- Full-height tick line -->
+          {#if i > 0}
+            <div
+              class="absolute top-0 bottom-0 w-px bg-black/8 pointer-events-none"
+              style="left: {pct}%;"
+            ></div>
+          {/if}
         {/each}
+        <span class="absolute top-1.5 right-2 text-[10px] font-black uppercase tracking-widest text-black/40">Timeline</span>
       </div>
     </div>
   </div>
 
-  <!-- Span List -->
-  <div class="flex-1 overflow-auto pb-6">
-    {#each sortedSpans as span (span.span_id)}
-      {@const position = getSpanPosition(span)}
-      {@const isSelected = selectedSpan?.span_id === span.span_id}
-      {@const indent = span.depth * INDENT_PX}
-      {@const serviceName = span.service_name}
-      {@const spanHasError = hasSpanError(span)}
-      {@const badgeClasses = getServiceBadgeClasses(span)}
-      {@const isSlowestSpan = slowestSpan && span.span_id === slowestSpan.span_id}
-      {@const isLast = isLastSibling(span, sortedSpans, parentChildMap)}
+  <!-- Span rows (locked scroll) -->
+  <div class="flex flex-1 min-h-0 overflow-hidden">
 
-      <div
-          class="flex group cursor-pointer hover:bg-surface-600 transition-colors"
-          style="height: {ROW_HEIGHT}px"
-          class:bg-primary-50={isSelected}
+    <!-- Left: Span names -->
+    <div
+      bind:this={spanScrollContainer}
+      onscroll={onSpanScroll}
+      class="w-[32%] min-w-[220px] flex-shrink-0 overflow-auto border-r-2 border-black bg-surface-50"
+    >
+      {#each sortedSpans as span (span.span_id)}
+        {@const isSelected = selectedSpan?.span_id === span.span_id}
+        {@const indent = span.depth * INDENT_PX}
+        {@const type = getSpanType(span)}
+        {@const typeColor = getTypeColor(type)}
+        {@const isLast = isLastSibling(span, sortedSpans, parentChildMap)}
+        {@const hasChildren = (parentChildMap.get(span.span_id) || []).length > 0}
+
+        <div
+          class="flex items-center gap-1.5 pr-2 cursor-pointer transition-colors border-b border-black/10 relative min-w-max
+            {isSelected
+              ? 'bg-primary-50 border-l-4 border-l-primary-600'
+              : 'hover:bg-surface-200 border-l-4 border-l-transparent'}"
+          style="height: {ROW_HEIGHT}px; padding-left: calc({indent}px + 0.5rem);"
           onclick={() => onSpanSelect(span)}
           onkeydown={(e) => e.key === 'Enter' && onSpanSelect(span)}
           role="button"
           tabindex="0"
         >
-
-        <div
-            class="w-[35%] min-w-[280px] flex items-center gap-1.5 px-2 border-r border-gray-100 overflow-hidden flex-shrink-0 relative"
-            style="padding-left: calc({indent}px + 0.5rem);"
-          >
-
+          <!-- Tree connector lines -->
           {#if span.depth > 0}
             {#each Array.from({ length: span.depth }) as _, depthIndex}
               {@const shouldDrawLine = shouldDrawVerticalLine(span, depthIndex, sortedSpans, parentChildMap)}
               {@const isCurrentLevel = depthIndex === span.depth - 1}
-              {@const lineLeftPosition = depthIndex * INDENT_PX + 8}
+              {@const lineLeft = depthIndex * INDENT_PX + 8}
 
               <div
                 class="absolute pointer-events-none"
-                style="left: calc({lineLeftPosition}px + 0.5rem); width: 1px; top: 0; height: {ROW_HEIGHT}px;"
+                style="left: calc({lineLeft}px + 0.5rem); width: 1px; top: 0; height: {ROW_HEIGHT}px;"
               >
                 {#if isCurrentLevel}
-                  <!-- L-shape or T-shape connector at current depth -->
                   <div class="relative w-full h-full">
-                    <!-- Vertical line from top to middle -->
-                    <div class="absolute top-0 left-0 w-full bg-gray-400" style="height: {ROW_HEIGHT / 2}px;"></div>
-
-                    <!-- Horizontal line extending to the right -->
-                    <div
-                      class="absolute left-0 bg-gray-400"
-                      style="top: {ROW_HEIGHT / 2}px; height: 1px; width: {INDENT_PX / 2}px;"
-                    ></div>
-
+                    <div class="absolute top-0 left-0 w-full bg-black/20" style="height: {ROW_HEIGHT / 2}px;"></div>
+                    <div class="absolute left-0 bg-black/20" style="top: {ROW_HEIGHT / 2}px; height: 1px; width: {INDENT_PX / 2}px;"></div>
                     {#if !isLast}
-                      <div class="absolute left-0 w-full bg-gray-400" style="top: {ROW_HEIGHT / 2}px; height: {ROW_HEIGHT / 2}px;"></div>
+                      <div class="absolute left-0 w-full bg-black/20" style="top: {ROW_HEIGHT / 2}px; height: {ROW_HEIGHT / 2}px;"></div>
                     {:else if span.parent_span_id}
                       {@const parent = sortedSpans.find(s => s.span_id === span.parent_span_id)}
                       {#if parent && !isLastSibling(parent, sortedSpans, parentChildMap)}
-                        <div class="absolute left-0 w-full bg-gray-400" style="top: {ROW_HEIGHT / 2}px; height: {ROW_HEIGHT / 2}px;"></div>
+                        <div class="absolute left-0 w-full bg-black/20" style="top: {ROW_HEIGHT / 2}px; height: {ROW_HEIGHT / 2}px;"></div>
                       {/if}
                     {/if}
                   </div>
                 {:else if shouldDrawLine}
-                  <div class="w-full bg-gray-400" style="height: {ROW_HEIGHT}px;"></div>
+                  <div class="w-full bg-black/20" style="height: {ROW_HEIGHT}px;"></div>
                 {/if}
               </div>
             {/each}
           {/if}
 
-          {#if span.depth > 0}
-            <span class="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-primary-100 border-primary-950 border-1 text-primary-950 rounded text-xs font-bold">
-              {span.depth}
-            </span>
+          <!-- Span type color square -->
+          <span class="z-10 flex-shrink-0 w-3 h-3 border {typeColor} rounded-sm"></span>
+
+          <!-- Child chevron indicator -->
+          {#if hasChildren}
+            <ChevronRight class="w-3 h-3 text-primary-400 flex-shrink-0 -mx-0.5" />
           {/if}
 
-          <span class="border px-1.5 py-0.5 text-xs rounded flex-shrink-0 {badgeClasses}">
-            {serviceName}
-          </span>
-
-          {#if isSlowestSpan}
-            <Clock class="w-4 h-4 text-retro-orange-900 flex-shrink-0"/>
-          {/if}
-
-          {#if spanHasError}
-            <CircleX class="w-4 h-4 text-error-600 flex-shrink-0"/>
-          {/if}
-
-          <span class="text-xs truncate font-medium text-gray-900 flex-1 min-w-0" title={span.span_name}>
+          <!-- Span name -->
+          <span class="text-xs font-mono truncate {isSelected ? 'text-primary-900 font-bold' : 'text-primary-800'}" style="max-width: 180px;">
             {span.span_name}
           </span>
-        </div>
 
-        <div class="flex-1 flex items-center gap-2 px-2 min-w-0">
-          <div class="relative flex-1 h-5 min-w-0">
+          <!-- Slow indicator -->
+          {#if slowestSpan && span.span_id === slowestSpan.span_id}
+            <Clock class="w-3 h-3 text-warning-600 flex-shrink-0 ml-auto" />
+          {/if}
+
+          <!-- Error indicator -->
+          {#if hasSpanError(span)}
+            <CircleX class="w-3 h-3 text-error-600 flex-shrink-0 ml-auto" />
+          {/if}
+        </div>
+      {/each}
+    </div>
+
+    <!-- Right: Timeline bars -->
+    <div
+      bind:this={timelineScrollContainer}
+      onscroll={onTimelineScroll}
+      onmousemove={onTimelineMouseMove}
+      onmouseleave={onTimelineMouseLeave}
+      role="presentation"
+      class="flex-1 overflow-y-auto overflow-x-hidden relative bg-surface-50"
+    >
+      <!-- Vertical tick grid lines behind rows -->
+      {#each AXIS_MARKS.slice(1) as mark}
+        <div
+          class="absolute top-0 bottom-0 w-px bg-black/6 pointer-events-none z-0"
+          style="left: {mark * 100}%;"
+          role="presentation"
+        ></div>
+      {/each}
+
+      <!-- Hover cursor line -->
+      {#if hoverX !== null}
+        <div
+          class="absolute h-full w-px bg-black/30 pointer-events-none z-20"
+          style="left: {hoverX}%;"
+        ></div>
+      {/if}
+
+      {#each sortedSpans as span (span.span_id)}
+        {@const position = getSpanPosition(span)}
+        {@const isSelected = selectedSpan?.span_id === span.span_id}
+        {@const type = getSpanType(span)}
+        {@const barColor = getBarColor(type, isSelected)}
+
+        <div
+          class="flex items-center px-2 cursor-pointer transition-colors border-b border-black/10 relative z-10
+            {isSelected ? 'bg-primary-50' : 'hover:bg-surface-200'}"
+          style="height: {ROW_HEIGHT}px;"
+          onclick={() => onSpanSelect(span)}
+          onkeydown={(e) => e.key === 'Enter' && onSpanSelect(span)}
+          role="button"
+          tabindex="0"
+        >
+          <div class="relative flex-1 h-[18px] min-w-0">
+            <!-- Span bar -->
             <div
-              class="absolute h-full rounded border border-black transition-all"
-              class:border-2={isSelected}
-              class:shadow-small={isSelected}
-              class:bg-error-200={spanHasError}
-              class:bg-secondary-200={!spanHasError}
-              class:opacity-60={!isSelected && selectedSpan !== null}
+              class="absolute h-full border rounded-sm transition-all duration-150 {barColor} {isSelected ? 'shadow-small' : ''}"
               style="left: {position.left}%; width: {position.width}%;"
             >
-              {#if position.width > 18}
-                <span
-                  class="absolute inset-0 flex items-center justify-center text-xs overflow-hidden"
-                  class:text-error-800={spanHasError}
-                  class:text-secondary-950={!spanHasError}
-                >
+              <!-- Duration label inside bar if wide enough -->
+              {#if position.width > 12}
+                <span class="absolute inset-0 flex items-center justify-center text-[10px] font-mono px-1 truncate text-black/70">
                   {formatDuration(span.duration_ms)}
                 </span>
               {/if}
             </div>
           </div>
 
-          <span class="w-16 text-xs font-mono text-gray-600 text-right flex-shrink-0 whitespace-nowrap">
+          <!-- Duration label outside bar (always visible, right-aligned) -->
+          <span class="w-14 text-[10px] font-mono text-primary-500 text-right flex-shrink-0 whitespace-nowrap">
             {formatDuration(span.duration_ms)}
           </span>
         </div>
-      </div>
-    {/each}
+      {/each}
+    </div>
+
   </div>
+
 </div>

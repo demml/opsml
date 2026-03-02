@@ -5,7 +5,6 @@ pub mod error;
 pub use crate::actions::{download_card, download_service, list_cards};
 use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
 pub use actions::{
-    demo::run_python_code,
     generate_key,
     lock::install_service,
     register::register_service,
@@ -23,11 +22,11 @@ use opsml_types::RegistryType;
 pub use actions::lock::lock_service;
 
 pub const LOGO_TEXT: &str = "
- ██████  ██████  ███████ ███    ███ ██             ██████ ██      ██ 
-██    ██ ██   ██ ██      ████  ████ ██            ██      ██      ██ 
-██    ██ ██████  ███████ ██ ████ ██ ██      █████ ██      ██      ██ 
-██    ██ ██           ██ ██  ██  ██ ██            ██      ██      ██ 
- ██████  ██      ███████ ██      ██ ███████        ██████ ███████ ██ 
+ ██████  ██████  ███████ ███    ███ ██             ██████ ██      ██
+██    ██ ██   ██ ██      ████  ████ ██            ██      ██      ██
+██    ██ ██████  ███████ ██ ████ ██ ██      █████ ██      ██      ██
+██    ██ ██           ██ ██  ██  ██ ██            ██      ██      ██
+ ██████  ██      ███████ ██      ██ ███████        ██████ ███████ ██
 ";
 
 pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
@@ -129,12 +128,6 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
                 Ok(())
             }
         },
-        Some(Commands::Demo) => {
-            println!("Running demo...");
-            run_python_code().context("Failed to run demo")?;
-            Ok(())
-        }
-
         Some(Commands::Validate) => {
             println!("Validating project...");
             validate_project(None, None).context("Failed to validate project")?;

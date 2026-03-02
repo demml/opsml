@@ -8,7 +8,6 @@
   import { getMaxDataPoints } from '$lib/utils';
   import { Loader2 } from 'lucide-svelte';
   import { DriftType } from '$lib/components/scouter/types';
-  import GenAIDashboard from '$lib/components/scouter/genai/dashboard/GenAIDashboard.svelte';
   import CustomDashboard from '$lib/components/scouter/custom/CustomDashboard.svelte';
   import PsiDashboard from '$lib/components/scouter/psi/PsiDashboard.svelte';
   import SpcDashboard from '$lib/components/scouter/spc/SpcDashboard.svelte';
@@ -25,10 +24,10 @@
 
   $effect(() => {
     const newRange = timeRangeState.selectedTimeRange;
-    
+
     if (newRange && monitoringData.status === 'success') {
       const currentRange = monitoringData.selectedTimeRange;
-      
+
       if (
         currentRange.startTime !== newRange.startTime ||
         currentRange.endTime !== newRange.endTime
@@ -58,19 +57,12 @@
     };
   });
 
-  async function performRefresh(
-    type: DriftType,
-    rCursor?: { cursor: RecordCursor; direction: string },
-    wCursor?: { cursor: RecordCursor; direction: string }
-  ) {
+  async function performRefresh(type: DriftType) {
     if (monitoringData.status !== 'success') return;
-    
+
     isRefreshing = true;
     try {
-      await refreshMonitoringData(fetch, type, monitoringData, {
-        recordCursor: rCursor,
-        workflowCursor: wCursor,
-      });
+      await refreshMonitoringData(fetch, type, monitoringData);
     } catch (e) {
       console.error('Dashboard Refresh Failed', e);
     } finally {
@@ -78,17 +70,9 @@
     }
   }
 
-  async function handleRecordPageChange(cursor: RecordCursor, direction: string) {
-    await performRefresh(driftType, { cursor, direction }, undefined);
-  }
-
-  async function handleWorkflowPageChange(cursor: RecordCursor, direction: string) {
-    await performRefresh(driftType, undefined, { cursor, direction });
-  }
-
   async function handleAlertPageChange(cursor: RecordCursor, direction: string) {
     if (monitoringData.status !== 'success') return;
-    
+
     isRefreshing = true;
     try {
       await changeAlertPage(fetch, { cursor, direction }, monitoringData);
@@ -101,7 +85,7 @@
 
   async function updateAlert(id: number, space: string): Promise<void> {
     if (monitoringData.status !== 'success') return;
-    
+
     const updated = await acknowledgeMonitoringAlert(fetch, id, space);
     if (updated) {
       const newAlerts = await getServerDriftAlerts(fetch, {
@@ -129,12 +113,11 @@
     name={data.metadata.name}
     version={data.metadata.version}
     registryType={data.registryType}
+    errorKind={monitoringData.errorKind}
   />
 {:else}
   <div class="transition-opacity duration-200 {isRefreshing ? 'opacity-60 pointer-events-none grayscale-[0.5]' : ''}">
-    {#if driftType === DriftType.GenAI}
-      <GenAIDashboard bind:monitoringData onRecordPageChange={handleRecordPageChange} onWorkflowPageChange={handleWorkflowPageChange} />
-    {:else if driftType === DriftType.Custom}
+    {#if driftType === DriftType.Custom}
       <CustomDashboard bind:monitoringData onAlertPageChange={handleAlertPageChange} onUpdateAlert={updateAlert} />
     {:else if driftType === DriftType.Psi}
       <PsiDashboard bind:monitoringData onAlertPageChange={handleAlertPageChange} onUpdateAlert={updateAlert} />
