@@ -8,6 +8,9 @@ on:
   release:
     types: [published]
 
+env:
+  PYTHON_VERSION: "3.12"
+
 permissions:
   contents: write
   pages: write
@@ -30,19 +33,22 @@ jobs:
           docker-images: true
           swap-storage: true
 
-      - name: Set up uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-
-      - name: set up python
-        uses: actions/setup-python@v5
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.11"
+          python-version: ${{ env.PYTHON_VERSION }}
+          ignore-nothing-to-cache: true
 
       - name: Install Protocol Buffers Compiler
         uses: arduino/setup-protoc@v3
         with:
           version: "33.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libcurl4-openssl-dev pkg-config
 
       - name: Build Docs
         working-directory: ./py-opsml
