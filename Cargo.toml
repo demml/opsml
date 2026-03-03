@@ -80,7 +80,7 @@ mimalloc = { version = "*", features = ["secure"] }
 mockall = "0.*"
 mockito = "1.*"
 names = "0.*"
-ort = { version = "2.0.0-rc.10" }
+ort = { version = ">=2.0.0-rc.11" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"
