@@ -89,7 +89,6 @@ test.examples.model:
 	uv run python examples/model/lightning_model.py && \
 	uv run python examples/model/onnx_model.py && \
 	uv run python examples/model/sklearn_model.py && \
-	uv run python examples/model/tensorflow_model.py && \
 	uv run python examples/model/torch_model.py && \
 	uv run python examples/model/xgb_booster.py
 
@@ -117,7 +116,8 @@ serve.docs:
 	uv run python scripts/create_mkdocs_stubs.py
 	uv run mkdocs serve
 
-publish.docs: build.stubs
+publish.docs:
+	uv run python scripts/assemble_stubs.py
 	uv run python scripts/create_mkdocs_stubs.py
 	uv run mkdocs gh-deploy --force
 
