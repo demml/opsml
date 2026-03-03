@@ -197,9 +197,11 @@ pub enum OnnxError {
     #[error("{0}")]
     Error(String),
 
+    #[cfg(not(all(target_arch = "x86_64", target_os = "macos")))]
     #[error("Failed to create onnx session: {0}")]
     SessionCreateError(ort::Error),
 
+    #[cfg(not(all(target_arch = "x86_64", target_os = "macos")))]
     #[error("Failed to commit onnx session: {0}")]
     SessionCommitError(ort::Error),
 
