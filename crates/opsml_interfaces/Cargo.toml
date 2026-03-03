@@ -11,7 +11,6 @@ doctest = false
 opsml-types = { workspace = true }
 opsml-state = { workspace = true }
 opsml-utils = { workspace = true }
-ort = { workspace = true }
 potato-head = { workspace = true }
 pyo3 = { workspace = true }
 pythonize = { workspace = true }
@@ -24,3 +23,6 @@ tempfile = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
+
+[target.'cfg(not(all(target_arch = "x86_64", target_os = "macos")))'.dependencies]
+ort = { workspace = true }
