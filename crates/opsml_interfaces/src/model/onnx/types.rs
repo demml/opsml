@@ -4,7 +4,9 @@ use std::vec;
 use crate::error::OnnxError;
 use crate::{Feature, FeatureSchema, OnnxSchema};
 use opsml_utils::PyHelperFuncs;
+#[cfg(not(all(target_arch = "x86_64", target_os = "macos")))]
 use ort::session::Session;
+#[cfg(not(all(target_arch = "x86_64", target_os = "macos")))]
 use ort::value::ValueType;
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList};
@@ -19,7 +21,7 @@ use std::fmt;
 use std::path::Path;
 use tracing::{debug, instrument};
 
-/// Extracts input and output schema from the ort ONNX session.
+#[cfg(not(all(target_arch = "x86_64", target_os = "macos")))]
 fn parse_session_schema(
     ort_session: &Session,
 ) -> Result<(FeatureSchema, FeatureSchema), OnnxError> {
@@ -98,13 +100,17 @@ impl OnnxSession {
             .extract::<Vec<u8>>()
             .map_err(OnnxError::PyModelBytesExtractError)?;
 
-        // extract onnx_bytes
-        let session = Session::builder()
-            .map_err(OnnxError::SessionCreateError)?
-            .commit_from_memory(&model_bytes)
-            .map_err(OnnxError::SessionCommitError)?;
+        #[cfg(not(all(target_arch = "x86_64", target_os = "macos")))]
+        let (input_schema, output_schema) = {
+            let session = Session::builder()
+                .map_err(OnnxError::SessionCreateError)?
+                .commit_from_memory(&model_bytes)
+                .map_err(OnnxError::SessionCommitError)?;
+            parse_session_schema(&session)?
+        };
 
-        let (input_schema, output_schema) = parse_session_schema(&session)?;
+        #[cfg(all(target_arch = "x86_64", target_os = "macos"))]
+        let (input_schema, output_schema) = (FeatureSchema::default(), FeatureSchema::default());
 
         let schema = OnnxSchema {
             input_features: input_schema,
@@ -289,12 +295,17 @@ impl OnnxSession {
             .getattr("__version__")?
             .extract::<String>()?;
 
-        let session = Session::builder()
-            .map_err(OnnxError::SessionCreateError)?
-            .commit_from_file(filepath)
-            .map_err(OnnxError::SessionCommitError)?;
+        #[cfg(not(all(target_arch = "x86_64", target_os = "macos")))]
+        let (input_schema, output_schema) = {
+            let session = Session::builder()
+                .map_err(OnnxError::SessionCreateError)?
+                .commit_from_file(filepath)
+                .map_err(OnnxError::SessionCommitError)?;
+            parse_session_schema(&session)?
+        };
 
-        let (input_schema, output_schema) = parse_session_schema(&session)?;
+        #[cfg(all(target_arch = "x86_64", target_os = "macos"))]
+        let (input_schema, output_schema) = (FeatureSchema::default(), FeatureSchema::default());
 
         let schema = OnnxSchema {
             input_features: input_schema,
