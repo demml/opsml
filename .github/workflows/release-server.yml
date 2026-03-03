@@ -27,11 +27,12 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          ignore-nothing-to-cache: true
 
       - name: Install dependencies, build stubs, update package name, and build sdist
         working-directory: ./py-opsml
         run: |
-          pip install -U twine tomli tomli-w
+          pip install "twine>=6.1.0" tomli tomli-w
           python ./scripts/assemble_stubs.py
 
       - name: Install build dependencies
@@ -80,8 +81,9 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          ignore-nothing-to-cache: true
 
-      - run: pip install -U twine
+      - run: pip install "twine>=6.1.0"
 
       - name: Set OPENSSL_DIR environment variable
         run: echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
@@ -214,6 +216,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          ignore-nothing-to-cache: true
 
       - name: Install Protocol Buffers Compiler
         uses: arduino/setup-protoc@v3
@@ -221,7 +224,7 @@ jobs:
           version: "33.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: pip install -U twine
+      - run: pip install "twine>=6.1.0"
 
       - name: Build stubs
         working-directory: ./py-opsml
@@ -272,6 +275,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+          ignore-nothing-to-cache: true
 
       - name: Install Protocol Buffers Compiler
         uses: arduino/setup-protoc@v3
@@ -279,7 +283,7 @@ jobs:
           version: "33.2"
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: pip install -U twine
+      - run: pip install "twine>=6.1.0"
 
       - name: Build stubs
         working-directory: ./py-opsml
@@ -386,7 +390,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -U twine
+      - run: pip install "twine>=6.1.0"
       - name: get dist artifacts
         uses: actions/download-artifact@v4
         with:
