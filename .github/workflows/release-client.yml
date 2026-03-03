@@ -28,12 +28,18 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Install Protocol Buffers Compiler
+        uses: arduino/setup-protoc@v3
+        with:
+          version: "33.2"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install dependencies, build stubs, update package name, and build sdist
         working-directory: ./py-opsml
         run: |
           pip install -U twine tomli tomli-w
-          make build.stubs
           python ./scripts/update_package_name.py ./pyproject.toml "opsml-client"
+          python ./scripts/assemble_stubs.py
 
       - name: Install build dependencies
         run: |
@@ -86,7 +92,7 @@ jobs:
         run: |
           pip install -U twine tomli tomli-w
           python ./scripts/update_package_name.py ./pyproject.toml "opsml-client"
-          make build.stubs
+          python ./scripts/assemble_stubs.py
 
       - name: Set OPENSSL_DIR environment variable
         run: echo "OPENSSL_DIR=/usr" >> $GITHUB_ENV
@@ -226,10 +232,7 @@ jobs:
         run: |
           pip install -U twine tomli tomli-w
           python ./scripts/update_package_name.py ./pyproject.toml "opsml-client"
-
-      - name: Build stubs
-        run: |
-          make build.stubs
+          python ./scripts/assemble_stubs.py
 
       - name: Install libomp on macOS
         run: brew install libomp curl openssl pkg-config
@@ -285,9 +288,9 @@ jobs:
       - name: Update package name to opsml-client
         working-directory: ./py-opsml
         run: |
-          make build.stubs
           pip install -U twine tomli tomli-w
           python ./scripts/update_package_name.py ./pyproject.toml "opsml-client"
+          python ./scripts/assemble_stubs.py
 
       - name: Build wheel
         uses: PyO3/maturin-action@v1
