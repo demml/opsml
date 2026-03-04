@@ -39,8 +39,8 @@
     preClasses = '[&>pre]:whitespace-pre [&>pre]:overflow-x-auto'
   }: CodeBlockProps = $props();
 
-  // Shiki convert to HTML
-  const generatedHtml = shiki.codeToHtml(code, { lang, theme });
+  // Shiki convert to HTML — must be $derived so it recomputes when code/lang/theme props change
+  const generatedHtml = $derived(shiki.codeToHtml(code, { lang, theme }));
 </script>
 
 <div class="w-full {base} {shadow} {classes} {preBase} {prePadding} {preClasses}" class:show-line-numbers={showLineNumbers}>
