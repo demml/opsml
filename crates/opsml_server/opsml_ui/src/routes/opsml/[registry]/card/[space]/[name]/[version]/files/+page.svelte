@@ -5,7 +5,7 @@
   let { data }: PageProps = $props();
 </script>
 
-<div class="mx-auto px-4 py-4 pb-2 w-full">
+<div class="mx-auto px-4 w-full">
   <FileExplorer
     initialTree={data.fileTree.files}
     rawFile={data.rawFile}
