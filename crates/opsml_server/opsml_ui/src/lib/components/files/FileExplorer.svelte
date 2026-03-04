@@ -108,7 +108,7 @@
   <!-- Desktop: split panel — full viewport height, both sides independently scrollable -->
   <div class="hidden lg:grid gap-4 w-full h-[calc(100vh-160px)]" style="grid-template-columns: min(320px, 32%) 1fr">
     <!-- Left: file tree — independently scrollable, stays in place -->
-    <div class="overflow-y-auto h-full pb-2 pr-2">
+    <div class="overflow-y-auto h-full pb-2 pr-2 pt-4">
       <FileTree
         nodes={initialTree}
         {basePath}
@@ -124,7 +124,7 @@
     </div>
 
     <!-- Right: file viewer — independently scrollable -->
-    <div class="overflow-y-auto h-full min-w-0 pr-8">
+    <div class="overflow-y-auto h-full min-w-0 pr-8 pt-4">
       {#if rawFile}
         <FileViewPage
           file={rawFile}
@@ -141,7 +141,7 @@
   </div>
 {:else}
   <!-- No file selected: tree takes full width on all breakpoints -->
-  <div class="max-w-6xl pb-2 pr-1  mx-auto">
+  <div class="max-w-6xl pb-2 pr-1 pt-4 mx-auto">
     <FileTree
       nodes={initialTree}
       {basePath}
