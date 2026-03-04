@@ -12,6 +12,7 @@
     loadingDirs: Set<string>;
     dirCache: Map<string, FileTreeNode[]>;
     selectedPath: string | null;
+    compact?: boolean;
     onFolderToggle: (node: FileTreeNode) => void;
     onFileSelect: (node: FileTreeNode) => void;
   }
@@ -24,6 +25,7 @@
     loadingDirs,
     dirCache,
     selectedPath,
+    compact = false,
     onFolderToggle,
     onFileSelect,
   }: Props = $props();
@@ -33,8 +35,10 @@
   {#if depth === 0}
     <div class="flex items-center px-3 py-1.5 border-b-2 border-black bg-surface-200 sticky top-0 z-5">
       <span class="flex-1 text-xs font-black uppercase tracking-wider text-primary-700 pl-10">Name</span>
-      <span class="text-xs font-black uppercase tracking-wider text-primary-700 w-20 text-right">Size</span>
-      <span class="text-xs font-black uppercase tracking-wider text-primary-700 w-24 text-right ml-2">Modified</span>
+      {#if !compact}
+        <span class="text-xs font-black uppercase tracking-wider text-primary-700 w-20 text-right">Size</span>
+        <span class="text-xs font-black uppercase tracking-wider text-primary-700 w-28 text-right ml-2">Modified</span>
+      {/if}
     </div>
   {/if}
   {#each nodes as node}
@@ -67,8 +71,10 @@
             {/if}
             <span class="text-sm font-medium text-black truncate">{node.name}</span>
           </button>
-          <span class="text-xs font-mono text-primary-700 shrink-0 w-20 text-right"></span>
-          <span class="text-xs text-primary-700 font-mono shrink-0 w-24 text-right ml-2">{timeAgo(node.created_at)}</span>
+          {#if !compact}
+            <span class="text-xs font-mono text-primary-700 shrink-0 w-20 text-right"></span>
+            <span class="text-xs text-primary-700 font-mono shrink-0 w-28 text-right ml-2 whitespace-nowrap">{timeAgo(node.created_at)}</span>
+          {/if}
 
         {:else if node.size < 50 * 1024 * 1024 && isAcceptableSuffix(node.suffix)}
           <button
@@ -79,8 +85,10 @@
             <File class="w-4 h-4 text-primary-600 shrink-0" />
             <span class="text-sm truncate {isSelected ? 'font-bold text-primary-900' : 'text-black'}">{node.name}</span>
           </button>
-          <span class="text-xs font-mono text-primary-700 shrink-0 w-20 text-right">{formatBytes(node.size)}</span>
-          <span class="text-xs text-primary-700 font-mono shrink-0 w-24 text-right ml-2">{timeAgo(node.created_at)}</span>
+          {#if !compact}
+            <span class="text-xs font-mono text-primary-700 shrink-0 w-20 text-right">{formatBytes(node.size)}</span>
+            <span class="text-xs text-primary-700 font-mono shrink-0 w-28 text-right ml-2 whitespace-nowrap">{timeAgo(node.created_at)}</span>
+          {/if}
 
         {:else}
           <div class="flex items-center gap-2 flex-1 min-w-0">
@@ -88,8 +96,10 @@
             <File class="w-4 h-4 text-primary-400 shrink-0" />
             <span class="text-sm text-primary-500 truncate">{node.name}</span>
           </div>
-          <span class="text-xs font-mono text-primary-700 shrink-0 w-20 text-right">{formatBytes(node.size)}</span>
-          <span class="text-xs text-primary-700 font-mono shrink-0 w-24 text-right ml-2">{timeAgo(node.created_at)}</span>
+          {#if !compact}
+            <span class="text-xs font-mono text-primary-700 shrink-0 w-20 text-right">{formatBytes(node.size)}</span>
+            <span class="text-xs text-primary-700 font-mono shrink-0 w-28 text-right ml-2 whitespace-nowrap">{timeAgo(node.created_at)}</span>
+          {/if}
         {/if}
       </div>
 
@@ -107,6 +117,7 @@
             {loadingDirs}
             {dirCache}
             {selectedPath}
+            {compact}
             {onFolderToggle}
             {onFileSelect}
           />
