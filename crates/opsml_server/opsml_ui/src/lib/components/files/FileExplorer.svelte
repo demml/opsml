@@ -82,7 +82,7 @@
 
 {#if viewPath}
   <!-- Mobile: full-width viewer with back button -->
-  <div class="lg:hidden w-full pb-2">
+  <div class="lg:hidden w-full pb-2 pt-2">
     <div class="flex items-center mb-3">
       <button
         class="btn text-sm bg-surface-50 text-primary-800 border-2 border-black shadow-small shadow-click-small rounded-base font-bold flex items-center gap-1"
@@ -106,7 +106,7 @@
   </div>
 
   <!-- Desktop: split panel — full viewport height, both sides independently scrollable -->
-  <div class="hidden lg:grid gap-4 w-full h-[calc(100vh-160px)]" style="grid-template-columns: min(320px, 32%) 1fr">
+  <div class="hidden lg:grid gap-4 w-full h-[calc(100vh-120px)]" style="grid-template-columns: min(320px, 32%) 1fr">
     <!-- Left: file tree — independently scrollable, stays in place -->
     <div class="overflow-y-auto h-full pb-2 pr-2 pt-4">
       <FileTree
@@ -124,7 +124,7 @@
     </div>
 
     <!-- Right: file viewer — independently scrollable -->
-    <div class="overflow-y-auto h-full min-w-0 pr-8 pt-4">
+    <div class="overflow-y-auto h-full min-w-0 pr-8 pt-3">
       {#if rawFile}
         <FileViewPage
           file={rawFile}
