@@ -18,7 +18,7 @@
 
 </script>
 
-<div class="h-full text-sm overflow-auto bg-surface-50 rounded-base">
+<div class="text-sm overflow-x-auto bg-surface-50 rounded-base">
   {#if fileTypeInfo.type === 'image'}
     <ImageViewer mimeType={file.mime_type} content={file.content} />
     

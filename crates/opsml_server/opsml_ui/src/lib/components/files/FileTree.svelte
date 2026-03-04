@@ -1,104 +1,121 @@
 <script lang="ts">
-    // Define the file node structure
-    
-  import { type FileTreeNode } from "./types";
-  import { Folder, File } from 'lucide-svelte';
-  import { formatBytes, timeAgo } from "./utils";
-  import { goto } from "$app/navigation";
-  import { isAcceptableSuffix } from "./utils";
-  import { getRegistryPath, type RegistryType } from "$lib/utils";
-  // Use runes for reactive state
-  let { files, 
-        currentPath, 
-        previousPath, 
-        space, 
-        name, 
-        version, 
-        isRoot ,
-        registryType
-      } = $props<{ 
-        files: FileTreeNode[], 
-        currentPath:string, 
-        previousPath: string, 
-        space:string, 
-        name:string, 
-        version: string, 
-        isRoot: boolean ,
-        registryType: RegistryType
-      }>();
+  import type { FileTreeNode } from './types';
+  import { Folder, FolderOpen, File, ChevronRight, ChevronDown, Loader } from 'lucide-svelte';
+  import { formatBytes, timeAgo, isAcceptableSuffix } from './utils';
+  import FileTree from './FileTree.svelte';
 
-
-
-  function navigateToPath(slug_name: string) {
-    let newPath = currentPath + '/' + slug_name;
-    goto(newPath);
+  interface Props {
+    nodes: FileTreeNode[];
+    basePath: string;
+    depth?: number;
+    expandedDirs: Set<string>;
+    loadingDirs: Set<string>;
+    dirCache: Map<string, FileTreeNode[]>;
+    selectedPath: string | null;
+    onFolderToggle: (node: FileTreeNode) => void;
+    onFileSelect: (node: FileTreeNode) => void;
   }
 
-  function navigateToView(path: string) {
-    // add params to path
-    let viewPath = `/opsml/${getRegistryPath(registryType)}/card/${space}/${name}/${version}/files/view?path=${path}`;
-    goto(viewPath);
-  }
-   
-  </script>
-  
+  let {
+    nodes,
+    basePath,
+    depth = 0,
+    expandedDirs,
+    loadingDirs,
+    dirCache,
+    selectedPath,
+    onFolderToggle,
+    onFileSelect,
+  }: Props = $props();
+</script>
 
-<div class="rounded-base border-2 border-black shadow bg-surface-50 overflow-auto">
-  <table class="table-auto w-full text-black overflow-hidden text-sm">
-    <thead class="bg-primary-500 border-b-2 border-black">
-      <tr>
-        <th class="pl-4 py-2 text-left">
-          <span class="px-2 py-1 rounded bg-white text-primary-800 text-xs font-bold uppercase tracking-wide border border-black shadow-small">Name</span>
-        </th>
-        <th class="p-2 text-left">
-          <span class="px-2 py-1 rounded bg-white text-primary-800 text-xs font-bold uppercase tracking-wide border border-black shadow-small">Size</span>
-        </th>
-        <th class="pr-4 py-2 text-right">
-          <span class="px-2 py-1 rounded bg-white text-primary-800 text-xs font-bold uppercase tracking-wide border border-black shadow-small">Created</span>
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      {#if !isRoot}
-        <tr class="border-t border-black/10 hover:bg-primary-50 transition-colors duration-100">
-          <td class="pl-4 py-2">
-            <button class="btn flex flex-row gap-2 items-center bg-primary-500 text-white border-2 border-black shadow-small shadow-click-small rounded-base text-sm font-bold" onclick={() => goto(previousPath)}>
-              <Folder class="w-4 h-4" />
-              <span>..</span>
-            </button>
-          </td>
-          <td class="p-2"></td>
-          <td class="pr-4 py-2 text-right"></td>
-        </tr>
+<div class="{depth === 0 ? 'rounded-base border-2 border-black shadow bg-surface-50 overflow-hidden' : ''}">
+  {#if depth === 0}
+    <div class="flex items-center px-3 py-1.5 border-b-2 border-black bg-surface-200 sticky top-0 z-5">
+      <span class="flex-1 text-xs font-black uppercase tracking-wider text-primary-700 pl-10">Name</span>
+      <span class="text-xs font-black uppercase tracking-wider text-primary-700 w-20 text-right">Size</span>
+      <span class="text-xs font-black uppercase tracking-wider text-primary-700 w-24 text-right ml-2">Modified</span>
+    </div>
+  {/if}
+  {#each nodes as node}
+    {@const isExpanded = expandedDirs.has(node.path)}
+    {@const isLoading = loadingDirs.has(node.path)}
+    {@const isSelected = selectedPath === node.path}
+    {@const children = dirCache.get(node.path) ?? []}
+
+    <div>
+      <div
+        class="flex items-center gap-2 py-2 pr-3 border-b border-black/10 transition-colors duration-100 {isSelected ? 'bg-primary-100' : 'hover:bg-primary-50 bg-surface-50'}"
+        style="padding-left: {8 + depth * 16}px"
+      >
+        {#if node.object_type === 'directory'}
+          <button
+            class="flex items-center gap-2 flex-1 text-left min-w-0"
+            onclick={() => onFolderToggle(node)}
+          >
+            {#if isLoading}
+              <Loader class="w-4 h-4 animate-spin text-primary-500 shrink-0" />
+            {:else if isExpanded}
+              <ChevronDown class="w-4 h-4 text-primary-700 shrink-0" />
+            {:else}
+              <ChevronRight class="w-4 h-4 text-primary-700 shrink-0" />
+            {/if}
+            {#if isExpanded}
+              <FolderOpen class="w-4 h-4 text-primary-600 shrink-0" />
+            {:else}
+              <Folder class="w-4 h-4 text-primary-600 shrink-0" />
+            {/if}
+            <span class="text-sm font-medium text-black truncate">{node.name}</span>
+          </button>
+          <span class="text-xs font-mono text-primary-700 shrink-0 w-20 text-right"></span>
+          <span class="text-xs text-primary-700 font-mono shrink-0 w-24 text-right ml-2">{timeAgo(node.created_at)}</span>
+
+        {:else if node.size < 50 * 1024 * 1024 && isAcceptableSuffix(node.suffix)}
+          <button
+            class="flex items-center gap-2 flex-1 text-left min-w-0"
+            onclick={() => onFileSelect(node)}
+          >
+            <span class="w-4 shrink-0"></span>
+            <File class="w-4 h-4 text-primary-600 shrink-0" />
+            <span class="text-sm truncate {isSelected ? 'font-bold text-primary-900' : 'text-black'}">{node.name}</span>
+          </button>
+          <span class="text-xs font-mono text-primary-700 shrink-0 w-20 text-right">{formatBytes(node.size)}</span>
+          <span class="text-xs text-primary-700 font-mono shrink-0 w-24 text-right ml-2">{timeAgo(node.created_at)}</span>
+
+        {:else}
+          <div class="flex items-center gap-2 flex-1 min-w-0">
+            <span class="w-4 shrink-0"></span>
+            <File class="w-4 h-4 text-primary-400 shrink-0" />
+            <span class="text-sm text-primary-500 truncate">{node.name}</span>
+          </div>
+          <span class="text-xs font-mono text-primary-700 shrink-0 w-20 text-right">{formatBytes(node.size)}</span>
+          <span class="text-xs text-primary-700 font-mono shrink-0 w-24 text-right ml-2">{timeAgo(node.created_at)}</span>
+        {/if}
+      </div>
+
+      {#if node.object_type === 'directory' && isExpanded}
+        {#if isLoading}
+          <div class="py-2 text-xs text-primary-600 italic" style="padding-left: {24 + depth * 16}px">
+            Loading...
+          </div>
+        {:else if children.length > 0}
+          <FileTree
+            nodes={children}
+            {basePath}
+            depth={depth + 1}
+            {expandedDirs}
+            {loadingDirs}
+            {dirCache}
+            {selectedPath}
+            {onFolderToggle}
+            {onFileSelect}
+          />
+        {:else}
+          <div class="py-2 text-xs text-primary-500 italic" style="padding-left: {24 + depth * 16}px">
+            Empty directory
+          </div>
+        {/if}
       {/if}
-      {#each files as file}
-      <tr class="border-t border-black/10 hover:bg-primary-50 transition-colors duration-100 bg-surface-50">
-        <td class="pl-4 py-2">
-          {#if file.object_type === 'directory'}
-            <button class="btn text-sm flex flex-row gap-2 items-center bg-primary-500 text-white border-2 border-black shadow-small shadow-hover-small rounded-base font-bold" onclick={() => navigateToPath(file.name)}>
-              <Folder class="w-4 h-4" />
-              <span>{file.name}</span>
-            </button>
-          {:else if file.size < 50 * 1024 * 1024 && isAcceptableSuffix(file.suffix)}
-            <button class="btn text-sm flex flex-row gap-2 items-center bg-surface-50 text-primary-800 border-2 border-black shadow-small shadow-hover-small rounded-base font-medium" onclick={() => navigateToView(file.path)}>
-              <File class="w-4 h-4" />
-              <span>{file.name}</span>
-            </button>
-          {:else}
-            <div class="flex flex-row gap-2 items-center pl-1 text-primary-800">
-              <File class="w-4 h-4" />
-              <span>{file.name}</span>
-            </div>
-          {/if}
-        </td>
-        <td class="p-2">
-          {#if file.object_type !== 'directory'}
-            <span class="font-mono text-sm text-primary-700">{formatBytes(file.size)}</span>
-          {/if}
-        </td>
-        <td class="pr-4 py-2 text-primary-700 text-right font-mono text-sm">{timeAgo(file.created_at)}</td>
-      </tr>
-      {/each}
-    </tbody>
-  </table>
+    </div>
+  {/each}
 </div>
