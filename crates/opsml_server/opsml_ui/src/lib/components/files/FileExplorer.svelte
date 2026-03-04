@@ -105,10 +105,10 @@
     {/if}
   </div>
 
-  <!-- Desktop: split panel -->
-  <div class="hidden lg:grid gap-4 w-full" style="grid-template-columns: min(320px, 32%) 1fr">
-    <!-- Left: file tree -->
-    <div class="overflow-auto max-h-[calc(100vh-160px)] pb-2 pr-2">
+  <!-- Desktop: split panel — full viewport height, both sides independently scrollable -->
+  <div class="hidden lg:grid gap-4 w-full h-[calc(100vh-160px)]" style="grid-template-columns: min(320px, 32%) 1fr">
+    <!-- Left: file tree — independently scrollable, stays in place -->
+    <div class="overflow-y-auto h-full pb-2 pr-2">
       <FileTree
         nodes={initialTree}
         {basePath}
@@ -117,13 +117,14 @@
         {loadingDirs}
         {dirCache}
         selectedPath={viewPath}
+        compact={true}
         onFolderToggle={handleFolderToggle}
         onFileSelect={handleFileSelect}
       />
     </div>
 
-    <!-- Right: file viewer -->
-    <div class="min-w-0 pr-8">
+    <!-- Right: file viewer — independently scrollable -->
+    <div class="overflow-y-auto h-full min-w-0 pr-8">
       {#if rawFile}
         <FileViewPage
           file={rawFile}

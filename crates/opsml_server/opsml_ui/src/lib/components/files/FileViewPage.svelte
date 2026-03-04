@@ -41,10 +41,10 @@
   }
 </script>
 
-<!-- Main container with strict width constraints -->
+<!-- Main container -->
 <div class="min-w-0 w-full pt-2 pb-8">
-  <!-- Breadcrumb navigation — sticks to top of viewport while file scrolls -->
-  <div class="w-full rounded-base border-2 border-black shadow-small bg-primary-100 py-2 mb-4 px-4 flex items-center gap-2">
+  <!-- Breadcrumb — sticks to top of right panel's scroll container -->
+  <div class="sticky top-0 z-5 w-full rounded-base border-2 border-black shadow-small bg-primary-100 py-2 mb-4 px-4 flex items-center gap-2">
     <div class="flex items-center flex-wrap gap-1 flex-1 min-w-0">
       {#each splitPath as path, index}
         {#if index < 3}
