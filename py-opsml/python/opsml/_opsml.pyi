@@ -20263,14 +20263,14 @@ class Experiment:
 
     def log_artifacts(
         self,
-        paths: Path,
+        path: Path,
     ) -> None:
         """
         Log multiple artifacts
 
         Args:
-            paths (Path):
-                Paths to a directory containing artifacts.
+            path (Path):
+                Path to a directory containing artifacts.
                 All files in the directory will be logged.
         """
 

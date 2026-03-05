@@ -48,6 +48,14 @@ impl FileUtils {
     }
 
     pub fn get_chunk_count(file_size: u64, chunk_size: u64) -> Result<ChunkParts, UtilError> {
+        if file_size == 0 {
+            return Ok(ChunkParts {
+                chunk_count: 1,
+                size_of_last_chunk: 0,
+                chunk_size,
+            });
+        }
+
         let chunk_size = std::cmp::min(file_size, chunk_size);
 
         let mut chunk_count = (file_size / chunk_size) + 1;
