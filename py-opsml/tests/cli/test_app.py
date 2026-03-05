@@ -118,3 +118,33 @@ def test_pyproject_app(
         ## delete the opsml_service and lock file
         shutil.rmtree(opsml_service)
         os.remove(lock_file)
+
+
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+def test_from_spec(
+    mock_environment,
+    random_forest_classifier: SklearnModel,
+    chat_prompt: Prompt,
+    example_dataframe: pd.DataFrame,
+):
+    """
+    Test that AppState.from_spec installs from opsmlspec.yaml and loads the service
+    without manually calling lock_service/install_service first.
+    """
+    with OpsmlTestServer(True, CURRENT_DIRECTORY):
+        run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
+
+        spec_path = CURRENT_DIRECTORY / "opsmlspec.yaml"
+        app = AppState.from_spec(
+            path=spec_path,
+            transport_config=opsml.scouter.HttpConfig(),
+        )
+
+        assert app.queue is not None
+        assert isinstance(app.queue.transport_config, MockConfig)
+
+        opsml_service = CURRENT_DIRECTORY / "opsml_service"
+        lock_file = CURRENT_DIRECTORY / "opsml.lock"
+        shutil.rmtree(opsml_service, ignore_errors=True)
+        if lock_file.exists():
+            os.remove(lock_file)
