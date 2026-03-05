@@ -2809,6 +2809,58 @@ class AppState:
             AppState: The loaded AppState.
         """
 
+    @staticmethod
+    def from_spec(
+        path: Path,
+        transport_config: Optional[
+            Union[
+                GrpcConfig,
+                KafkaConfig,
+                RabbitMQConfig,
+                RedisConfig,
+                HttpConfig,
+            ]
+        ] = None,
+        reload_config: Optional[ReloadConfig] = None,
+        load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
+    ) -> "AppState":
+        """
+        Load AppState from an opsmlspec.yaml file.
+
+        Runs install_service (checking for a lock file or creating one, then
+        registering and downloading all cards), then delegates to from_path.
+
+        Args:
+            path (Path):
+                Path to the opsmlspec.yaml file.
+
+            transport_config (KafkaConfig | RabbitMQConfig | RedisConfig | HttpConfig | None):
+                Optional transport configuration for the queue publisher.
+
+            reload_config (ReloadConfig | None):
+                Optional reload configuration for the AppState.
+
+            load_kwargs (Dict[str, Dict[str, Any]]):
+                Optional kwargs for loading cards. Expected format:
+                {
+                    "card_alias": {
+                        "interface": interface_object,
+                        "load_kwargs": DataLoadKwargs | ModelLoadKwargs
+                    }
+                }
+
+        Example:
+            ```python
+            from opsml.app import AppState
+
+            app_state = AppState.from_spec("/path/to/opsmlspec.yaml")
+            service = app_state.service
+            ```
+
+        Returns:
+            AppState: The loaded AppState.
+        """
+
     @property
     def service(self) -> ServiceCard:
         """Get the service card."""
