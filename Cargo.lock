@@ -4140,6 +4140,7 @@ dependencies = [
  "opsml-semver",
  "opsml-state",
  "opsml-storage",
+ "opsml-toml",
  "opsml-types",
  "pyo3",
  "scouter-client",
