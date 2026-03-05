@@ -5,8 +5,10 @@ use crate::{
     reloader::{ReloadConfig, ServiceReloader, start_background_download_task},
 };
 use opsml_cards::{ServiceCard, card_service::ServiceInfo};
+use opsml_cli::install_service;
 use opsml_state::app_state;
 use opsml_storage::{StorageError, copy_objects};
+use opsml_toml::LockFile;
 use opsml_types::{SaveName, Suffix, cards::ServiceCardMapping};
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
@@ -176,6 +178,40 @@ impl AppState {
             load_kwargs: kwargs.map(|kw| Arc::new(RwLock::new(kw))),
             reload_state,
         })
+    }
+
+    #[staticmethod]
+    #[pyo3(signature = (path, transport_config=None, reload_config=None, load_kwargs=None))]
+    pub fn from_spec(
+        py: Python,
+        path: PathBuf,
+        transport_config: Option<&Bound<'_, PyAny>>,
+        reload_config: Option<ReloadConfig>,
+        load_kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Result<Self, AppError> {
+        let spec_dir = path
+            .parent()
+            .ok_or_else(|| AppError::Error("Spec path has no parent directory".to_string()))?
+            .to_path_buf();
+
+        install_service(spec_dir.clone(), Some(spec_dir.clone()))
+            .map_err(|e| AppError::Error(e.to_string()))?;
+
+        let lock_file = LockFile::read(&spec_dir).map_err(|e| AppError::Error(e.to_string()))?;
+
+        let write_dir = lock_file
+            .artifact
+            .first()
+            .map(|a| a.write_dir.clone())
+            .ok_or_else(|| AppError::Error("Lock file contains no artifacts".to_string()))?;
+
+        Self::from_path(
+            py,
+            Some(spec_dir.join(write_dir)),
+            transport_config,
+            reload_config,
+            load_kwargs,
+        )
     }
 
     #[getter]
