@@ -23176,7 +23176,7 @@ class AppState:
 
     @staticmethod
     def from_spec(
-        path: Path,
+        path: Optional[Path] = None,
         transport_config: Optional[
             Union[
                 GrpcConfig,
@@ -23196,8 +23196,9 @@ class AppState:
         registering and downloading all cards), then delegates to from_path.
 
         Args:
-            path (Path):
-                Path to the opsmlspec.yaml file.
+            path (Optional[Path]):
+                Path to the opsmlspec.yaml file. If not provided, defaults to "opsmlspec.yaml"
+                in the current working directory.
 
             transport_config (KafkaConfig | RabbitMQConfig | RedisConfig | HttpConfig | None):
                 Optional transport configuration for the queue publisher.
