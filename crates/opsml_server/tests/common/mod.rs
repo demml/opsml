@@ -602,6 +602,10 @@ impl TestHelper {
             .unwrap()
     }
 
+    pub async fn send_no_auth(&self, request: Request<Body>) -> Response<Body> {
+        self.app.clone().oneshot(request).await.unwrap()
+    }
+
     pub fn cleanup(&self) {
         cleanup();
     }
