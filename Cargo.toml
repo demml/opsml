@@ -29,6 +29,7 @@ opsml-interfaces = { path = "crates/opsml_interfaces" }
 opsml-genai = { path = "crates/opsml_genai" }
 opsml-registry = { path = "crates/opsml_registry" }
 opsml-experiment = { path = "crates/opsml_experiment" }
+opsml-mcp = { path = "crates/opsml_mcp" }
 opsml-mocks = { path = "crates/opsml_mocks" }
 opsml-server = { path = "crates/opsml_server" }
 opsml-semver = { path = "crates/opsml_semver" }

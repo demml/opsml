@@ -8,6 +8,7 @@ pub mod experiment;
 pub mod files;
 pub mod genai;
 pub mod health;
+pub mod mcp;
 pub mod middleware;
 pub mod router;
 pub mod scouter;
