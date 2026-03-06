@@ -191,7 +191,7 @@ impl AppState {
     /// # Returns
     /// * `AppState` - The loaded application state
     #[staticmethod]
-    #[pyo3(signature = (path, transport_config=None, reload_config=None, load_kwargs=None))]
+    #[pyo3(signature = (path=None, transport_config=None, reload_config=None, load_kwargs=None))]
     pub fn from_spec(
         py: Python,
         path: Option<PathBuf>,
