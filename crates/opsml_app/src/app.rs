@@ -5,8 +5,10 @@ use crate::{
     reloader::{ReloadConfig, ServiceReloader, start_background_download_task},
 };
 use opsml_cards::{ServiceCard, card_service::ServiceInfo};
+use opsml_cli::install_service;
 use opsml_state::app_state;
 use opsml_storage::{StorageError, copy_objects};
+use opsml_toml::LockFile;
 use opsml_types::{SaveName, Suffix, cards::ServiceCardMapping};
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
@@ -176,6 +178,52 @@ impl AppState {
             load_kwargs: kwargs.map(|kw| Arc::new(RwLock::new(kw))),
             reload_state,
         })
+    }
+
+    /// This method will load an application state from an opsmlspec.yaml file. This is intended to be a
+    /// convenience method for users who want to load an application state from a directory containing an opsmlspec.yaml file without having to manually call lock_service or install_service first. This method will attempt to find an opsmlspec.yaml file in the provided path (or current directory if no path is provided), install the service using the lock_service function, and then load the service and queue using the from_path method.
+    /// # Arguments
+    /// * `py` - Python interpreter state
+    /// * `path` - The root path to the application directory containing the opsmlspec.yaml file. If not provided, the current directory will be used.
+    /// * `transport_config` - The transport config to use with the ScouterQueue. If not provided, no queue will be created.
+    /// * `reload_config` - The reload config to use with the ServiceReloader. If not provided, no reloader will be created.
+    /// * `load_kwargs` - Load kwargs to pass to the ServiceCard loader
+    /// # Returns
+    /// * `AppState` - The loaded application state
+    #[staticmethod]
+    #[pyo3(signature = (path=None, transport_config=None, reload_config=None, load_kwargs=None))]
+    pub fn from_spec(
+        py: Python,
+        path: Option<PathBuf>,
+        transport_config: Option<&Bound<'_, PyAny>>,
+        reload_config: Option<ReloadConfig>,
+        load_kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Result<Self, AppError> {
+        // if path is file, get parent directory, if not use path, if None use current directory
+        let spec_dir = match path {
+            Some(p) if p.is_file() => p.parent().unwrap_or_else(|| Path::new(".")).to_path_buf(),
+            Some(p) => p,
+            None => std::env::current_dir()?,
+        };
+
+        install_service(spec_dir.clone(), Some(spec_dir.clone()))
+            .map_err(|e| AppError::Error(e.to_string()))?;
+
+        let lock_file = LockFile::read(&spec_dir).map_err(|e| AppError::Error(e.to_string()))?;
+
+        let write_dir = lock_file
+            .artifact
+            .first()
+            .map(|a| a.write_dir.clone())
+            .ok_or_else(|| AppError::Error("Lock file contains no artifacts".to_string()))?;
+
+        Self::from_path(
+            py,
+            Some(spec_dir.join(write_dir)),
+            transport_config,
+            reload_config,
+            load_kwargs,
+        )
     }
 
     #[getter]
