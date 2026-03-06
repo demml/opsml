@@ -4367,6 +4367,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-mcp"
+version = "3.0.0"
+dependencies = [
+ "anyhow",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "opsml-mocks"
 version = "3.0.0"
 dependencies = [
@@ -4452,6 +4464,7 @@ dependencies = [
  "opsml-colors",
  "opsml-crypt",
  "opsml-events",
+ "opsml-mcp",
  "opsml-semver",
  "opsml-settings",
  "opsml-sql",
