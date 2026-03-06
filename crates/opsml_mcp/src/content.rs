@@ -207,7 +207,9 @@ pub static DOCS: &[DocEntry] = &[
         id: "specs/ts-feature-registry-hardware-async",
         title: "Spec: Registry Hardware Async",
         category: "specs",
-        content: include_str!("../../../py-opsml/docs/docs/specs/ts-feature-opsml-registry-hardware-async.md"),
+        content: include_str!(
+            "../../../py-opsml/docs/docs/specs/ts-feature-opsml-registry-hardware-async.md"
+        ),
     },
     // ---- Examples: getting started ----
     DocEntry {
