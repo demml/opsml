@@ -7,6 +7,7 @@ use anyhow::Result;
 use axum::Router;
 use opsml_auth::auth::AuthManager;
 use opsml_events::EventBus;
+use opsml_mcp::handler::McpHandler;
 use std::sync::Arc;
 use tracing::{info, warn};
 
@@ -32,6 +33,7 @@ pub async fn create_app() -> Result<Router> {
         storage_settings,
         scouter_client,
         event_bus: EventBus::new(100),
+        mcp_handler: McpHandler,
     });
 
     // Start background Scouter health watcher — updates enabled flag every 30 s
