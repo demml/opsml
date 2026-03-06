@@ -77,10 +77,7 @@ async fn test_mcp_tools_list() {
     let tools = resp.result.unwrap()["tools"].clone();
     let tools: Vec<Value> = serde_json::from_value(tools).unwrap();
 
-    let names: Vec<&str> = tools
-        .iter()
-        .map(|t| t["name"].as_str().unwrap())
-        .collect();
+    let names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
 
     assert!(names.contains(&"list_docs"));
     assert!(names.contains(&"read_doc"));
