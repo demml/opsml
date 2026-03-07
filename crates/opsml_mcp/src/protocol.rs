@@ -2,6 +2,9 @@ use serde::de::Deserializer;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+#[cfg(feature = "server")]
+pub use opsml_types::contracts::{CardQueryArgs, RegistrySpaceRequest};
+
 // ---- JSON-RPC 2.0 response ----
 
 #[derive(Serialize, Deserialize)]
@@ -122,6 +125,13 @@ pub enum ToolCall {
     ListExamples,
     ReadExample(ReadExampleArgs),
     SearchDocs(SearchDocsArgs),
+    // Registry query tools (server feature only)
+    #[cfg(feature = "server")]
+    ListCards(CardQueryArgs),
+    #[cfg(feature = "server")]
+    ListSpaces(RegistrySpaceRequest),
+    #[cfg(feature = "server")]
+    SearchCards(CardQueryArgs),
     /// Unknown tool name — handler returns -32602.
     Unknown(String),
     /// Known tool with malformed arguments — handler returns -32602.
@@ -153,6 +163,27 @@ impl From<RawToolCall> for ToolCall {
                 }),
             "search_docs" => serde_json::from_value::<SearchDocsArgs>(args)
                 .map(ToolCall::SearchDocs)
+                .unwrap_or_else(|e| ToolCall::InvalidArgs {
+                    name: name.clone(),
+                    reason: e.to_string(),
+                }),
+            #[cfg(feature = "server")]
+            "list_cards" => serde_json::from_value::<CardQueryArgs>(args)
+                .map(ToolCall::ListCards)
+                .unwrap_or_else(|e| ToolCall::InvalidArgs {
+                    name: name.clone(),
+                    reason: e.to_string(),
+                }),
+            #[cfg(feature = "server")]
+            "list_spaces" => serde_json::from_value::<RegistrySpaceRequest>(args)
+                .map(ToolCall::ListSpaces)
+                .unwrap_or_else(|e| ToolCall::InvalidArgs {
+                    name: name.clone(),
+                    reason: e.to_string(),
+                }),
+            #[cfg(feature = "server")]
+            "search_cards" => serde_json::from_value::<CardQueryArgs>(args)
+                .map(ToolCall::SearchCards)
                 .unwrap_or_else(|e| ToolCall::InvalidArgs {
                     name: name.clone(),
                     reason: e.to_string(),

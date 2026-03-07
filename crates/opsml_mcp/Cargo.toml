@@ -13,6 +13,9 @@ doctest = false
 name = "opsml-mcp"
 path = "src/main.rs"
 
+[features]
+server = ["dep:opsml-sql", "dep:opsml-types", "dep:opsml-auth"]
+
 [dependencies]
 serde       = { workspace = true, features = ["derive"] }
 serde_json  = { workspace = true }
@@ -20,3 +23,6 @@ tokio       = { workspace = true, features = ["io-util", "io-std", "macros", "rt
 anyhow      = { workspace = true }
 tracing     = { workspace = true }
 tracing-subscriber = { workspace = true }
+opsml-sql   = { path = "../opsml_sql", optional = true }
+opsml-types = { path = "../opsml_types", optional = true }
+opsml-auth  = { path = "../opsml_auth", optional = true }
