@@ -129,8 +129,6 @@ pub enum ToolCall {
     #[cfg(feature = "server")]
     ListCards(CardQueryArgs),
     #[cfg(feature = "server")]
-    GetCard(CardQueryArgs),
-    #[cfg(feature = "server")]
     ListSpaces(RegistrySpaceRequest),
     #[cfg(feature = "server")]
     SearchCards(CardQueryArgs),
@@ -172,13 +170,6 @@ impl From<RawToolCall> for ToolCall {
             #[cfg(feature = "server")]
             "list_cards" => serde_json::from_value::<CardQueryArgs>(args)
                 .map(ToolCall::ListCards)
-                .unwrap_or_else(|e| ToolCall::InvalidArgs {
-                    name: name.clone(),
-                    reason: e.to_string(),
-                }),
-            #[cfg(feature = "server")]
-            "get_card" => serde_json::from_value::<CardQueryArgs>(args)
-                .map(ToolCall::GetCard)
                 .unwrap_or_else(|e| ToolCall::InvalidArgs {
                     name: name.clone(),
                     reason: e.to_string(),

@@ -1,6 +1,8 @@
 use anyhow::Result;
 use opsml_mcp::handler::McpHandler;
 use opsml_mcp::protocol::{JsonRpcRequest, JsonRpcResponse};
+#[cfg(feature = "server")]
+use opsml_auth::permission::UserPermissions;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, BufWriter, Lines, Stdin};
 
 #[tokio::main]
@@ -23,7 +25,7 @@ async fn main() -> Result<()> {
         }
 
         let resp: JsonRpcResponse = match serde_json::from_str::<JsonRpcRequest>(&line) {
-            Ok(req) => handler.handle(req).await,
+            Ok(req) => handler.handle(req, #[cfg(feature = "server")] UserPermissions::new_with_default("mcp-stdio".to_string())).await,
             Err(e) => JsonRpcResponse::err(None, -32700, format!("Parse error: {e}")),
         };
 
