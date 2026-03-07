@@ -6,15 +6,27 @@ use crate::protocol::{
 };
 use serde_json::{Value, json};
 
-pub struct McpHandler;
+#[cfg(feature = "server")]
+use {
+    crate::protocol::{CardQueryArgs, RegistrySpaceRequest},
+    opsml_sql::enums::client::SqlClientEnum,
+    opsml_sql::traits::CardLogicTrait,
+    opsml_types::cards::CardTable,
+    std::sync::Arc,
+};
+
+pub struct McpHandler {
+    #[cfg(feature = "server")]
+    pub sql: Option<Arc<SqlClientEnum>>,
+}
 
 impl McpHandler {
-    pub fn handle(&self, req: JsonRpcRequest) -> JsonRpcResponse {
+    pub async fn handle(&self, req: JsonRpcRequest) -> JsonRpcResponse {
         let JsonRpcRequest { id, call } = req;
         match call {
             McpCall::Initialize(_) => self.initialize(id),
             McpCall::ToolsList => self.tools_list(id),
-            McpCall::ToolsCall(tool_call) => self.dispatch_tool(id, tool_call),
+            McpCall::ToolsCall(tool_call) => self.dispatch_tool(id, tool_call).await,
             McpCall::Unknown(method) => {
                 JsonRpcResponse::err(id, -32601, format!("Method not found: {method}"))
             }
@@ -52,7 +64,8 @@ For Claude Desktop, set the header in claude_desktop_config.json under the serve
     }
 
     fn tools_list(&self, id: Option<Value>) -> JsonRpcResponse {
-        let tools = vec![
+        #[allow(unused_mut)]
+        let mut tools = vec![
             ToolDef {
                 name: "list_docs",
                 description: "List all available OpsML documentation topics (cards, setup, CLI, deployment, monitoring).",
@@ -97,16 +110,84 @@ For Claude Desktop, set the header in claude_desktop_config.json under the serve
                 }),
             },
         ];
+
+        #[cfg(feature = "server")]
+        tools.extend([
+            ToolDef {
+                name: "list_cards",
+                description: "List cards from the live OpsML registry, optionally filtered by space, name, tags, or recency.",
+                input_schema: json!({
+                    "type": "object",
+                    "properties": {
+                        "registry_type": { "type": "string", "description": "Registry type: model, data, experiment, prompt, or service" },
+                        "space": { "type": "string", "description": "Filter by space name" },
+                        "name": { "type": "string", "description": "Filter by card name" },
+                        "tags": { "type": "array", "items": { "type": "string" }, "description": "Filter by tags" },
+                        "limit": { "type": "integer", "description": "Maximum number of results (default 20)" },
+                        "sort_by_timestamp": { "type": "boolean", "description": "Sort by creation time descending (default true)" }
+                    },
+                    "required": ["registry_type"]
+                }),
+            },
+            ToolDef {
+                name: "get_card",
+                description: "Fetch a specific card by UID or by space + name + version.",
+                input_schema: json!({
+                    "type": "object",
+                    "properties": {
+                        "registry_type": { "type": "string", "description": "Registry type: model, data, experiment, prompt, or service" },
+                        "uid": { "type": "string", "description": "Card UID" },
+                        "space": { "type": "string", "description": "Card space" },
+                        "name": { "type": "string", "description": "Card name" },
+                        "version": { "type": "string", "description": "Card version" }
+                    },
+                    "required": ["registry_type"]
+                }),
+            },
+            ToolDef {
+                name: "list_spaces",
+                description: "List all unique space names for a given registry type.",
+                input_schema: json!({
+                    "type": "object",
+                    "properties": {
+                        "registry_type": { "type": "string", "description": "Registry type: model, data, experiment, prompt, or service" }
+                    },
+                    "required": ["registry_type"]
+                }),
+            },
+            ToolDef {
+                name: "search_cards",
+                description: "Search cards by name across a registry type.",
+                input_schema: json!({
+                    "type": "object",
+                    "properties": {
+                        "registry_type": { "type": "string", "description": "Registry type: model, data, experiment, prompt, or service" },
+                        "name": { "type": "string", "description": "Search term matched against card name" },
+                        "limit": { "type": "integer", "description": "Maximum number of results (default 20)" }
+                    },
+                    "required": ["registry_type", "name"]
+                }),
+            },
+        ]);
+
         JsonRpcResponse::ok(id, ToolsListResult { tools })
     }
 
-    fn dispatch_tool(&self, id: Option<Value>, call: ToolCall) -> JsonRpcResponse {
+    async fn dispatch_tool(&self, id: Option<Value>, call: ToolCall) -> JsonRpcResponse {
         match call {
             ToolCall::ListDocs => self.tool_list_docs(id),
             ToolCall::ReadDoc(args) => self.tool_read_doc(id, args),
             ToolCall::ListExamples => self.tool_list_examples(id),
             ToolCall::ReadExample(args) => self.tool_read_example(id, args),
             ToolCall::SearchDocs(args) => self.tool_search_docs(id, args),
+            #[cfg(feature = "server")]
+            ToolCall::ListCards(args) => self.tool_list_cards(id, args).await,
+            #[cfg(feature = "server")]
+            ToolCall::GetCard(args) => self.tool_get_card(id, args).await,
+            #[cfg(feature = "server")]
+            ToolCall::ListSpaces(args) => self.tool_list_spaces(id, args).await,
+            #[cfg(feature = "server")]
+            ToolCall::SearchCards(args) => self.tool_search_cards(id, args).await,
             ToolCall::Unknown(name) => {
                 JsonRpcResponse::err(id, -32602, format!("Unknown tool: {name}"))
             }
@@ -231,5 +312,95 @@ For Claude Desktop, set the header in claude_desktop_config.json under the serve
                 content: vec![TextContent::text(text)],
             },
         )
+    }
+
+    // ---- Registry tools ----
+
+    #[cfg(feature = "server")]
+    async fn tool_list_cards(&self, id: Option<Value>, args: CardQueryArgs) -> JsonRpcResponse {
+        let sql = match self.sql.as_ref() {
+            Some(s) => s,
+            None => return JsonRpcResponse::err(id, -32603, "No database connection available"),
+        };
+        let table = CardTable::from_registry_type(&args.registry_type);
+        match sql.query_cards(&table, &args).await {
+            Ok(results) => {
+                let text = serde_json::to_string_pretty(&results).unwrap_or_default();
+                JsonRpcResponse::ok(
+                    id,
+                    ToolCallResult {
+                        content: vec![TextContent::text(text)],
+                    },
+                )
+            }
+            Err(e) => JsonRpcResponse::err(id, -32603, format!("Query failed: {e}")),
+        }
+    }
+
+    #[cfg(feature = "server")]
+    async fn tool_get_card(&self, id: Option<Value>, args: CardQueryArgs) -> JsonRpcResponse {
+        let sql = match self.sql.as_ref() {
+            Some(s) => s,
+            None => return JsonRpcResponse::err(id, -32603, "No database connection available"),
+        };
+        let table = CardTable::from_registry_type(&args.registry_type);
+        match sql.query_cards(&table, &args).await {
+            Ok(results) => {
+                let text = serde_json::to_string_pretty(&results).unwrap_or_default();
+                JsonRpcResponse::ok(
+                    id,
+                    ToolCallResult {
+                        content: vec![TextContent::text(text)],
+                    },
+                )
+            }
+            Err(e) => JsonRpcResponse::err(id, -32603, format!("Query failed: {e}")),
+        }
+    }
+
+    #[cfg(feature = "server")]
+    async fn tool_list_spaces(
+        &self,
+        id: Option<Value>,
+        args: RegistrySpaceRequest,
+    ) -> JsonRpcResponse {
+        let sql = match self.sql.as_ref() {
+            Some(s) => s,
+            None => return JsonRpcResponse::err(id, -32603, "No database connection available"),
+        };
+        let table = CardTable::from_registry_type(&args.registry_type);
+        match sql.get_unique_space_names(&table).await {
+            Ok(spaces) => {
+                let text = serde_json::to_string_pretty(&spaces).unwrap_or_default();
+                JsonRpcResponse::ok(
+                    id,
+                    ToolCallResult {
+                        content: vec![TextContent::text(text)],
+                    },
+                )
+            }
+            Err(e) => JsonRpcResponse::err(id, -32603, format!("Query failed: {e}")),
+        }
+    }
+
+    #[cfg(feature = "server")]
+    async fn tool_search_cards(&self, id: Option<Value>, args: CardQueryArgs) -> JsonRpcResponse {
+        let sql = match self.sql.as_ref() {
+            Some(s) => s,
+            None => return JsonRpcResponse::err(id, -32603, "No database connection available"),
+        };
+        let table = CardTable::from_registry_type(&args.registry_type);
+        match sql.query_cards(&table, &args).await {
+            Ok(results) => {
+                let text = serde_json::to_string_pretty(&results).unwrap_or_default();
+                JsonRpcResponse::ok(
+                    id,
+                    ToolCallResult {
+                        content: vec![TextContent::text(text)],
+                    },
+                )
+            }
+            Err(e) => JsonRpcResponse::err(id, -32603, format!("Query failed: {e}")),
+        }
     }
 }
