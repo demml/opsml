@@ -25,15 +25,18 @@ pub async fn create_app() -> Result<Router> {
     .await?;
 
     // Create shared state for the application (storage client, auth manager, config)
+    let sql_client = Arc::new(sql_client);
     let app_state = Arc::new(AppState {
         storage_client: Arc::new(storage_client),
-        sql_client: Arc::new(sql_client),
+        sql_client: Arc::clone(&sql_client),
         auth_manager,
         config,
         storage_settings,
         scouter_client,
         event_bus: EventBus::new(100),
-        mcp_handler: McpHandler,
+        mcp_handler: McpHandler {
+            sql: Some(sql_client),
+        },
     });
 
     // Start background Scouter health watcher — updates enabled flag every 30 s

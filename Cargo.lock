@@ -4371,6 +4371,9 @@ name = "opsml-mcp"
 version = "3.0.0"
 dependencies = [
  "anyhow",
+ "opsml-auth",
+ "opsml-sql",
+ "opsml-types",
  "serde",
  "serde_json",
  "tokio",
