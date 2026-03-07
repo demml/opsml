@@ -21,7 +21,7 @@ async fn mcp_handler(
         opsml_mcp::protocol::McpCall::Unknown(_) => "unknown",
     };
 
-    let resp = state.mcp_handler.handle(req);
+    let resp = state.mcp_handler.handle(req).await;
 
     let mut response = Json(resp).into_response();
     response.extensions_mut().insert(AuditContext {

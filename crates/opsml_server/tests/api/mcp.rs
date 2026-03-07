@@ -318,3 +318,187 @@ async fn test_mcp_invalid_tool_args() {
 
     helper.cleanup();
 }
+
+// ---- Registry query tool tests ----
+
+#[tokio::test]
+async fn test_mcp_tools_list_includes_registry_tools() {
+    let helper = TestHelper::new(None).await;
+
+    let resp = send_mcp(
+        &helper,
+        json!({"jsonrpc": "2.0", "id": 1, "method": "tools/list"}),
+    )
+    .await;
+
+    assert!(resp.error.is_none());
+    let tools = resp.result.unwrap()["tools"].clone();
+    let tools: Vec<Value> = serde_json::from_value(tools).unwrap();
+    let names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
+
+    assert!(names.contains(&"list_cards"));
+    assert!(names.contains(&"get_card"));
+    assert!(names.contains(&"list_spaces"));
+    assert!(names.contains(&"search_cards"));
+
+    helper.cleanup();
+}
+
+#[tokio::test]
+async fn test_mcp_list_cards_model() {
+    let helper = TestHelper::new(None).await;
+
+    let resp = send_mcp(
+        &helper,
+        json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+                "name": "list_cards",
+                "arguments": { "registry_type": "model" }
+            }
+        }),
+    )
+    .await;
+
+    assert!(resp.error.is_none());
+    let text = resp.result.unwrap()["content"][0]["text"].clone();
+    let text = text.as_str().unwrap();
+    // Seeded data has Model1–Model10
+    assert!(text.contains("Model1") || text.contains("model"));
+
+    helper.cleanup();
+}
+
+#[tokio::test]
+async fn test_mcp_list_cards_data() {
+    let helper = TestHelper::new(None).await;
+
+    let resp = send_mcp(
+        &helper,
+        json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+                "name": "list_cards",
+                "arguments": { "registry_type": "data", "limit": 5 }
+            }
+        }),
+    )
+    .await;
+
+    assert!(resp.error.is_none());
+    let text = resp.result.unwrap()["content"][0]["text"].clone();
+    assert!(text.as_str().unwrap().contains("Data1"));
+
+    helper.cleanup();
+}
+
+#[tokio::test]
+async fn test_mcp_list_cards_invalid_registry_type() {
+    let helper = TestHelper::new(None).await;
+
+    let resp = send_mcp(
+        &helper,
+        json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+                "name": "list_cards",
+                "arguments": { "registry_type": "bogus" }
+            }
+        }),
+    )
+    .await;
+
+    assert!(resp.result.is_none());
+    let err = resp.error.unwrap();
+    assert_eq!(err.code, -32602);
+
+    helper.cleanup();
+}
+
+#[tokio::test]
+async fn test_mcp_get_card_by_uid() {
+    let helper = TestHelper::new(None).await;
+
+    // uid seeded in populate_db.sql for model registry
+    let resp = send_mcp(
+        &helper,
+        json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+                "name": "get_card",
+                "arguments": {
+                    "registry_type": "model",
+                    "uid": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        }),
+    )
+    .await;
+
+    assert!(resp.error.is_none());
+    let text = resp.result.unwrap()["content"][0]["text"].clone();
+    assert!(text.as_str().unwrap().contains("Model1"));
+
+    helper.cleanup();
+}
+
+#[tokio::test]
+async fn test_mcp_list_spaces_model() {
+    let helper = TestHelper::new(None).await;
+
+    let resp = send_mcp(
+        &helper,
+        json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+                "name": "list_spaces",
+                "arguments": { "registry_type": "model" }
+            }
+        }),
+    )
+    .await;
+
+    assert!(resp.error.is_none());
+    let text = resp.result.unwrap()["content"][0]["text"].clone();
+    let spaces: Vec<String> = serde_json::from_str(text.as_str().unwrap()).unwrap();
+    // Seeded models have spaces repo1–repo10
+    assert!(!spaces.is_empty());
+    assert!(spaces.contains(&"repo1".to_string()));
+
+    helper.cleanup();
+}
+
+#[tokio::test]
+async fn test_mcp_search_cards() {
+    let helper = TestHelper::new(None).await;
+
+    let resp = send_mcp(
+        &helper,
+        json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+                "name": "search_cards",
+                "arguments": { "registry_type": "data", "name": "Data1" }
+            }
+        }),
+    )
+    .await;
+
+    assert!(resp.error.is_none());
+    let text = resp.result.unwrap()["content"][0]["text"].clone();
+    assert!(text.as_str().unwrap().contains("Data1"));
+
+    helper.cleanup();
+}
