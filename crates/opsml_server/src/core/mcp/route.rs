@@ -21,11 +21,12 @@ async fn mcp_handler(
         opsml_mcp::protocol::McpCall::Unknown(_) => "unknown",
     };
 
-    let resp = state.mcp_handler.handle(req).await;
+    let username = perms.username.clone();
+    let resp = state.mcp_handler.handle(req, perms).await;
 
     let mut response = Json(resp).into_response();
     response.extensions_mut().insert(AuditContext {
-        resource_id: perms.username,
+        resource_id: username,
         resource_type: ResourceType::Database,
         metadata: format!("MCP method: {method_label}"),
         operation: Operation::Read,

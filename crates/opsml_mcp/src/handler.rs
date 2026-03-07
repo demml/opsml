@@ -9,6 +9,7 @@ use serde_json::{Value, json};
 #[cfg(feature = "server")]
 use {
     crate::protocol::{CardQueryArgs, RegistrySpaceRequest},
+    opsml_auth::permission::UserPermissions,
     opsml_sql::enums::client::SqlClientEnum,
     opsml_sql::traits::CardLogicTrait,
     opsml_types::cards::CardTable,
@@ -21,12 +22,19 @@ pub struct McpHandler {
 }
 
 impl McpHandler {
-    pub async fn handle(&self, req: JsonRpcRequest) -> JsonRpcResponse {
+    pub async fn handle(
+        &self,
+        req: JsonRpcRequest,
+        #[cfg(feature = "server")] perms: UserPermissions,
+    ) -> JsonRpcResponse {
         let JsonRpcRequest { id, call } = req;
         match call {
             McpCall::Initialize(_) => self.initialize(id),
             McpCall::ToolsList => self.tools_list(id),
-            McpCall::ToolsCall(tool_call) => self.dispatch_tool(id, tool_call).await,
+            McpCall::ToolsCall(tool_call) => {
+                self.dispatch_tool(id, tool_call, #[cfg(feature = "server")] perms)
+                    .await
+            }
             McpCall::Unknown(method) => {
                 JsonRpcResponse::err(id, -32601, format!("Method not found: {method}"))
             }
@@ -130,21 +138,6 @@ For Claude Desktop, set the header in claude_desktop_config.json under the serve
                 }),
             },
             ToolDef {
-                name: "get_card",
-                description: "Fetch a specific card by UID or by space + name + version.",
-                input_schema: json!({
-                    "type": "object",
-                    "properties": {
-                        "registry_type": { "type": "string", "description": "Registry type: model, data, experiment, prompt, or service" },
-                        "uid": { "type": "string", "description": "Card UID" },
-                        "space": { "type": "string", "description": "Card space" },
-                        "name": { "type": "string", "description": "Card name" },
-                        "version": { "type": "string", "description": "Card version" }
-                    },
-                    "required": ["registry_type"]
-                }),
-            },
-            ToolDef {
                 name: "list_spaces",
                 description: "List all unique space names for a given registry type.",
                 input_schema: json!({
@@ -173,7 +166,12 @@ For Claude Desktop, set the header in claude_desktop_config.json under the serve
         JsonRpcResponse::ok(id, ToolsListResult { tools })
     }
 
-    async fn dispatch_tool(&self, id: Option<Value>, call: ToolCall) -> JsonRpcResponse {
+    async fn dispatch_tool(
+        &self,
+        id: Option<Value>,
+        call: ToolCall,
+        #[cfg(feature = "server")] perms: UserPermissions,
+    ) -> JsonRpcResponse {
         match call {
             ToolCall::ListDocs => self.tool_list_docs(id),
             ToolCall::ReadDoc(args) => self.tool_read_doc(id, args),
@@ -181,13 +179,11 @@ For Claude Desktop, set the header in claude_desktop_config.json under the serve
             ToolCall::ReadExample(args) => self.tool_read_example(id, args),
             ToolCall::SearchDocs(args) => self.tool_search_docs(id, args),
             #[cfg(feature = "server")]
-            ToolCall::ListCards(args) => self.tool_list_cards(id, args).await,
+            ToolCall::ListCards(args) => self.tool_list_cards(id, args, perms).await,
             #[cfg(feature = "server")]
-            ToolCall::GetCard(args) => self.tool_get_card(id, args).await,
+            ToolCall::ListSpaces(args) => self.tool_list_spaces(id, args, perms).await,
             #[cfg(feature = "server")]
-            ToolCall::ListSpaces(args) => self.tool_list_spaces(id, args).await,
-            #[cfg(feature = "server")]
-            ToolCall::SearchCards(args) => self.tool_search_cards(id, args).await,
+            ToolCall::SearchCards(args) => self.tool_search_cards(id, args, perms).await,
             ToolCall::Unknown(name) => {
                 JsonRpcResponse::err(id, -32602, format!("Unknown tool: {name}"))
             }
@@ -317,28 +313,12 @@ For Claude Desktop, set the header in claude_desktop_config.json under the serve
     // ---- Registry tools ----
 
     #[cfg(feature = "server")]
-    async fn tool_list_cards(&self, id: Option<Value>, args: CardQueryArgs) -> JsonRpcResponse {
-        let sql = match self.sql.as_ref() {
-            Some(s) => s,
-            None => return JsonRpcResponse::err(id, -32603, "No database connection available"),
-        };
-        let table = CardTable::from_registry_type(&args.registry_type);
-        match sql.query_cards(&table, &args).await {
-            Ok(results) => {
-                let text = serde_json::to_string_pretty(&results).unwrap_or_default();
-                JsonRpcResponse::ok(
-                    id,
-                    ToolCallResult {
-                        content: vec![TextContent::text(text)],
-                    },
-                )
-            }
-            Err(e) => JsonRpcResponse::err(id, -32603, format!("Query failed: {e}")),
-        }
-    }
-
-    #[cfg(feature = "server")]
-    async fn tool_get_card(&self, id: Option<Value>, args: CardQueryArgs) -> JsonRpcResponse {
+    async fn tool_list_cards(
+        &self,
+        id: Option<Value>,
+        args: CardQueryArgs,
+        _perms: UserPermissions,
+    ) -> JsonRpcResponse {
         let sql = match self.sql.as_ref() {
             Some(s) => s,
             None => return JsonRpcResponse::err(id, -32603, "No database connection available"),
@@ -363,6 +343,7 @@ For Claude Desktop, set the header in claude_desktop_config.json under the serve
         &self,
         id: Option<Value>,
         args: RegistrySpaceRequest,
+        _perms: UserPermissions,
     ) -> JsonRpcResponse {
         let sql = match self.sql.as_ref() {
             Some(s) => s,
@@ -384,7 +365,12 @@ For Claude Desktop, set the header in claude_desktop_config.json under the serve
     }
 
     #[cfg(feature = "server")]
-    async fn tool_search_cards(&self, id: Option<Value>, args: CardQueryArgs) -> JsonRpcResponse {
+    async fn tool_search_cards(
+        &self,
+        id: Option<Value>,
+        args: CardQueryArgs,
+        _perms: UserPermissions,
+    ) -> JsonRpcResponse {
         let sql = match self.sql.as_ref() {
             Some(s) => s,
             None => return JsonRpcResponse::err(id, -32603, "No database connection available"),

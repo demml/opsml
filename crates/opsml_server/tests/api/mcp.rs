@@ -337,7 +337,6 @@ async fn test_mcp_tools_list_includes_registry_tools() {
     let names: Vec<&str> = tools.iter().map(|t| t["name"].as_str().unwrap()).collect();
 
     assert!(names.contains(&"list_cards"));
-    assert!(names.contains(&"get_card"));
     assert!(names.contains(&"list_spaces"));
     assert!(names.contains(&"search_cards"));
 
@@ -417,35 +416,6 @@ async fn test_mcp_list_cards_invalid_registry_type() {
     assert!(resp.result.is_none());
     let err = resp.error.unwrap();
     assert_eq!(err.code, -32602);
-
-    helper.cleanup();
-}
-
-#[tokio::test]
-async fn test_mcp_get_card_by_uid() {
-    let helper = TestHelper::new(None).await;
-
-    // uid seeded in populate_db.sql for model registry
-    let resp = send_mcp(
-        &helper,
-        json!({
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "tools/call",
-            "params": {
-                "name": "get_card",
-                "arguments": {
-                    "registry_type": "model",
-                    "uid": "550e8400-e29b-41d4-a716-446655440000"
-                }
-            }
-        }),
-    )
-    .await;
-
-    assert!(resp.error.is_none());
-    let text = resp.result.unwrap()["content"][0]["text"].clone();
-    assert!(text.as_str().unwrap().contains("Model1"));
 
     helper.cleanup();
 }
