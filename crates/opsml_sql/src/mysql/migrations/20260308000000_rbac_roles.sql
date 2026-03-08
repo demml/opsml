@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS opsml_role (
     id          INT AUTO_INCREMENT PRIMARY KEY,
     name        VARCHAR(255) NOT NULL UNIQUE,
-    description TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL DEFAULT ('No description available'),
     permissions JSON NOT NULL,
     is_system   TINYINT(1) NOT NULL DEFAULT 0,
     created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
