@@ -10,8 +10,8 @@ use axum::{
     response::Json,
 };
 use axum_extra::extract::cookie::CookieJar;
-use opsml_auth::permission::UserPermissions;
-use opsml_sql::traits::UserLogicTrait;
+use opsml_auth::permission::{UserPermissions, resolve_effective_permissions};
+use opsml_sql::traits::{RoleLogicTrait, UserLogicTrait};
 use serde::Serialize;
 use std::sync::Arc;
 use tracing::{error, info};
@@ -63,6 +63,7 @@ pub async fn auth_api_middleware(
             let group_permissions = claims.group_permissions.clone();
             UserPermissions {
                 username: claims.sub,
+                effective_permissions: permissions.clone(),
                 permissions,
                 group_permissions,
             }
@@ -136,7 +137,14 @@ pub async fn auth_api_middleware(
                     ));
                 }
 
+                let roles = state
+                    .sql_client
+                    .get_roles_by_names(&user.group_permissions)
+                    .await
+                    .unwrap_or_default();
+                let effective = resolve_effective_permissions(&user, &roles);
                 let auth_middleware = UserPermissions {
+                    effective_permissions: effective,
                     username: user.username,
                     permissions: user.permissions,
                     group_permissions: user.group_permissions,

@@ -8,6 +8,7 @@ use axum::Router;
 use opsml_auth::auth::AuthManager;
 use opsml_events::EventBus;
 use opsml_mcp::handler::McpHandler;
+use opsml_sql::traits::RoleLogicTrait;
 use std::sync::Arc;
 use tracing::{info, warn};
 
@@ -51,6 +52,11 @@ pub async fn create_app() -> Result<Router> {
     {
         // Log error but don't fail startup
         warn!("Failed to initialize default user: {e}");
+    }
+
+    // Seed system roles if not already present
+    if let Err(e) = app_state.sql_client.seed_system_roles().await {
+        warn!("Failed to seed system roles: {e}");
     }
 
     info!("✅ Application state created");

@@ -1,0 +1,1 @@
+UPDATE opsml_role SET description = ?, permissions = ?, updated_at = CURRENT_TIMESTAMP WHERE name = ?;

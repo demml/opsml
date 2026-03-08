@@ -1,0 +1,1 @@
+DELETE FROM opsml_role WHERE name = ? AND is_system = 0;
