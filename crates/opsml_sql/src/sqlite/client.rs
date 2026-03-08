@@ -1527,7 +1527,7 @@ mod tests {
 
         assert_eq!(user_to_update.username, "user");
         assert_eq!(user_to_update.password_hash, "pass");
-        assert_eq!(user_to_update.group_permissions, vec!["user"]);
+        assert_eq!(user_to_update.roles, vec!["user"]);
         assert_eq!(user_to_update.email, "email");
 
         // update user

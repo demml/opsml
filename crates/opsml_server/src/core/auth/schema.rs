@@ -41,7 +41,7 @@ pub struct LoginResponse {
     pub username: String,
     pub jwt_token: String,
     pub permissions: Vec<String>,
-    pub group_permissions: Vec<String>,
+    pub roles: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Default)]

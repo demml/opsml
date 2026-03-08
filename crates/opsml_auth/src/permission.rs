@@ -5,13 +5,13 @@ use serde::{Deserialize, Serialize};
 pub struct UserPermissions {
     pub username: String,
     pub permissions: Vec<String>,
-    pub group_permissions: Vec<String>,
+    pub roles: Vec<String>,
     pub effective_permissions: Vec<String>,
 }
 
 impl UserPermissions {
     pub fn is_admin(&self) -> bool {
-        self.group_permissions.contains(&"admin".to_string())
+        self.roles.contains(&"admin".to_string())
     }
 
     pub fn has_permission(&self, permission: &str) -> bool {
@@ -55,7 +55,7 @@ impl UserPermissions {
             username,
             effective_permissions: permissions.clone(),
             permissions,
-            group_permissions: Vec::new(),
+            roles: Vec::new(),
         }
     }
 }

@@ -60,12 +60,12 @@ pub async fn auth_api_middleware(
     let auth_middleware = match state.auth_manager.validate_jwt(&access_token) {
         Ok(claims) => {
             let permissions = claims.permissions.clone();
-            let group_permissions = claims.group_permissions.clone();
+            let roles = claims.roles.clone();
             UserPermissions {
                 username: claims.sub,
                 effective_permissions: permissions.clone(),
                 permissions,
-                group_permissions,
+                roles,
             }
         }
         Err(_) => {
@@ -137,17 +137,17 @@ pub async fn auth_api_middleware(
                     ));
                 }
 
-                let roles = state
+                let user_roles = state
                     .sql_client
-                    .get_roles_by_names(&user.group_permissions)
+                    .get_roles_by_names(&user.roles)
                     .await
                     .unwrap_or_default();
-                let effective = resolve_effective_permissions(&user, &roles);
+                let effective = resolve_effective_permissions(&user, &user_roles);
                 let auth_middleware = UserPermissions {
                     effective_permissions: effective,
                     username: user.username,
                     permissions: user.permissions,
-                    group_permissions: user.group_permissions,
+                    roles: user.roles,
                 };
                 req.extensions_mut().insert(auth_middleware);
 

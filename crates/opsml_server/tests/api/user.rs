@@ -21,7 +21,7 @@ async fn test_opsml_server_user_crud() {
         password: "test_password".to_string(),
         email: "test_user@example.com".to_string(),
         permissions: Some(vec!["read:all".to_string(), "write:all".to_string()]),
-        group_permissions: Some(vec!["user".to_string()]),
+        roles: Some(vec!["user".to_string()]),
         role: Some("user".to_string()),
         active: Some(true),
     };
@@ -45,10 +45,7 @@ async fn test_opsml_server_user_crud() {
         user_response.user.permissions,
         vec!["read:all".to_string(), "write:all".to_string()]
     );
-    assert_eq!(
-        user_response.user.group_permissions,
-        vec!["user".to_string()]
-    );
+    assert_eq!(user_response.user.roles, vec!["user".to_string()]);
     assert!(user_response.user.active);
 
     let recovery_codes = user_response.recovery_codes;
@@ -75,7 +72,7 @@ async fn test_opsml_server_user_crud() {
             "write:all".to_string(),
             "execute:all".to_string(),
         ]),
-        group_permissions: Some(vec!["user".to_string(), "developer".to_string()]),
+        roles: Some(vec!["user".to_string(), "developer".to_string()]),
         active: Some(true),
         favorite_spaces: None,
     };
@@ -95,7 +92,7 @@ async fn test_opsml_server_user_crud() {
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let mut user_response: UserResponse = serde_json::from_slice(&body).unwrap();
     user_response.permissions.sort();
-    user_response.group_permissions.sort();
+    user_response.roles.sort();
 
     assert_eq!(
         user_response.permissions,
@@ -106,7 +103,7 @@ async fn test_opsml_server_user_crud() {
         ]
     );
     assert_eq!(
-        user_response.group_permissions,
+        user_response.roles,
         vec!["developer".to_string(), "user".to_string()]
     );
 
@@ -190,7 +187,7 @@ async fn test_opsml_login_logout() {
         password: "test_password".to_string(),
         email: "test_user@example.com".to_string(),
         permissions: Some(vec!["read:all".to_string(), "write:all".to_string()]),
-        group_permissions: Some(vec!["user".to_string()]),
+        roles: Some(vec!["user".to_string()]),
         role: Some("user".to_string()),
         active: Some(true),
     };

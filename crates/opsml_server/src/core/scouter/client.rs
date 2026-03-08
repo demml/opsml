@@ -1,5 +1,17 @@
 use crate::core::error::ServerError;
-use crate::core::user::schema::CreateUserRequest;
+use serde::Serialize;
+
+// Scouter's user API still uses `group_permissions` — map at the boundary only.
+#[derive(Serialize)]
+struct ScouterCreateUserRequest {
+    username: String,
+    password: String,
+    email: String,
+    permissions: Option<Vec<String>>,
+    group_permissions: Option<Vec<String>>,
+    role: Option<String>,
+    active: Option<bool>,
+}
 use anyhow::Result;
 use opsml_client::error::ApiClientError;
 use opsml_settings::config::ScouterSettings;
@@ -265,12 +277,12 @@ impl ScouterApiClient {
         user: &User,
         password: &str,
     ) -> Result<Response, ApiClientError> {
-        let user_request = CreateUserRequest {
+        let user_request = ScouterCreateUserRequest {
             username: user.username.clone(),
             password: password.to_string(),
             email: user.email.clone(),
             permissions: Some(user.permissions.clone()),
-            group_permissions: Some(user.group_permissions.clone()),
+            group_permissions: Some(user.roles.clone()),
             role: Some(user.role.clone()),
             active: Some(user.active),
         };

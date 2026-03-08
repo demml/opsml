@@ -28,7 +28,10 @@ async fn test_opsml_server_role_crud() {
     let system_role_names = ["admin", "user", "viewer", "data_scientist"];
     for role_name in &system_role_names {
         let role = list_response.roles.iter().find(|r| r.name == *role_name);
-        assert!(role.is_some(), "Expected system role '{role_name}' not found");
+        assert!(
+            role.is_some(),
+            "Expected system role '{role_name}' not found"
+        );
         assert!(
             role.unwrap().is_system,
             "Role '{role_name}' should have is_system=true"
