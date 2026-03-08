@@ -1524,7 +1524,7 @@ mod tests {
         let mut user = client.user.get_user("user", None).await.unwrap().unwrap();
 
         assert_eq!(user.username, "user");
-        assert_eq!(user.group_permissions, vec!["user"]);
+        assert_eq!(user.roles, vec!["user"]);
         assert_eq!(user.email, "email");
 
         // update user

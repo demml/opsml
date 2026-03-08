@@ -37,7 +37,7 @@ pub async fn create_user(
     // need to ensure that a create request that has admin perms can only be created by an admin
     if !perms.is_admin()
         && create_req
-            .group_permissions
+            .roles
             .as_ref()
             .is_some_and(|p| p.contains(&"admin".to_string()))
     {
@@ -63,7 +63,7 @@ pub async fn create_user(
         create_req.email,
         hashed_recovery_codes,
         create_req.permissions,
-        create_req.group_permissions,
+        create_req.roles,
         create_req.role,
         None,
         None,
@@ -205,9 +205,9 @@ async fn update_user(
             user.permissions = hash_set.into_iter().collect();
         }
 
-        if let Some(group_permissions) = update_req.group_permissions {
-            let hash_set: std::collections::HashSet<_> = group_permissions.into_iter().collect();
-            user.group_permissions = hash_set.into_iter().collect();
+        if let Some(roles) = update_req.roles {
+            let hash_set: std::collections::HashSet<_> = roles.into_iter().collect();
+            user.roles = hash_set.into_iter().collect();
         }
 
         if let Some(active) = update_req.active {
@@ -328,7 +328,7 @@ async fn assign_roles(
     }
 
     let mut user = get_user_from_db(&state.sql_client, &username, None).await?;
-    user.group_permissions = req.roles;
+    user.roles = req.roles;
 
     if let Err(e) = state.sql_client.update_user(&user).await {
         error!("Failed to assign roles to user: {e}");
@@ -351,7 +351,7 @@ async fn remove_role(
     }
 
     let mut user = get_user_from_db(&state.sql_client, &username, None).await?;
-    user.group_permissions.retain(|r| r != &role);
+    user.roles.retain(|r| r != &role);
 
     if let Err(e) = state.sql_client.update_user(&user).await {
         error!("Failed to remove role from user: {e}");
@@ -380,16 +380,16 @@ async fn get_effective_permissions(
     }
 
     let user = get_user_from_db(&state.sql_client, &username, None).await?;
-    let roles = state
+    let role_records = state
         .sql_client
-        .get_roles_by_names(&user.group_permissions)
+        .get_roles_by_names(&user.roles)
         .await
         .map_err(|e| internal_server_error(e, "Failed to get roles", None))?;
-    let effective = resolve_effective_permissions(&user, &roles);
+    let effective = resolve_effective_permissions(&user, &role_records);
 
     Ok(Json(EffectivePermissionsResponse {
         username: user.username,
-        roles: user.group_permissions,
+        roles: user.roles,
         direct_permissions: user.permissions,
         effective_permissions: effective,
     }))

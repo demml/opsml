@@ -1346,7 +1346,7 @@ pub struct User {
     pub password_hash: String,
     pub hashed_recovery_codes: Vec<String>,
     pub permissions: Vec<String>,
-    pub group_permissions: Vec<String>,
+    pub roles: Vec<String>,
     pub role: String,
     pub favorite_spaces: Vec<String>,
     pub refresh_token: Option<String>,
@@ -1363,7 +1363,7 @@ impl User {
         email: String,
         hashed_recovery_codes: Vec<String>,
         permissions: Option<Vec<String>>,
-        group_permissions: Option<Vec<String>>,
+        roles: Option<Vec<String>>,
         role: Option<String>,
         favorite_spaces: Option<Vec<String>>,
         authentication_type: Option<String>,
@@ -1378,7 +1378,7 @@ impl User {
             password_hash,
             hashed_recovery_codes,
             permissions: permissions.unwrap_or(vec!["read:all".to_string()]),
-            group_permissions: group_permissions.unwrap_or(vec!["user".to_string()]),
+            roles: roles.unwrap_or(vec!["user".to_string()]),
             favorite_spaces: favorite_spaces.unwrap_or_default(),
             role: role.unwrap_or("user".to_string()),
             refresh_token: None,
@@ -1400,7 +1400,7 @@ impl User {
             password_hash: "[redacted]".to_string(),
             hashed_recovery_codes: Vec::new(),
             permissions: vec!["read:all".to_string(), "write:all".to_string()],
-            group_permissions: vec!["user".to_string()],
+            roles: vec!["user".to_string()],
             favorite_spaces: Vec::new(),
             role: "user".to_string(),
             refresh_token: None,
@@ -1422,10 +1422,7 @@ impl User {
         map.insert("password_hash".to_string(), "[redacted]".into());
         map.insert("hashed_recovery_codes".to_string(), "[redacted]".into());
         map.insert("permissions".to_string(), self.permissions.clone().into());
-        map.insert(
-            "group_permissions".to_string(),
-            self.group_permissions.clone().into(),
-        );
+        map.insert("roles".to_string(), self.roles.clone().into());
         map.insert("role".to_string(), self.role.clone().into());
         map.insert(
             "favorite_spaces".to_string(),
@@ -1453,7 +1450,7 @@ impl std::fmt::Debug for User {
             .field("password_hash", &"[redacted]")
             .field("hashed_recovery_codes", &"[redacted]")
             .field("permissions", &"[redacted]")
-            .field("group_permissions", &self.group_permissions)
+            .field("roles", &self.roles)
             .field("role", &self.role)
             .field("favorite_spaces", &self.favorite_spaces)
             .field("created_at", &self.created_at)

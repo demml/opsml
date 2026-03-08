@@ -1,3 +1,5 @@
+ALTER TABLE opsml_user RENAME COLUMN group_permissions TO roles;
+
 CREATE TABLE IF NOT EXISTS opsml_role (
     id          INT AUTO_INCREMENT PRIMARY KEY,
     name        VARCHAR(255) NOT NULL UNIQUE,

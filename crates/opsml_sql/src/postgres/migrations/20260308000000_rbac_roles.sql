@@ -1,3 +1,5 @@
+ALTER TABLE opsml_user RENAME COLUMN group_permissions TO roles;
+
 CREATE TABLE IF NOT EXISTS opsml_role (
     id          SERIAL PRIMARY KEY,
     name        TEXT NOT NULL UNIQUE,

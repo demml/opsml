@@ -129,7 +129,7 @@ pub async fn api_login_handler(
     // Resolve effective permissions (roles → union of direct + role permissions)
     let roles = state
         .sql_client
-        .get_roles_by_names(&user.group_permissions)
+        .get_roles_by_names(&user.roles)
         .await
         .unwrap_or_default();
     user.permissions = resolve_effective_permissions(&user, &roles);
@@ -272,7 +272,7 @@ async fn ui_login_handler(
     // Resolve effective permissions (roles → union of direct + role permissions)
     let roles = state
         .sql_client
-        .get_roles_by_names(&user.group_permissions)
+        .get_roles_by_names(&user.roles)
         .await
         .unwrap_or_default();
     user.permissions = resolve_effective_permissions(&user, &roles);
@@ -309,7 +309,7 @@ async fn ui_login_handler(
         message: "User authenticated".to_string(),
         username: user.username,
         jwt_token,
-        group_permissions: user.group_permissions,
+        roles: user.roles,
         permissions: user.permissions,
     }))
 }
@@ -376,7 +376,7 @@ pub async fn api_refresh_token_handler(
         // Resolve effective permissions (roles → union of direct + role permissions)
         let roles = state
             .sql_client
-            .get_roles_by_names(&user.group_permissions)
+            .get_roles_by_names(&user.roles)
             .await
             .unwrap_or_default();
         user.permissions = resolve_effective_permissions(&user, &roles);
@@ -445,7 +445,7 @@ async fn validate_jwt_token(
                     user_response: UserResponse {
                         username: user.username,
                         permissions: user.permissions,
-                        group_permissions: user.group_permissions,
+                        roles: user.roles,
                         active: user.active,
                         email: user.email,
                         role: user.role,
@@ -512,7 +512,7 @@ async fn exchange_callback_token(
     // Resolve effective permissions (roles → union of direct + role permissions)
     let roles = state
         .sql_client
-        .get_roles_by_names(&user.group_permissions)
+        .get_roles_by_names(&user.roles)
         .await
         .unwrap_or_default();
     user.permissions = resolve_effective_permissions(&user, &roles);
@@ -550,7 +550,7 @@ async fn exchange_callback_token(
         message: "User authenticated".to_string(),
         username: user.username,
         jwt_token,
-        group_permissions: user.group_permissions,
+        roles: user.roles,
         permissions: user.permissions,
     }))
 }

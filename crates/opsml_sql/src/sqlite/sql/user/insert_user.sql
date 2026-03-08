@@ -1,1 +1,1 @@
-INSERT INTO opsml_user (username, password_hash, hashed_recovery_codes, permissions, group_permissions, favorite_spaces, role, active, email, authentication_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO opsml_user (username, password_hash, hashed_recovery_codes, permissions, roles, favorite_spaces, role, active, email, authentication_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
