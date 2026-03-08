@@ -1326,6 +1326,17 @@ impl Default for HardwareMetricsRecord {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct Role {
+    pub id: Option<i32>,
+    pub name: String,
+    pub description: String,
+    pub permissions: Vec<String>,
+    pub is_system: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct User {
     pub id: Option<i32>,

@@ -4,12 +4,12 @@ use crate::postgres::client::PostgresClient;
 use crate::schemas::VersionSummary;
 use crate::schemas::schema::{
     ArtifactSqlRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord,
-    ParameterRecord, QueryStats, ServerCard, ServiceCardRecord, User,
+    ParameterRecord, QueryStats, Role, ServerCard, ServiceCardRecord, User,
 };
 use crate::sqlite::client::SqliteClient;
 use crate::traits::{
-    ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, ExperimentLogicTrait, SpaceLogicTrait,
-    UserLogicTrait,
+    ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, ExperimentLogicTrait, RoleLogicTrait,
+    SpaceLogicTrait, UserLogicTrait,
 };
 use anyhow::Context;
 use anyhow::Result as AnyhowResult;
@@ -503,6 +503,84 @@ impl UserLogicTrait for SqlClientEnum {
             SqlClientEnum::Postgres(client) => client.user.update_user(user).await,
             SqlClientEnum::Sqlite(client) => client.user.update_user(user).await,
             SqlClientEnum::MySql(client) => client.user.update_user(user).await,
+        }
+    }
+
+    async fn get_users_paginated(
+        &self,
+        limit: i64,
+        offset: i64,
+        search: Option<&str>,
+    ) -> Result<(Vec<User>, i64), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.user.get_users_paginated(limit, offset, search).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.user.get_users_paginated(limit, offset, search).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.user.get_users_paginated(limit, offset, search).await
+            }
+        }
+    }
+}
+
+#[async_trait]
+impl RoleLogicTrait for SqlClientEnum {
+    async fn insert_role(&self, role: &Role) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.role.insert_role(role).await,
+            SqlClientEnum::Sqlite(client) => client.role.insert_role(role).await,
+            SqlClientEnum::MySql(client) => client.role.insert_role(role).await,
+        }
+    }
+
+    async fn get_role(&self, name: &str) -> Result<Option<Role>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.role.get_role(name).await,
+            SqlClientEnum::Sqlite(client) => client.role.get_role(name).await,
+            SqlClientEnum::MySql(client) => client.role.get_role(name).await,
+        }
+    }
+
+    async fn get_roles(&self) -> Result<Vec<Role>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.role.get_roles().await,
+            SqlClientEnum::Sqlite(client) => client.role.get_roles().await,
+            SqlClientEnum::MySql(client) => client.role.get_roles().await,
+        }
+    }
+
+    async fn get_roles_by_names(&self, names: &[String]) -> Result<Vec<Role>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.role.get_roles_by_names(names).await,
+            SqlClientEnum::Sqlite(client) => client.role.get_roles_by_names(names).await,
+            SqlClientEnum::MySql(client) => client.role.get_roles_by_names(names).await,
+        }
+    }
+
+    async fn update_role(&self, role: &Role) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.role.update_role(role).await,
+            SqlClientEnum::Sqlite(client) => client.role.update_role(role).await,
+            SqlClientEnum::MySql(client) => client.role.update_role(role).await,
+        }
+    }
+
+    async fn delete_role(&self, name: &str) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.role.delete_role(name).await,
+            SqlClientEnum::Sqlite(client) => client.role.delete_role(name).await,
+            SqlClientEnum::MySql(client) => client.role.delete_role(name).await,
+        }
+    }
+
+    async fn seed_system_roles(&self) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.role.seed_system_roles().await,
+            SqlClientEnum::Sqlite(client) => client.role.seed_system_roles().await,
+            SqlClientEnum::MySql(client) => client.role.seed_system_roles().await,
         }
     }
 }
