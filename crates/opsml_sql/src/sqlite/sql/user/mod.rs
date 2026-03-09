@@ -20,8 +20,7 @@ impl FromRow<'_, SqliteRow> for User {
         let refresh_token = row.try_get("refresh_token")?;
         let authentication_type: String = row.try_get("authentication_type")?;
 
-        let group_permissions: Vec<String> =
-            serde_json::from_value(row.try_get("group_permissions")?).unwrap_or_default();
+        let roles: Vec<String> = serde_json::from_value(row.try_get("roles")?).unwrap_or_default();
 
         let permissions: Vec<String> =
             serde_json::from_value(row.try_get("permissions")?).unwrap_or_default();
@@ -44,7 +43,7 @@ impl FromRow<'_, SqliteRow> for User {
             refresh_token,
             hashed_recovery_codes,
             permissions,
-            group_permissions,
+            roles,
             favorite_spaces,
             authentication_type,
         })
@@ -67,7 +66,7 @@ impl UserLogicTrait for UserLogicSqliteClient {
         let query = SqliteQueryHelper::get_user_insert_query();
 
         let hashed_recovery_codes = serde_json::to_string(&user.hashed_recovery_codes)?;
-        let group_permissions = serde_json::to_string(&user.group_permissions)?;
+        let roles = serde_json::to_string(&user.roles)?;
         let permissions = serde_json::to_string(&user.permissions)?;
         let favorite_spaces = serde_json::to_string(&user.favorite_spaces)?;
 
@@ -76,7 +75,7 @@ impl UserLogicTrait for UserLogicSqliteClient {
             .bind(&user.password_hash)
             .bind(&hashed_recovery_codes)
             .bind(&permissions)
-            .bind(&group_permissions)
+            .bind(&roles)
             .bind(&favorite_spaces)
             .bind(&user.role)
             .bind(user.active)
@@ -153,7 +152,7 @@ impl UserLogicTrait for UserLogicSqliteClient {
         let query = SqliteQueryHelper::get_user_update_query();
 
         let hashed_recovery_codes = serde_json::to_string(&user.hashed_recovery_codes)?;
-        let group_permissions = serde_json::to_string(&user.group_permissions)?;
+        let roles = serde_json::to_string(&user.roles)?;
         let permissions = serde_json::to_string(&user.permissions)?;
         let favorite_spaces = serde_json::to_string(&user.favorite_spaces)?;
 
@@ -162,7 +161,7 @@ impl UserLogicTrait for UserLogicSqliteClient {
             .bind(&user.password_hash)
             .bind(&hashed_recovery_codes)
             .bind(&permissions)
-            .bind(&group_permissions)
+            .bind(&roles)
             .bind(&favorite_spaces)
             .bind(&user.refresh_token)
             .bind(&user.email)
@@ -173,5 +172,46 @@ impl UserLogicTrait for UserLogicSqliteClient {
             .await?;
 
         Ok(())
+    }
+
+    async fn get_users_paginated(
+        &self,
+        limit: i64,
+        offset: i64,
+        search: Option<&str>,
+    ) -> Result<(Vec<User>, i64), SqlError> {
+        let (users, total) = if let Some(search) = search {
+            let pattern = format!("%{search}%");
+            let users = sqlx::query_as::<_, User>(
+                "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, roles, favorite_spaces, role, refresh_token, email, updated_at, authentication_type FROM opsml_user WHERE username LIKE ? OR email LIKE ? ORDER BY username LIMIT ? OFFSET ?",
+            )
+            .bind(&pattern)
+            .bind(&pattern)
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await?;
+            let total: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM opsml_user WHERE username LIKE ? OR email LIKE ?",
+            )
+            .bind(&pattern)
+            .bind(&pattern)
+            .fetch_one(&self.pool)
+            .await?;
+            (users, total)
+        } else {
+            let users = sqlx::query_as::<_, User>(
+                "SELECT id, created_at, active, username, password_hash, hashed_recovery_codes, permissions, roles, favorite_spaces, role, refresh_token, email, updated_at, authentication_type FROM opsml_user ORDER BY username LIMIT ? OFFSET ?",
+            )
+            .bind(limit)
+            .bind(offset)
+            .fetch_all(&self.pool)
+            .await?;
+            let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM opsml_user")
+                .fetch_one(&self.pool)
+                .await?;
+            (users, total)
+        };
+        Ok((users, total))
     }
 }

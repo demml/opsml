@@ -12,7 +12,7 @@ pub struct Claims {
     pub sub: String,
     exp: usize,
     pub permissions: Vec<String>,
-    pub group_permissions: Vec<String>,
+    pub roles: Vec<String>,
     salt: String,
 }
 
@@ -74,7 +74,7 @@ impl AuthManager {
             sub: user.username.clone(),
             exp: expiration as usize,
             permissions: user.permissions.clone(),
-            group_permissions: user.group_permissions.clone(),
+            roles: user.roles.clone(),
             salt: self.generate_salt(),
         };
 
@@ -97,7 +97,7 @@ impl AuthManager {
             sub: user.username.clone(),
             exp: expiration as usize,
             permissions: user.permissions.clone(),
-            group_permissions: user.group_permissions.clone(),
+            roles: user.roles.clone(),
             salt: self.generate_salt(),
         };
 
@@ -178,7 +178,7 @@ impl AuthManager {
             sub: user.username.clone(),
             exp: expiration as usize,
             permissions: user.permissions.clone(),
-            group_permissions: user.group_permissions.clone(),
+            roles: user.roles.clone(),
             salt: self.generate_salt(),
         };
 

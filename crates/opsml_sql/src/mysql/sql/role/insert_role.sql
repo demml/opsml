@@ -1,0 +1,1 @@
+INSERT INTO opsml_role (name, description, permissions, is_system) VALUES (?, ?, ?, ?);

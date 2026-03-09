@@ -7,7 +7,7 @@ pub struct CreateUserRequest {
     pub password: String,
     pub email: String,
     pub permissions: Option<Vec<String>>,
-    pub group_permissions: Option<Vec<String>>,
+    pub roles: Option<Vec<String>>,
     pub role: Option<String>,
     pub active: Option<bool>,
 }
@@ -16,7 +16,7 @@ pub struct CreateUserRequest {
 pub struct UpdateUserRequest {
     pub password: Option<String>,
     pub permissions: Option<Vec<String>>,
-    pub group_permissions: Option<Vec<String>>,
+    pub roles: Option<Vec<String>>,
     pub active: Option<bool>,
     pub favorite_spaces: Option<Vec<String>>,
 }
@@ -41,7 +41,7 @@ pub struct UserResponse {
     pub active: bool,
     pub role: String,
     pub permissions: Vec<String>,
-    pub group_permissions: Vec<String>,
+    pub roles: Vec<String>,
     pub favorite_spaces: Vec<String>,
 }
 
@@ -74,6 +74,27 @@ pub struct UserListResponse {
     pub users: Vec<UserResponse>,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct AssignRolesRequest {
+    pub roles: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct EffectivePermissionsResponse {
+    pub username: String,
+    pub roles: Vec<String>,
+    pub direct_permissions: Vec<String>,
+    pub effective_permissions: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UserPageResponse {
+    pub users: Vec<UserResponse>,
+    pub total: i64,
+    pub limit: i64,
+    pub offset: i64,
+}
+
 // Convert User to UserResponse (strips sensitive data)
 impl From<User> for UserResponse {
     fn from(user: User) -> Self {
@@ -81,7 +102,7 @@ impl From<User> for UserResponse {
             username: user.username,
             active: user.active,
             permissions: user.permissions,
-            group_permissions: user.group_permissions,
+            roles: user.roles,
             email: user.email,
             role: user.role,
             favorite_spaces: user.favorite_spaces,

@@ -3,8 +3,8 @@ use crate::{
     sqlite::sql::{
         artifact::ArtifactLogicSqliteClient, audit::AuditLogicSqliteClient,
         card::CardLogicSqliteClient, evaluation::EvaluationLogicSqliteClient,
-        experiment::ExperimentLogicSqliteClient, space::SpaceLogicSqliteClient,
-        user::UserLogicSqliteClient,
+        experiment::ExperimentLogicSqliteClient, role::RoleLogicSqliteClient,
+        space::SpaceLogicSqliteClient, user::UserLogicSqliteClient,
     },
 };
 use opsml_settings::config::DatabaseSettings;
@@ -25,6 +25,7 @@ pub struct SqliteClient {
     pub space: SpaceLogicSqliteClient,
     pub audit: AuditLogicSqliteClient,
     pub eval: EvaluationLogicSqliteClient,
+    pub role: RoleLogicSqliteClient,
 }
 
 impl SqliteClient {
@@ -66,6 +67,7 @@ impl SqliteClient {
             space: SpaceLogicSqliteClient::new(&pool),
             audit: AuditLogicSqliteClient::new(&pool),
             eval: EvaluationLogicSqliteClient::new(&pool),
+            role: RoleLogicSqliteClient::new(&pool),
             pool,
         };
 
@@ -100,11 +102,11 @@ mod tests {
     use crate::schemas::schema::{
         ArtifactSqlRecord, AuditCardRecord, CardResults, DataCardRecord, ExperimentCardRecord,
         HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-        ServerCard, ServiceCardRecord, User,
+        Role, ServerCard, ServiceCardRecord, User,
     };
     use crate::traits::{
         ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, EvaluationLogicTrait,
-        ExperimentLogicTrait, SpaceLogicTrait, UserLogicTrait,
+        ExperimentLogicTrait, RoleLogicTrait, SpaceLogicTrait, UserLogicTrait,
     };
     use opsml_settings::config::DatabaseSettings;
     use opsml_types::SqlType;
@@ -1525,7 +1527,7 @@ mod tests {
 
         assert_eq!(user_to_update.username, "user");
         assert_eq!(user_to_update.password_hash, "pass");
-        assert_eq!(user_to_update.group_permissions, vec!["user"]);
+        assert_eq!(user_to_update.roles, vec!["user"]);
         assert_eq!(user_to_update.email, "email");
 
         // update user
@@ -2241,6 +2243,121 @@ mod tests {
         assert_eq!(deployment[0].urls.len(), 1);
         assert_eq!(deployment[0].urls[0], "http://localhost:8000");
         assert_eq!(deployment[0].healthcheck.as_deref(), Some("/health"));
+
+        cleanup();
+    }
+
+    #[tokio::test]
+    async fn test_sqlite_role() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+
+        // seed_system_roles is idempotent — calling twice must not fail
+        client.role.seed_system_roles().await.unwrap();
+        client.role.seed_system_roles().await.unwrap();
+
+        // system roles seeded
+        let roles = client.role.get_roles().await.unwrap();
+        assert!(roles.len() >= 4);
+        let names: Vec<&str> = roles.iter().map(|r| r.name.as_str()).collect();
+        assert!(names.contains(&"admin"));
+        assert!(names.contains(&"user"));
+        assert!(names.contains(&"viewer"));
+        assert!(names.contains(&"data_scientist"));
+
+        // system admin role has delete permission
+        let admin = client.role.get_role("admin").await.unwrap().unwrap();
+        assert!(admin.is_system);
+        assert!(admin.permissions.contains(&"delete:all".to_string()));
+
+        // insert a custom role
+        let custom = Role {
+            id: None,
+            name: "tester".to_string(),
+            description: "CI testing role".to_string(),
+            permissions: vec!["read:ci".to_string()],
+            is_system: false,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
+        client.role.insert_role(&custom).await.unwrap();
+
+        let fetched = client.role.get_role("tester").await.unwrap().unwrap();
+        assert_eq!(fetched.name, "tester");
+        assert!(!fetched.is_system);
+        assert_eq!(fetched.permissions, vec!["read:ci".to_string()]);
+
+        // update the custom role
+        let mut to_update = fetched;
+        to_update.description = "Updated description".to_string();
+        to_update.permissions = vec!["read:ci".to_string(), "write:ci".to_string()];
+        client.role.update_role(&to_update).await.unwrap();
+
+        let updated = client.role.get_role("tester").await.unwrap().unwrap();
+        assert_eq!(updated.description, "Updated description");
+        assert_eq!(updated.permissions.len(), 2);
+
+        // get_roles_by_names
+        let by_names = client
+            .role
+            .get_roles_by_names(&["admin".to_string(), "tester".to_string()])
+            .await
+            .unwrap();
+        assert_eq!(by_names.len(), 2);
+
+        // delete_role only removes non-system roles
+        client.role.delete_role("tester").await.unwrap();
+        assert!(client.role.get_role("tester").await.unwrap().is_none());
+
+        // system role must survive delete attempt
+        client.role.delete_role("admin").await.unwrap();
+        assert!(client.role.get_role("admin").await.unwrap().is_some());
+
+        // get_users_paginated — no users yet, expect empty
+        let (users, total) = client.user.get_users_paginated(10, 0, None).await.unwrap();
+        assert_eq!(users.len(), 0);
+        assert_eq!(total, 0);
+
+        // insert a user and verify pagination
+        let user = User::new(
+            "paginated_user".to_string(),
+            "hash".to_string(),
+            "pag@test.com".to_string(),
+            vec![],
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+        client.user.insert_user(&user).await.unwrap();
+
+        let (users, total) = client.user.get_users_paginated(10, 0, None).await.unwrap();
+        assert_eq!(users.len(), 1);
+        assert_eq!(total, 1);
+
+        let (users, total) = client
+            .user
+            .get_users_paginated(10, 0, Some("paginated"))
+            .await
+            .unwrap();
+        assert_eq!(users.len(), 1);
+        assert_eq!(total, 1);
+
+        let (users, total) = client
+            .user
+            .get_users_paginated(10, 0, Some("nonexistent"))
+            .await
+            .unwrap();
+        assert_eq!(users.len(), 0);
+        assert_eq!(total, 0);
 
         cleanup();
     }

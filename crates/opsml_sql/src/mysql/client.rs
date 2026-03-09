@@ -3,8 +3,8 @@ use crate::{
     mysql::sql::{
         artifact::ArtifactLogicMySqlClient, audit::AuditLogicMySqlClient,
         card::CardLogicMySqlClient, evaluation::EvaluationLogicMySqlClient,
-        experiment::ExperimentLogicMySqlClient, space::SpaceLogicMySqlClient,
-        user::UserLogicMySqlClient,
+        experiment::ExperimentLogicMySqlClient, role::RoleLogicMySqlClient,
+        space::SpaceLogicMySqlClient, user::UserLogicMySqlClient,
     },
 };
 use opsml_settings::config::DatabaseSettings;
@@ -26,6 +26,7 @@ pub struct MySqlClient {
     pub space: SpaceLogicMySqlClient,
     pub audit: AuditLogicMySqlClient,
     pub eval: EvaluationLogicMySqlClient,
+    pub role: RoleLogicMySqlClient,
 }
 
 impl MySqlClient {
@@ -44,6 +45,7 @@ impl MySqlClient {
             space: SpaceLogicMySqlClient::new(&pool),
             audit: AuditLogicMySqlClient::new(&pool),
             eval: EvaluationLogicMySqlClient::new(&pool),
+            role: RoleLogicMySqlClient::new(&pool),
             pool,
         };
 
@@ -72,12 +74,12 @@ mod tests {
     use crate::schemas::schema::{
         ArtifactSqlRecord, AuditCardRecord, CardResults, DataCardRecord, ExperimentCardRecord,
         HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-        ServerCard, ServiceCardRecord, User,
+        Role, ServerCard, ServiceCardRecord, User,
     };
     use crate::traits::EvaluationLogicTrait;
     use crate::traits::{
-        ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, ExperimentLogicTrait, SpaceLogicTrait,
-        UserLogicTrait,
+        ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, ExperimentLogicTrait, RoleLogicTrait,
+        SpaceLogicTrait, UserLogicTrait,
     };
     use opsml_settings::config::DatabaseSettings;
     use opsml_types::CommonKwargs;
@@ -1566,7 +1568,7 @@ mod tests {
 
         let mut user = client.user.get_user("user", None).await.unwrap().unwrap();
         assert_eq!(user.username, "user");
-        assert_eq!(user.group_permissions, vec!["user"]);
+        assert_eq!(user.roles, vec!["user"]);
         assert_eq!(user.email, "email");
 
         // update user
@@ -2270,5 +2272,115 @@ mod tests {
         assert_eq!(deployment[0].urls.len(), 1);
         assert_eq!(deployment[0].urls[0], "http://localhost:8000");
         assert_eq!(deployment[0].healthcheck.as_deref(), Some("/health"));
+    }
+
+    #[tokio::test]
+    async fn test_mysql_role() {
+        let client = db_client().await;
+
+        // seed_system_roles is idempotent — calling twice must not fail
+        client.role.seed_system_roles().await.unwrap();
+        client.role.seed_system_roles().await.unwrap();
+
+        let roles = client.role.get_roles().await.unwrap();
+        assert!(roles.len() >= 4);
+        let names: Vec<&str> = roles.iter().map(|r| r.name.as_str()).collect();
+        assert!(names.contains(&"admin"));
+        assert!(names.contains(&"user"));
+        assert!(names.contains(&"viewer"));
+        assert!(names.contains(&"data_scientist"));
+
+        let admin = client.role.get_role("admin").await.unwrap().unwrap();
+        assert!(admin.is_system);
+        assert!(admin.permissions.contains(&"delete:all".to_string()));
+
+        // insert a custom role
+        let custom = Role {
+            id: None,
+            name: "mysql_tester".to_string(),
+            description: "MySQL CI role".to_string(),
+            permissions: vec!["read:ci".to_string()],
+            is_system: false,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
+        client.role.insert_role(&custom).await.unwrap();
+
+        let fetched = client.role.get_role("mysql_tester").await.unwrap().unwrap();
+        assert_eq!(fetched.name, "mysql_tester");
+        assert!(!fetched.is_system);
+
+        // update
+        let mut to_update = fetched;
+        to_update.description = "Updated".to_string();
+        to_update.permissions = vec!["read:ci".to_string(), "write:ci".to_string()];
+        client.role.update_role(&to_update).await.unwrap();
+
+        let updated = client.role.get_role("mysql_tester").await.unwrap().unwrap();
+        assert_eq!(updated.description, "Updated");
+        assert_eq!(updated.permissions.len(), 2);
+
+        // get_roles_by_names
+        let by_names = client
+            .role
+            .get_roles_by_names(&["admin".to_string(), "mysql_tester".to_string()])
+            .await
+            .unwrap();
+        assert_eq!(by_names.len(), 2);
+
+        // delete non-system role
+        client.role.delete_role("mysql_tester").await.unwrap();
+        assert!(
+            client
+                .role
+                .get_role("mysql_tester")
+                .await
+                .unwrap()
+                .is_none()
+        );
+
+        // system role must survive delete attempt
+        client.role.delete_role("admin").await.unwrap();
+        assert!(client.role.get_role("admin").await.unwrap().is_some());
+
+        // get_users_paginated
+        let user = User::new(
+            "mysql_paginated_user".to_string(),
+            "hash".to_string(),
+            "mysql_pag@test.com".to_string(),
+            vec![],
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+        client.user.insert_user(&user).await.unwrap();
+
+        let (users, total) = client.user.get_users_paginated(10, 0, None).await.unwrap();
+        assert!(total >= 1);
+        assert!(!users.is_empty());
+
+        let (users, total) = client
+            .user
+            .get_users_paginated(10, 0, Some("mysql_paginated"))
+            .await
+            .unwrap();
+        assert_eq!(users.len(), 1);
+        assert_eq!(total, 1);
+
+        let (users, total) = client
+            .user
+            .get_users_paginated(10, 0, Some("nonexistent_xyz"))
+            .await
+            .unwrap();
+        assert_eq!(users.len(), 0);
+        assert_eq!(total, 0);
+
+        client
+            .user
+            .delete_user("mysql_paginated_user")
+            .await
+            .unwrap();
     }
 }

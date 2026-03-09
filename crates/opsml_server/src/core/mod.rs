@@ -10,6 +10,7 @@ pub mod genai;
 pub mod health;
 pub mod mcp;
 pub mod middleware;
+pub mod role;
 pub mod router;
 pub mod scouter;
 pub mod settings;

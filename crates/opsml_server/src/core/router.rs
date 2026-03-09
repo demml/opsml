@@ -9,6 +9,7 @@ use crate::core::health::route::get_health_router;
 use crate::core::mcp::route::get_mcp_router;
 use crate::core::middleware::event::event_middleware;
 use crate::core::middleware::metrics::track_metrics;
+use crate::core::role::route::get_role_router;
 use crate::core::scouter::route::get_scouter_router;
 use crate::core::settings::route::get_settings_router;
 use crate::core::state::AppState;
@@ -49,6 +50,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     let scouter_routes = get_scouter_router(ROUTE_PREFIX).await?;
     let genai_routes = get_genai_router(ROUTE_PREFIX).await?;
     let mcp_routes = get_mcp_router(ROUTE_PREFIX).await?;
+    let role_routes = get_role_router(ROUTE_PREFIX).await?;
 
     // All routes except auth, healthcheck, and settings are protected by auth + event middleware.
     let merged_routes = Router::new()
@@ -57,6 +59,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
         .merge(card_routes)
         .merge(run_routes)
         .merge(user_routes)
+        .merge(role_routes)
         .merge(scouter_routes)
         .merge(genai_routes)
         .merge(mcp_routes)

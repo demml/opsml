@@ -44,7 +44,7 @@ pub async fn initialize_default_user(
         "admin".to_string(),
         hashed_recovery_codes, // recovery codes
         Some(vec!["read:all".to_string(), "write:all".to_string()]), // permissions
-        Some(vec!["admin".to_string()]), // group_permissions
+        Some(vec!["admin".to_string()]), // roles
         Some("admin".to_string()), // role
         None,
         None,

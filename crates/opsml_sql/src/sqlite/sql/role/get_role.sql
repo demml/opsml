@@ -1,0 +1,1 @@
+SELECT id, name, description, permissions, is_system, created_at, updated_at FROM opsml_role WHERE name = ?;

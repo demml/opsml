@@ -2,7 +2,8 @@ use crate::core::error::{OpsmlServerError, internal_server_error};
 use crate::core::scouter;
 use crate::core::state::AppState;
 use crate::core::user::schema::{
-    CreateUserRequest, CreateUserResponse, UpdateUserRequest, UserListResponse, UserResponse,
+    AssignRolesRequest, CreateUserRequest, CreateUserResponse, EffectivePermissionsResponse,
+    UpdateUserRequest, UserListResponse, UserResponse,
 };
 use crate::core::user::utils::get_user as get_user_from_db;
 use anyhow::{Context, Result};
@@ -14,10 +15,10 @@ use axum::{
     routing::{delete, get, post, put},
 };
 
-use opsml_auth::permission::UserPermissions;
+use opsml_auth::permission::{UserPermissions, resolve_effective_permissions};
 use opsml_auth::util::generate_recovery_codes_with_hashes;
 use opsml_sql::schemas::schema::User;
-use opsml_sql::traits::UserLogicTrait;
+use opsml_sql::traits::{RoleLogicTrait, UserLogicTrait};
 use opsml_types::RequestType;
 use password_auth::generate_hash;
 use std::panic::{AssertUnwindSafe, catch_unwind};
@@ -34,9 +35,9 @@ pub async fn create_user(
     // Check if requester has admin permissions
 
     // need to ensure that a create request that has admin perms can only be created by an admin
-    if !perms.group_permissions.contains(&"admin".to_string())
+    if !perms.is_admin()
         && create_req
-            .group_permissions
+            .roles
             .as_ref()
             .is_some_and(|p| p.contains(&"admin".to_string()))
     {
@@ -62,7 +63,7 @@ pub async fn create_user(
         create_req.email,
         hashed_recovery_codes,
         create_req.permissions,
-        create_req.group_permissions,
+        create_req.roles,
         create_req.role,
         None,
         None,
@@ -120,7 +121,7 @@ async fn get_user(
     Path(username): Path<String>,
 ) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check permissions - user can only get their own data or admin can get any user
-    let is_admin = perms.group_permissions.contains(&"admin".to_string());
+    let is_admin = perms.is_admin();
     let is_self = perms.username == username;
 
     if !is_admin && !is_self {
@@ -147,7 +148,7 @@ async fn list_users(
     Extension(perms): Extension<UserPermissions>,
 ) -> Result<Json<UserListResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
-    if !perms.group_permissions.contains(&"admin".to_string()) {
+    if !perms.is_admin() {
         return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
     }
 
@@ -176,7 +177,7 @@ async fn update_user(
     Json(update_req): Json<UpdateUserRequest>,
 ) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Check permissions - user can only update their own data or admin can update any user
-    let is_admin = perms.group_permissions.contains(&"admin".to_string());
+    let is_admin = perms.is_admin();
     let is_self = perms.username == username;
 
     if !is_admin && !is_self {
@@ -204,9 +205,9 @@ async fn update_user(
             user.permissions = hash_set.into_iter().collect();
         }
 
-        if let Some(group_permissions) = update_req.group_permissions {
-            let hash_set: std::collections::HashSet<_> = group_permissions.into_iter().collect();
-            user.group_permissions = hash_set.into_iter().collect();
+        if let Some(roles) = update_req.roles {
+            let hash_set: std::collections::HashSet<_> = roles.into_iter().collect();
+            user.roles = hash_set.into_iter().collect();
         }
 
         if let Some(active) = update_req.active {
@@ -263,7 +264,7 @@ async fn delete_user(
     Path(username): Path<String>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
     // Check if requester has admin permissions
-    if !perms.group_permissions.contains(&"admin".to_string()) {
+    if !perms.is_admin() {
         return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
     }
 
@@ -314,6 +315,86 @@ async fn delete_user(
     Ok(Json(serde_json::json!({"success": true})))
 }
 
+/// Assign roles to a user (replaces group_permissions)
+#[instrument(skip_all)]
+async fn assign_roles(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Path(username): Path<String>,
+    Json(req): Json<AssignRolesRequest>,
+) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !perms.is_admin() {
+        return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
+    }
+
+    let mut user = get_user_from_db(&state.sql_client, &username, None).await?;
+    user.roles = req.roles;
+
+    if let Err(e) = state.sql_client.update_user(&user).await {
+        error!("Failed to assign roles to user: {e}");
+        return Err(internal_server_error(e, "Failed to assign roles", None));
+    }
+
+    info!("Roles assigned to user {} successfully", user.username);
+    Ok(Json(UserResponse::from(user)))
+}
+
+/// Remove a single role from a user
+#[instrument(skip_all)]
+async fn remove_role(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Path((username, role)): Path<(String, String)>,
+) -> Result<Json<UserResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !perms.is_admin() {
+        return OpsmlServerError::need_admin_permission().into_response(StatusCode::FORBIDDEN);
+    }
+
+    let mut user = get_user_from_db(&state.sql_client, &username, None).await?;
+    user.roles.retain(|r| r != &role);
+
+    if let Err(e) = state.sql_client.update_user(&user).await {
+        error!("Failed to remove role from user: {e}");
+        return Err(internal_server_error(e, "Failed to remove role", None));
+    }
+
+    info!(
+        "Role {} removed from user {} successfully",
+        role, user.username
+    );
+    Ok(Json(UserResponse::from(user)))
+}
+
+/// Get effective permissions for a user
+#[instrument(skip_all)]
+async fn get_effective_permissions(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Path(username): Path<String>,
+) -> Result<Json<EffectivePermissionsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    let is_admin = perms.is_admin();
+    let is_self = perms.username == username;
+
+    if !is_admin && !is_self {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
+    let user = get_user_from_db(&state.sql_client, &username, None).await?;
+    let role_records = state
+        .sql_client
+        .get_roles_by_names(&user.roles)
+        .await
+        .map_err(|e| internal_server_error(e, "Failed to get roles", None))?;
+    let effective = resolve_effective_permissions(&user, &role_records);
+
+    Ok(Json(EffectivePermissionsResponse {
+        username: user.username,
+        roles: user.roles,
+        direct_permissions: user.permissions,
+        effective_permissions: effective,
+    }))
+}
+
 pub async fn get_user_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -322,6 +403,18 @@ pub async fn get_user_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             .route(&format!("{prefix}/user/{{username}}"), get(get_user))
             .route(&format!("{prefix}/user/{{username}}"), put(update_user))
             .route(&format!("{prefix}/user/{{username}}"), delete(delete_user))
+            .route(
+                &format!("{prefix}/user/{{username}}/roles"),
+                put(assign_roles),
+            )
+            .route(
+                &format!("{prefix}/user/{{username}}/roles/{{role}}"),
+                delete(remove_role),
+            )
+            .route(
+                &format!("{prefix}/user/{{username}}/permissions"),
+                get(get_effective_permissions),
+            )
     }));
 
     match result {

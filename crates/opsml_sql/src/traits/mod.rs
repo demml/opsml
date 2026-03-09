@@ -1,7 +1,7 @@
 use crate::error::SqlError;
 use crate::schemas::schema::{
     ArtifactSqlRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord,
-    ParameterRecord, QueryStats, ServerCard, User, VersionSummary,
+    ParameterRecord, QueryStats, Role, ServerCard, User, VersionSummary,
 };
 use crate::schemas::{EvaluationSqlRecord, ServiceCardRecord};
 use async_trait::async_trait;
@@ -116,9 +116,26 @@ pub trait UserLogicTrait {
         auth_type: Option<&str>,
     ) -> Result<Option<User>, SqlError>;
     async fn get_users(&self) -> Result<Vec<User>, SqlError>;
+    async fn get_users_paginated(
+        &self,
+        limit: i64,
+        offset: i64,
+        search: Option<&str>,
+    ) -> Result<(Vec<User>, i64), SqlError>;
     async fn is_last_admin(&self, username: &str) -> Result<bool, SqlError>;
     async fn delete_user(&self, username: &str) -> Result<(), SqlError>;
     async fn update_user(&self, user: &User) -> Result<(), SqlError>;
+}
+
+#[async_trait]
+pub trait RoleLogicTrait {
+    async fn insert_role(&self, role: &Role) -> Result<(), SqlError>;
+    async fn get_role(&self, name: &str) -> Result<Option<Role>, SqlError>;
+    async fn get_roles(&self) -> Result<Vec<Role>, SqlError>;
+    async fn get_roles_by_names(&self, names: &[String]) -> Result<Vec<Role>, SqlError>;
+    async fn update_role(&self, role: &Role) -> Result<(), SqlError>;
+    async fn delete_role(&self, name: &str) -> Result<(), SqlError>;
+    async fn seed_system_roles(&self) -> Result<(), SqlError>;
 }
 
 #[async_trait]

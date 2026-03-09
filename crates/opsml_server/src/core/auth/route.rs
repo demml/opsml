@@ -21,7 +21,7 @@ use axum::{
     http::header::HeaderMap,
     routing::{get, post},
 };
-use opsml_auth::permission::UserPermissions;
+use opsml_auth::permission::{UserPermissions, resolve_effective_permissions};
 use opsml_crypt::{generate_code_challenge, generate_code_verifier};
 use opsml_sql::traits::*;
 use opsml_types::JwtToken;
@@ -125,6 +125,14 @@ pub async fn api_login_handler(
             }
         }
     };
+
+    // Resolve effective permissions (roles → union of direct + role permissions)
+    let roles = state
+        .sql_client
+        .get_roles_by_names(&user.roles)
+        .await
+        .unwrap_or_default();
+    user.permissions = resolve_effective_permissions(&user, &roles);
 
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
@@ -261,6 +269,14 @@ async fn ui_login_handler(
         }
     }
 
+    // Resolve effective permissions (roles → union of direct + role permissions)
+    let roles = state
+        .sql_client
+        .get_roles_by_names(&user.roles)
+        .await
+        .unwrap_or_default();
+    user.permissions = resolve_effective_permissions(&user, &roles);
+
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
         error!("Failed to generate JWT token: {e}");
@@ -293,7 +309,7 @@ async fn ui_login_handler(
         message: "User authenticated".to_string(),
         username: user.username,
         jwt_token,
-        group_permissions: user.group_permissions,
+        roles: user.roles,
         permissions: user.permissions,
     }))
 }
@@ -356,6 +372,14 @@ pub async fn api_refresh_token_handler(
                     )),
                 )
             })?;
+
+        // Resolve effective permissions (roles → union of direct + role permissions)
+        let roles = state
+            .sql_client
+            .get_roles_by_names(&user.roles)
+            .await
+            .unwrap_or_default();
+        user.permissions = resolve_effective_permissions(&user, &roles);
 
         // generate new JWT token
         let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|_| {
@@ -421,7 +445,7 @@ async fn validate_jwt_token(
                     user_response: UserResponse {
                         username: user.username,
                         permissions: user.permissions,
-                        group_permissions: user.group_permissions,
+                        roles: user.roles,
                         active: user.active,
                         email: user.email,
                         role: user.role,
@@ -485,6 +509,14 @@ async fn exchange_callback_token(
 
     let mut user = authenticate_user_with_sso_callback(&state, &code, &code_verifier).await?;
 
+    // Resolve effective permissions (roles → union of direct + role permissions)
+    let roles = state
+        .sql_client
+        .get_roles_by_names(&user.roles)
+        .await
+        .unwrap_or_default();
+    user.permissions = resolve_effective_permissions(&user, &roles);
+
     // generate JWT token
     let jwt_token = state.auth_manager.generate_jwt(&user).map_err(|e| {
         error!("Failed to generate JWT token: {e}");
@@ -518,7 +550,7 @@ async fn exchange_callback_token(
         message: "User authenticated".to_string(),
         username: user.username,
         jwt_token,
-        group_permissions: user.group_permissions,
+        roles: user.roles,
         permissions: user.permissions,
     }))
 }
