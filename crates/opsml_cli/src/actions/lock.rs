@@ -237,44 +237,27 @@ pub fn lock_service_card(spec: &mut OpsmlServiceSpec) -> Result<LockArtifact, Cl
     }
 }
 
-/// Install services specified in an opsml.lock file
-/// # Arguments
-/// * `path` - PathBuf to the opsml.lock file
-/// * `write_path` - Optional PathBuf to override write directory
-/// # Returns
-/// * `Result<(), CliError>`
-#[pyfunction]
-#[pyo3(signature = (path, write_path=None))]
-pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), CliError> {
-    debug!("Installing service from lock file");
+fn create_lock_from_spec(path: &PathBuf) -> Result<LockFile, CliError> {
+    let spec_path = path.join(DEFAULT_SERVICE_FILENAME);
 
-    println!(
-        "{}",
-        Colorize::green("Downloading service for opsml.lock file")
+    if !spec_path.exists() {
+        return Err(CliError::SpecNotFound(spec_path));
+    }
+
+    debug!(
+        "Lock file not found, creating lock from spec at path: {:?}",
+        spec_path
     );
 
-    // if lockfile cannot be read, check if path/ DEFAULT_SPEC_PATH exists as a spec file.
-    // If so, create a lockfile from it and proceed;
-    let lockfile = match LockFile::read(&path) {
-        Ok(lockfile) => lockfile,
-        Err(original_error) => {
-            let spec_path = path.join(DEFAULT_SERVICE_FILENAME);
+    lock_service(spec_path)?;
 
-            if !spec_path.exists() {
-                return Err(original_error.into());
-            }
+    Ok(LockFile::read(&path)?)
+}
 
-            debug!(
-                "Lock file not found, creating lock from spec at path: {:?}",
-                spec_path
-            );
-
-            lock_service(spec_path)?;
-
-            LockFile::read(&path)?
-        }
-    };
-
+fn download_service_artifacts(
+    lockfile: LockFile,
+    write_path: Option<PathBuf>,
+) -> Result<(), CliError> {
     for artifact in lockfile.artifact {
         match artifact.registry_type {
             RegistryType::Service | RegistryType::Mcp | RegistryType::Agent => {
@@ -315,7 +298,50 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
             }
         }
     }
+    Ok(())
+}
 
+/// Install services specified in an opsmlspec.yaml file.
+/// This is primarily used in Opsml AppState to create and load a service from a spec
+/// # Arguments
+/// * `path` - PathBuf to the opsmlspec.yaml file. The function will look for opsmlspec.yaml in the provided path
+/// * `write_path` - Optional PathBuf to override write directory
+/// # Returns
+/// * `Result<(), CliError>`
+pub fn install_service_from_spec(
+    path: PathBuf,
+    write_path: Option<PathBuf>,
+) -> Result<(), CliError> {
+    debug!("Installing service from spec");
+
+    println!("{}", Colorize::green("Installing service from spec"));
+
+    let lockfile = create_lock_from_spec(&path)?;
+    download_service_artifacts(lockfile, write_path)?;
+    Ok(())
+}
+
+/// Install services specified in an opsml.lock file
+/// # Arguments
+/// * `path` - PathBuf to the opsml.lock file
+/// * `write_path` - Optional PathBuf to override write directory
+/// # Returns
+/// * `Result<(), CliError>`
+#[pyfunction]
+#[pyo3(signature = (path, write_path=None))]
+pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), CliError> {
+    debug!("Installing service from lock file");
+
+    println!("{}", Colorize::green("Installing service"));
+
+    // if lockfile cannot be read, check if path/ DEFAULT_SPEC_PATH exists as a spec file.
+    // If so, create a lockfile from it and proceed;
+    let lockfile = match LockFile::read(&path) {
+        Ok(lockfile) => lockfile,
+        Err(_) => create_lock_from_spec(&path)?,
+    };
+
+    download_service_artifacts(lockfile, write_path)?;
     Ok(())
 }
 

@@ -11,6 +11,9 @@ from agent.sub_agents import (
     meat_recipe_agent,
     vegan_recipe_agent,
 )
+from agent.callbacks.response import (
+    after_model_callback as response_after_model_callback,
+)
 from google.adk.a2a.utils.agent_to_a2a import to_a2a
 from google.adk.agents import LlmAgent, SequentialAgent
 from starlette.middleware.cors import CORSMiddleware
@@ -36,6 +39,7 @@ response_agent = LlmAgent(
     name="RecipeResponseAgent",
     model=prompts.response.prompt.model,
     instruction=prompts.response.prompt.messages[0].text,
+    after_model_callback=response_after_model_callback,
 )
 
 root_agent = SequentialAgent(
@@ -65,4 +69,6 @@ a2a_app.add_middleware(
 @a2a_app.route("/health", methods=["GET"])
 async def health_check(request):
     """Basic health check endpoint for load balancers."""
-    return JSONResponse({"status": "healthy", "service": "music-recommender-agent", "version": "1.0.0"})
+    return JSONResponse(
+        {"status": "healthy", "service": "music-recommender-agent", "version": "1.0.0"}
+    )

@@ -5,7 +5,7 @@ use crate::{
     reloader::{ReloadConfig, ServiceReloader, start_background_download_task},
 };
 use opsml_cards::{ServiceCard, card_service::ServiceInfo};
-use opsml_cli::install_service;
+use opsml_cli::actions::lock::install_service_from_spec;
 use opsml_state::app_state;
 use opsml_storage::{StorageError, copy_objects};
 use opsml_toml::LockFile;
@@ -181,7 +181,9 @@ impl AppState {
     }
 
     /// This method will load an application state from an opsmlspec.yaml file. This is intended to be a
-    /// convenience method for users who want to load an application state from a directory containing an opsmlspec.yaml file without having to manually call lock_service or install_service first. This method will attempt to find an opsmlspec.yaml file in the provided path (or current directory if no path is provided), install the service using the lock_service function, and then load the service and queue using the from_path method.
+    /// convenience method for users who want to load an application state from a directory containing an opsmlspec.yaml file without having to manually call lock_service or install_service first.
+    ///  This method will attempt to find an opsmlspec.yaml file in the provided path (or current directory if no path is provided), install the service using the lock_service function,
+    /// and then load the service and queue using the from_path method. This method skips checking an opsml.lock file if present
     /// # Arguments
     /// * `py` - Python interpreter state
     /// * `path` - The root path to the application directory containing the opsmlspec.yaml file. If not provided, the current directory will be used.
@@ -206,7 +208,7 @@ impl AppState {
             None => std::env::current_dir()?,
         };
 
-        install_service(spec_dir.clone(), Some(spec_dir.clone()))
+        install_service_from_spec(spec_dir.clone(), Some(spec_dir.clone()))
             .map_err(|e| AppError::Error(e.to_string()))?;
 
         let lock_file = LockFile::read(&spec_dir).map_err(|e| AppError::Error(e.to_string()))?;
