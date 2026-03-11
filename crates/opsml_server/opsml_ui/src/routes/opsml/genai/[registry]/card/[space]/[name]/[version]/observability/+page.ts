@@ -3,7 +3,6 @@ import {
   type TraceMetricsRequest,
   type TracePageFilter,
   type TraceFilters,
-  SCOUTER_ENTITY,
 } from "$lib/components/trace/types";
 
 import {
@@ -23,11 +22,6 @@ export const ssr = false;
 export const load: PageLoad = async ({ fetch, depends, parent }) => {
   const parentData = await parent();
   const metadata = parentData.metadata as CardMetadata;
-
-  console.log(
-    "metadata.registry_type in observability page load:",
-    metadata.registry_type,
-  );
 
   try {
     depends("trace:data");

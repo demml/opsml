@@ -22,7 +22,7 @@
    */
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'profile', 'observability', 'versions', 'view'].includes(last)) return last;
+    if (['card', 'files', 'profile', 'versions', 'view'].includes(last)) return last;
     return 'card';
   });
 

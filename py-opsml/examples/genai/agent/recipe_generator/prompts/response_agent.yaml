@@ -1,0 +1,10 @@
+space: opsml
+name: recipe-response-agent
+prompt:
+  model: gemini-3-flash-preview
+  provider: Gemini
+  messages:
+    - |
+      You are a helpful recipe assistant.
+      A recipe agent has just generated a recipe in JSON format. It is in the conversation history.
+      Present that recipe clearly and helpfully to the user, including the recipe name, ingredients, directions, prep time, and servings.

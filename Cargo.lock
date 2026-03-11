@@ -6186,6 +6186,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "758025cb5fccfd3bc2fd74708fd4682be41d99e5dff73c377c0646c6012c73a4"
 dependencies = [
  "aws-lc-rs",
+ "log",
  "once_cell",
  "ring",
  "rustls-pki-types",
@@ -6400,9 +6401,8 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scouter-client"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e4d54a654303487ed14ac5b7be8b50c7fa157519cc0740f09f8b3915d4adac5"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6425,7 +6425,7 @@ dependencies = [
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "thiserror 2.0.18",
  "tokio",
  "tracing",
@@ -6433,9 +6433,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-dispatch"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c933c5c6f199a4ddca1282a9484ab9d45bb73f4d252c3e97ec9cd572bb9ef728"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "futures",
  "pyo3",
@@ -6449,14 +6448,13 @@ dependencies = [
 
 [[package]]
 name = "scouter-drift"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a390c51f08113e0dcf8452b0ea6305e00604245513243cd1afea4303f7f9f213"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "chrono",
  "futures",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "numpy",
@@ -6476,12 +6474,11 @@ dependencies = [
 
 [[package]]
 name = "scouter-evaluate"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c14af2664977d1b9f2fd4325855255cab4f4c85ce6fb17b4871864dbdfa4f5c"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "chrono",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "owo-colors",
@@ -6504,9 +6501,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-events"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ea3872eca4e0aa61bcf449ef1963f7c3c321965ec77329e0d1ca3cb69088b842"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6540,36 +6536,33 @@ dependencies = [
 
 [[package]]
 name = "scouter-http"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c38f21cc80b9edd82406bcccab964fcab03abe00059ea3066f2aa8a38cf638d"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "pyo3",
  "reqwest 0.12.28",
  "scouter-settings",
  "scouter-types",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "thiserror 2.0.18",
  "tracing",
 ]
 
 [[package]]
 name = "scouter-macro"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "202c37d63acaf558e2d5337c69f63b1dd949e4e04855323e9191b5759a5bb8a4"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "thiserror 2.0.18",
 ]
 
 [[package]]
 name = "scouter-observability"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9e4bba85b0eb733c87d13fe540a22542c6de3c09855736860f917958c13c358d"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6583,13 +6576,12 @@ dependencies = [
 
 [[package]]
 name = "scouter-profile"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "056ce8b4bf75fcd2b7b04c8500daf4da9df78faefaf00d59852d0cffdbb78cc6"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -6606,9 +6598,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-semver"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee0d0d107ceb3bd84c9395286588ca98727a46e582435f0a89eeb161fdedb350"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "pyo3",
  "semver",
@@ -6618,9 +6609,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-settings"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b57c8c25c0fecd557af20fc1efa5781098e529c47661580ee448a7c513224663"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -6633,9 +6623,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-state"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e4520c7d5ca5d9fe3beff7a16af3dda77432a918e1e4e4eb24aa5f4b8897a54"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -6644,9 +6633,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-tonic"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8306bcdca858011b97e5213e028947d26c9152deaf7e2c32853654b0cc53bd06"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "prost",
  "prost-types",
@@ -6664,9 +6652,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-tracing"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a0ed017aa700267203ed8c927733dc6c74493176af6ad69be6169ece79864b8"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6691,9 +6678,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-types"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5336b9be38ab2d880cff64e63df5a8e7ec1edab7533a7e5cfbceef2135dbfd1c"
+version = "0.20.0"
+source = "git+https://github.com/demml/scouter.git?branch=feat%2Fdataframe-api#404d1d1a551a9ae9ef50fe7a2d7f41ba0eadbe4c"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -7849,9 +7835,11 @@ dependencies = [
  "hyper-util",
  "percent-encoding",
  "pin-project",
+ "rustls-native-certs 0.8.3",
  "socket2 0.6.2",
  "sync_wrapper",
  "tokio",
+ "tokio-rustls 0.26.4",
  "tokio-stream",
  "tower",
  "tower-layer",

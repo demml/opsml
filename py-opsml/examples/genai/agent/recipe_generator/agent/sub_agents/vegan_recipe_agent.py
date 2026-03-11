@@ -2,7 +2,7 @@ from agent.lifespan import prompts
 from google.adk.agents.llm_agent import Agent
 from google.adk.agents.callback_context import CallbackContext
 from typing import Optional
-from google.adk.models import LlmResponse
+from google.adk.models.llm_response import LlmResponse
 from .models import Recipe
 from opentelemetry import trace
 from opsml.scouter.tracing import ActiveSpan
@@ -15,7 +15,7 @@ def parse_model_recipe_output(llm_response: LlmResponse) -> Optional[Recipe]:
 
     try:
         # Attempt to parse the LLM response content into the Recipe schema
-        recipe = Recipe.model_validate_json(llm_response.content.parts[0].text)
+        recipe = Recipe.model_validate_json(llm_response.content.parts[0].text)  # type: ignore
         return recipe
     except Exception as _e:
         return None

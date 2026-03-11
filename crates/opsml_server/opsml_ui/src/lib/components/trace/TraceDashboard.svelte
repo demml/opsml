@@ -33,8 +33,6 @@
       ...filters.filters,
     };
 
-    console.log('Fetching trace metrics with request:', metricsRequest);
-
     let traceMetrics = await getServerTraceMetrics(fetch, metricsRequest);
     return traceMetrics.metrics;
   }
