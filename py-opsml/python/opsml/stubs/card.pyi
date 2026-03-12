@@ -763,7 +763,7 @@ class ExperimentCard:
     def get_metrics(
         self,
         names: Optional[list[str]] = None,
-    ) -> Metrics:
+    ) -> ExperimentMetrics:
         """
         Get metrics of an experiment
 
@@ -772,7 +772,7 @@ class ExperimentCard:
                 Names of the metrics to get. If None, all metrics will be returned.
 
         Returns:
-            Metrics
+            ExperimentMetrics
         """
 
     def get_parameters(
@@ -882,11 +882,11 @@ class ExperimentCard:
                 The experiment card uid to add
         """
 
-    def list_artifacts(self, path: Optional[Path]) -> List[str]:
+    def list_artifacts(self, path: Optional[Path | str] = None) -> List[str]:
         """List the artifacts associated with the experiment card
 
         Args:
-            path (Path):
+            path (Path | str | None):
                 Specific path you wish to list artifacts from. If not provided,
                 all artifacts will be listed.
 
@@ -901,30 +901,30 @@ class ExperimentCard:
 
     def download_artifacts(
         self,
-        path: Optional[Path] = None,
-        lpath: Optional[Path] = None,
+        path: Optional[Path | str] = None,
+        lpath: Optional[Path | str] = None,
     ) -> None:
         """Download artifacts associated with the ExperimentCard
 
         Args:
-            path (Path | None):
+            path (Path | str | None):
                 Specific path you wish to download artifacts from. If not provided,
                 all artifacts will be downloaded.
 
-            lpath (Path | None):
+            lpath (Path | str | None):
                 Local path to save the artifacts. If not provided, the artifacts will be saved
                 to a directory called "artifacts"
         """
 
     def download_artifact(
         self,
-        path: Path,
+        path: Path | str,
         lpath: Optional[Path] = None,
     ) -> None:
         """Download a specific artifact associated with the ExperimentCard
 
         Args:
-            path (Path):
+            path (Path | str):
                 Path to the artifact to download
             lpath (Path | None):
                 Local path to save the artifact. If not provided, the artifact will be saved
@@ -1699,7 +1699,7 @@ class CardRegistry(Generic[CardT]):
         """
 
 class ModelCardRegistry(CardRegistry):
-    def register_card(
+    def register_card(  # type: ignore
         self,
         card: ModelCard,
         version_type: VersionType = VersionType.Minor,
@@ -1723,7 +1723,7 @@ class ModelCardRegistry(CardRegistry):
 
         """
 
-    def load_card(
+    def load_card(  # type: ignore
         self,
         uid: Optional[str] = None,
         space: Optional[str] = None,
@@ -1776,7 +1776,7 @@ class ModelCardRegistry(CardRegistry):
         """
 
 class DataCardRegistry(CardRegistry):
-    def register_card(
+    def register_card(  # type: ignore
         self,
         card: DataCard,
         version_type: VersionType = VersionType.Minor,
@@ -1800,7 +1800,7 @@ class DataCardRegistry(CardRegistry):
 
         """
 
-    def load_card(
+    def load_card(  # type: ignore
         self,
         uid: Optional[str] = None,
         space: Optional[str] = None,
@@ -2156,6 +2156,8 @@ class ExperimentMetric:
         Created at of the metric
         """
 
+    def __str__(self) -> str: ...
+
 class ExperimentMetrics:
     def __str__(self): ...
     def __getitem__(self, index: int) -> Metric: ...
@@ -2315,14 +2317,14 @@ class Experiment:
 
     def log_figure_from_path(
         self,
-        lpath: Path,
+        lpath: Path | str,
         rpath: Optional[str] = None,
     ) -> None:
         """
         Log a figure
 
         Args:
-            lpath (Path):
+            lpath (Path | str):
                 The local path where the figure has been saved to. Must be an image type
                 (e.g. jpeg, tiff, png, etc.)
             rpath (Optional[str]):
@@ -2436,7 +2438,7 @@ class EvalMetrics:
 def get_experiment_metrics(
     experiment_uid: str,
     names: Optional[list[str]] = None,
-) -> Metrics:
+) -> ExperimentMetrics:
     """
     Get metrics of an experiment
 
@@ -2447,7 +2449,7 @@ def get_experiment_metrics(
             Names of the metrics to get. If None, all metrics will be returned.
 
     Returns:
-        Metrics
+        ExperimentMetrics
     """
 
 def get_experiment_parameters(
@@ -2469,7 +2471,7 @@ def get_experiment_parameters(
 
 def download_artifact(
     experiment_uid: str,
-    path: Path,
+    path: Path | str,
     lpath: Optional[Path] = None,
 ) -> None:
     """
@@ -2477,7 +2479,7 @@ def download_artifact(
     Args:
         experiment_uid (str):
             UID of the experiment
-        path (Path):
+        path (Path | str):
             Path of the artifact to download
         lpath (Path | None):
             Local path to download the artifact to. If None, the artifact will be downloaded to the current working directory.
