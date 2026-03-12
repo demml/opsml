@@ -14,7 +14,7 @@
   }
 
   let { data, registryType, children }: DataLayoutProps = $props();
-  let metadata: DataCard= data.metadata;
+  let metadata = $derived(data.metadata as DataCard);
 
   /**
    * Determines the active tab based on the current URL path

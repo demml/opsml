@@ -15,7 +15,7 @@
   }
 
   let { data, registryType, children }: ExperimentLayoutProps = $props();
-  let metadata: ExperimentCard = data.metadata;
+  let metadata = $derived(data.metadata as ExperimentCard);
 
   /**
    * Determines the active tab based on the current URL path

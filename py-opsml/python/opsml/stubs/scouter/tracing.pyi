@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 from ..header import SerializedType
 from .scouter import (
     CompressionType,
-    Features,
     EvalRecord,
+    Features,
     GrpcConfig,
     HttpConfig,
     KafkaConfig,

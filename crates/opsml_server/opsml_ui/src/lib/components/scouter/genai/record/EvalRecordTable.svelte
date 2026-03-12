@@ -88,7 +88,6 @@
 
 <div class="pt-2 h-full flex flex-col min-h-0">
   <div class="border-2 border-black rounded-lg bg-white flex flex-col h-full max-h-[500px] overflow-hidden">
-    
     <div class="overflow-auto flex-1 w-full relative">
       {#if records.length === 0}
         <div class="flex items-center justify-center p-8 bg-white h-full">

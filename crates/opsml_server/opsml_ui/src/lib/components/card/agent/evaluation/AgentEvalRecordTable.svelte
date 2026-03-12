@@ -89,7 +89,7 @@
         <div class="min-w-[1050px] w-full">
 
           <!-- Sticky header -->
-          <div class="bg-white border-b-2 border-black sticky top-0 z-20 w-full">
+          <div class="bg-white border-b-2 border-black sticky top-0 z-5 w-full">
             <div class="grid gap-3 text-black text-xs font-bold px-4 py-3 items-center" style={gridLayout}>
               <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">Prompt</span></div>
               <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">ID</span></div>

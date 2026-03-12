@@ -2,8 +2,8 @@
 from ..._opsml import (
     CustomMetricRecord,
     EntityType,
-    Features,
     EvalRecord,
+    Features,
     Metric,
     Metrics,
     PsiRecord,

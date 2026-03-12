@@ -18,7 +18,7 @@
   let { data, registryType, children }: CardLayoutProps = $props();
 
   let scouterEnabled: boolean = $state(uiSettingsStore.scouterEnabled);
-  let metadata: ModelCard = data.metadata;
+  let metadata = $derived(data.metadata as ModelCard);
 
   /**
    * Determines the active tab based on the current URL path
