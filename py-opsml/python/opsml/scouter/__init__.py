@@ -19,8 +19,8 @@ from .._opsml import (
     FreedmanDiaconis,
     GenAIEvalConfig,
     GenAIEvalProfile,
-    GenAIEvalRecord,
-    GenAIEvalResults,
+    EvalRecord,
+    EvalResults,
     GrpcConfig,
     HttpConfig,
     KafkaConfig,
@@ -125,9 +125,9 @@ __all__ = [
     # genai
     "GenAIEvalConfig",
     "GenAIEvalProfile",
-    "GenAIEvalRecord",
+    "EvalRecord",
     "LLMJudgeTask",
     "AssertionTask",
     "ComparisonOperator",
-    "GenAIEvalResults",
+    "EvalResults",
 ]

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { X, List, Clock, Layers, CheckCircle2, XCircle } from 'lucide-svelte';
-  import type { GenAIEvalWorkflowResult, GenAIEvalTaskResult } from '../task';
+  import type { GenAIEvalWorkflowResult, EvalTaskResult } from '../task';
   import WorkflowStageList from './WorkflowStageList.svelte';
   import TaskDetailView from '../task/TaskDetailView.svelte';
   import { getServerGenAIEvalTask } from '../utils';
@@ -18,8 +18,8 @@
     profile: GenAIEvalProfile;
   } = $props();
 
-  let selectedTask = $state<GenAIEvalTaskResult | null>(null);
-  let tasks = $state<GenAIEvalTaskResult[]>([]);
+  let selectedTask = $state<EvalTaskResult | null>(null);
+  let tasks = $state<EvalTaskResult[]>([]);
   let activePanel = $state<'list' | 'detail'>('list');
   let loading = $state(true);
 
@@ -41,7 +41,7 @@
     loadTasks();
   });
 
-  function handleTaskSelect(task: GenAIEvalTaskResult) {
+  function handleTaskSelect(task: EvalTaskResult) {
     selectedTask = task;
     if (window.innerWidth < 1024) activePanel = 'detail';
   }

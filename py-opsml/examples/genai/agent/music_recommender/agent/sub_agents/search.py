@@ -5,7 +5,7 @@ from google.genai import types  # For types.Content
 from typing import Optional
 from opentelemetry import trace
 from typing import cast
-from opsml.scouter.evaluate import GenAIEvalRecord
+from opsml.scouter.evaluate import EvalRecord
 from opsml.scouter.tracing import ActiveSpan
 
 
@@ -23,7 +23,9 @@ def before_search_callback(
     invocation_id = callback_context.invocation_id
     current_state = callback_context.state.to_dict()
 
-    with cast(ActiveSpan, tracer.start_as_current_span("before_search_callback")) as span:
+    with cast(
+        ActiveSpan, tracer.start_as_current_span("before_search_callback")
+    ) as span:
         span.set_attribute("agent.name", agent_name)
         span.set_attribute("invocation.id", invocation_id)
         span.set_attribute("state", current_state)
@@ -45,12 +47,14 @@ def search_callback(
     invocation_id = callback_context.invocation_id
     current_state = callback_context.state.to_dict()
 
-    with cast(ActiveSpan, tracer.start_as_current_span("after_search_callback")) as span:
+    with cast(
+        ActiveSpan, tracer.start_as_current_span("after_search_callback")
+    ) as span:
         span.set_attribute("agent.name", agent_name)
         span.set_attribute("invocation.id", invocation_id)
         span.set_attribute("state", current_state)
 
-        queue_record = GenAIEvalRecord(
+        queue_record = EvalRecord(
             context={
                 "candidate_tracks": current_state.get("candidate_tracks", {}),
             },
