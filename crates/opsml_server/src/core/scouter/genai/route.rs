@@ -14,7 +14,7 @@ use opsml_types::api::RequestType;
 
 use opsml_client::error::ApiClientError;
 use scouter_client::{
-    GenAIEvalRecordPaginationRequest, GenAIEvalRecordPaginationResponse, GenAIEvalTaskRequest,
+    EvalRecordPaginationRequest, EvalRecordPaginationResponse, GenAIEvalTaskRequest,
     GenAIEvalTaskResponse, GenAIEvalWorkflowPaginationResponse,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
@@ -26,8 +26,8 @@ use tracing::{error, instrument};
 pub async fn query_genai_eval_records(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Json(body): Json<GenAIEvalRecordPaginationRequest>,
-) -> Result<Json<GenAIEvalRecordPaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    Json(body): Json<EvalRecordPaginationRequest>,
+) -> Result<Json<EvalRecordPaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !data.scouter_client.is_enabled() {
         return Err((
             StatusCode::SERVICE_UNAVAILABLE,
@@ -84,7 +84,7 @@ pub async fn query_genai_eval_records(
     };
 
     let body = response
-        .json::<GenAIEvalRecordPaginationResponse>()
+        .json::<EvalRecordPaginationResponse>()
         .await
         .map_err(|e| {
             error!("Failed to parse genai records: {e}");
@@ -98,7 +98,7 @@ pub async fn query_genai_eval_records(
 pub async fn query_genai_eval_workflow(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Json(body): Json<GenAIEvalRecordPaginationRequest>,
+    Json(body): Json<EvalRecordPaginationRequest>,
 ) -> Result<Json<GenAIEvalWorkflowPaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !data.scouter_client.is_enabled() {
         return Err((

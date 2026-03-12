@@ -8,7 +8,7 @@ use axum::{
 use http_body_util::BodyExt;
 use reqwest::header;
 use scouter_client::{
-    GenAIEvalRecordPaginationRequest, GenAIEvalRecordPaginationResponse, GenAIEvalTaskRequest,
+    EvalRecordPaginationRequest, EvalRecordPaginationResponse, GenAIEvalTaskRequest,
     GenAIEvalTaskResponse, GenAIEvalWorkflowPaginationResponse,
 };
 
@@ -16,7 +16,7 @@ use scouter_client::{
 async fn test_scouter_routes_record_page() {
     let helper = TestHelper::new(None).await;
 
-    let record_request = GenAIEvalRecordPaginationRequest::default();
+    let record_request = EvalRecordPaginationRequest::default();
 
     let body = serde_json::to_string(&record_request).unwrap();
     let request = Request::builder()
@@ -29,16 +29,16 @@ async fn test_scouter_routes_record_page() {
     let response = helper.send_oneshot(request).await;
     assert_eq!(response.status(), StatusCode::OK);
 
-    // deserialize into GenAIEvalRecordPaginationResponse
+    // deserialize into EvalRecordPaginationResponse
     let body = response.into_body().collect().await.unwrap().to_bytes();
-    let _page_response: GenAIEvalRecordPaginationResponse = serde_json::from_slice(&body).unwrap();
+    let _page_response: EvalRecordPaginationResponse = serde_json::from_slice(&body).unwrap();
 }
 
 #[tokio::test]
 async fn test_scouter_routes_workflow_page() {
     let helper = TestHelper::new(None).await;
 
-    let record_request = GenAIEvalRecordPaginationRequest::default();
+    let record_request = EvalRecordPaginationRequest::default();
 
     let body = serde_json::to_string(&record_request).unwrap();
     let request = Request::builder()
@@ -51,7 +51,7 @@ async fn test_scouter_routes_workflow_page() {
     let response = helper.send_oneshot(request).await;
     assert_eq!(response.status(), StatusCode::OK);
 
-    // deserialize into GenAIEvalRecordPaginationResponse
+    // deserialize into EvalRecordPaginationResponse
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let _page_response: GenAIEvalWorkflowPaginationResponse =
         serde_json::from_slice(&body).unwrap();
@@ -75,7 +75,7 @@ async fn test_scouter_routes_workflow_task() {
     let response = helper.send_oneshot(request).await;
     assert_eq!(response.status(), StatusCode::OK);
 
-    // deserialize into GenAIEvalRecordPaginationResponse
+    // deserialize into EvalRecordPaginationResponse
     let body = response.into_body().collect().await.unwrap().to_bytes();
     let _page_response: GenAIEvalTaskResponse = serde_json::from_slice(&body).unwrap();
 }

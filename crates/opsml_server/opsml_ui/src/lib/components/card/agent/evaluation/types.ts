@@ -7,7 +7,7 @@ import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard
 import type { GenAIMonitoringPageData } from "$lib/components/scouter/dashboard/utils";
 import type {
   GenAIEvalProfile,
-  GenAIEvalRecord,
+  EvalRecord,
 } from "$lib/components/scouter/genai/types";
 import type { GenAIEvalWorkflowResult } from "$lib/components/scouter/genai/task";
 
@@ -21,7 +21,7 @@ export interface AgentPromptEvalData {
   monitoringData: GenAIMonitoringPageData;
 }
 
-export type RecordWithAgent = GenAIEvalRecord & {
+export type RecordWithAgent = EvalRecord & {
   _agentName: string;
   _evalPath: string;
 };

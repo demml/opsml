@@ -128,8 +128,8 @@ Five two-column layout wrappers: `DataCardLayout`, `ModelCardLayout`, `Experimen
 | Component | Purpose |
 |-----------|---------|
 | `genai/GenAIDashboard.svelte` | GenAI eval dashboard |
-| `genai/record/GenAIEvalRecordTable.svelte` | Record list |
-| `genai/record/GenAIEvalRecordContent.svelte` | Record detail |
+| `genai/record/EvalRecordTable.svelte` | Record list |
+| `genai/record/EvalRecordContent.svelte` | Record detail |
 | `genai/workflow/GenAIEvalWorkflowTable.svelte` | Workflow list |
 | `genai/task/GenAITaskAccordion.svelte` | Collapsible task list |
 | `drift/PsiDashboard.svelte` | PSI drift monitoring |

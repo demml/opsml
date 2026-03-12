@@ -5,7 +5,7 @@ from opsml.scouter.tracing import (
     ActiveSpan,
 )
 from opsml.scouter.transport import GrpcConfig
-from opsml.scouter.queue import ScouterQueue, GenAIEvalRecord
+from opsml.scouter.queue import ScouterQueue, EvalRecord
 from google.adk.agents.llm_agent import Agent
 from .setup.prompt import (
     recipe_card,
@@ -54,7 +54,7 @@ def recipe_agent_callback(
         span.set_attribute("invocation.id", invocation_id)
         span.set_attribute("state", str(current_state))
 
-        queue_record = GenAIEvalRecord(
+        queue_record = EvalRecord(
             context={
                 "recipe": current_state.get("recipe", {}),
             },
@@ -84,7 +84,7 @@ def recipe_response_agent_callback(
         span.set_attribute("invocation.id", invocation_id)
         span.set_attribute("state", str(current_state))
 
-        queue_record = GenAIEvalRecord(
+        queue_record = EvalRecord(
             context={
                 "recipe_response": current_state.get("recipe_response", {}),
             },

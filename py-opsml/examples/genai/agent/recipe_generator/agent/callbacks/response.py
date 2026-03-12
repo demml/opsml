@@ -4,7 +4,7 @@ from typing import Optional
 from google.adk.models.llm_response import LlmResponse
 from opentelemetry import trace
 from opsml.scouter.tracing import ActiveSpan
-from opsml.scouter.evaluate import GenAIEvalRecord
+from opsml.scouter.evaluate import EvalRecord
 from typing import cast
 
 
@@ -21,7 +21,7 @@ def after_model_callback(
         if content and content.parts:
             span.add_queue_item(
                 "response_eval",
-                GenAIEvalRecord(
+                EvalRecord(
                     context={"response": content.parts[0].text},
                     session_id=callback_context.session.id,
                 ),

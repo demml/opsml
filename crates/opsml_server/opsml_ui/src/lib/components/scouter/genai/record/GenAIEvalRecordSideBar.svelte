@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import type { GenAIEvalRecord } from '../types';
-  import GenAIEvalRecordContent from './GenAIEvalRecordContent.svelte';
+  import type { EvalRecord } from '../types';
+  import EvalRecordContent from './EvalRecordContent.svelte';
 
   let {
     selectedRecord,
     onClose,
   }: {
-    selectedRecord: GenAIEvalRecord;
+    selectedRecord: EvalRecord;
     onClose: () => void;
   } = $props();
 
@@ -56,6 +56,6 @@
     onclick={(e) => e.stopPropagation()}
     onmousedown={(e) => e.stopPropagation()}
   >
-    <GenAIEvalRecordContent record={selectedRecord} onClose={handleClose} showCloseButton={true} />
+    <EvalRecordContent record={selectedRecord} onClose={handleClose} showCloseButton={true} />
   </div>
 </div>

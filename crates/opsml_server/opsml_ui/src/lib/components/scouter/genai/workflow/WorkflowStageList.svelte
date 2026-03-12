@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { GenAIEvalTaskResult, ExecutionPlan } from '../task';
+  import type { EvalTaskResult, ExecutionPlan } from '../task';
   import { CheckCircle2, XCircle, GitBranch } from 'lucide-svelte';
 
   let {
@@ -8,27 +8,27 @@
     selectedTask,
     onTaskSelect,
   }: {
-    tasks: GenAIEvalTaskResult[];
+    tasks: EvalTaskResult[];
     executionPlan: ExecutionPlan;
-    selectedTask: GenAIEvalTaskResult | null;
-    onTaskSelect: (task: GenAIEvalTaskResult) => void;
+    selectedTask: EvalTaskResult | null;
+    onTaskSelect: (task: EvalTaskResult) => void;
   } = $props();
 
-  function getTaskById(taskId: string): GenAIEvalTaskResult | undefined {
+  function getTaskById(taskId: string): EvalTaskResult | undefined {
     return tasks.find(t => t.task_id === taskId);
   }
 
-  function getStatusIcon(task: GenAIEvalTaskResult) {
+  function getStatusIcon(task: EvalTaskResult) {
     if (task.condition) return GitBranch;
     return task.passed ? CheckCircle2 : XCircle;
   }
 
-  function getStatusBarColor(task: GenAIEvalTaskResult): string {
+  function getStatusBarColor(task: EvalTaskResult): string {
     if (task.condition) return 'bg-tertiary-500';
     return task.passed ? 'bg-secondary-500' : 'bg-error-600';
   }
 
-  function getStatusIconColor(task: GenAIEvalTaskResult): string {
+  function getStatusIconColor(task: EvalTaskResult): string {
     if (task.condition) return 'text-tertiary-600';
     return task.passed ? 'text-secondary-600' : 'text-error-600';
   }
@@ -45,7 +45,7 @@
     executionPlan.stages.map((stageTaskIds, stageIndex) => {
       const stageTasks = stageTaskIds
         .map(taskId => getTaskById(taskId))
-        .filter((task): task is GenAIEvalTaskResult => task !== undefined)
+        .filter((task): task is EvalTaskResult => task !== undefined)
         .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
       return { stageIndex, tasks: stageTasks };
     })

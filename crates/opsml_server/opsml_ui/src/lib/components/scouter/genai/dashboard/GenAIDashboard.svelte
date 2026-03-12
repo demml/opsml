@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { GenAIEvalConfig, GenAIEvalProfile, GenAIEvalRecordPaginationResponse, GenAIEvalWorkflowPaginationResponse } from '../types';
+  import type { GenAIEvalConfig, GenAIEvalProfile, EvalRecordPaginationResponse, GenAIEvalWorkflowPaginationResponse } from '../types';
   import type { GenAIMonitoringPageData } from '../../dashboard/utils';
   import type { RecordCursor } from '../../types';
   import type { BinnedMetrics } from '../../custom/types';
@@ -8,7 +8,7 @@
   // Components
   import ComboBoxDropDown from '$lib/components/utils/ComboBoxDropDown.svelte';
   import GenAIConfigHeader from '../GenAIConfigHeader.svelte';
-  import GenAIEvalRecordTable from '../record/GenAIEvalRecordTable.svelte';
+  import EvalRecordTable from '../record/EvalRecordTable.svelte';
   import GenAIEvalWorkflowTable from '../workflow/GenAIEvalWorkflowTable.svelte';
   import VizBody from '$lib/components/scouter/dashboard/VizBody.svelte';
   import GenAITaskAccordion from '../task/GenAITaskAccordion.svelte';
@@ -159,8 +159,8 @@
 
         <div class="p-2 w-full flex-grow bg-slate-50 min-h-0">
            {#key records}
-              <GenAIEvalRecordTable
-                currentPage={records as GenAIEvalRecordPaginationResponse}
+              <EvalRecordTable
+                currentPage={records as EvalRecordPaginationResponse}
                 onPageChange={onRecordPageChange}
               />
            {/key}

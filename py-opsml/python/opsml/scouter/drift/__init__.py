@@ -14,7 +14,7 @@ from ..._opsml import (
     GenAIAlertConfig,
     GenAIEvalConfig,
     GenAIEvalProfile,
-    GenAIEvalRecord,
+    EvalRecord,
     LLMJudgeTask,
     Manual,
     PsiAlertConfig,
@@ -62,7 +62,7 @@ __all__ = [
     # genai
     "GenAIEvalConfig",
     "GenAIEvalProfile",
-    "GenAIEvalRecord",
+    "EvalRecord",
     "LLMJudgeTask",
     "AssertionTask",
     "ComparisonOperator",

@@ -3,7 +3,7 @@ from ..._opsml import (
     CustomMetricRecord,
     EntityType,
     Features,
-    GenAIEvalRecord,
+    EvalRecord,
     Metric,
     Metrics,
     PsiRecord,
@@ -26,5 +26,5 @@ __all__ = [
     "Metric",
     "Metrics",
     "EntityType",
-    "GenAIEvalRecord",
+    "EvalRecord",
 ]

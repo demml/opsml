@@ -13,7 +13,7 @@ use opsml_types::contracts::CardVariant;
 use opsml_types::{RegistryType, contracts::CardRecord};
 use pyo3::prelude::*;
 use scouter_client::{DriftType, ProfileStatusRequest};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::vec;
 use tracing::error;
@@ -237,7 +237,7 @@ pub fn lock_service_card(spec: &mut OpsmlServiceSpec) -> Result<LockArtifact, Cl
     }
 }
 
-fn create_lock_from_spec(path: &PathBuf) -> Result<LockFile, CliError> {
+fn create_lock_from_spec(path: &Path) -> Result<LockFile, CliError> {
     let spec_path = path.join(DEFAULT_SERVICE_FILENAME);
 
     if !spec_path.exists() {
@@ -251,7 +251,7 @@ fn create_lock_from_spec(path: &PathBuf) -> Result<LockFile, CliError> {
 
     lock_service(spec_path)?;
 
-    Ok(LockFile::read(&path)?)
+    Ok(LockFile::read(path)?)
 }
 
 fn download_service_artifacts(

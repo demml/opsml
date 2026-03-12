@@ -6,7 +6,7 @@ from google.adk.models.llm_response import LlmResponse
 from .models import Recipe
 from opentelemetry import trace
 from opsml.scouter.tracing import ActiveSpan
-from opsml.scouter.evaluate import GenAIEvalRecord
+from opsml.scouter.evaluate import EvalRecord
 from typing import cast
 
 
@@ -35,7 +35,7 @@ def after_model_callback(
         if recipe:
             span.add_queue_item(
                 "vegan_eval",
-                GenAIEvalRecord(
+                EvalRecord(
                     context={"recipe": recipe},
                     session_id=callback_context.session.id,
                 ),

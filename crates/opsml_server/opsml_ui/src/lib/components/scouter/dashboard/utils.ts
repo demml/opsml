@@ -2,7 +2,7 @@ import { getSpcDriftMetrics } from "$lib/components/scouter/spc/utils";
 import { getPsiDriftMetrics } from "$lib/components/scouter/psi/utils";
 import { getCustomDriftMetrics } from "$lib/components/scouter/custom/utils";
 import {
-  getServerGenAIEvalRecordPage,
+  getServerEvalRecordPage,
   getGenAIEvalTaskDriftMetrics,
   getGenAIEvalWorkflowDriftMetrics,
   getServerGenAIEvalWorkflowPage,
@@ -20,7 +20,7 @@ import {
 } from "../utils";
 import type {
   GenAIEvalProfile,
-  GenAIEvalRecordPaginationResponse,
+  EvalRecordPaginationResponse,
   GenAIEvalWorkflowPaginationResponse,
 } from "../genai/types";
 import { calculateTimeRange, getCookie } from "$lib/components/trace/utils";
@@ -72,7 +72,7 @@ export type SelectedData = {
 export type SelectedGenAIData = {
   metrics: DriftMetricMapping[DriftType.GenAI];
   driftAlerts: DriftAlertPaginationResponse;
-  records: GenAIEvalRecordPaginationResponse;
+  records: EvalRecordPaginationResponse;
   workflows: GenAIEvalWorkflowPaginationResponse;
 };
 
@@ -231,11 +231,11 @@ async function loadGenAIRecordsAndWorkflows(
   recordCursor?: { cursor: RecordCursor; direction: string },
   workflowCursor?: { cursor: RecordCursor; direction: string },
 ): Promise<{
-  records: GenAIEvalRecordPaginationResponse;
+  records: EvalRecordPaginationResponse;
   workflows: GenAIEvalWorkflowPaginationResponse;
 }> {
   const [records, workflows] = await Promise.all([
-    getServerGenAIEvalRecordPage(fetch, {
+    getServerEvalRecordPage(fetch, {
       service_info: { uid, space },
       ...(recordCursor
         ? {
