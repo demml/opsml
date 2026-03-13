@@ -763,7 +763,7 @@ class ExperimentCard:
     def get_metrics(
         self,
         names: Optional[list[str]] = None,
-    ) -> ExperimentMetrics:
+    ) -> "ExperimentMetrics":
         """
         Get metrics of an experiment
 
