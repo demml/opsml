@@ -7,7 +7,7 @@ from opsml.helpers.data import create_fake_data
 from skl2onnx import to_onnx  # type: ignore
 from sklearn.ensemble import RandomForestClassifier  # type: ignore
 
-model_registry: CardRegistry[ModelCard] = CardRegistry(registry_type=RegistryType.Model)
+model_registry = CardRegistry(registry_type=RegistryType.Model)
 
 
 # create data
