@@ -1,6 +1,6 @@
 import type { RegistryType } from "$lib/utils";
 import type { FeatureSchema } from "./datacard";
-import type { DriftProfileUri } from "../monitoring/types";
+import type { DriftProfileUri } from "$lib/components/scouter/types";
 
 // Enums
 export enum DataType {
@@ -174,4 +174,17 @@ export interface ModelCard {
   created_at: string; // ISO datetime string
   is_card: boolean;
   opsml_version: string;
+}
+
+export function isModelCard(obj: any): obj is ModelCard {
+  return (
+    obj &&
+    obj.registry_type === "Model" &&
+    typeof obj.name === "string" &&
+    typeof obj.space === "string" &&
+    typeof obj.version === "string" &&
+    typeof obj.uid === "string" &&
+    typeof obj.metadata === "object" &&
+    typeof obj.metadata.interface_metadata === "object"
+  );
 }

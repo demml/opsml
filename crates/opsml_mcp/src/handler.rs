@@ -32,8 +32,13 @@ impl McpHandler {
             McpCall::Initialize(_) => self.initialize(id),
             McpCall::ToolsList => self.tools_list(id),
             McpCall::ToolsCall(tool_call) => {
-                self.dispatch_tool(id, tool_call, #[cfg(feature = "server")] perms)
-                    .await
+                self.dispatch_tool(
+                    id,
+                    tool_call,
+                    #[cfg(feature = "server")]
+                    perms,
+                )
+                .await
             }
             McpCall::Unknown(method) => {
                 JsonRpcResponse::err(id, -32601, format!("Method not found: {method}"))

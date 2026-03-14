@@ -1,7 +1,7 @@
 # pylint: disable=invalid-name
 from contextlib import asynccontextmanager
 from pathlib import Path
-from opsml.scouter.queue import GenAIEvalRecord
+from opsml.scouter.queue import EvalRecord
 from opsml.card import PromptCard
 from fastapi import FastAPI, Request
 from opsml.app import AppState
@@ -66,7 +66,7 @@ async def predict(request: Request, payload: Question) -> Recipe:
 
         span.add_queue_item(
             alias="recipe_metrics",
-            item=GenAIEvalRecord(context={"recipe": recipe}),
+            item=EvalRecord(context={"recipe": recipe}),
         )
 
         return recipe

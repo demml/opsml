@@ -1,6 +1,6 @@
 import type {
   AssertionTask,
-  GenAIEvalTaskResult,
+  EvalTaskResult,
   GenAIEvalWorkflowResult,
   LLMJudgeTask,
   TraceAssertion,
@@ -109,7 +109,7 @@ export interface GenAIEvalProfile {
   alias?: string;
 }
 
-export interface GenAIEvalRecordPaginationRequest {
+export interface EvalRecordPaginationRequest {
   service_info: ServiceInfo;
   status?: Status;
   limit?: number;
@@ -120,8 +120,8 @@ export interface GenAIEvalRecordPaginationRequest {
   end_datetime?: DateTime;
 }
 
-export interface GenAIEvalRecordPaginationResponse {
-  items: GenAIEvalRecord[];
+export interface EvalRecordPaginationResponse {
+  items: EvalRecord[];
   has_next: boolean;
   next_cursor?: RecordCursor;
   has_previous: boolean;
@@ -129,11 +129,11 @@ export interface GenAIEvalRecordPaginationResponse {
 }
 
 /**
- * Represents the GenAIEvalRecord struct.
+ * Represents the EvalRecord struct.
  * Dates are handled as ISO-8601 strings, which is the default
  * serialization for chrono::DateTime.
  */
-export interface GenAIEvalRecord {
+export interface EvalRecord {
   record_id: string;
   created_at: string; // ISO-8601 String
   uid: string;
@@ -164,7 +164,7 @@ export interface GenAIEvalWorkflowPaginationResponse {
  * Container for multiple task results.
  */
 export interface GenAIEvalTaskResponse {
-  tasks: GenAIEvalTaskResult[];
+  tasks: EvalTaskResult[];
 }
 
 /** Request interface for GenAIEvalTask */

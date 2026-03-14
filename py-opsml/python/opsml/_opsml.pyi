@@ -10057,7 +10057,7 @@ def init_tracer(
             Optional ScouterQueue to associate with the tracer for correlated
             queue entity export alongside span data.
 
-            This allows queue records (e.g., Features, Metrics, GenAIEvalRecord)
+            This allows queue records (e.g., Features, Metrics, EvalRecord)
             to be ingested in conjunction with tracing data for enhanced
             observability.
 
@@ -10211,7 +10211,7 @@ class ActiveSpan:
     def add_queue_item(
         self,
         alias: str,
-        item: Union[Features, Metrics, GenAIEvalRecord],
+        item: Union[Features, Metrics, EvalRecord],
     ) -> None:
         """Helpers to add queue entities into a specified queue associated with the active span.
         This is an convenience method that abstracts away the details of queue management and
@@ -10221,9 +10221,9 @@ class ActiveSpan:
         Args:
             alias (str):
                 Alias of the queue to add the item into.
-            item (Union[Features, Metrics, GenAIEvalRecord]):
+            item (Union[Features, Metrics, EvalRecord]):
                 Item to add into the queue.
-                Can be an instance for Features, Metrics, or GenAIEvalRecord.
+                Can be an instance for Features, Metrics, or EvalRecord.
 
         Example:
             ```python
@@ -13860,13 +13860,13 @@ class Metrics:
 class Queue:
     """Individual queue associated with a drift profile"""
 
-    def insert(self, item: Union[Features, Metrics, GenAIEvalRecord]) -> None:
+    def insert(self, item: Union[Features, Metrics, EvalRecord]) -> None:
         """Insert a record into the queue
 
         Args:
             item:
                 Item to insert into the queue.
-                Can be an instance for Features, Metrics, or GenAIEvalRecord.
+                Can be an instance for Features, Metrics, or EvalRecord.
 
         Example:
             ```python
@@ -13916,7 +13916,7 @@ class ScouterQueue:
         ║                              │                                           ║
         ║                              ▼                                           ║
         ║  ┌────────────────────────────────────────────────────────────────────┐  ║
-        ║  │  queue["profile_alias"].insert(Features | Metrics | GenAIEvalRecord)     │  ║
+        ║  │  queue["profile_alias"].insert(Features | Metrics | EvalRecord)     │  ║
         ║  └───────────────────────────┬────────────────────────────────────────┘  ║
         ║                              │                                           ║
         ╚══════════════════════════════╪═══════════════════════════════════════════╝
@@ -13967,7 +13967,7 @@ class ScouterQueue:
         ```
         Flow Summary:
             1. **Python Runtime**: Initialize queue with drift profiles and transport config
-            2. **Insert Records**: Call queue["alias"].insert() with Features/Metrics/GenAIEvalRecord
+            2. **Insert Records**: Call queue["alias"].insert() with Features/Metrics/EvalRecord
             3. **Rust Queue**: Buffer and validate records against profile schema
             4. **Transport Producer**: Serialize and publish to configured transport
             5. **Network**: Records travel via Kafka/RabbitMQ/Redis/HTTP/gRPC
@@ -14042,7 +14042,7 @@ class ScouterQueue:
                 ...     ),
                 ... )
                 >>> queue["genai_eval"].insert(
-                ...     GenAIEvalRecord(context={"input": "...", "response": "..."})
+                ...     EvalRecord(context={"input": "...", "response": "..."})
                 ... )
         """
 
@@ -14099,13 +14099,13 @@ class ScouterQueue:
     ) -> Union[KafkaConfig, RabbitMQConfig, RedisConfig, HttpConfig, MockConfig]:
         """Return the transport configuration used by the queue"""
 
-class GenAIEvalRecord:
+class EvalRecord:
     """LLM record containing context tied to a Large Language Model interaction
     that is used to evaluate drift in LLM responses.
 
 
     Examples:
-        >>> record = GenAIEvalRecord(
+        >>> record = EvalRecord(
         ...     context={
         ...         "input": "What is the capital of France?",
         ...         "response": "Paris is the capital of France."
@@ -16307,22 +16307,22 @@ class Drifter:
     @overload
     def compute_drift(
         self,
-        data: List[GenAIEvalRecord],
+        data: List[EvalRecord],
         drift_profile: GenAIEvalProfile,
         data_type: Optional[ScouterDataType] = None,
-    ) -> "GenAIEvalResultSet":
+    ) -> "EvalResultSet":
         """Create a drift map from data.
 
         Args:
-            data (List[GenAIEvalRecord]):
-                Data to create a data profile from. Data can be a list of GenAIEvalRecord.
+            data (List[EvalRecord]):
+                Data to create a data profile from. Data can be a list of EvalRecord.
             profile (GenAIEvalProfile):
                 Drift profile to use to compute drift map
             data_type:
                 Optional data type. Inferred from data if not provided.
 
         Returns:
-            GenAIEvalResultSet
+            EvalResultSet
         """
 
     def compute_drift(  # type: ignore
@@ -16330,7 +16330,7 @@ class Drifter:
         data: Any,
         drift_profile: Union[SpcDriftProfile, PsiDriftProfile, GenAIEvalProfile],
         data_type: Optional[ScouterDataType] = None,
-    ) -> Union[SpcDriftMap, PsiDriftMap, GenAIEvalResultSet]:
+    ) -> Union[SpcDriftMap, PsiDriftMap, EvalResultSet]:
         """Create a drift map from data.
 
         Args:
@@ -16343,10 +16343,10 @@ class Drifter:
                 Optional data type. Inferred from data if not provided.
 
         Returns:
-            SpcDriftMap, PsiDriftMap or GenAIEvalResultSet
+            SpcDriftMap, PsiDriftMap or EvalResultSet
         """
 
-class GenAIEvalTaskResult:
+class EvalTaskResult:
     """Individual task result from an LLM evaluation run"""
 
     @property
@@ -16407,25 +16407,25 @@ class GenAIEvalTaskResult:
     def model_dump_json(self) -> str:
         """Serialize the task result to JSON string"""
 
-class GenAIEvalDataset:
+class EvalDataset:
     """Defines the dataset used for LLM evaluation"""
 
     def __init__(
         self,
-        records: Sequence[GenAIEvalRecord],
+        records: Sequence[EvalRecord],
         tasks: Sequence[LLMJudgeTask | AssertionTask],
     ):
-        """Initialize the GenAIEvalDataset with records and tasks.
+        """Initialize the EvalDataset with records and tasks.
 
         Args:
-            records (List[GenAIEvalRecord]):
+            records (List[EvalRecord]):
                 List of LLM evaluation records to be evaluated.
             tasks (List[LLMJudgeTask | AssertionTask]):
                 List of evaluation tasks to apply to the records.
         """
 
     @property
-    def records(self) -> List[GenAIEvalRecord]:
+    def records(self) -> List[EvalRecord]:
         """Get the list of LLM evaluation records in this dataset"""
 
     @property
@@ -16439,7 +16439,7 @@ class GenAIEvalDataset:
     def evaluate(
         self,
         config: Optional[EvaluationConfig] = None,
-    ) -> "GenAIEvalResults":
+    ) -> "EvalResults":
         """Evaluate the records using the defined tasks.
 
         Args:
@@ -16447,7 +16447,7 @@ class GenAIEvalDataset:
                 Optional configuration for the evaluation process.
 
         Returns:
-            GenAIEvalResults:
+            EvalResults:
                 The results of the evaluation.
         """
 
@@ -16457,8 +16457,8 @@ class GenAIEvalDataset:
     def with_updated_contexts_by_id(
         self,
         updated_contexts: Dict[str, Any],
-    ) -> "GenAIEvalDataset":
-        """Create a new GenAIEvalDataset with updated contexts for specific records.
+    ) -> "EvalDataset":
+        """Create a new EvalDataset with updated contexts for specific records.
 
         Example:
             >>> updated_contexts = {
@@ -16470,15 +16470,15 @@ class GenAIEvalDataset:
             updated_contexts (Dict[str, Any]):
                 A dictionary mapping record UIDs to their new context data.
         Returns:
-            GenAIEvalDataset:
+            EvalDataset:
                 A new dataset instance with the updated contexts.
         """
 
-class GenAIEvalSet:
+class EvalSet:
     """Evaluation set for a specific evaluation run"""
 
     @property
-    def records(self) -> List[GenAIEvalTaskResult]:
+    def records(self) -> List[EvalTaskResult]:
         """Get the list of task results in this evaluation set"""
 
     @property
@@ -16520,11 +16520,11 @@ class GenAIEvalSet:
 
     def __str__(self): ...
 
-class GenAIEvalResultSet:
+class EvalResultSet:
     """Defines the results of a specific evaluation run"""
 
     @property
-    def records(self) -> List[GenAIEvalSet]:
+    def records(self) -> List[EvalSet]:
         """Get the list of evaluation sets in this result set"""
 
 class AlignedEvalResult:
@@ -16535,7 +16535,7 @@ class AlignedEvalResult:
         """Get the unique identifier for the record associated with this result"""
 
     @property
-    def eval_set(self) -> GenAIEvalSet:
+    def eval_set(self) -> EvalSet:
         """Get the eval results"""
 
     @property
@@ -16628,7 +16628,7 @@ class WorkflowComparison:
         """Get detailed task-by-task comparisons for this workflow"""
 
 class ComparisonResults:
-    """Results from comparing two GenAIEvalResults evaluations"""
+    """Results from comparing two EvalResults evaluations"""
 
     @property
     def workflow_comparisons(self) -> List[WorkflowComparison]:
@@ -16705,7 +16705,7 @@ class ComparisonResults:
         - Missing tasks list (if any)
         """
 
-class GenAIEvalResults:
+class EvalResults:
     """Defines the results of an LLM eval metric"""
 
     def __getitem__(self, key: str) -> AlignedEvalResult:
@@ -16728,7 +16728,7 @@ class GenAIEvalResults:
         """Get the count of failed evaluations"""
 
     def __str__(self):
-        """String representation of the GenAIEvalResults"""
+        """String representation of the EvalResults"""
 
     def to_dataframe(self, polars: bool = False) -> Any:
         """
@@ -16747,12 +16747,12 @@ class GenAIEvalResults:
         """Dump the results as a JSON string"""
 
     @staticmethod
-    def model_validate_json(json_string: str) -> "GenAIEvalResults":
-        """Validate and create an GenAIEvalResults instance from a JSON string
+    def model_validate_json(json_string: str) -> "EvalResults":
+        """Validate and create an EvalResults instance from a JSON string
 
         Args:
             json_string (str):
-                JSON string to validate and create the GenAIEvalResults instance from.
+                JSON string to validate and create the EvalResults instance from.
         """
 
     def as_table(self, show_tasks: bool = False) -> str:
@@ -16765,11 +16765,11 @@ class GenAIEvalResults:
 
         """
 
-    def compare_to(self, baseline: "GenAIEvalResults", regression_threshold: float) -> ComparisonResults:
+    def compare_to(self, baseline: "EvalResults", regression_threshold: float) -> ComparisonResults:
         """Compare the current evaluation results to a baseline with a regression threshold.
 
         Args:
-            baseline (GenAIEvalResults):
+            baseline (EvalResults):
                 The baseline evaluation results to compare against.
             regression_threshold (float):
                 The threshold for considering a regression significant.
@@ -18679,7 +18679,7 @@ class ExperimentCard:
     def get_metrics(
         self,
         names: Optional[list[str]] = None,
-    ) -> Metrics:
+    ) -> "ExperimentMetrics":
         """
         Get metrics of an experiment
 
@@ -18688,7 +18688,7 @@ class ExperimentCard:
                 Names of the metrics to get. If None, all metrics will be returned.
 
         Returns:
-            Metrics
+            ExperimentMetrics
         """
 
     def get_parameters(
@@ -18798,11 +18798,11 @@ class ExperimentCard:
                 The experiment card uid to add
         """
 
-    def list_artifacts(self, path: Optional[Path]) -> List[str]:
+    def list_artifacts(self, path: Optional[Path | str] = None) -> List[str]:
         """List the artifacts associated with the experiment card
 
         Args:
-            path (Path):
+            path (Path | str | None):
                 Specific path you wish to list artifacts from. If not provided,
                 all artifacts will be listed.
 
@@ -18817,30 +18817,30 @@ class ExperimentCard:
 
     def download_artifacts(
         self,
-        path: Optional[Path] = None,
-        lpath: Optional[Path] = None,
+        path: Optional[Path | str] = None,
+        lpath: Optional[Path | str] = None,
     ) -> None:
         """Download artifacts associated with the ExperimentCard
 
         Args:
-            path (Path | None):
+            path (Path | str | None):
                 Specific path you wish to download artifacts from. If not provided,
                 all artifacts will be downloaded.
 
-            lpath (Path | None):
+            lpath (Path | str | None):
                 Local path to save the artifacts. If not provided, the artifacts will be saved
                 to a directory called "artifacts"
         """
 
     def download_artifact(
         self,
-        path: Path,
+        path: Path | str,
         lpath: Optional[Path] = None,
     ) -> None:
         """Download a specific artifact associated with the ExperimentCard
 
         Args:
-            path (Path):
+            path (Path | str):
                 Path to the artifact to download
             lpath (Path | None):
                 Local path to save the artifact. If not provided, the artifact will be saved
@@ -19615,7 +19615,7 @@ class CardRegistry(Generic[CardT]):
         """
 
 class ModelCardRegistry(CardRegistry):
-    def register_card(
+    def register_card(  # type: ignore
         self,
         card: ModelCard,
         version_type: VersionType = VersionType.Minor,
@@ -19639,7 +19639,7 @@ class ModelCardRegistry(CardRegistry):
 
         """
 
-    def load_card(
+    def load_card(  # type: ignore
         self,
         uid: Optional[str] = None,
         space: Optional[str] = None,
@@ -19692,7 +19692,7 @@ class ModelCardRegistry(CardRegistry):
         """
 
 class DataCardRegistry(CardRegistry):
-    def register_card(
+    def register_card(  # type: ignore
         self,
         card: DataCard,
         version_type: VersionType = VersionType.Minor,
@@ -19716,7 +19716,7 @@ class DataCardRegistry(CardRegistry):
 
         """
 
-    def load_card(
+    def load_card(  # type: ignore
         self,
         uid: Optional[str] = None,
         space: Optional[str] = None,
@@ -20072,6 +20072,8 @@ class ExperimentMetric:
         Created at of the metric
         """
 
+    def __str__(self) -> str: ...
+
 class ExperimentMetrics:
     def __str__(self): ...
     def __getitem__(self, index: int) -> Metric: ...
@@ -20231,14 +20233,14 @@ class Experiment:
 
     def log_figure_from_path(
         self,
-        lpath: Path,
+        lpath: Path | str,
         rpath: Optional[str] = None,
     ) -> None:
         """
         Log a figure
 
         Args:
-            lpath (Path):
+            lpath (Path | str):
                 The local path where the figure has been saved to. Must be an image type
                 (e.g. jpeg, tiff, png, etc.)
             rpath (Optional[str]):
@@ -20352,7 +20354,7 @@ class EvalMetrics:
 def get_experiment_metrics(
     experiment_uid: str,
     names: Optional[list[str]] = None,
-) -> Metrics:
+) -> ExperimentMetrics:
     """
     Get metrics of an experiment
 
@@ -20363,7 +20365,7 @@ def get_experiment_metrics(
             Names of the metrics to get. If None, all metrics will be returned.
 
     Returns:
-        Metrics
+        ExperimentMetrics
     """
 
 def get_experiment_parameters(
@@ -20385,7 +20387,7 @@ def get_experiment_parameters(
 
 def download_artifact(
     experiment_uid: str,
-    path: Path,
+    path: Path | str,
     lpath: Optional[Path] = None,
 ) -> None:
     """
@@ -20393,7 +20395,7 @@ def download_artifact(
     Args:
         experiment_uid (str):
             UID of the experiment
-        path (Path):
+        path (Path | str):
             Path of the artifact to download
         lpath (Path | None):
             Local path to download the artifact to. If None, the artifact will be downloaded to the current working directory.
@@ -23830,7 +23832,13 @@ __all__ = [
     "EnterpriseWebSearch",
     "EntityType",
     "EqualWidthBinning",
+    "EvalDataset",
     "EvalMetrics",
+    "EvalRecord",
+    "EvalResultSet",
+    "EvalResults",
+    "EvalSet",
+    "EvalTaskResult",
     "EvaluationConfig",
     "EvaluationTaskType",
     "EventDetails",
@@ -23871,13 +23879,7 @@ __all__ = [
     "GeminiTool",
     "GenAIAlertConfig",
     "GenAIEvalConfig",
-    "GenAIEvalDataset",
     "GenAIEvalProfile",
-    "GenAIEvalRecord",
-    "GenAIEvalResultSet",
-    "GenAIEvalResults",
-    "GenAIEvalSet",
-    "GenAIEvalTaskResult",
     "GenerateContentResponse",
     "GenerationConfig",
     "GetProfileRequest",

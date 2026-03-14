@@ -1,5 +1,4 @@
 import type { DateTime } from "$lib/types";
-import { RegistryType } from "$lib/utils";
 
 export interface TraceListItem {
   trace_id: string;
@@ -153,6 +152,8 @@ export interface TraceSpansResponse {
 export interface TraceRequest {
   trace_id: string;
   service_name?: string;
+  start_time?: DateTime;
+  end_time?: DateTime;
 }
 
 export interface TraceMetricsRequest {

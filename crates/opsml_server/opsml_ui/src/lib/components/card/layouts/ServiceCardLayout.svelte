@@ -15,8 +15,8 @@
   }
 
   let { data, registryType, children }: ServiceLayoutProps = $props();
-  let metadata: ServiceCard = data.metadata;
-  let showEvalTab: boolean = data.showEvalTab;
+  let metadata = $derived(data.metadata as ServiceCard);
+  let showEvalTab = $derived(data.showEvalTab as boolean);
 
   /**
    * Determines the active tab based on the current URL path

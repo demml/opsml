@@ -9,6 +9,7 @@ use opsml_utils::error::UtilError;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use scouter_client::ProfileError;
+use std::path::PathBuf;
 use thiserror::Error;
 use tracing::error;
 
@@ -79,6 +80,9 @@ pub enum CliError {
 
     #[error("Expected a CardVariant::Card, but found a different variant")]
     ExpectedCardPathVariant,
+
+    #[error("OpsML spec file not found at path: {0}")]
+    SpecNotFound(PathBuf),
 }
 
 impl From<CliError> for PyErr {

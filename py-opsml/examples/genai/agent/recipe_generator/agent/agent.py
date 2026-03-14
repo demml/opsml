@@ -1,30 +1,30 @@
 """
-Music Recommendation: Prompt Chaining with SequentialAgent
-
-This demonstrates the Prompt Chaining pattern using Google ADK's SequentialAgent.
-Each sub-agent performs one step and passes results via shared state using output_key.
+Recipe Generator: Orchestrator + Sequential Response Pattern
 
 Pipeline:
-1. Preference Analyzer → Extracts user taste
-2. Pattern Recognizer → Identifies listening themes
-3. Search Specialist → Finds candidate tracks
-4. Recommendation Generator → Produces final recommendations
+1. Recipe Orchestrator (LlmAgent) → Routes to the appropriate recipe sub-agent and stores result
+2. Response Agent (LlmAgent) → Reads the recipe result and returns a polished response to the user
 """
 
-from starlette.responses import JSONResponse
-from google.adk.agents import LlmAgent
-from google.adk.a2a.utils.agent_to_a2a import to_a2a
-from starlette.middleware.cors import CORSMiddleware
-from .lifespan import app, prompts
 from agent.sub_agents import (
+    dessert_recipe_agent,
     meat_recipe_agent,
     vegan_recipe_agent,
-    dessert_recipe_agent,
 )
+from agent.callbacks.response import (
+    after_model_callback as response_after_model_callback,
+)
+from google.adk.a2a.utils.agent_to_a2a import to_a2a
+from google.adk.agents import LlmAgent, SequentialAgent
+from starlette.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse
 
+from .lifespan import app, prompts
 
 agent_card = app.service.agent_card()
-root_agent = LlmAgent(
+
+recipe_orchestrator = LlmAgent(
+    model=prompts.recipe.prompt.model,
     name=agent_card.skills[0].id,
     sub_agents=[
         meat_recipe_agent,
@@ -33,6 +33,18 @@ root_agent = LlmAgent(
     ],
     description="Recipe generator agent that creates meal and dessert recipes based on user preferences and dietary restrictions.",
     instruction=prompts.recipe.prompt.messages[0].text,
+)
+
+response_agent = LlmAgent(
+    name="RecipeResponseAgent",
+    model=prompts.response.prompt.model,
+    instruction=prompts.response.prompt.messages[0].text,
+    after_model_callback=response_after_model_callback,
+)
+
+root_agent = SequentialAgent(
+    name="RecipePipeline",
+    sub_agents=[recipe_orchestrator, response_agent],
 )
 
 # Convert to A2A-compatible Starlette app

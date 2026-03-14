@@ -146,10 +146,10 @@ export type Assertion =
   | { TraceAssertion: TraceAssertion };
 
 /**
- * Maps to GenAIEvalTaskResult struct.
+ * Maps to EvalTaskResult struct.
  * Note: entity_id is included here for TS safety even if not exposed to Python.
  */
-export interface GenAIEvalTaskResult {
+export interface EvalTaskResult {
   created_at: string; // ISO-8601
   start_time: string; // ISO-8601
   end_time: string; // ISO-8601
@@ -170,11 +170,11 @@ export interface GenAIEvalTaskResult {
 }
 
 /**
- * Extract assertion from GenAIEvalTaskResult.
+ * Extract assertion from EvalTaskResult.
  * Returns context_path for standard assertions, TraceAssertion for trace tasks.
  */
 export function getAssertion(
-  result: GenAIEvalTaskResult,
+  result: EvalTaskResult,
 ): string | null | TraceAssertion {
   if ("FieldPath" in result.assertion) {
     return result.assertion.FieldPath;

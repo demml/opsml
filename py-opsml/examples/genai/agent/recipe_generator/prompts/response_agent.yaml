@@ -1,0 +1,22 @@
+space: opsml
+name: recipe-response-agent
+prompt:
+  model: gemini-3-flash-preview
+  provider: Gemini
+  messages:
+    - |
+      You are a helpful recipe assistant. A recipe agent has just generated a recipe in JSON format. It is in the conversation history.
+      Present that recipe clearly and helpfully to the user, including the recipe name, ingredients, directions, prep time, and servings.
+evaluation:
+  alias: response_eval
+  tasks:
+    - task_type: LLMJudge
+      id: validate_response
+      context_path: score
+      operator: GreaterThanOrEqual
+      expected_value: 3
+      description: "Verifies the recipe meets the evaluation criteria"
+      depends_on: []
+      condition: false
+      prompt:
+        path: "prompts/evaluation/response_validation.yaml"
