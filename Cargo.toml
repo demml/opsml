@@ -85,7 +85,7 @@ ort = { version = "=2.0.0-rc.11" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = "0.*"
-potato-head = "0.16.1"
+potato-head = "0.17.0"
 pyo3 = { version = "0.27.2", features = ["abi3-py310", "extension-module", "anyhow", "serde", "chrono"] }
 rand = { version = "0.9.1"}
 rayon = "1.*"
@@ -95,7 +95,7 @@ reqwest-middleware = "0.*"
 rusty-logging = "0.*"
 pythonize = { version = "0.*" }
 # we cant use crates.io because scouter relies on a fork of linfa at the moment
-scouter-client = { git= "https://github.com/demml/scouter.git" , branch = "more-renaming" }
+scouter-client = { git= "https://github.com/demml/scouter.git" , branch = "bug/datafusion-query" }
 sha2 = "0.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
