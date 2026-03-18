@@ -5,7 +5,7 @@ use crate::{
     reloader::{ReloadConfig, ServiceReloader, start_background_download_task},
 };
 use opsml_cards::{ServiceCard, card_service::ServiceInfo};
-use opsml_cli::actions::lock::install_service_from_spec;
+use opsml_cli::actions::lock::{install_service_from_spec, install_service_locally};
 use opsml_state::app_state;
 use opsml_storage::{StorageError, copy_objects};
 use opsml_toml::LockFile;
@@ -192,14 +192,20 @@ impl AppState {
     /// * `load_kwargs` - Load kwargs to pass to the ServiceCard loader
     /// # Returns
     /// * `AppState` - The loaded application state
+    /// This method will load an application state from an opsmlspec.yaml file.
+    /// When `register` is `True` (default), the service is registered normally.
+    /// When `register` is `False`, the service is installed locally without
+    /// registering a new ServiceCard — no encryption keys, no uploads. Sub-card
+    /// artifacts for Card variants are still downloaded from the registry.
     #[staticmethod]
-    #[pyo3(signature = (path=None, transport_config=None, reload_config=None, load_kwargs=None))]
+    #[pyo3(signature = (path=None, transport_config=None, reload_config=None, load_kwargs=None, register=None))]
     pub fn from_spec(
         py: Python,
         path: Option<PathBuf>,
         transport_config: Option<&Bound<'_, PyAny>>,
         reload_config: Option<ReloadConfig>,
         load_kwargs: Option<&Bound<'_, PyDict>>,
+        register: Option<bool>,
     ) -> Result<Self, AppError> {
         // if path is file, get parent directory, if not use path, if None use current directory
         let spec_dir = match path {
@@ -208,8 +214,13 @@ impl AppState {
             None => std::env::current_dir()?,
         };
 
-        install_service_from_spec(spec_dir.clone(), Some(spec_dir.clone()))
-            .map_err(|e| AppError::Error(e.to_string()))?;
+        if register.unwrap_or(true) {
+            install_service_from_spec(spec_dir.clone(), Some(spec_dir.clone()))
+                .map_err(|e| AppError::Error(e.to_string()))?;
+        } else {
+            install_service_locally(spec_dir.clone(), Some(spec_dir.clone()))
+                .map_err(|e| AppError::Error(e.to_string()))?;
+        }
 
         let lock_file = LockFile::read(&spec_dir).map_err(|e| AppError::Error(e.to_string()))?;
 

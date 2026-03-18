@@ -148,3 +148,36 @@ def test_from_spec(
         shutil.rmtree(opsml_service, ignore_errors=True)
         if lock_file.exists():
             os.remove(lock_file)
+
+
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+def test_from_spec_no_register(
+    mock_environment,
+    random_forest_classifier: SklearnModel,
+    chat_prompt: Prompt,
+    example_dataframe: pd.DataFrame,
+):
+    """
+    Test that AppState.from_spec with register=False loads the service
+    without registering a new ServiceCard.
+    """
+    with OpsmlTestServer(True, CURRENT_DIRECTORY):
+        # Register model and prompt cards so they exist for download
+        run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
+
+        app = AppState.from_spec(
+            path=CURRENT_DIRECTORY,
+            transport_config=opsml.scouter.HttpConfig(),
+            register=False,
+        )
+
+        assert app.service is not None
+        assert app.queue is not None
+        assert isinstance(app.queue.transport_config, MockConfig)
+
+        # Cleanup
+        opsml_service = CURRENT_DIRECTORY / "opsml_service"
+        lock_file = CURRENT_DIRECTORY / "opsml.lock"
+        shutil.rmtree(opsml_service, ignore_errors=True)
+        if lock_file.exists():
+            os.remove(lock_file)

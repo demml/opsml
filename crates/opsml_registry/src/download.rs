@@ -14,6 +14,7 @@ use opsml_types::{
 };
 use opsml_utils::PyHelperFuncs;
 use pyo3::prelude::*;
+use std::collections::HashSet;
 use std::path::Path;
 use std::path::PathBuf;
 use tracing::{debug, error, instrument};
@@ -96,6 +97,86 @@ pub fn download_card_from_registry(
     Ok(())
 }
 
+/// Download sub-card artifacts for a service card.
+///
+/// Creates an `OpsmlCardRegistry`, iterates the service's cards, skipping any
+/// whose alias is in `skip_aliases` (e.g. cards already saved locally from Path
+/// variants), downloads the rest, processes drift paths, and writes the
+/// `ServiceCardMapping` to `write_path/card_map.json`.
+///
+/// # Arguments
+/// * `service` - The ServiceCard whose sub-cards should be downloaded
+/// * `write_path` - Directory to download into
+/// * `skip_aliases` - Aliases of cards to skip (already present locally)
+pub fn download_service_sub_cards(
+    service: &ServiceCard,
+    write_path: &Path,
+    skip_aliases: &HashSet<String>,
+) -> Result<(), RegistryError> {
+    let registry = OpsmlCardRegistry::new(service.registry_type.clone())?;
+    let mut mapping = ServiceCardMapping::new();
+    let current_dir = std::env::current_dir()?;
+
+    // Download each card in the service
+    service
+        .cards
+        .iter()
+        .try_for_each(|card| -> Result<(), RegistryError> {
+            if skip_aliases.contains(&card.alias) {
+                debug!("Skipping card {} (already saved locally)", card.alias);
+                // Still add to mapping since the card is already on disk
+                let card_path = write_path
+                    .strip_prefix(&current_dir)
+                    .unwrap_or(write_path)
+                    .join(&card.alias);
+                mapping.add_card_path(&card.alias, &card_path);
+
+                if card.registry_type == RegistryType::Model
+                    || card.registry_type == RegistryType::Prompt
+                {
+                    process_drift_paths(card, &card_path, &mut mapping)?;
+                }
+                return Ok(());
+            }
+
+            let query_args = CardQueryArgs {
+                uid: card.uid.clone(),
+                name: Some(card.name.clone()),
+                space: Some(card.space.clone()),
+                version: card.version.clone(),
+                registry_type: card.registry_type.clone(),
+                ..Default::default()
+            };
+
+            let key = registry.get_key(&query_args)?;
+            let card_path = write_path
+                .strip_prefix(&current_dir)
+                .unwrap_or(write_path)
+                .join(&card.alias);
+
+            // Download card artifacts
+            download_card_artifacts(&key, &card_path)?;
+            mapping.add_card_path(&card.alias, &card_path);
+
+            // If modelcard or promptcard, load and process drift paths
+            if card.registry_type == RegistryType::Model
+                || card.registry_type == RegistryType::Prompt
+            {
+                process_drift_paths(card, &card_path, &mut mapping)?;
+            }
+            Ok(())
+        })?;
+
+    // save mapping to card root dir
+    let mapping_path = write_path
+        .join(SaveName::CardMap)
+        .with_extension(Suffix::Json);
+
+    PyHelperFuncs::save_to_json(mapping, &mapping_path)?;
+
+    Ok(())
+}
+
 pub fn download_service_from_registry(
     args: &CardQueryArgs,
     write_path: &Path,
@@ -124,86 +205,8 @@ pub fn download_service_from_registry(
         Colorize::green(write_path.to_str().unwrap())
     );
 
-    let mut mapping = ServiceCardMapping::new();
-    let current_dir = std::env::current_dir()?;
-
-    // Download each card in the service
-    service
-        .cards
-        .iter()
-        .try_for_each(|card| -> Result<(), RegistryError> {
-            let query_args = CardQueryArgs {
-                uid: card.uid.clone(),
-                name: Some(card.name.clone()),
-                space: Some(card.space.clone()),
-                version: card.version.clone(),
-                registry_type: card.registry_type.clone(),
-                ..Default::default()
-            };
-
-            let key = registry.get_key(&query_args)?;
-            let card_path = write_path
-                .strip_prefix(&current_dir)
-                .unwrap_or(write_path)
-                .join(&card.alias);
-
-            // Download card artifacts
-            download_card_artifacts(&key, &card_path)?;
-            mapping.add_card_path(&card.alias, &card_path);
-
-            // If modelcard or promptcard, load and process drift paths
-            if card.registry_type == RegistryType::Model
-                || card.registry_type == RegistryType::Prompt
-            {
-                let card_json_path = card_path.join(SaveName::Card).with_extension(Suffix::Json);
-                let json_string = std::fs::read_to_string(&card_json_path)?;
-
-                let drift_paths = match card.registry_type {
-                    RegistryType::Model => {
-                        let modelcard: ModelCard = serde_json::from_str(&json_string)?;
-                        modelcard
-                            .metadata
-                            .interface_metadata
-                            .save_metadata
-                            .drift_profile_uri_map
-                    }
-                    RegistryType::Prompt => {
-                        let promptcard: PromptCard = serde_json::from_str(&json_string)?;
-                        promptcard.metadata.drift_profile_uri_map
-                    }
-                    _ => {
-                        debug!(
-                            "Card {} is not a ModelCard or PromptCard, skipping drift paths",
-                            card.alias
-                        );
-                        None
-                    }
-                };
-
-                match drift_paths {
-                    Some(paths) => {
-                        for (alias, path) in paths {
-                            // create drift alias and path
-                            // {card_path}/{uri} - uri is relative to parent card path in the profile uri map
-                            let drift_path = card_path.join(path.uri);
-                            mapping.add_drift_path(&alias, &drift_path);
-                        }
-                    }
-                    None => {
-                        debug!("{} has no drift paths", card.alias);
-                    }
-                }
-                // Optionally: do something with drift_paths
-            }
-            Ok(())
-        })?;
-
-    // save mapping to card root dir
-    let mapping_path = write_path
-        .join(SaveName::CardMap)
-        .with_extension(Suffix::Json);
-
-    PyHelperFuncs::save_to_json(mapping, &mapping_path)?;
+    // Download sub-cards with no skips
+    download_service_sub_cards(&service, write_path, &HashSet::new())?;
 
     Ok(())
 }

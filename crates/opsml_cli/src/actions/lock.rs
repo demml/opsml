@@ -1,9 +1,10 @@
-use crate::actions::utils::register_service_card;
+use crate::actions::utils::{create_service_card_local, register_service_card};
 use crate::cli::arg::DownloadCard;
 use crate::download_service;
 use crate::error::CliError;
 use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
+use opsml_registry::download::download_service_sub_cards;
 use opsml_registry::error::RegistryError;
 use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_service::{OpsmlServiceSpec, service::DEFAULT_SERVICE_FILENAME};
@@ -90,7 +91,7 @@ fn postprocess_service_card(
 /// * `write_dir` - &str
 /// # Returns
 /// * `LockArtifact`
-fn create_lock_artifact_from_service_card(
+pub(crate) fn create_lock_artifact_from_service_card(
     service_card: &ServiceCard,
     write_dir: &str,
 ) -> LockArtifact {
@@ -125,7 +126,7 @@ fn create_lock_artifact_from_existing_service(
 }
 
 /// Gets the write directory with a fallback default
-fn get_write_dir(spec: &OpsmlServiceSpec, default: &str) -> String {
+pub(crate) fn get_write_dir(spec: &OpsmlServiceSpec, default: &str) -> String {
     spec.service
         .as_ref()
         .and_then(|s| s.write_dir.clone())
@@ -342,6 +343,66 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
     };
 
     download_service_artifacts(lockfile, write_path)?;
+    Ok(())
+}
+
+/// Install a service locally without registering a ServiceCard.
+/// Creates the ServiceCard from the spec, saves it to disk, downloads sub-card
+/// artifacts from the registry (for Card variants), and writes a lock file.
+/// Path variant cards are loaded from disk and saved locally instead.
+///
+/// # Arguments
+/// * `path` - Path to the directory containing opsmlspec.yaml
+/// * `write_path` - Optional override for the base write directory
+pub fn install_service_locally(
+    path: PathBuf,
+    write_path: Option<PathBuf>,
+) -> Result<(), CliError> {
+    debug!("Installing service locally (no registration)");
+    println!(
+        "{}",
+        Colorize::green("Installing service locally (no registration)")
+    );
+
+    let spec_path = path.join(DEFAULT_SERVICE_FILENAME);
+    if !spec_path.exists() {
+        return Err(CliError::SpecNotFound(spec_path));
+    }
+
+    let mut spec = OpsmlServiceSpec::from_path(&spec_path).inspect_err(|e| {
+        error!("Failed to read service spec: {:?}", e);
+    })?;
+
+    let space = spec.space().to_string();
+    let name = spec.name.to_string();
+    let write_dir = get_write_dir(&spec, "opsml_service");
+
+    let base_path = write_path.unwrap_or(path.clone());
+    let target_path = base_path.join(&write_dir);
+
+    if !target_path.exists() {
+        std::fs::create_dir_all(&target_path)?;
+    }
+
+    // Create ServiceCard locally (no registration)
+    let (service, local_aliases) =
+        create_service_card_local(&mut spec, &space, &name, &target_path)?;
+
+    // Save the ServiceCard to disk
+    service
+        .save_card(target_path.clone())
+        .map_err(|e| CliError::Error(format!("Failed to save ServiceCard: {}", e)))?;
+
+    // Download sub-cards from registry, skipping locally-saved Path variant cards
+    download_service_sub_cards(&service, &target_path, &local_aliases)?;
+
+    // Write lock file
+    let lock_artifact = create_lock_artifact_from_service_card(&service, &write_dir);
+    let lock_file = LockFile {
+        artifact: vec![lock_artifact],
+    };
+    lock_file.write(&path)?;
+
     Ok(())
 }
 

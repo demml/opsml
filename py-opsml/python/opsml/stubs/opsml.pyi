@@ -2823,12 +2823,17 @@ class AppState:
         ] = None,
         reload_config: Optional[ReloadConfig] = None,
         load_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
+        register: Optional[bool] = None,
     ) -> "AppState":
         """
         Load AppState from an opsmlspec.yaml file.
 
         Runs install_service (checking for a lock file or creating one, then
         registering and downloading all cards), then delegates to from_path.
+
+        When register is False, the service is installed locally without
+        registering a new ServiceCard. Sub-card artifacts for Card variants
+        are still downloaded from the registry.
 
         Args:
             path (Optional[Path]):
@@ -2849,6 +2854,10 @@ class AppState:
                         "load_kwargs": DataLoadKwargs | ModelLoadKwargs
                     }
                 }
+
+            register (Optional[bool]):
+                Whether to register the ServiceCard. Defaults to True.
+                When False, no registration, encryption, or uploads occur.
 
         Example:
             ```python
