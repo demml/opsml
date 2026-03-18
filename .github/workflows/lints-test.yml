@@ -112,7 +112,7 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
-            manylinux: auto
+            manylinux: "2_28"
             runner-type: ubuntu-latest
             runner: ubuntu-latest
             docker-options: "-e CI"

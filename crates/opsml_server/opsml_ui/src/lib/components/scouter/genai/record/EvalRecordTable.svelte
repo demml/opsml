@@ -1,19 +1,19 @@
 <script lang="ts">
-  import type { GenAIEvalRecord, GenAIEvalRecordPaginationResponse, Status } from '../types';
+  import type { EvalRecord, EvalRecordPaginationResponse, Status } from '../types';
   import type { RecordCursor } from '$lib/components/scouter/types';
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
-  import GenAIEvalRecordSideBar from './GenAIEvalRecordSideBar.svelte';
+  import EvalRecordSideBar from './EvalRecordSideBar.svelte';
 
   let {
     currentPage,
     onPageChange
   } = $props<{
-    currentPage: GenAIEvalRecordPaginationResponse;
+    currentPage: EvalRecordPaginationResponse;
     onPageChange: (cursor: RecordCursor, direction: string) => void;
   }>();
 
-  let records = $state<GenAIEvalRecord[]>(currentPage.items || []);
-  let selectedRecord = $state<GenAIEvalRecord | null>(null);
+  let records = $state<EvalRecord[]>(currentPage.items || []);
+  let selectedRecord = $state<EvalRecord | null>(null);
   let isSelected = $state(false);
 
   // Sync state
@@ -70,7 +70,7 @@
     return seconds < 1 ? `${duration}ms` : `${seconds.toFixed(2)}s`;
   }
 
-  function selectRecordForDetail(record: GenAIEvalRecord) {
+  function selectRecordForDetail(record: EvalRecord) {
     selectedRecord = record;
     isSelected = true;
   }
@@ -88,7 +88,6 @@
 
 <div class="pt-2 h-full flex flex-col min-h-0">
   <div class="border-2 border-black rounded-lg bg-white flex flex-col h-full max-h-[500px] overflow-hidden">
-    
     <div class="overflow-auto flex-1 w-full relative">
       {#if records.length === 0}
         <div class="flex items-center justify-center p-8 bg-white h-full">
@@ -186,7 +185,7 @@
   </div>
 
   {#if selectedRecord && isSelected}
-    <GenAIEvalRecordSideBar
+    <EvalRecordSideBar
       {selectedRecord}
       onClose={handleClosePanel}
     />

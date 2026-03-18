@@ -12,14 +12,21 @@ service:
     - alias: recipe_agent
       path: "prompts/recipe_agent.yaml"
       registry_type: prompt
+
     - alias: meat_recipe_agent
       path: "prompts/meat_recipe_agent.yaml"
       registry_type: prompt
+
     - alias: vegan_recipe_agent
       path: "prompts/vegan_recipe_agent.yaml"
       registry_type: prompt
+
     - alias: dessert_recipe_agent
       path: "prompts/dessert_recipe_agent.yaml"
+      registry_type: prompt
+
+    - alias: recipe_response_agent
+      path: "prompts/response_agent.yaml"
       registry_type: prompt
 
   agent:

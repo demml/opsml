@@ -26,7 +26,13 @@
   async function handleTraceClick(trace: TraceListItem) {
     isLoadingDetail = true;
     try {
-      const spans = await getServerTraceSpans(fetch, { trace_id: trace.trace_id });
+      const spans = await getServerTraceSpans(fetch, {
+        trace_id: trace.trace_id,
+        service_name: trace.service_name,
+        start_time: trace.start_time,
+        // @ts-ignore
+        end_time: trace.end_time
+      });
 
       if (spans) {
         selectedTraceSpans = spans;

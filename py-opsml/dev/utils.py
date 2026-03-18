@@ -4,7 +4,7 @@ from sklearn.preprocessing import StandardScaler  # type: ignore
 from sklearn import ensemble  # type: ignore
 from opsml.scouter.drift import (
     PsiDriftConfig,
-    GenAIEvalRecord,
+    EvalRecord,
     CustomMetricDriftConfig,
     CustomMetric,
     CustomMetricAlertConfig,
@@ -119,15 +119,15 @@ def create_genai_tasks() -> list[AssertionTask]:
     return [check_foo, check_bar, check_foo_1, check_foo_2, check_bar_1]
 
 
-def create_random_genaieval_record() -> GenAIEvalRecord:
-    """Helper function to create a random GenAIEvalRecord for testing."""
+def create_random_genaieval_record() -> EvalRecord:
+    """Helper function to create a random EvalRecord for testing."""
     rand_num = np.random.rand()
     if rand_num < 0.5:
         context = {"response": "foo", "value": 15}
     else:
         context = {"response": "bar", "value": 8}
 
-    record = GenAIEvalRecord(
+    record = EvalRecord(
         id=random_name(),  # this is optional
         context=context,
     )

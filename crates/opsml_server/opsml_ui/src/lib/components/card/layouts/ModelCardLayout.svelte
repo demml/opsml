@@ -8,7 +8,7 @@
   import type { RegistryType } from '$lib/utils';
   import type { ModelCard } from '../card_interfaces/modelcard';
 
-  
+
   interface CardLayoutProps {
     data: any; // from parent
     registryType: RegistryType;
@@ -18,7 +18,7 @@
   let { data, registryType, children }: CardLayoutProps = $props();
 
   let scouterEnabled: boolean = $state(uiSettingsStore.scouterEnabled);
-  let metadata: ModelCard = data.metadata;
+  let metadata = $derived(data.metadata as ModelCard);
 
   /**
    * Determines the active tab based on the current URL path
@@ -27,13 +27,13 @@
     const pathParts = page.url.pathname.split('/');
     const last = pathParts[pathParts.length - 1] ?? '';
     const secondLast = pathParts[pathParts.length - 2] ?? '';
-    
+
     // Check if we're in a nested monitoring route
     if (secondLast === 'monitoring') return 'monitoring';
-    
+
     // Direct routes
-    if (['card', 'files', 'monitoring', 'versions', 'view', 'observability'].includes(last)) return last;
-    
+    if (['card', 'files', 'monitoring', 'versions', 'view'].includes(last)) return last;
+
     return 'card';
   });
 
@@ -58,7 +58,7 @@
     <h1 class="flex flex-row flex-wrap items-center">
       <div class="group flex flex-none items-center">
         <a
-          class="font-semibold text-black hover:text-secondary-500" 
+          class="font-semibold text-black hover:text-secondary-500"
           href="/opsml/space/{metadata.space}"
         >
           {metadata.space}

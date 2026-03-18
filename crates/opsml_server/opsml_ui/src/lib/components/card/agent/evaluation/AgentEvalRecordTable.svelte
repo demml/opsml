@@ -5,7 +5,7 @@
   Receives a flat sorted list + pagination booleans from AgentEvalDashboard.
   Manages its own row-detail sidebar.
 
-  Structure mirrors GenAIEvalRecordTable exactly (the proven working pattern):
+  Structure mirrors EvalRecordTable exactly (the proven working pattern):
     overflow-hidden outer → overflow-auto flex-1 scroll container → min-w forced inner
   The parent (AgentEvalDashboard) must supply flex flex-col on the wrapper div.
 -->
@@ -13,7 +13,7 @@
   import type { RecordWithAgent } from './types';
   import type { Status } from '$lib/components/scouter/genai/types';
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
-  import GenAIEvalRecordSideBar from '$lib/components/scouter/genai/record/GenAIEvalRecordSideBar.svelte';
+  import EvalRecordSideBar from '$lib/components/scouter/genai/record/EvalRecordSideBar.svelte';
 
   let {
     records,
@@ -73,7 +73,7 @@
   }
 
   // Prompt column prepended before ID; 1fr on Entity Type consumes whitespace.
-  // min-w-[1050px] = GenAIEvalRecordTable's 900px + ~150px for the Prompt column.
+  // min-w-[1050px] = EvalRecordTable's 900px + ~150px for the Prompt column.
   const gridLayout = "grid-template-columns: 140px 80px 140px 100px 1fr 140px 140px 100px;";
 </script>
 
@@ -89,7 +89,7 @@
         <div class="min-w-[1050px] w-full">
 
           <!-- Sticky header -->
-          <div class="bg-white border-b-2 border-black sticky top-0 z-20 w-full">
+          <div class="bg-white border-b-2 border-black sticky top-0 z-5 w-full">
             <div class="grid gap-3 text-black text-xs font-bold px-4 py-3 items-center" style={gridLayout}>
               <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">Prompt</span></div>
               <div class="text-center"><span class="px-2 py-1 rounded-full bg-primary-100 text-primary-800 border border-transparent">ID</span></div>
@@ -195,7 +195,7 @@
   </div>
 
   {#if selectedRecord && isSelected}
-    <GenAIEvalRecordSideBar
+    <EvalRecordSideBar
       selectedRecord={selectedRecord}
       onClose={handleClosePanel}
     />

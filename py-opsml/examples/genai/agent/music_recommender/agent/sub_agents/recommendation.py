@@ -5,7 +5,7 @@ from google.genai import types  # For types.Content
 from typing import Optional
 from opentelemetry import trace
 from typing import cast
-from opsml.scouter.evaluate import GenAIEvalRecord
+from opsml.scouter.evaluate import EvalRecord
 from opsml.scouter.tracing import ActiveSpan
 
 
@@ -49,7 +49,7 @@ def after_recommendation_callback(
         span.set_attribute("agent.name", agent_name)
         span.set_attribute("invocation.id", invocation_id)
 
-        queue_record = GenAIEvalRecord(
+        queue_record = EvalRecord(
             context={
                 "final_recommendations": current_state.get("final_recommendations", {}),
             },

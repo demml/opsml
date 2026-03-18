@@ -4,7 +4,6 @@ import type { PromptCard } from "./promptcard";
 import type { ExperimentCard } from "./experimentcard";
 import type { ServiceCard } from "./servicecard";
 import { isPromptCard } from "./promptcard";
-import type { GenAIEvalProfile } from "$lib/components/scouter/genai/types";
 
 export type CardMetadata =
   | { Data: DataCard }
