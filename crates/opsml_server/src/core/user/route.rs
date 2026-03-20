@@ -197,6 +197,10 @@ async fn update_user(
         user.favorite_spaces = hash_set.into_iter().collect();
     }
 
+    if let Some(theme_preference) = update_req.theme_preference.filter(|p| ["light", "dark", "system"].contains(&p.as_str())) {
+        user.theme_preference = theme_preference;
+    }
+
     // Only admins can change permissions
     if is_admin {
         if let Some(permissions) = update_req.permissions {

@@ -12,8 +12,8 @@
   let { data }: PageProps = $props();
   let spaceRecord: SpaceRecord= data.spaceRecord;
   let cards: RecentCards = data.recentCards;
-  let badgeColor = "#40328b";
-  let iconColor = "#40328b"; // Default icon color, can be customized
+  let badgeColor = "currentColor";
+  let iconColor = "currentColor"; // Default icon color, can be customized
 
   async function favoriteSpace() {
     let userFavoriteSpaces = userStore.favorite_spaces;

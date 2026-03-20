@@ -7,6 +7,7 @@
   import { Filler } from 'chart.js';
   import type { WordStats } from '../card/data/types';
   import { createWordBarChart } from './wordChart';
+  import { themeStore } from '$lib/components/settings/theme.svelte';
 
   let {
     wordStats,
@@ -36,6 +37,14 @@
       if (resetZoomTrigger !== lastTriggerValue && chart) {
         chart.resetZoom();
         lastTriggerValue = resetZoomTrigger;
+      }
+    });
+
+    // Re-render on theme change
+    $effect(() => {
+      const _ = themeStore.resolved;
+      if (chart && canvas) {
+        initChart();
       }
     });
 

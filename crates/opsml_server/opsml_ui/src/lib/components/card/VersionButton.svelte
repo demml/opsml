@@ -36,14 +36,14 @@
     >
     <div class="flex items-center justify-start gap-2 text-smd">
       <div class="ml-1">
-        <CircuitBoard color="#5948a3" />
+        <CircuitBoard color="currentColor" />
       </div>
       <div><h4 class="truncate font-bold">{space}/{name}</h4></div>
     </div>
  
     <div class="flex items-center justify-start gap-2 overflow-hidden whitespace-nowrap text-xs mb-1">
       <div class="ml-1">
-        <Clock color="#5948a3" />
+        <Clock color="currentColor" />
       </div>
       <div>
         <time datetime={ Date() } >
@@ -52,7 +52,7 @@
       </div>
 
        <div class="ml-1">
-        <Tag color="#5948a3" />
+        <Tag color="currentColor" />
       </div>
       <div class="text-black">{version}</div>
 

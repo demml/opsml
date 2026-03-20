@@ -426,6 +426,7 @@ async fn validate_jwt_token(
                         email: user.email,
                         role: user.role,
                         favorite_spaces: user.favorite_spaces,
+                        theme_preference: user.theme_preference,
                     },
                 }))
             }

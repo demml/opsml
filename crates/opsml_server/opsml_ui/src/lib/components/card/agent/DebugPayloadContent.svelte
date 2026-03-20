@@ -70,7 +70,7 @@
     <!-- Timing Information -->
     <section>
       <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-        <Clock color="#8059b6"/>
+        <Clock color="currentColor"/>
         <header class="pl-2 text-primary-950 text-sm font-bold">Timing</header>
       </div>
 
@@ -84,7 +84,7 @@
     {@const task = messageResponse}
       <section>
         <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-          <Info color="#8059b6"/>
+          <Info color="currentColor"/>
           <header class="pl-2 text-primary-950 text-sm font-bold">A2A Task Summary</header>
         </div>
 
@@ -127,7 +127,7 @@
       {#if adkMetadata}
         <section>
           <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-            <Info color="#8059b6"/>
+            <Info color="currentColor"/>
             <header class="pl-2 text-primary-950 text-sm font-bold">ADK Metadata</header>
           </div>
           <div class="flex flex-col space-y-1 text-sm">
@@ -170,7 +170,7 @@
       {:else if taskMetadata}
         <section>
           <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-            <Info color="#8059b6"/>
+            <Info color="currentColor"/>
             <header class="pl-2 text-primary-950 text-sm font-bold">Metadata</header>
           </div>
           <div class="flex flex-col space-y-1 text-sm">
@@ -186,7 +186,7 @@
     {#if requestJson && role === 'user'}
       <section>
         <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-          <Send color="#8059b6"/>
+          <Send color="currentColor"/>
           <header class="pl-2 text-primary-950 text-sm font-bold">Request</header>
         </div>
 
@@ -200,7 +200,7 @@
     {#if responseJson && role === 'agent'}
       <section>
         <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-          <MessageCircle color="#8059b6"/>
+          <MessageCircle color="currentColor"/>
           <header class="pl-2 text-primary-950 text-sm font-bold">Response</header>
         </div>
 

@@ -16,7 +16,7 @@
   <div class="items-center text-xl mr-2 font-bold text-primary-800">Data Profile:</div>
   <div class="flex items-center gap-2 pr-2">
     <div class="self-center" aria-label="Time Interval">
-      <KeySquare color="#5948a3" />
+      <KeySquare color="currentColor" />
     </div>
 
     <Dropdown 

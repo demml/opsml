@@ -78,12 +78,12 @@
               <span class="ml-2 text-gray-400 hover:text-gray-600">
                 {#if sortColumn === "metricName"}
                   {#if sortDirection === "asc"}
-                    <ArrowUp color="#8059b6" />
+                    <ArrowUp color="currentColor" />
                   {:else}
-                    <ArrowDown color="#8059b6" />
+                    <ArrowDown color="currentColor" />
                   {/if}
                 {:else}
-                  <ArrowUpDown color="#8059b6" />
+                  <ArrowUpDown color="currentColor" />
                 {/if}
               </span>
             </div>
@@ -94,12 +94,12 @@
               <span class="ml-2 text-gray-400 hover:text-gray-600">
                 {#if sortColumn === "value"}
                   {#if sortDirection === "asc"}
-                    <ArrowUp color="#8059b6" />
+                    <ArrowUp color="currentColor" />
                   {:else}
-                    <ArrowDown color="#8059b6" />
+                    <ArrowDown color="currentColor" />
                   {/if}
                 {:else}
-                  <ArrowUpDown color="#8059b6" />
+                  <ArrowUpDown color="currentColor" />
                 {/if}
               </span>
             </div>
@@ -110,12 +110,12 @@
               <span class="ml-2 text-gray-400 hover:text-gray-600">
                 {#if sortColumn === "version"}
                   {#if sortDirection === "asc"}
-                    <ArrowUp color="#8059b6" />
+                    <ArrowUp color="currentColor" />
                   {:else}
-                    <ArrowDown color="#8059b6" />
+                    <ArrowDown color="currentColor" />
                   {/if}
                 {:else}
-                  <ArrowUpDown color="#8059b6" />
+                  <ArrowUpDown color="currentColor" />
                 {/if}
               </span>
             </div>
@@ -126,12 +126,12 @@
               <span class="ml-2 text-gray-400 hover:text-gray-600">
                 {#if sortColumn === "step"}
                   {#if sortDirection === "asc"}
-                    <ArrowUp color="#8059b6" />
+                    <ArrowUp color="currentColor" />
                   {:else}
-                    <ArrowDown color="#8059b6" />
+                    <ArrowDown color="currentColor" />
                   {/if}
                 {:else}
-                  <ArrowUpDown color="#8059b6" />
+                  <ArrowUpDown color="currentColor" />
                 {/if}
               </span>
             </div>
@@ -142,12 +142,12 @@
               <span class="ml-2 text-gray-400 hover:text-gray-600">
                 {#if sortColumn === "timestamp"}
                   {#if sortDirection === "asc"}
-                    <ArrowUp color="#8059b6" />
+                    <ArrowUp color="currentColor" />
                   {:else}
-                    <ArrowDown color="#8059b6" />
+                    <ArrowDown color="currentColor" />
                   {/if}
                 {:else}
-                  <ArrowUpDown color="#8059b6" />
+                  <ArrowUpDown color="currentColor" />
                 {/if}
               </span>
             </div>

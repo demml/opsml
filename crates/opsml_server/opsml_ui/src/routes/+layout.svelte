@@ -7,6 +7,7 @@
     import { afterNavigate } from '$app/navigation';
     import { ToastProvider } from '@skeletonlabs/skeleton-svelte';
     import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
+    import { themeStore } from "$lib/components/settings/theme.svelte";
 
     let { data, children } = $props();
     let show = $state(false);
@@ -14,6 +15,7 @@
     // Initial sync: runs client-side only, after SSR hydration.
     onMount(() => {
         uiSettingsStore.initialize(data.settings);
+        themeStore.initialize(data.settings?.theme_preference);
         setTimeout(() => {
           show = true;
         }, 50);
@@ -54,10 +56,10 @@
 
 <style>
   .grid-background {
-    background-color: #E3DFF2;
+    background-color: var(--grid-bg, #E3DFF2);
     background-image:
-      linear-gradient(to right, #CECBDB 1px, transparent 1px),
-      linear-gradient(to bottom, #CECBDB 1px, transparent 1px);
+      linear-gradient(to right, var(--grid-line, #CECBDB) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line, #CECBDB) 1px, transparent 1px);
     background-size: 60px 60px;
     background-attachment: fixed;
   }

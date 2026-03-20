@@ -1,0 +1,9 @@
+version = "3.0.0"
+
+[[artifact]]
+space = "opsml"
+name = "recipe-generation-agent"
+version = "0.1.0"
+uid = "019d0c67-d0bf-76b3-802c-ec3eb509a397"
+write_dir = "opsml_service"
+registry_type = "agent"

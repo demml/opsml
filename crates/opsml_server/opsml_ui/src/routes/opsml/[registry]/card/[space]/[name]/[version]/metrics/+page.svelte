@@ -76,7 +76,7 @@
           <div class="flex flex-row justify-between pb-4">
             <div class="flex flex-row">
               <div class="self-center" aria-label="Time Interval">
-                <CircleDot color="#8059b6"/>
+                <CircleDot color="currentColor"/>
               </div>
               <header class="pl-2 text-primary-800 self-center font-bold text-lg">Search Metrics</header>
             </div>
@@ -126,7 +126,7 @@
 
         <div class="flex flex-row">
           <div class="self-center" aria-label="Metric Plot">
-            <ChartNoAxesColumn color="#8059b6"/>
+            <ChartNoAxesColumn color="currentColor"/>
           </div>
           <header class="pl-2 text-primary-800 text-lg self-center font-bold">Metrics</header>
         </div>
@@ -151,7 +151,7 @@
         <div class="bg-white p-4 border-2 border-black rounded-lg shadow mb-4 min-h-[6rem] max-h-[40rem] flex flex-col overflow-hidden">
           <div class="flex flex-row mb-4">
             <div class="self-center" aria-label="Metric Plot">
-              <ChartNoAxesColumn color="#8059b6"/>
+              <ChartNoAxesColumn color="currentColor"/>
             </div>
             <header class="pl-2 text-primary-800 text-lg self-center font-bold">Metric Table</header>
           </div>

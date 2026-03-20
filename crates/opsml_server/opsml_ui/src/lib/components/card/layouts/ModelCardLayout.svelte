@@ -81,7 +81,7 @@
         data-sveltekit-preload-data="hover"
         aria-current={activeTab === 'card' ? 'page' : undefined}
       >
-        <IdCard color="#8059b6" size={16} />
+        <IdCard color="currentColor" size={16} />
         <span>Card</span>
       </a>
 
@@ -91,7 +91,7 @@
         data-sveltekit-preload-data="hover"
         aria-current={activeTab === 'files' || activeTab === 'view' ? 'page' : undefined}
       >
-        <FolderTree color="#8059b6" size={16} />
+        <FolderTree color="currentColor" size={16} />
         <span>Files</span>
       </a>
 
@@ -102,7 +102,7 @@
           data-sveltekit-preload-data="hover"
           aria-current={activeTab === 'monitoring' ? 'page' : undefined}
         >
-          <Activity color="#8059b6" size={16} />
+          <Activity color="currentColor" size={16} />
           <span>Monitoring</span>
         </a>
       {/if}
@@ -113,7 +113,7 @@
         data-sveltekit-preload-data="hover"
         aria-current={activeTab === 'observability' ? 'page' : undefined}
       >
-        <Search color="#8059b6" size={16} />
+        <Search color="currentColor" size={16} />
         <span>Observability</span>
       </a>
 
@@ -123,7 +123,7 @@
         data-sveltekit-preload-data="hover"
         aria-current={activeTab === 'versions' ? 'page' : undefined}
       >
-        <Tag color="#8059b6" fill="#8059b6" size={16} />
+        <Tag color="currentColor" fill="currentColor" size={16} />
         <span>Versions</span>
       </a>
     </nav>

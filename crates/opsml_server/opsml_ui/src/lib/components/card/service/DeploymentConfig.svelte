@@ -45,7 +45,7 @@
   {#if config.endpoints.length > 0}
     <div class="flex flex-col space-y-1 gap-1">
       <div class="flex flex-row items-center pb-1 border-b-2 border-black">
-        <EthernetPort color="#8059b6" />
+        <EthernetPort color="currentColor" />
         <header class="pl-2 text-primary-900 text-sm font-bold">Endpoints</header>
       </div>
     </div>

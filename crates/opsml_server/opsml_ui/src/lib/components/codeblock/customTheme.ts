@@ -64,6 +64,70 @@ export const customTheme: ThemeRegistration = {
   ],
 };
 
+export const customDarkTheme: ThemeRegistration = {
+  name: "custom-dark",
+  type: "dark",
+  colors: {
+    "editor.background": "#0a120e",
+    "editor.foreground": "#b4dfc8",
+  },
+  tokenColors: [
+    {
+      scope: [
+        "keyword",
+        "keyword.control",
+        "keyword.operator",
+        "variable.language",
+        "entity.other.attribute-name",
+        "support.type.property-name",
+      ],
+      settings: {
+        foreground: "#44cc80",
+        fontStyle: "bold",
+      },
+    },
+    {
+      scope: [
+        "string",
+        "string.quoted",
+        "constant.numeric",
+        "constant.language",
+        "constant.character",
+        "entity.name.tag",
+        "entity.name.type",
+        "support.constant",
+      ],
+      settings: {
+        foreground: "#ccaa44",
+      },
+    },
+    {
+      scope: ["comment", "comment.line", "comment.block"],
+      settings: {
+        foreground: "#4a6a55",
+        fontStyle: "italic",
+      },
+    },
+    {
+      scope: ["entity.name.function", "support.function", "meta.function-call"],
+      settings: {
+        foreground: "#68d898",
+      },
+    },
+    {
+      scope: [
+        "punctuation",
+        "punctuation.definition",
+        "punctuation.separator",
+        "punctuation.terminator",
+      ],
+      settings: {
+        foreground: "#8aaf98",
+      },
+    },
+  ],
+};
+
 export const tracebackTheme: ThemeRegistration = {
   name: "traceback-theme",
   type: "light",

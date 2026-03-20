@@ -8,8 +8,9 @@
   import annotationPlugin from 'chartjs-plugin-annotation';
   import 'chartjs-adapter-date-fns';
   import { Filler } from 'chart.js';
+  import { themeStore } from '$lib/components/settings/theme.svelte';
 
-  let { 
+  let {
     timestamps, 
     values,
     baselineValue,
@@ -51,6 +52,14 @@
       if (resetZoomTrigger !== lastTriggerValue && chart) {
         chart.resetZoom();
         lastTriggerValue = resetZoomTrigger;
+      }
+    });
+
+    // Re-render on theme change
+    $effect(() => {
+      const _ = themeStore.resolved;
+      if (chart && canvas) {
+        initChart();
       }
     });
 

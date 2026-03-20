@@ -180,14 +180,14 @@
           onclick={() => onPageChange('previous')}
           disabled={!hasPrevious}
         >
-          <ArrowLeft class="w-4 h-4" color="#5948a3"/>
+          <ArrowLeft class="w-4 h-4" color="currentColor"/>
         </button>
         <button
           class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
           onclick={() => onPageChange('next')}
           disabled={!hasNext}
         >
-          <ArrowRight class="w-4 h-4" color="#5948a3"/>
+          <ArrowRight class="w-4 h-4" color="currentColor"/>
         </button>
       </div>
     {/if}

@@ -145,3 +145,5 @@ py-opsml/examples/genai/agent/music_recommender/opsml_service
 /py-opsml/examples/genai/agent/recipe_generator/agent/.adk
 /py-opsml/examples/genai/agent/recipe_generator/opsml_service
 py-opsml/examples/genai/agent/recipe_generator/opsml.lock
+/dev
+/py-opsml/dev/agent/opsml_service

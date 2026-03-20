@@ -141,7 +141,7 @@
         onclick={handlePreviousPage}
         disabled={!onPageChange}
       >
-        <ArrowLeft color="#5948a3"/>
+        <ArrowLeft color="currentColor"/>
       </button>
     {/if}
 
@@ -157,7 +157,7 @@
         onclick={handleNextPage}
         disabled={!onPageChange}
       >
-        <ArrowRight color="#5948a3"/>
+        <ArrowRight color="currentColor"/>
       </button>
     {/if}
   </div>

@@ -54,7 +54,7 @@
 
     <div class="flex flex-row items-center gap-2 pb-2">
       <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
-        <Settings color="#40328b" />
+        <Settings color="currentColor" />
       </div>
       <h2 class="font-bold text-primary-800 text-lg">Spaces</h2>
     </div>
@@ -94,7 +94,7 @@
 
       {#if currentPage > 1}
         <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage - 1)}>
-          <ArrowLeft color="#5948a3"/>
+          <ArrowLeft color="currentColor"/>
         </button>
       {/if}
       
@@ -105,7 +105,7 @@
 
       {#if currentPage < totalPages }
         <button class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9" onclick={() => changePage(currentPage + 1)}>
-          <ArrowRight color="#5948a3"/>
+          <ArrowRight color="currentColor"/>
         </button>
       {/if}
     

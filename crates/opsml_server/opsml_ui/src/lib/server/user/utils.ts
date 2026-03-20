@@ -61,6 +61,7 @@ interface UpdateUserOptions {
   permissions?: string[];
   group_permissions?: string[];
   favorite_spaces?: string[];
+  theme_preference?: string;
 }
 
 export async function updateUser(
@@ -72,6 +73,7 @@ export async function updateUser(
     permissions: options.permissions,
     group_permissions: options.group_permissions,
     favorite_spaces: options.favorite_spaces,
+    theme_preference: options.theme_preference,
   };
 
   let path = `${RoutePaths.USER}/${username}`;

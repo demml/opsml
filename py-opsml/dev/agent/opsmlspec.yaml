@@ -1,0 +1,57 @@
+name: "recipe-generation-agent"
+space: "opsml"
+type: Agent
+
+metadata:
+  description: "A recipe generation agent service"
+  language: "python"
+  tags: ["recipe", "generation", "agent", "orchestration"]
+
+service:
+  cards:
+    - alias: recipe_agent
+      path: "prompts/recipe_agent.yaml"
+      registry_type: prompt
+
+    - alias: meat_recipe_agent
+      path: "prompts/meat_recipe_agent.yaml"
+      registry_type: prompt
+
+    - alias: vegan_recipe_agent
+      path: "prompts/vegan_recipe_agent.yaml"
+      registry_type: prompt
+
+    - alias: dessert_recipe_agent
+      path: "prompts/dessert_recipe_agent.yaml"
+      registry_type: prompt
+
+  agent:
+    version: "0.3.0"
+    capabilities:
+      streaming: false
+      push_notifications: false
+      extended_agent_card: false
+    default_output_modes: ["text/plain"]
+    default_input_modes: ["text/plain"]
+    description: "A sample agent service that demonstrates prompt chaining."
+    name: "Prompt Chaining Agent"
+    skills:
+      - format: a2a # Using A2A skill format
+        id: "recipe_recommendation"
+        name: "Recipe Recommendation"
+        description: "Recommends recipes based on user preferences, including dietary restrictions, cuisine, and meal type."
+        input_modes: ["text/plain"]
+        output_modes: ["text/plain", "text/markdown"]
+        tags: ["recipe", "recommendation", "cooking"]
+        examples:
+          - "Recommend a chickpea vegan recipe for dinner"
+          - "Suggest a cake dessert recipe for a party"
+          - "Find a quick and easy breakfast recipe"
+    supported_interfaces:
+      - protocol_binding: "JSONRPC"
+        url: "http://localhost:8888"
+
+deploy:
+  - environment: "development"
+    urls: ["http://localhost:8888"]
+    healthcheck: "/health"

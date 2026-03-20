@@ -100,12 +100,12 @@
               <span class="ml-2 text-gray-400">
                 {#if sortColumn === "metricName"}
                   {#if sortDirection === "asc"}
-                    <ArrowUp color="#8059b6" size={16}/>
+                    <ArrowUp color="currentColor" size={16}/>
                   {:else}
-                    <ArrowDown color="#8059b6" size={16}/>
+                    <ArrowDown color="currentColor" size={16}/>
                   {/if}
                 {:else}
-                  <ArrowUpDown color="#8059b6" size={16}/>
+                  <ArrowUpDown color="currentColor" size={16}/>
                 {/if}
               </span>
             </div>
@@ -116,12 +116,12 @@
               <span class="ml-2 text-gray-400">
                 {#if sortColumn === "currentValue"}
                   {#if sortDirection === "asc"}
-                    <ArrowUp color="#8059b6" size={16}/>
+                    <ArrowUp color="currentColor" size={16}/>
                   {:else}
-                    <ArrowDown color="#8059b6" size={16}/>
+                    <ArrowDown color="currentColor" size={16}/>
                   {/if}
                 {:else}
-                  <ArrowUpDown color="#8059b6" size={16}/>
+                  <ArrowUpDown color="currentColor" size={16}/>
                 {/if}
               </span>
             </div>
@@ -132,12 +132,12 @@
               <span class="ml-2 text-gray-400">
                 {#if sortColumn === "comparedValue"}
                   {#if sortDirection === "asc"}
-                    <ArrowUp color="#8059b6" size={16}/>
+                    <ArrowUp color="currentColor" size={16}/>
                   {:else}
-                    <ArrowDown color="#8059b6" size={16}/>
+                    <ArrowDown color="currentColor" size={16}/>
                   {/if}
                 {:else}
-                  <ArrowUpDown color="#8059b6" size={16}/>
+                  <ArrowUpDown color="currentColor" size={16}/>
                 {/if}
               </span>
             </div>
@@ -148,12 +148,12 @@
               <span class="ml-2 text-gray-400">
                 {#if sortColumn === "comparedTo"}
                   {#if sortDirection === "asc"}
-                    <ArrowUp color="#8059b6" size={16}/>
+                    <ArrowUp color="currentColor" size={16}/>
                   {:else}
-                    <ArrowDown color="#8059b6" size={16}/>
+                    <ArrowDown color="currentColor" size={16}/>
                   {/if}
                 {:else}
-                  <ArrowUpDown color="#8059b6" size={16}/>
+                  <ArrowUpDown color="currentColor" size={16}/>
                 {/if}
               </span>
             </div>
@@ -164,12 +164,12 @@
               <span class="ml-2 text-gray-400">
                 {#if sortColumn === "difference"}
                   {#if sortDirection === "asc"}
-                    <ArrowUp color="#8059b6" size={16}/>
+                    <ArrowUp color="currentColor" size={16}/>
                   {:else}
-                    <ArrowDown color="#8059b6" size={16}/>
+                    <ArrowDown color="currentColor" size={16}/>
                   {/if}
                 {:else}
-                  <ArrowUpDown color="#8059b6" size={16}/>
+                  <ArrowUpDown color="currentColor" size={16}/>
                 {/if}
               </span>
             </div>
@@ -180,12 +180,12 @@
               <span class="ml-2 text-gray-400">
                 {#if sortColumn === "idx"}
                   {#if sortDirection === "asc"}
-                    <ArrowUp color="#8059b6" size={16}/>
+                    <ArrowUp color="currentColor" size={16}/>
                   {:else}
-                    <ArrowDown color="#8059b6" size={16}/>
+                    <ArrowDown color="currentColor" size={16}/>
                   {/if}
                 {:else}
-                  <ArrowUpDown color="#8059b6" size={16}/>
+                  <ArrowUpDown color="currentColor" size={16}/>
                 {/if}
               </span>
             </div>

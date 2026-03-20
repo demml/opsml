@@ -3,9 +3,26 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<script>
+			// Anti-FOUC: apply theme before first paint
+			(function() {
+				try {
+					var stored = localStorage.getItem('opsml-theme');
+					var resolved = 'light';
+					if (stored === 'dark') {
+						resolved = 'dark';
+					} else if (stored === 'system' || !stored) {
+						resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+					}
+					document.documentElement.classList.add('theme-' + resolved);
+				} catch(e) {
+					document.documentElement.classList.add('theme-light');
+				}
+			})();
+		</script>
 		%sveltekit.head%
 	</head>
-	<body data-theme="opsml" data-sveltekit-preload-data="hover">
+	<body data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>

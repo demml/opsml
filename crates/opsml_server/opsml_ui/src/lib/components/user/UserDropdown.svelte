@@ -27,7 +27,7 @@
         onclick={toggleDropdown}
         class="w-full h-full flex items-center justify-center"
     >
-        <UserRound color="#5948a3" size={24}/>
+        <UserRound color="currentColor" size={24}/>
     </button>
 
     {#if isOpen}

@@ -34,7 +34,7 @@
     <div class="max-w-full mx-auto">
       <div class="flex flex-row flex-wrap gap-2 items-center justify-center px-4 py-3">
         <div class="flex items-center gap-2 text-lg font-bold text-primary-800">
-          <KeySquare color="#5948a3" size={20} aria-hidden="true" />
+          <KeySquare color="currentColor" size={20} aria-hidden="true" />
           <span>Data Profile:</span>
         </div>
 

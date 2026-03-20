@@ -21,9 +21,9 @@
 <section>
   <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
     {#if isJson}
-      <FileJson color="#8059b6"/>
+      <FileJson color="currentColor"/>
     {:else}
-      <AlignLeft color="#8059b6"/>
+      <AlignLeft color="currentColor"/>
     {/if}
     <header class="pl-2 text-primary-950 text-sm font-bold">{label}</header>
   </div>

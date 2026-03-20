@@ -14,7 +14,7 @@
 <div class="col-span-12 md:col-start-5 md:col-span-4 flex items-center justify-center px-4">
   <div class="rounded-2xl bg-surface-50 border-black border-2 shadow p-4 w-lg md:w-xl lg:w-2xl md:px-5">
     <div class="flex flex-row items-center py-2">
-      <Cog color="#8059b6"/>
+      <Cog color="currentColor"/>
       <header class="pl-2 text-primary-950 font-bold">User Profile</header>
     </div>
 
@@ -28,7 +28,7 @@
     </div>
 
     <div class="flex flex-row items-center pt-2 mb-2 border-b-2 border-black">
-      <ShieldEllipsis color="#8059b6"/>
+      <ShieldEllipsis color="currentColor"/>
       <header class="pl-2 text-primary-900 text-smd font-bold">Permissions</header>
     </div>
 
@@ -39,7 +39,7 @@
     </div>
 
     <div class="flex flex-row items-center pt-2 mb-2 border-b-2 border-black">
-      <ShieldEllipsis color="#8059b6"/>
+      <ShieldEllipsis color="currentColor"/>
       <header class="pl-2 text-primary-900 text-smd font-bold">Group Permissions</header>
     </div>
 
@@ -53,7 +53,7 @@
 
 
     <div class="flex flex-row items-center pt-2 mb-2 border-b-2 border-black">
-      <Star fill="#8059b6"/>
+      <Star fill="currentColor"/>
       <header class="pl-2 text-primary-900 text-smd font-bold">Spaces</header>
     </div>
     

@@ -1,8 +1,6 @@
 import type { Histogram } from "../card/data/types";
 import type { ChartConfiguration } from "chart.js";
-import { generateColors } from "./utils";
-import { getPlugins } from "./utils";
-import { handleResize } from "./utils";
+import { generateColors, getPlugins, getChartTheme } from "./utils";
 
 export function createHistogramViz(data: Histogram): ChartConfiguration {
   const datasets = [
@@ -15,6 +13,7 @@ export function createHistogramViz(data: Histogram): ChartConfiguration {
   ];
 
   const labels = Array.from(data.bins).map((bin) => bin.toFixed(2));
+  const theme = getChartTheme();
 
   const baseConfig = {
     type: "bar",
@@ -32,25 +31,25 @@ export function createHistogramViz(data: Histogram): ChartConfiguration {
           border: {
             display: true,
             width: 2,
-            color: "rgb(0, 0, 0)",
+            color: theme.axisColor,
           },
           grid: {
             display: true,
-            color: "rgba(0, 0, 0, 0.1)",
+            color: theme.gridColor,
             tickLength: 8,
             drawTicks: true,
           },
           title: {
             display: true,
             text: "Bins",
-            color: "rgb(0,0,0)",
+            color: theme.textColor,
             font: {
               size: 14,
             },
           },
           ticks: {
             maxTicksLimit: 10,
-            color: "rgb(0,0,0)",
+            color: theme.textColor,
             font: {
               size: 12,
             },
@@ -60,14 +59,14 @@ export function createHistogramViz(data: Histogram): ChartConfiguration {
           title: {
             display: true,
             text: "Count",
-            color: "rgb(0,0,0)",
+            color: theme.textColor,
             font: {
               size: 14,
             },
           },
           ticks: {
             maxTicksLimit: 10,
-            color: "rgb(0,0,0)",
+            color: theme.textColor,
             font: {
               size: 12,
             },
@@ -75,13 +74,13 @@ export function createHistogramViz(data: Histogram): ChartConfiguration {
           border: {
             display: true,
             width: 2,
-            color: "rgb(0, 0, 0)",
+            color: theme.axisColor,
           },
           grace: "10%",
           padding: { top: 10 },
           grid: {
             display: true,
-            color: "rgba(0, 0, 0, 0.1)",
+            color: theme.gridColor,
             tickLength: 8,
             drawTicks: true,
           },
