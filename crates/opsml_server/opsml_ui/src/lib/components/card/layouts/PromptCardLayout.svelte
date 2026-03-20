@@ -53,7 +53,7 @@
     `/opsml/genai/${registryType.toLowerCase()}/card/${metadata.space}/${metadata.name}/${metadata.version}`
   );
 
-  const iconColor = 'currentColor';
+  const iconColor = 'var(--color-primary-500)';
 </script>
 
 <!-- Sticky header with breadcrumb and tab navigation -->
@@ -115,7 +115,7 @@
           data-sveltekit-preload-data="hover"
           aria-current={activeTab === 'observability' ? 'page' : undefined}
         >
-          <Search color="currentColor" size={16} />
+          <Search color={iconColor} size={16} />
           <span>Observability</span>
         </a>
       {/if}

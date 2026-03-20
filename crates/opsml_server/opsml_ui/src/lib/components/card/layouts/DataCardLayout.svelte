@@ -60,17 +60,17 @@
       label: 'Observability',
       icon: Search,
       isActive: (tab: string) => tab === 'observability',
-      iconProps: { fill: 'currentColor' }
+      iconProps: { fill: 'var(--color-primary-500)' }
     },
     {
       key: 'versions',
       label: 'Versions',
       icon: Tag,
       isActive: (tab: string) => tab === 'versions',
-      iconProps: { fill: 'currentColor' }
+      iconProps: { fill: 'var(--color-primary-500)' }
     }
   ];
-  const iconColor = 'currentColor';
+  const iconColor = 'var(--color-primary-500)';
 </script>
 
 
