@@ -116,4 +116,13 @@
     font-weight: 700;
   }
 
+  /* Dark mode: bright phosphor green underlines */
+  :global([data-theme='opsml'].theme-dark) nav a:hover,
+  :global([data-theme='opsml'].theme-dark) nav a:focus {
+    text-decoration-color: oklch(65% 0.14 150);
+  }
+  :global([data-theme='opsml'].theme-dark) nav a.active {
+    text-decoration-color: oklch(65% 0.14 150);
+  }
+
 </style>

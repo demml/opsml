@@ -318,8 +318,8 @@
 	   Low numbers = dark fills/backgrounds
 	   High numbers = visible phosphor green text/accents */
 	--color-primary-50:  oklch(10% 0.01 150);
-	--color-primary-100: oklch(14% 0.02 150);
-	--color-primary-200: oklch(20% 0.04 150);
+	--color-primary-100: oklch(20% 0.04 150);
+	--color-primary-200: oklch(24% 0.05 150);
 	--color-primary-300: oklch(28% 0.06 150);
 	--color-primary-400: oklch(36% 0.09 148);
 	--color-primary-500: oklch(45% 0.11 150);
@@ -344,7 +344,7 @@
 
 	/* ── Secondary: Same green family, slightly cooler ── */
 	--color-secondary-50:  oklch(10% 0.01 155);
-	--color-secondary-100: oklch(14% 0.02 155);
+	--color-secondary-100: oklch(20% 0.04 155);
 	--color-secondary-200: oklch(20% 0.04 155);
 	--color-secondary-300: oklch(28% 0.06 155);
 	--color-secondary-400: oklch(36% 0.09 155);
@@ -476,10 +476,10 @@
 	   From inspiration: bg #0e120e, card #0a100b
 	   50 = lightest surface (card body) — slightly above page bg
 	   950 = deepest (page background) */
-	--color-surface-50:  oklch(12% 0.01 150);
-	--color-surface-100: oklch(11% 0.01 150);
+	--color-surface-50:  oklch(16% 0.025 150);
+	--color-surface-100: oklch(13% 0.015 150);
 	--color-surface-200: oklch(10% 0.01 150);
-	--color-surface-300: oklch(9% 0.008 150);
+	--color-surface-300: oklch(18% 0.025 150);
 	--color-surface-400: oklch(8.5% 0.008 150);
 	--color-surface-500: oklch(8% 0.007 150);
 	--color-surface-600: oklch(7.5% 0.006 150);
@@ -681,6 +681,10 @@
 [data-theme='opsml'].theme-dark .border-4.border-black {
     border-color: oklch(50% 0.10 150 / 0.4);
 }
+/* Subtle separator for file tree rows and similar low-opacity borders */
+[data-theme='opsml'].theme-dark .border-black\/10 {
+    border-color: oklch(30% 0.04 150 / 0.15);
+}
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -700,13 +704,39 @@
     color: oklch(83% 0.15 150);
 }
 [data-theme='opsml'].theme-dark .text-gray-600 {
-    color: oklch(55% 0.06 150);
+    color: oklch(65% 0.08 150);
 }
 [data-theme='opsml'].theme-dark .text-gray-700 {
-    color: oklch(60% 0.07 150);
+    color: oklch(70% 0.09 150);
+}
+[data-theme='opsml'].theme-dark .text-gray-800 {
+    color: oklch(72% 0.10 150);
 }
 [data-theme='opsml'].theme-dark .text-gray-900 {
-    color: oklch(75% 0.10 150);
+    color: oklch(78% 0.11 150);
+}
+/* Slate text overrides — used in GenAI task cards and tables */
+[data-theme='opsml'].theme-dark .text-slate-400 {
+    color: oklch(55% 0.07 150);
+}
+[data-theme='opsml'].theme-dark .text-slate-500 {
+    color: oklch(60% 0.08 150);
+}
+[data-theme='opsml'].theme-dark .text-slate-600 {
+    color: oklch(65% 0.09 150);
+}
+[data-theme='opsml'].theme-dark .text-slate-700 {
+    color: oklch(70% 0.09 150);
+}
+/* Primary text overrides — pills and badges */
+[data-theme='opsml'].theme-dark .text-primary-800 {
+    color: oklch(75% 0.15 150);
+}
+[data-theme='opsml'].theme-dark .text-primary-900 {
+    color: oklch(78% 0.14 150);
+}
+[data-theme='opsml'].theme-dark .text-primary-950 {
+    color: oklch(80% 0.14 150);
 }
 
 
@@ -787,7 +817,15 @@
 /* Remove bloom from elements that shouldn't glow */
 [data-theme='opsml'].theme-dark input,
 [data-theme='opsml'].theme-dark textarea,
-[data-theme='opsml'].theme-dark select {
+[data-theme='opsml'].theme-dark select,
+[data-theme='opsml'].theme-dark pre,
+[data-theme='opsml'].theme-dark code,
+[data-theme='opsml'].theme-dark .shiki,
+[data-theme='opsml'].theme-dark .shiki code,
+[data-theme='opsml'].theme-dark .cm-editor,
+[data-theme='opsml'].theme-dark .hljs,
+[data-theme='opsml'].theme-dark .markdown-body pre,
+[data-theme='opsml'].theme-dark .markdown-body code {
     text-shadow: none;
 }
 
@@ -801,6 +839,16 @@
     }
 }
 
+/* ── Card subnav: name segment in purple ── */
+[data-theme='opsml'].theme-dark .sticky h1 .font-bold.text-primary-800 {
+    color: oklch(75% 0.15 295);
+}
+
+/* ── Textarea: dark background for agent playground and other textareas ── */
+[data-theme='opsml'].theme-dark textarea {
+    background-color: oklch(8% 0.01 150);
+    color: oklch(75% 0.12 150);
+}
 
 /* ── Sidebar nav items: green outline on hover ── */
 [data-theme='opsml'].theme-dark nav button.border:hover {
@@ -824,33 +872,33 @@
    Dark mode — outlined buttons/badges (not filled)
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme='opsml'].theme-dark .bg-primary-500 {
-    background-color: transparent;
-    border: 1px solid oklch(55% 0.13 150 / 0.6);
+    background-color: oklch(28% 0.07 148);
+    border-color: oklch(40% 0.09 150 / 0.6);
 }
 [data-theme='opsml'].theme-dark .bg-primary-500:hover {
-    background-color: oklch(55% 0.13 150 / 0.1);
+    background-color: oklch(33% 0.08 148);
 }
 [data-theme='opsml'].theme-dark .bg-secondary-500 {
-    background-color: transparent;
-    border: 1px solid oklch(55% 0.13 155 / 0.6);
+    background-color: oklch(28% 0.07 155);
+    border-color: oklch(40% 0.09 155 / 0.6);
 }
 [data-theme='opsml'].theme-dark .bg-secondary-500:hover {
-    background-color: oklch(55% 0.13 155 / 0.1);
+    background-color: oklch(33% 0.08 155);
 }
 [data-theme='opsml'].theme-dark .bg-success-300 {
-    background-color: transparent;
-    border: 1px solid oklch(55% 0.13 148 / 0.6);
+    background-color: oklch(25% 0.06 148);
+    border-color: oklch(40% 0.09 148 / 0.6);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Dark mode — title banner: pure text, no box
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme='opsml'].theme-dark .bg-primary-500.text-white {
-    background-color: transparent;
-    border-color: transparent;
-    box-shadow: none;
-    color: oklch(85% 0.16 150);
-    text-shadow: 0 0 8px oklch(75% 0.15 150 / 0.5);
+    background-color: oklch(12% 0.025 150);
+    border-color: oklch(40% 0.08 150 / 0.5);
+    box-shadow: inset 0 0 30px oklch(30% 0.06 150 / 0.15), 0 0 15px oklch(45% 0.10 150 / 0.1);
+    color: oklch(87% 0.16 150);
+    text-shadow: 0 0 10px oklch(75% 0.15 150 / 0.6);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -885,6 +933,164 @@
     border: 1px solid oklch(55% 0.15 14 / 0.6);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — navbar underlines: bright phosphor green
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark nav a:hover,
+[data-theme='opsml'].theme-dark nav a:focus,
+[data-theme='opsml'].theme-dark nav a.active {
+    text-decoration-color: oklch(65% 0.14 150);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — slate backgrounds: dark terminal panels
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-slate-100 {
+    background-color: oklch(12% 0.015 150);
+}
+[data-theme='opsml'].theme-dark .bg-slate-200 {
+    background-color: oklch(14% 0.018 150);
+}
+[data-theme='opsml'].theme-dark .bg-slate-300 {
+    background-color: oklch(18% 0.03 150);
+}
+[data-theme='opsml'].theme-dark .bg-slate-700 {
+    background-color: oklch(10% 0.012 150);
+}
+[data-theme='opsml'].theme-dark .bg-slate-900 {
+    background-color: oklch(8% 0.01 150);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — gray backgrounds: close/cancel buttons in modals
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-gray-200,
+[data-theme='opsml'].theme-dark .hover\:bg-gray-200:hover {
+    background-color: oklch(20% 0.03 150);
+}
+[data-theme='opsml'].theme-dark .bg-gray-400 {
+    background-color: oklch(30% 0.05 150);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — green semantic backgrounds (message bubbles, success states)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-green-50 {
+    background-color: oklch(12% 0.02 150);
+}
+[data-theme='opsml'].theme-dark .bg-green-100 {
+    background-color: oklch(16% 0.03 150);
+}
+[data-theme='opsml'].theme-dark .bg-green-300 {
+    background-color: oklch(25% 0.06 148);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — border-primary-800: brighter than border-primary-700
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .border-primary-800 {
+    border-color: oklch(40% 0.09 150 / 0.55);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — text-black opacity variants (agent descriptions, capabilities)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .text-black\/70 {
+    color: oklch(75% 0.11 150 / 0.9);
+}
+[data-theme='opsml'].theme-dark .text-black\/50 {
+    color: oklch(55% 0.07 150 / 0.8);
+}
+[data-theme='opsml'].theme-dark .text-black\/40 {
+    color: oklch(50% 0.06 150 / 0.7);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — gray text overrides (catch-all for remaining gray text)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .text-gray-300 {
+    color: oklch(45% 0.06 150);
+}
+[data-theme='opsml'].theme-dark .text-gray-400 {
+    color: oklch(50% 0.06 150);
+}
+[data-theme='opsml'].theme-dark .text-gray-500 {
+    color: oklch(58% 0.07 150);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — retro-orange badge → phosphor green (card table version badge)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-retro-orange-100 {
+    background-color: oklch(14% 0.02 150);
+}
+[data-theme='opsml'].theme-dark .border-retro-orange-900 {
+    border-color: oklch(50% 0.10 150 / 0.5);
+}
+[data-theme='opsml'].theme-dark .text-retro-orange-900 {
+    color: oklch(70% 0.12 150);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — Markdown preview: dark bg, phosphor green text
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .markdown-body {
+    background-color: oklch(8% 0.01 150);
+    color: oklch(75% 0.12 150);
+}
+[data-theme='opsml'].theme-dark .markdown-body h1,
+[data-theme='opsml'].theme-dark .markdown-body h2,
+[data-theme='opsml'].theme-dark .markdown-body h3,
+[data-theme='opsml'].theme-dark .markdown-body h4,
+[data-theme='opsml'].theme-dark .markdown-body h5,
+[data-theme='opsml'].theme-dark .markdown-body h6 {
+    color: oklch(82% 0.14 152);
+    border-bottom-color: oklch(30% 0.06 150 / 0.4);
+}
+[data-theme='opsml'].theme-dark .markdown-body a {
+    color: oklch(72% 0.14 150);
+}
+[data-theme='opsml'].theme-dark .markdown-body a:hover {
+    color: oklch(82% 0.15 150);
+}
+[data-theme='opsml'].theme-dark .markdown-body code {
+    background-color: oklch(14% 0.02 150);
+    color: oklch(70% 0.12 150);
+}
+[data-theme='opsml'].theme-dark .markdown-body pre {
+    background-color: oklch(10% 0.015 150);
+    border: 1px solid oklch(30% 0.06 150 / 0.3);
+}
+[data-theme='opsml'].theme-dark .markdown-body pre code {
+    background-color: transparent;
+    color: oklch(70% 0.12 150);
+}
+[data-theme='opsml'].theme-dark .markdown-body blockquote {
+    color: oklch(60% 0.08 150);
+    border-left-color: oklch(40% 0.08 150 / 0.5);
+}
+[data-theme='opsml'].theme-dark .markdown-body table th,
+[data-theme='opsml'].theme-dark .markdown-body table td {
+    border-color: oklch(30% 0.06 150 / 0.3);
+}
+[data-theme='opsml'].theme-dark .markdown-body table tr {
+    background-color: oklch(8% 0.01 150);
+    border-top-color: oklch(30% 0.06 150 / 0.3);
+}
+[data-theme='opsml'].theme-dark .markdown-body table tr:nth-child(2n) {
+    background-color: oklch(10% 0.015 150);
+}
+[data-theme='opsml'].theme-dark .markdown-body hr {
+    background-color: oklch(30% 0.06 150 / 0.3);
+}
+[data-theme='opsml'].theme-dark .markdown-body img {
+    background-color: transparent;
+}
+/* highlight.js code blocks in dark mode */
+[data-theme='opsml'].theme-dark .markdown-body .hljs {
+    background-color: oklch(10% 0.015 150);
+    color: oklch(70% 0.12 150);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    sRGB fallbacks for browsers without OKLCH support (Safari < 15.4)

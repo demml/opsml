@@ -85,4 +85,17 @@
     scrollbar-width: thin;
     scrollbar-color: #ffffff #e5e7eb;
   }
+
+  /* Dark mode scrollbar */
+  :global([data-theme='opsml'].theme-dark) .custom-scrollbar::-webkit-scrollbar-track {
+    background: oklch(10% 0.01 150);
+    border-radius: 2px;
+  }
+  :global([data-theme='opsml'].theme-dark) .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: oklch(35% 0.08 150);
+    border-radius: 2px;
+  }
+  :global([data-theme='opsml'].theme-dark) .custom-scrollbar {
+    scrollbar-color: oklch(35% 0.08 150) oklch(10% 0.01 150);
+  }
 </style>

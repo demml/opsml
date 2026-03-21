@@ -5,8 +5,9 @@
   import { markdown } from "@codemirror/lang-markdown";
   import { languages } from "@codemirror/language-data";
   import { Compartment } from '@codemirror/state';
-  import { editorTheme } from './editor-theme';
+  import { editorTheme, editorDarkTheme } from './editor-theme';
   import {  onMount } from 'svelte';
+  import { themeStore } from '$lib/components/settings/theme.svelte';
   import { getRegistryPath, type RegistryType } from "$lib/utils";
   import { convertMarkdown } from "./util";
   import { createInternalApiClient } from "$lib/api/internalClient";
@@ -93,6 +94,10 @@ async function toggle(toggle: string) {
 
 
 
+  function getEditorTheme() {
+    return themeStore.resolved === 'dark' ? editorDarkTheme : editorTheme;
+  }
+
   onMount(() => {
     content = readme_content;
     let parent = document.getElementById("editor")!;
@@ -106,11 +111,20 @@ async function toggle(toggle: string) {
           addKeymap: true,
           extensions: []
         }),
-        themeConfig.of([editorTheme])
+        themeConfig.of([getEditorTheme()])
       ],
       parent: parent
     });
 
+  });
+
+  $effect(() => {
+    const _resolved = themeStore.resolved;
+    if (editor) {
+      editor.dispatch({
+        effects: themeConfig.reconfigure([getEditorTheme()])
+      });
+    }
   });
 
 </script>
