@@ -15,7 +15,8 @@ interface SpanNodeData {
 
 export function createSpanGraph(
   spans: TraceSpan[],
-  slowestSpan?: TraceSpan | null
+  slowestSpan?: TraceSpan | null,
+  isDark: boolean = false
 ): {
   //@ts-ignore
   nodes: Node<SpanNodeData>[];
@@ -69,6 +70,10 @@ export function createSpanGraph(
     });
 
     if (span.parent_span_id) {
+      const edgeColor = spanHasError
+        ? "#d93025"
+        : (isDark ? "oklch(60% 0.10 150)" : "#000");
+
       edges.push({
         id: `e-${span.parent_span_id}-${span.span_id}`,
         source: span.parent_span_id,
@@ -77,12 +82,10 @@ export function createSpanGraph(
         animated: true,
         //@ts-ignore
         className: spanHasError ? "error" : "",
-        style: spanHasError
-          ? "stroke: var(--color-error-600); stroke-width: 1;"
-          : "stroke: #000; stroke-width: 1;",
+        style: `stroke: ${edgeColor}; stroke-width: 1;`,
         markerEnd: {
           type: "arrowclosed",
-          color: spanHasError ? "#d93025" : "#000",
+          color: edgeColor,
         },
       });
     }

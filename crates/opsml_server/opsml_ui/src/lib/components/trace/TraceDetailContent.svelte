@@ -68,7 +68,7 @@
     if (!isDragging || !containerEl) return;
     const rect = containerEl.getBoundingClientRect();
     const deltaPct = ((e.clientY - dragStartY) / rect.height) * 100;
-    topPct = Math.min(75, Math.max(25, dragStartTopPct + deltaPct));
+    topPct = Math.min(90, Math.max(10, dragStartTopPct + deltaPct));
   }
 
   function onMouseUp() {

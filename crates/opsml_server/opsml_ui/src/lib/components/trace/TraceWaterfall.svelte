@@ -159,6 +159,37 @@
   const sortedSpans = $derived(sortSpansDepthFirst(spans));
   const parentChildMap = $derived(buildParentChildMap(sortedSpans));
 
+  // ─── Collapsible spans ─────────────────────────────────────────────────
+  // Show root (depth 0) + first-level (depth 1) expanded; collapse depth ≥ 1 parents
+  const initialCollapsed = $derived(new Set(
+    sortedSpans
+      .filter(s => s.depth >= 1 && (parentChildMap.get(s.span_id) || []).length > 0)
+      .map(s => s.span_id)
+  ));
+  let collapsedSpans = $state<Set<string> | null>(null);
+  const effectiveCollapsed = $derived(collapsedSpans ?? initialCollapsed);
+
+  function toggleCollapse(spanId: string) {
+    const next = new Set(effectiveCollapsed);
+    if (next.has(spanId)) next.delete(spanId); else next.add(spanId);
+    collapsedSpans = next;
+  }
+
+  const spanById = $derived(new Map(sortedSpans.map(s => [s.span_id, s])));
+
+  const visibleSpans = $derived((() => {
+    if (effectiveCollapsed.size === 0) return sortedSpans;
+    return sortedSpans.filter(span => {
+      let parentId = span.parent_span_id;
+      while (parentId) {
+        if (effectiveCollapsed.has(parentId)) return false;
+        const parent = spanById.get(parentId);
+        parentId = parent?.parent_span_id ?? null;
+      }
+      return true;
+    });
+  })());
+
   // ─── Scroll sync ─────────────────────────────────────────────────────────
 
   function onSpanScroll() {
@@ -234,12 +265,12 @@
       onscroll={onSpanScroll}
       class="w-[32%] min-w-[220px] flex-shrink-0 overflow-auto border-r-2 border-black bg-surface-50"
     >
-      {#each sortedSpans as span (span.span_id)}
+      {#each visibleSpans as span (span.span_id)}
         {@const isSelected = selectedSpan?.span_id === span.span_id}
         {@const indent = span.depth * INDENT_PX}
         {@const type = getSpanType(span)}
         {@const typeColor = getTypeColor(type)}
-        {@const isLast = isLastSibling(span, sortedSpans, parentChildMap)}
+        {@const isLast = isLastSibling(span, visibleSpans, parentChildMap)}
         {@const hasChildren = (parentChildMap.get(span.span_id) || []).length > 0}
 
         <div
@@ -256,7 +287,7 @@
           <!-- Tree connector lines -->
           {#if span.depth > 0}
             {#each Array.from({ length: span.depth }) as _, depthIndex}
-              {@const shouldDrawLine = shouldDrawVerticalLine(span, depthIndex, sortedSpans, parentChildMap)}
+              {@const shouldDrawLine = shouldDrawVerticalLine(span, depthIndex, visibleSpans, parentChildMap)}
               {@const isCurrentLevel = depthIndex === span.depth - 1}
               {@const lineLeft = depthIndex * INDENT_PX + 8}
 
@@ -271,8 +302,8 @@
                     {#if !isLast}
                       <div class="absolute left-0 w-full bg-black/20" style="top: {ROW_HEIGHT / 2}px; height: {ROW_HEIGHT / 2}px;"></div>
                     {:else if span.parent_span_id}
-                      {@const parent = sortedSpans.find(s => s.span_id === span.parent_span_id)}
-                      {#if parent && !isLastSibling(parent, sortedSpans, parentChildMap)}
+                      {@const parent = visibleSpans.find(s => s.span_id === span.parent_span_id)}
+                      {#if parent && !isLastSibling(parent, visibleSpans, parentChildMap)}
                         <div class="absolute left-0 w-full bg-black/20" style="top: {ROW_HEIGHT / 2}px; height: {ROW_HEIGHT / 2}px;"></div>
                       {/if}
                     {/if}
@@ -289,7 +320,14 @@
 
           <!-- Child chevron indicator -->
           {#if hasChildren}
-            <ChevronRight class="w-3 h-3 text-primary-400 flex-shrink-0 -mx-0.5" />
+            <button
+              onclick={(e) => { e.stopPropagation(); toggleCollapse(span.span_id); }}
+              class="flex items-center justify-center w-4 h-4 flex-shrink-0 -mx-0.5 transition-transform duration-100"
+              aria-label={effectiveCollapsed.has(span.span_id) ? 'Expand' : 'Collapse'}
+            >
+              <ChevronRight class="w-3 h-3 text-primary-400 transition-transform duration-100
+                {effectiveCollapsed.has(span.span_id) ? '' : 'rotate-90'}" />
+            </button>
           {/if}
 
           <!-- Span name -->
@@ -336,7 +374,7 @@
         ></div>
       {/if}
 
-      {#each sortedSpans as span (span.span_id)}
+      {#each visibleSpans as span (span.span_id)}
         {@const position = getSpanPosition(span)}
         {@const isSelected = selectedSpan?.span_id === span.span_id}
         {@const type = getSpanType(span)}

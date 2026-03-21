@@ -113,54 +113,12 @@
       : span.attributes
   );
 
-  // Group attributes by namespace prefix (e.g. "gen_ai", "http", "db")
-  const groupedAttributes = $derived((() => {
-    const groups: Record<string, Attribute[]> = {};
-    for (const attr of filteredAttributes) {
-      const parts = attr.key.split('.');
-      const ns = parts.length > 1 ? parts[0] : 'other';
-      if (!groups[ns]) groups[ns] = [];
-      groups[ns].push(attr);
-    }
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
-  })());
-
-  // Group resource attributes by namespace
-  const groupedResources = $derived((() => {
-    const groups: Record<string, Attribute[]> = {};
-    for (const attr of resourceAttributes) {
-      const parts = attr.key.split('.');
-      const ns = parts.length > 1 ? parts[0] : 'other';
-      if (!groups[ns]) groups[ns] = [];
-      groups[ns].push(attr);
-    }
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
-  })());
-
-  // Track collapsed state per group namespace — reset when span changes
-  let collapsedGroups = $state<Set<string>>(new Set());
-  let collapsedResourceGroups = $state<Set<string>>(new Set());
-
   $effect(() => {
     // Access span.span_id to track span identity; reset all per-span UI state on change
     span.span_id;
-    collapsedGroups = new Set();
-    collapsedResourceGroups = new Set();
     collapsedReqRes = new Set();
     attrSearch = '';
   });
-
-  function toggleGroup(ns: string) {
-    const next = new Set(collapsedGroups);
-    if (next.has(ns)) next.delete(ns); else next.add(ns);
-    collapsedGroups = next;
-  }
-
-  function toggleResourceGroup(ns: string) {
-    const next = new Set(collapsedResourceGroups);
-    if (next.has(ns)) next.delete(ns); else next.add(ns);
-    collapsedResourceGroups = next;
-  }
 
   function copyJson(rawJson: string) {
     navigator.clipboard.writeText(rawJson);
@@ -548,44 +506,26 @@
             {attrSearch ? 'No attributes match your filter' : 'No attributes recorded'}
           </p>
         {:else}
-          <!-- Grouped JSON codeblocks -->
-          <div class="space-y-2">
-            {#each groupedAttributes as [ns, attrs]}
-              {@const isCollapsed = collapsedGroups.has(ns)}
-              <div class="border-2 border-black rounded-base overflow-hidden shadow-small">
-                <!-- Group header -->
-                <button
-                  onclick={() => toggleGroup(ns)}
-                  class="w-full flex items-center justify-between px-3 py-2 bg-primary-100 hover:bg-primary-200 transition-colors duration-100 border-b-2 border-black"
-                >
-                  <div class="flex items-center gap-2">
-                    <Tags class="w-3.5 h-3.5 text-primary-700" />
-                    <span class="text-xs font-black uppercase tracking-wide text-primary-900">{ns}</span>
-                    <span class="px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-primary-200 border border-primary-400 text-primary-800">{attrs.length}</span>
-                  </div>
-                  {#if isCollapsed}
-                    <ChevronDown class="w-3.5 h-3.5 text-primary-600" />
-                  {:else}
-                    <ChevronUp class="w-3.5 h-3.5 text-primary-600" />
-                  {/if}
-                </button>
-                <!-- JSON codeblock -->
-                {#if !isCollapsed}
-                  <div class="bg-surface-50 text-xs overflow-hidden relative">
-                    <button
-                      class="absolute p-2 top-4 right-4 btn btn-sm bg-white border-2 border-black shadow-small z-20 hover:bg-slate-50 active:translate-y-[2px] active:shadow-none transition-all"
-                      onclick={() => copyJson(attrsToJson(attrs))}
-                      aria-label="Copy JSON"
-                    >
-                        <Copy class="w-4 h-4" color="black"/>
-                    </button>
-                    <div class="bg-surface-50 text-xs overflow-hidden">
-                      <CodeBlock code={attrsToJson(attrs)} showLineNumbers={false} lang="json" prePadding="p-3" />
-                    </div>
-                  </div>
-                {/if}
+          <div class="border-2 border-black rounded-base overflow-hidden shadow-small">
+            <div class="flex items-center justify-between px-3 py-2 bg-primary-100 border-b-2 border-black">
+              <div class="flex items-center gap-2">
+                <Tags class="w-3.5 h-3.5 text-primary-700" />
+                <span class="text-xs font-black uppercase tracking-wide text-primary-900">All Attributes</span>
+                <span class="px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-primary-200 border border-primary-400 text-primary-800">
+                  {filteredAttributes.length}
+                </span>
               </div>
-            {/each}
+              <button
+                class="btn btn-sm bg-white border-2 border-black shadow-small hover:bg-slate-50 active:translate-y-[2px] active:shadow-none transition-all p-1.5"
+                onclick={() => copyJson(attrsToJson(filteredAttributes))}
+                aria-label="Copy all attributes"
+              >
+                <Copy class="w-4 h-4" color="black" />
+              </button>
+            </div>
+            <div class="bg-surface-50 text-xs overflow-hidden">
+              <CodeBlock code={attrsToJson(filteredAttributes)} showLineNumbers={false} lang="json" prePadding="p-3" />
+            </div>
           </div>
         {/if}
       </div>
@@ -685,42 +625,26 @@
             <p class="text-sm font-bold text-primary-600 uppercase tracking-wide">No resource attributes</p>
           </div>
         {:else}
-          <div class="space-y-2">
-            {#each groupedResources as [ns, attrs]}
-              {@const isCollapsed = collapsedResourceGroups.has(ns)}
-              <div class="border-2 border-black rounded-base overflow-hidden shadow-small">
-                <!-- Group header -->
-                <button
-                  onclick={() => toggleResourceGroup(ns)}
-                  class="w-full flex items-center justify-between px-3 py-2 bg-secondary-100 hover:bg-secondary-200 transition-colors duration-100 border-b-2 border-black"
-                >
-                  <div class="flex items-center gap-2">
-                    <Server class="w-3.5 h-3.5 text-secondary-700" />
-                    <span class="text-xs font-black uppercase tracking-wide text-secondary-900">{ns}</span>
-                    <span class="px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-secondary-200 border border-secondary-500 text-secondary-800">{attrs.length}</span>
-                  </div>
-                  {#if isCollapsed}
-                    <ChevronDown class="w-3.5 h-3.5 text-secondary-600" />
-                  {:else}
-                    <ChevronUp class="w-3.5 h-3.5 text-secondary-600" />
-                  {/if}
-                </button>
-                {#if !isCollapsed}
-                  <div class="bg-surface-50 text-xs overflow-hidden relative">
-                    <button
-                      class="absolute p-2 top-4 right-4 btn btn-sm bg-white border-2 border-black shadow-small z-20 hover:bg-slate-50 active:translate-y-[2px] active:shadow-none transition-all"
-                      onclick={() => copyJson(attrsToJson(attrs))}
-                      aria-label="Copy JSON"
-                    >
-                        <Copy class="w-4 h-4" color="black"/>
-                    </button>
-                    <div class="bg-surface-50 text-xs overflow-hidden">
-                      <CodeBlock code={attrsToJson(attrs)} showLineNumbers={false} lang="json" prePadding="p-3" />
-                    </div>
-                  </div>
-                {/if}
+          <div class="border-2 border-black rounded-base overflow-hidden shadow-small">
+            <div class="flex items-center justify-between px-3 py-2 bg-secondary-100 border-b-2 border-black">
+              <div class="flex items-center gap-2">
+                <Server class="w-3.5 h-3.5 text-secondary-700" />
+                <span class="text-xs font-black uppercase tracking-wide text-secondary-900">All Resources</span>
+                <span class="px-1.5 py-0.5 rounded-sm text-[10px] font-bold bg-secondary-200 border border-secondary-500 text-secondary-800">
+                  {resourceAttributes.length}
+                </span>
               </div>
-            {/each}
+              <button
+                class="btn btn-sm bg-white border-2 border-black shadow-small hover:bg-slate-50 active:translate-y-[2px] active:shadow-none transition-all p-1.5"
+                onclick={() => copyJson(attrsToJson(resourceAttributes))}
+                aria-label="Copy all resources"
+              >
+                <Copy class="w-4 h-4" color="black" />
+              </button>
+            </div>
+            <div class="bg-surface-50 text-xs overflow-hidden">
+              <CodeBlock code={attrsToJson(resourceAttributes)} showLineNumbers={false} lang="json" prePadding="p-3" />
+            </div>
           </div>
         {/if}
       </div>

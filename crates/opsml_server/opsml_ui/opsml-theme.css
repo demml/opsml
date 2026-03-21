@@ -1156,96 +1156,50 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Dark mode — Span Graph (SvelteFlow) overrides
+   Dark mode — SpanNode overrides (Tailwind class fights)
+   SvelteFlow theming is handled via --xy-* vars + colorMode in SpanGraph.svelte
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Container border */
+/* SpanNode CSS custom properties for dark mode */
 [data-theme='opsml'].theme-dark .span-graph-container {
-    border-color: oklch(35% 0.05 150 / 0.5);
-    background: oklch(8% 0.003 150);
+    --span-node-text: oklch(80% 0.06 150);
+    --span-node-shadow: 2px 2px 0 0 oklch(25% 0.03 150 / 0.6);
+    --span-node-ring: oklch(55% 0.12 150);
+    --span-badge-text: oklch(85% 0.04 150);
+    --span-badge-border: oklch(35% 0.05 150 / 0.5);
+    --span-handle-bg: oklch(60% 0.10 150);
+    --span-handle-border: oklch(12% 0.003 150);
 }
 
-/* Background dots */
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__background) {
-    background-color: oklch(8% 0.003 150);
+/* Node backgrounds — override Tailwind bg/border classes */
+[data-theme='opsml'].theme-dark .span-graph-container :global(.span-node) {
+    background: oklch(12% 0.003 150) !important;
+    border-color: oklch(35% 0.05 150 / 0.6) !important;
 }
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__background pattern circle) {
-    fill: oklch(30% 0.04 150 / 0.4);
+[data-theme='opsml'].theme-dark .span-graph-container :global(.span-node.is-selected) {
+    background: oklch(15% 0.01 150) !important;
+    border-color: oklch(50% 0.10 150 / 0.8) !important;
 }
-
-/* Edges — bright green lines on dark bg (!important to override inline style) */
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__edge-path) {
-    stroke: oklch(60% 0.10 150) !important;
-    stroke-width: 2;
-}
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__edge.in-path .svelte-flow__edge-path) {
-    stroke: oklch(72% 0.14 150) !important;
-    stroke-width: 3;
-}
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__edge.error .svelte-flow__edge-path) {
-    stroke: oklch(60% 0.15 14) !important;
+[data-theme='opsml'].theme-dark .span-graph-container :global(.span-node:has(.text-error-600)) {
+    background: oklch(12% 0.01 14) !important;
+    border-color: oklch(45% 0.10 14 / 0.6) !important;
 }
 
-/* Arrow markers (SVG marker defs + edge marker elements) */
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__edge .svelte-flow__edge-marker) {
-    fill: oklch(60% 0.10 150);
-}
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__edge.in-path .svelte-flow__edge-marker) {
-    fill: oklch(72% 0.14 150);
-}
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__edge.error .svelte-flow__edge-marker) {
-    fill: oklch(60% 0.15 14);
-}
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__marker) {
-    fill: oklch(60% 0.10 150) !important;
-}
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__arrowhead polyline),
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__arrowhead polygon) {
-    stroke: oklch(60% 0.10 150) !important;
-    fill: oklch(60% 0.10 150) !important;
-}
-/* SvelteFlow SVG defs marker overrides */
-[data-theme='opsml'].theme-dark .span-graph-container :global(marker path),
-[data-theme='opsml'].theme-dark .span-graph-container :global(marker polygon) {
-    fill: oklch(60% 0.10 150) !important;
+/* Service badge */
+[data-theme='opsml'].theme-dark .span-graph-container :global(.service-badge) {
+    background: oklch(14% 0.004 150) !important;
+    border-color: oklch(35% 0.05 150 / 0.5) !important;
+    color: oklch(70% 0.06 150) !important;
 }
 
-/* Connection handles */
-[data-theme='opsml'].theme-dark :global(.span-handle) {
-    background: oklch(60% 0.10 150);
-    border-color: oklch(16% 0.004 150);
-}
-[data-theme='opsml'].theme-dark :global(.span-handle:hover) {
-    background: oklch(72% 0.14 150);
-}
-
-/* Node text — span name and duration */
-[data-theme='opsml'].theme-dark .span-graph-container :global(.span-name) {
-    color: oklch(80% 0.06 150);
-}
+/* Duration text — override Tailwind text-primary-700 */
 [data-theme='opsml'].theme-dark .span-graph-container :global(.span-duration) {
-    color: oklch(55% 0.04 150);
+    color: oklch(55% 0.04 150) !important;
 }
 
-/* Controls panel */
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__controls) {
-    background: oklch(12% 0.003 150);
-    border-color: oklch(35% 0.05 150 / 0.5);
-}
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__controls-button) {
-    background: oklch(12% 0.003 150);
-    border-bottom-color: oklch(25% 0.01 150 / 0.3);
-}
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__controls-button:hover) {
-    background: oklch(18% 0.004 150);
-}
-[data-theme='opsml'].theme-dark .span-graph-container :global(.svelte-flow__controls-button svg) {
-    fill: oklch(60% 0.10 150);
-}
-
-/* Depth badge border */
+/* Depth badge — override Tailwind bg classes */
 [data-theme='opsml'].theme-dark .span-graph-container :global(.depth-badge) {
-    border-color: oklch(35% 0.05 150 / 0.5);
+    background: oklch(25% 0.04 150) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

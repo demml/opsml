@@ -70,7 +70,7 @@
       {span.span_name}
     </div>
 
-    <div class="span-duration font-mono text-sm text-gray-700">
+    <div class="span-duration font-mono text-sm text-primary-700">
       {duration}
     </div>
 
@@ -87,7 +87,7 @@
 <style>
   .span-node {
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow-small);
+    box-shadow: var(--span-node-shadow, var(--shadow-small));
     min-width: 10rem;
     position: relative;
     transition: all 0.2s ease;
@@ -99,11 +99,11 @@
   }
 
   .span-node.is-in-path {
-    box-shadow: 0 0 0 3px var(--color-primary-500);
+    box-shadow: 0 0 0 3px var(--span-node-ring, var(--color-primary-500));
   }
 
   .span-node.is-selected {
-    box-shadow: 0 0 0 4px var(--color-primary-500);
+    box-shadow: 0 0 0 4px var(--span-node-ring, var(--color-primary-500));
     transform: scale(1.05);
   }
 
@@ -114,7 +114,7 @@
 
   .span-name {
     font-weight: 700;
-    color: #000;
+    color: var(--span-node-text, #000);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -125,19 +125,19 @@
     position: absolute;
     top: 3px;
     right: 3px;
-    color: white;
+    color: var(--span-badge-text, white);
     font-size: 8px;
     padding: 2px 4px;
     border-radius: 3px;
-    border: 1px solid black;
+    border: 1px solid var(--span-badge-border, rgb(197, 12, 12));
     font-weight: bold;
   }
 
   :global(.span-handle) {
     width: 8px;
     height: 8px;
-    background: black;
-    border: 2px solid white;
+    background: var(--span-handle-bg, black);
+    border: 2px solid var(--span-handle-border, white);
     border-radius: 50%;
   }
 

@@ -11,17 +11,17 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 w-full">
   <MetricChart
-      config={createTraceCountChart(buckets)}
+      configFn={() => createTraceCountChart(buckets)}
       title="Total Traces"
   />
 
   <MetricChart
-      config={createErrorRateChart(buckets)}
+      configFn={() => createErrorRateChart(buckets)}
       title="Error Rate (%)"
   />
 
   <MetricChart
-      config={createLatencyChart(buckets)}
+      configFn={() => createLatencyChart(buckets)}
       title="Latency (ms)"
   />
 </div>
