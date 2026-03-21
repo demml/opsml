@@ -34,7 +34,7 @@
         onclick={modalClose}
         class="btn-icon btn-icon-sm bg-white border-2 border-black shadow-small shadow-hover-small"
       >
-        <X class="w-4 h-4" color="black" />
+        <X class="w-4 h-4" />
       </button>
     </header>
 

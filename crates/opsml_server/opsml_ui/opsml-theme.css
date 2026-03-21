@@ -692,7 +692,7 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 /* Dark text: phosphor green (#8ddb9f) with bloom */
 [data-theme='opsml'].theme-dark .text-black {
-    color: oklch(82% 0.14 152);
+    color: oklch(76% 0.10 150);
 }
 [data-theme='opsml'].theme-dark .text-black\/60 {
     color: oklch(60% 0.08 150 / 0.7);
@@ -701,7 +701,7 @@
     color: oklch(72% 0.10 150 / 0.85);
 }
 [data-theme='opsml'].theme-dark .text-white {
-    color: oklch(83% 0.15 150);
+    color: oklch(78% 0.12 150);
 }
 [data-theme='opsml'].theme-dark .text-gray-600 {
     color: oklch(65% 0.08 150);
@@ -720,7 +720,7 @@
     color: oklch(55% 0.07 150);
 }
 [data-theme='opsml'].theme-dark .text-slate-500 {
-    color: oklch(60% 0.08 150);
+    color: oklch(65% 0.10 150);
 }
 [data-theme='opsml'].theme-dark .text-slate-600 {
     color: oklch(65% 0.09 150);
@@ -812,7 +812,7 @@
 
 /* ── Phosphor bloom: text glow on all dark mode text ── */
 [data-theme='opsml'].theme-dark {
-    text-shadow: 0 0 4px oklch(75% 0.15 150 / 0.4);
+    text-shadow: 0 0 1px oklch(75% 0.15 150 / 0.15);
 }
 /* Remove bloom from elements that shouldn't glow */
 [data-theme='opsml'].theme-dark input,
@@ -1090,6 +1090,69 @@
 [data-theme='opsml'].theme-dark .markdown-body .hljs {
     background-color: oklch(10% 0.015 150);
     color: oklch(70% 0.12 150);
+}
+
+/* ── Fix C: brighter secondary-300 for eval task expected values ── */
+[data-theme='opsml'].theme-dark .text-secondary-300 {
+    color: oklch(78% 0.14 160);
+}
+
+/* ── Fix D: slate text + bg overrides for prompt/tool call components ── */
+[data-theme='opsml'].theme-dark .text-slate-800 {
+    color: oklch(72% 0.10 150);
+}
+[data-theme='opsml'].theme-dark .text-slate-900 {
+    color: oklch(78% 0.11 150);
+}
+[data-theme='opsml'].theme-dark .bg-slate-50 {
+    background-color: oklch(10% 0.01 150);
+}
+
+/* ── Fix E: semi-transparent white badge background ── */
+[data-theme='opsml'].theme-dark .bg-white\/50 {
+    background-color: oklch(15% 0.02 150 / 0.5);
+}
+
+/* ── Fix G: remap inline arbitrary shadow values to soft glow ── */
+[data-theme='opsml'].theme-dark [class*="shadow-["] {
+    box-shadow: 0 0 12px oklch(40% 0.10 150 / 0.25) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — Fix A: Eval Tasks accordion hover (GenAITaskAccordion)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .hover\:bg-slate-100:hover {
+    background-color: oklch(16% 0.02 150);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — Fix B: CardButton / VersionButton / CardPage bg-primary-400
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-primary-400 {
+    background-color: oklch(14% 0.03 150);
+    border-color: oklch(40% 0.08 150 / 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — Fix C: Trace / Observability component overrides
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-surface-500 {
+    background-color: oklch(12% 0.015 150);
+}
+[data-theme='opsml'].theme-dark .bg-primary-800 {
+    background-color: oklch(20% 0.05 150);
+}
+[data-theme='opsml'].theme-dark .border-gray-100 {
+    border-color: oklch(20% 0.02 150 / 0.3);
+}
+[data-theme='opsml'].theme-dark .border-gray-200 {
+    border-color: oklch(25% 0.03 150 / 0.3);
+}
+[data-theme='opsml'].theme-dark .text-gray-900 {
+    color: oklch(78% 0.11 150);
+}
+[data-theme='opsml'].theme-dark .border-gray-900 {
+    border-color: oklch(50% 0.10 150 / 0.4);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

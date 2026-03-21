@@ -109,7 +109,7 @@
           {#if copied}
             <Check class="w-4 h-4 text-green-600"/>
           {:else}
-            <Copy class="w-4 h-4" color="black"/>
+            <Copy class="w-4 h-4"/>
           {/if}
         </button>
         

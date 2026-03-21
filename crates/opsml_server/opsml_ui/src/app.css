@@ -107,14 +107,14 @@
 
 /* ─── Dark mode: Nostromo Terminal shadows + tokens ─── */
 [data-theme='opsml'].theme-dark {
-    --shadow: 4px 4px 0 0 oklch(30% 0.06 150 / 0.5);
-    --shadow-primary: 4px 4px 0 0 oklch(45% 0.10 150 / 0.4);
-    --shadow-small: 2px 2px 0 0 oklch(30% 0.06 150 / 0.5);
-    --shadow-primary-small: 2px 2px 0 0 oklch(45% 0.10 150 / 0.4);
-    --reverse-shadow-small: -2px -2px 0 0 oklch(30% 0.06 150 / 0.5);
+    --shadow: 0 0 12px oklch(40% 0.10 150 / 0.25);
+    --shadow-primary: 0 0 12px oklch(50% 0.12 150 / 0.3);
+    --shadow-small: 0 0 6px oklch(40% 0.10 150 / 0.2);
+    --shadow-primary-small: 0 0 6px oklch(50% 0.12 150 / 0.25);
+    --reverse-shadow-small: 0 0 6px oklch(40% 0.10 150 / 0.2);
     --border: oklch(45% 0.10 150 / 0.25);
-    --text: oklch(82% 0.14 152);
+    --text: oklch(76% 0.10 150);
     --ring: oklch(45% 0.10 150 / 0.25);
-    --mtext: oklch(82% 0.14 152);
+    --mtext: oklch(76% 0.10 150);
     --ring-offset: oklch(5.5% 0.004 150);
 }
