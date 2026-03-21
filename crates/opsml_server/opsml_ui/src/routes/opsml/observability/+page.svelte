@@ -3,6 +3,7 @@
   import TraceErrorView from "$lib/components/trace/TraceErrorView.svelte";
   import ScouterRequiredView from "$lib/components/scouter/ScouterRequiredView.svelte";
   import { Activity } from 'lucide-svelte';
+  import { dev } from '$app/environment';
   import type { PageProps } from './$types';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
 
@@ -10,7 +11,7 @@
   let scouterEnabled = $derived(uiSettingsStore.scouterEnabled);
 </script>
 
-{#if scouterEnabled}
+{#if scouterEnabled || dev}
   {#if data.status === 'error' || data.status === 'not_found'}
     <TraceErrorView
       message={data.errorMessage}
