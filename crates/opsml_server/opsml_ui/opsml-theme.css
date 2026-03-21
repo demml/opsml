@@ -476,17 +476,17 @@
 	   From inspiration: bg #0e120e, card #0a100b
 	   50 = lightest surface (card body) — slightly above page bg
 	   950 = deepest (page background) */
-	--color-surface-50:  oklch(16% 0.025 150);
-	--color-surface-100: oklch(13% 0.015 150);
-	--color-surface-200: oklch(10% 0.01 150);
-	--color-surface-300: oklch(18% 0.025 150);
-	--color-surface-400: oklch(8.5% 0.008 150);
-	--color-surface-500: oklch(8% 0.007 150);
-	--color-surface-600: oklch(7.5% 0.006 150);
-	--color-surface-700: oklch(7% 0.006 150);
-	--color-surface-800: oklch(6.5% 0.005 150);
-	--color-surface-900: oklch(6% 0.005 150);
-	--color-surface-950: oklch(5.5% 0.004 150);
+	--color-surface-50:  oklch(16% 0.006 150);
+	--color-surface-100: oklch(13% 0.005 150);
+	--color-surface-200: oklch(10% 0.004 150);
+	--color-surface-300: oklch(18% 0.007 150);
+	--color-surface-400: oklch(8.5% 0.004 150);
+	--color-surface-500: oklch(8% 0.003 150);
+	--color-surface-600: oklch(7.5% 0.003 150);
+	--color-surface-700: oklch(7% 0.003 150);
+	--color-surface-800: oklch(6.5% 0.003 150);
+	--color-surface-900: oklch(6% 0.003 150);
+	--color-surface-950: oklch(5.5% 0.003 150);
 	--color-surface-contrast-dark: var(--color-surface-50);
 	--color-surface-contrast-light: var(--color-surface-950);
 	--color-surface-contrast-50: var(--color-surface-contrast-light);
@@ -744,35 +744,35 @@
    Dark mode — background overrides
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme='opsml'].theme-dark .bg-white {
-    background-color: oklch(8% 0.01 150);
+    background-color: oklch(8% 0.003 150);
 }
 /* Gray hover/highlight backgrounds → dark terminal tones */
 [data-theme='opsml'].theme-dark .bg-gray-50,
 [data-theme='opsml'].theme-dark .hover\:bg-gray-50:hover {
-    background-color: oklch(14% 0.01 150);
+    background-color: oklch(14% 0.004 150);
 }
 [data-theme='opsml'].theme-dark .bg-gray-100,
 [data-theme='opsml'].theme-dark .hover\:bg-gray-100:hover {
-    background-color: oklch(16% 0.01 150);
+    background-color: oklch(16% 0.004 150);
 }
 [data-theme='opsml'].theme-dark .bg-gray-300 {
-    background-color: oklch(30% 0.04 150);
+    background-color: oklch(30% 0.015 150);
 }
 /* Primary hover/highlight backgrounds */
 [data-theme='opsml'].theme-dark .hover\:bg-primary-50:hover {
-    background-color: oklch(12% 0.015 150);
+    background-color: oklch(12% 0.008 150);
 }
 [data-theme='opsml'].theme-dark .hover\:bg-primary-100:hover {
-    background-color: oklch(15% 0.02 150);
+    background-color: oklch(15% 0.012 150);
 }
 [data-theme='opsml'].theme-dark .hover\:bg-primary-200:hover {
-    background-color: oklch(18% 0.03 150);
+    background-color: oklch(18% 0.015 150);
 }
 [data-theme='opsml'].theme-dark .hover\:bg-slate-50:hover {
-    background-color: oklch(14% 0.01 150);
+    background-color: oklch(14% 0.004 150);
 }
 [data-theme='opsml'].theme-dark .bg-black {
-    background-color: oklch(40% 0.08 150);
+    background-color: oklch(40% 0.04 150);
 }
 
 
@@ -812,7 +812,7 @@
 
 /* ── Phosphor bloom: text glow on all dark mode text ── */
 [data-theme='opsml'].theme-dark {
-    text-shadow: 0 0 1px oklch(75% 0.15 150 / 0.15);
+    text-shadow: 0 0 1px oklch(75% 0.08 150 / 0.12);
 }
 /* Remove bloom from elements that shouldn't glow */
 [data-theme='opsml'].theme-dark input,
@@ -847,7 +847,7 @@
 /* ── Textarea: dark background for agent playground and other textareas ── */
 [data-theme='opsml'].theme-dark textarea {
     background-color: oklch(8% 0.01 150);
-    color: oklch(75% 0.12 150);
+    color: oklch(75% 0.06 150);
 }
 
 /* ── Sidebar nav items: green outline on hover ── */
@@ -898,7 +898,7 @@
     border-color: oklch(40% 0.08 150 / 0.5);
     box-shadow: inset 0 0 30px oklch(30% 0.06 150 / 0.15), 0 0 15px oklch(45% 0.10 150 / 0.1);
     color: oklch(87% 0.16 150);
-    text-shadow: 0 0 10px oklch(75% 0.15 150 / 0.6);
+    text-shadow: 0 0 10px oklch(75% 0.10 150 / 0.4);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -946,19 +946,19 @@
    Dark mode — slate backgrounds: dark terminal panels
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme='opsml'].theme-dark .bg-slate-100 {
-    background-color: oklch(12% 0.015 150);
+    background-color: oklch(12% 0.005 150);
 }
 [data-theme='opsml'].theme-dark .bg-slate-200 {
-    background-color: oklch(14% 0.018 150);
+    background-color: oklch(14% 0.006 150);
 }
 [data-theme='opsml'].theme-dark .bg-slate-300 {
-    background-color: oklch(18% 0.03 150);
+    background-color: oklch(18% 0.008 150);
 }
 [data-theme='opsml'].theme-dark .bg-slate-700 {
-    background-color: oklch(10% 0.012 150);
+    background-color: oklch(10% 0.004 150);
 }
 [data-theme='opsml'].theme-dark .bg-slate-900 {
-    background-color: oklch(8% 0.01 150);
+    background-color: oklch(8% 0.003 150);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -966,23 +966,23 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme='opsml'].theme-dark .bg-gray-200,
 [data-theme='opsml'].theme-dark .hover\:bg-gray-200:hover {
-    background-color: oklch(20% 0.03 150);
+    background-color: oklch(20% 0.008 150);
 }
 [data-theme='opsml'].theme-dark .bg-gray-400 {
-    background-color: oklch(30% 0.05 150);
+    background-color: oklch(30% 0.015 150);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Dark mode — green semantic backgrounds (message bubbles, success states)
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme='opsml'].theme-dark .bg-green-50 {
-    background-color: oklch(12% 0.02 150);
+    background-color: oklch(12% 0.008 150);
 }
 [data-theme='opsml'].theme-dark .bg-green-100 {
-    background-color: oklch(16% 0.03 150);
+    background-color: oklch(16% 0.012 150);
 }
 [data-theme='opsml'].theme-dark .bg-green-300 {
-    background-color: oklch(25% 0.06 148);
+    background-color: oklch(25% 0.03 148);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -996,26 +996,26 @@
    Dark mode — text-black opacity variants (agent descriptions, capabilities)
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme='opsml'].theme-dark .text-black\/70 {
-    color: oklch(75% 0.11 150 / 0.9);
+    color: oklch(75% 0.06 150 / 0.9);
 }
 [data-theme='opsml'].theme-dark .text-black\/50 {
-    color: oklch(55% 0.07 150 / 0.8);
+    color: oklch(55% 0.04 150 / 0.8);
 }
 [data-theme='opsml'].theme-dark .text-black\/40 {
-    color: oklch(50% 0.06 150 / 0.7);
+    color: oklch(50% 0.035 150 / 0.7);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Dark mode — gray text overrides (catch-all for remaining gray text)
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme='opsml'].theme-dark .text-gray-300 {
-    color: oklch(45% 0.06 150);
+    color: oklch(45% 0.035 150);
 }
 [data-theme='opsml'].theme-dark .text-gray-400 {
-    color: oklch(50% 0.06 150);
+    color: oklch(50% 0.035 150);
 }
 [data-theme='opsml'].theme-dark .text-gray-500 {
-    color: oklch(58% 0.07 150);
+    color: oklch(58% 0.04 150);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1105,7 +1105,7 @@
     color: oklch(78% 0.11 150);
 }
 [data-theme='opsml'].theme-dark .bg-slate-50 {
-    background-color: oklch(10% 0.01 150);
+    background-color: oklch(10% 0.004 150);
 }
 
 /* ── Fix E: semi-transparent white badge background ── */
@@ -1122,37 +1122,37 @@
    Dark mode — Fix A: Eval Tasks accordion hover (GenAITaskAccordion)
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme='opsml'].theme-dark .hover\:bg-slate-100:hover {
-    background-color: oklch(16% 0.02 150);
+    background-color: oklch(16% 0.006 150);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Dark mode — Fix B: CardButton / VersionButton / CardPage bg-primary-400
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme='opsml'].theme-dark .bg-primary-400 {
-    background-color: oklch(14% 0.03 150);
-    border-color: oklch(40% 0.08 150 / 0.4);
+    background-color: oklch(14% 0.008 150);
+    border-color: oklch(40% 0.05 150 / 0.4);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Dark mode — Fix C: Trace / Observability component overrides
    ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme='opsml'].theme-dark .bg-surface-500 {
-    background-color: oklch(12% 0.015 150);
+    background-color: oklch(12% 0.005 150);
 }
 [data-theme='opsml'].theme-dark .bg-primary-800 {
-    background-color: oklch(20% 0.05 150);
+    background-color: oklch(20% 0.025 150);
 }
 [data-theme='opsml'].theme-dark .border-gray-100 {
-    border-color: oklch(20% 0.02 150 / 0.3);
+    border-color: oklch(20% 0.008 150 / 0.3);
 }
 [data-theme='opsml'].theme-dark .border-gray-200 {
-    border-color: oklch(25% 0.03 150 / 0.3);
+    border-color: oklch(25% 0.01 150 / 0.3);
 }
 [data-theme='opsml'].theme-dark .text-gray-900 {
-    color: oklch(78% 0.11 150);
+    color: oklch(78% 0.06 150);
 }
 [data-theme='opsml'].theme-dark .border-gray-900 {
-    border-color: oklch(50% 0.10 150 / 0.4);
+    border-color: oklch(50% 0.04 150 / 0.4);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
