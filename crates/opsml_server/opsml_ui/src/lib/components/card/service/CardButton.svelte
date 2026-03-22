@@ -31,7 +31,7 @@
 </script>
 
 <a 
-  class="p-2 text-black rounded-base shadow border-2 border-black bg-primary-400 w-full max-w-[30em] h-[5em] overflow-auto whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" 
+  class="p-2 text-black rounded-base shadow border-2 border-black bg-surface-300 w-full max-w-[30em] h-[5em] overflow-auto whitespace-nowrap hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" 
   href={cardUrl}
   data-sveltekit-preload-data="hover"
   >

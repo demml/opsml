@@ -76,7 +76,7 @@
             version={summary.version}
             updated_at={summary.created_at}
             registry={registry}
-            bgColor={"bg-primary-400"}
+            bgColor={"bg-surface-300"}
           />
         {/each}
       </div>

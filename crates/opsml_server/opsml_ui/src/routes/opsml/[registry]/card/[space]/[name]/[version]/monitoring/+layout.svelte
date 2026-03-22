@@ -13,6 +13,7 @@
 
   let { data, children }: { data: LayoutData; children: any } = $props();
   let scouterEnabled = $derived(uiSettingsStore.scouterEnabled);
+  let mockMode = $derived(data.mockMode ?? false);
 
   let registryType = $derived(getRegistryFromString(page.params.registry as string)) as RegistryType;
 
@@ -50,7 +51,7 @@
   }
 </script>
 
-{#if scouterEnabled}
+{#if scouterEnabled || mockMode}
   <div class="mx-auto w-full max-w-screen-3xl px-4 py-4 sm:px-6 lg:px-8 space-y-6">
     <div class="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4 bg-white p-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl">
       <div class="flex items-center gap-3">

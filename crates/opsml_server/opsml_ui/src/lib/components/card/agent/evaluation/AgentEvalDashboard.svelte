@@ -23,7 +23,8 @@
   import { refreshGenAIMonitoringData } from '$lib/components/scouter/dashboard/utils';
   import { timeRangeState } from '$lib/components/utils/timeState.svelte';
   import { getRegistryPath, RegistryType,  getMaxDataPoints  } from '$lib/utils';
-  import { generateColors } from '$lib/components/viz/utils';
+  import { generateColors, getChartTheme, getPlugins } from '$lib/components/viz/utils';
+  import { browser } from '$app/environment';
   import { Chart } from 'chart.js/auto';
   import { Filler } from 'chart.js';
   import zoomPlugin from 'chartjs-plugin-zoom';
@@ -167,6 +168,16 @@
   let chart: Chart | null = null;
   let resetZoomTrigger = $state(0);
   let lastResetTrigger = 0;
+  let isDark = $state(browser && document.documentElement.classList.contains('theme-dark'));
+
+  $effect(() => {
+    if (!browser) return;
+    const observer = new MutationObserver(() => {
+      isDark = document.documentElement.classList.contains('theme-dark');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  });
 
   $effect(() => {
     if (resetZoomTrigger !== lastResetTrigger && chart) {
@@ -208,56 +219,35 @@
     if (chart) chart.destroy();
     if (datasets.length === 0) { chart = null; return; }
 
+    const theme = getChartTheme();
     chart = new Chart(chartCanvas, {
       type: 'line',
       data: { datasets } as any,
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        // @ts-ignore
         plugins: {
-          legend: { display: true, position: 'bottom' },
-          // @ts-ignore
-          zoom: {
-            pan: { enabled: true, mode: 'xy', modifierKey: 'ctrl' },
-            zoom: {
-              mode: 'xy',
-              drag: {
-                enabled: true,
-                borderColor: 'rgb(163, 135, 239)',
-                borderWidth: 1,
-                backgroundColor: 'rgba(163, 135, 239, 0.3)',
-              },
-            },
-          },
-          tooltip: {
-            cornerRadius: 1,
-            backgroundColor: 'rgba(255,255,255,1)',
-            borderColor: 'rgb(0,0,0)',
-            borderWidth: 1,
-            titleColor: 'rgb(0,0,0)',
-            bodyColor: 'rgb(0,0,0)',
-            titleFont: { size: 13 },
-            bodyFont: { size: 12 },
-          },
+          ...getPlugins(true, 'bottom'),
         },
         scales: {
           x: {
             type: 'time',
-            border: { display: true, width: 2, color: 'rgb(0,0,0)' },
+            border: { display: true, width: 2, color: theme.axisColor },
             time: {
               displayFormats: {
                 millisecond: 'HH:mm', second: 'HH:mm', minute: 'HH:mm',
                 hour: 'HH:mm', day: 'MM/dd HH:mm',
               },
             },
-            grid: { display: true, color: 'rgba(0,0,0,0.1)', tickLength: 8 },
-            ticks: { maxTicksLimit: 12, color: 'rgb(0,0,0)', font: { size: 12 } },
+            grid: { display: true, color: theme.gridColor, tickLength: 8 },
+            ticks: { maxTicksLimit: 12, color: theme.textColor, font: { size: 12 } },
           },
           y: {
-            title: { display: true, text: selectedMetricName, color: 'rgb(0,0,0)', font: { size: 13 } },
-            ticks: { maxTicksLimit: 10, color: 'rgb(0,0,0)', font: { size: 12 } },
-            border: { display: true, width: 2, color: 'rgb(0,0,0)' },
-            grid: { display: true, color: 'rgba(0,0,0,0.1)', tickLength: 8 },
+            title: { display: true, text: selectedMetricName, color: theme.textColor, font: { size: 13 } },
+            ticks: { maxTicksLimit: 10, color: theme.textColor, font: { size: 12 } },
+            border: { display: true, width: 2, color: theme.axisColor },
+            grid: { display: true, color: theme.gridColor, tickLength: 8 },
           },
         },
         layout: { padding: 10 },
@@ -268,6 +258,7 @@
   $effect(() => {
     void selectedMetricName;
     void evalData;
+    void isDark;
     buildChart();
   });
 

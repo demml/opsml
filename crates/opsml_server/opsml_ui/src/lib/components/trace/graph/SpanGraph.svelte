@@ -56,9 +56,7 @@
 
   const containerHeight = $derived(Math.max(300, Math.min(bounds.height + 100, 600)));
 
-  // Detect dark mode reactively
-  let isDark = $state(browser && document.documentElement.classList.contains('theme-dark'));
-
+  // Detect dark mode reactively via MutationObserver
   $effect(() => {
     if (!browser) return;
     const observer = new MutationObserver(() => {

@@ -5,6 +5,7 @@
   import TaskDetailView from '../task/TaskDetailView.svelte';
   import { getServerGenAIEvalTask } from '../utils';
   import type { GenAIEvalProfile, GenAIEvalTaskRequest } from '../types';
+  import { dev } from '$app/environment';
 
   let {
     workflow,
@@ -26,6 +27,12 @@
   async function loadTasks() {
     loading = true;
     try {
+      if (dev) {
+        const { buildMockEvalTasks } = await import('$lib/components/scouter/evaluation/mockData');
+        tasks = buildMockEvalTasks(workflow.record_uid);
+        if (tasks.length > 0) selectedTask = tasks[0];
+        return;
+      }
       const request: GenAIEvalTaskRequest = { record_uid: workflow.record_uid };
       const response = await getServerGenAIEvalTask(fetch, request);
       tasks = response.tasks || [];

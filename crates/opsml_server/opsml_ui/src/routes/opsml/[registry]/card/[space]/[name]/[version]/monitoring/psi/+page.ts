@@ -9,6 +9,7 @@ import {
   classifyError,
 } from "$lib/components/scouter/dashboard/utils";
 import type { DriftProfileResponse } from "$lib/components/scouter/utils";
+import { dev } from "$app/environment";
 
 export const load: PageLoad = async ({ parent, fetch }) => {
   const parentData = await parent();
@@ -17,6 +18,16 @@ export const load: PageLoad = async ({ parent, fetch }) => {
   const timeRange = getTimeRange();
 
   if (!settings?.scouter_enabled) {
+    if (dev) {
+      const { getMockMonitoringPageData } =
+        await import("$lib/components/scouter/monitoring/mockData");
+      return {
+        monitoringData: getMockMonitoringPageData(DriftType.Psi, metadata.uid, registryType, timeRange),
+        metadata,
+        driftType: DriftType.Psi,
+        registryType,
+      };
+    }
     return {
       monitoringData: {
         status: "error" as const,

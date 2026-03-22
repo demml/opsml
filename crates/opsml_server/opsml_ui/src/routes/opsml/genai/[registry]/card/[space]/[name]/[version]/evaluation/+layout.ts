@@ -10,6 +10,7 @@ import type {
   Card,
 } from "$lib/components/card/card_interfaces/servicecard";
 import { RoutePaths } from "$lib/components/api/routes";
+import { dev } from "$app/environment";
 
 /** Fetch a single prompt card's full metadata using a relative-path fetch call. */
 async function fetchPromptCardMetadata(
@@ -36,11 +37,41 @@ async function fetchPromptCardMetadata(
 
 export const load: LayoutLoad = async ({ parent, fetch }) => {
   const parentData = await parent();
-  const { registryType, metadata, promptCardsWithEval } = parentData;
+  const { registryType, metadata, promptCardsWithEval, settings } = parentData;
+
+  const mockMode = dev && !settings?.scouter_enabled;
 
   // ── Agent registry: collect all associated prompt cards that have eval profiles ──
   if (registryType === RegistryType.Agent) {
     if (promptCardsWithEval.length === 0) {
+      if (dev) {
+        const { buildMockGenAIEvalProfile } =
+          await import("$lib/components/scouter/evaluation/mockData");
+        const mockProfile = buildMockGenAIEvalProfile();
+        const mockPromptCard = {
+          name: "mock-intent-classifier",
+          space: metadata.space,
+          version: "1.0.0",
+          uid: "mock-prompt-uid-001",
+          tags: ["mock"],
+          metadata: {} as any,
+          registry_type: "Prompt",
+          app_env: "development",
+          created_at: new Date().toISOString(),
+          is_card: true,
+          opsml_version: "1.0.0",
+          eval_profile: mockProfile,
+          prompt: {} as any,
+        } as any;
+
+        return {
+          registryType,
+          metadata,
+          promptCardsWithEval: [mockPromptCard],
+          eval_profile: undefined,
+          mockMode: true,
+        };
+      }
       throw redirect(
         303,
         `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${metadata.name}/${metadata.version}/card`,
@@ -52,6 +83,7 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
       metadata,
       promptCardsWithEval,
       eval_profile: undefined,
+      mockMode,
     };
   }
 
@@ -66,6 +98,17 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
   const eval_profile = metadata.eval_profile;
 
   if (!eval_profile) {
+    if (dev) {
+      const { buildMockGenAIEvalProfile } =
+        await import("$lib/components/scouter/evaluation/mockData");
+      return {
+        registryType,
+        metadata,
+        eval_profile: buildMockGenAIEvalProfile(),
+        promptCardsWithEval,
+        mockMode: true,
+      };
+    }
     throw redirect(
       303,
       `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${metadata.name}/${metadata.version}/card`,
@@ -77,5 +120,6 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
     metadata,
     eval_profile,
     promptCardsWithEval,
+    mockMode,
   };
 };

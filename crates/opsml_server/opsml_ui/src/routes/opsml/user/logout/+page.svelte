@@ -35,7 +35,7 @@
       <img alt="OpsML logo" class="mx-auto -mt-12 mb-2 w-20" src={logo}>
       <h1 class="pt-1 text-center text-lg font-bold text-primary-800">Logout</h1>
 
-      <p class="mb-6 text-center text-surface-950 text-smd">
+      <p class="mb-6 text-center text-primary-800 text-smd">
         You are about to logout. Click the logout button below to proceed.
       </p>
 

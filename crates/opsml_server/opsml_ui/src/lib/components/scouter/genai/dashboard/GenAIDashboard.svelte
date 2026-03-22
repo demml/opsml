@@ -170,7 +170,7 @@
 
     {#if workflows && workflows.items && workflows.items.length > 0}
       <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl overflow-hidden flex flex-col h-full">
-        <div class="bg-purple-100 border-b-2 border-black px-5 py-3 flex items-center justify-between flex-shrink-0">
+        <div class="bg-primary-100 border-b-2 border-black px-5 py-3 flex items-center justify-between flex-shrink-0">
           <h3 class="font-black text-lg uppercase tracking-tight flex items-center gap-2 text-slate-900">
             <ArrowRightLeft class="w-5 h-5" />
             Workflow Results

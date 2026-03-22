@@ -13,6 +13,7 @@ import { getDriftProfileExists } from "$lib/components/scouter/utils";
 import { RegistryType } from "$lib/utils";
 import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
 import type { AgentPromptEvalData } from "$lib/components/card/agent/evaluation/types";
+import { dev } from "$app/environment";
 
 export const load: PageLoad = async ({ parent, fetch }) => {
   const parentData = await parent();
@@ -33,6 +34,16 @@ export const load: PageLoad = async ({ parent, fetch }) => {
         const profile = promptCard.eval_profile!;
 
         if (!settings?.scouter_enabled) {
+          if (dev) {
+            const { getMockGenAIMonitoringPageData } =
+              await import("$lib/components/scouter/evaluation/mockData");
+            const monitoringData = getMockGenAIMonitoringPageData(
+              promptCard.uid,
+              registryType,
+              timeRange,
+            );
+            return { promptCard, monitoringData };
+          }
           const errorData: Extract<
             GenAIMonitoringPageData,
             { status: "error" }
@@ -124,6 +135,17 @@ export const load: PageLoad = async ({ parent, fetch }) => {
 
   // ── Prompt registry: existing single-card evaluation flow ──
   if (!settings?.scouter_enabled) {
+    if (dev) {
+      const { getMockGenAIMonitoringPageData } =
+        await import("$lib/components/scouter/evaluation/mockData");
+      return {
+        monitoringData: getMockGenAIMonitoringPageData(metadata.uid, registryType, timeRange),
+        driftType: DriftType.GenAI,
+        metadata,
+        registryType,
+        agentPromptEvals: undefined,
+      };
+    }
     const errorData: Extract<GenAIMonitoringPageData, { status: "error" }> = {
       status: "error",
       uid: metadata.uid,

@@ -554,6 +554,25 @@
 	--chart-zoom-bg: oklch(65% 0.14 150 / 0.2);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Auth pages dark mode — login, logout, register, reset
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark form p,
+[data-theme='opsml'].theme-dark form label {
+  color: var(--color-primary-950) !important;
+}
+[data-theme='opsml'].theme-dark form input {
+  color: var(--color-primary-950) !important;
+  background-color: var(--color-surface-100) !important;
+}
+[data-theme='opsml'].theme-dark form input::placeholder {
+  color: var(--color-primary-700) !important;
+  opacity: 1 !important;
+}
+[data-theme='opsml'].theme-dark form a {
+  color: var(--color-primary-700) !important;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Gradient classes (both themes)
