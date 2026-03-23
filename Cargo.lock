@@ -6406,8 +6406,9 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scouter-client"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "108ed266a33da77d86eccbd8032d288d921096be00264056b918540ffb41aa0f"
 dependencies = [
  "chrono",
  "ndarray",
@@ -6438,8 +6439,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-dispatch"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "38a134a88b2188b32f1ff8b0d0383b570fee27828f83dd5853b9902e1dd1d35a"
 dependencies = [
  "futures",
  "pyo3",
@@ -6453,8 +6455,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-drift"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "701b65b4f2557f2d33f2215ff91c7bc1a960dfc229c8f19f25a95913b7815203"
 dependencies = [
  "chrono",
  "futures",
@@ -6479,8 +6482,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-evaluate"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b5b27d5774ff888714c612aeb9bd7ccff2a93e83de6bbbca3ebdcefe616a2e96"
 dependencies = [
  "chrono",
  "itertools 0.14.0",
@@ -6506,8 +6510,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-events"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f79805111b01ec61054e38fe1878b8c788ac2a7dc438bfd2d0d8bd44fc7cef1f"
 dependencies = [
  "async-trait",
  "chrono",
@@ -6542,8 +6547,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-http"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7eb9711e400f5334de64b9e20d0a62dd872e77049728f3ff39047c084865a0ad"
 dependencies = [
  "pyo3",
  "reqwest 0.12.28",
@@ -6557,16 +6563,18 @@ dependencies = [
 
 [[package]]
 name = "scouter-macro"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "af61c1eaf6fabb385b945a2add0c9b22b322e5f89aa0cfa8b47c5f812d2aaed0"
 dependencies = [
  "thiserror 2.0.18",
 ]
 
 [[package]]
 name = "scouter-observability"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "90cc44a1dc4fcc4560f45b9bda91fa2f414f8d226af79710bb5b35562720eccf"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -6582,8 +6590,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-profile"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e17a2538e9cd3ba5c6d46a946e3a83af8dab4c168d7f044f151fdfe7936a0a67"
 dependencies = [
  "chrono",
  "indicatif",
@@ -6604,8 +6613,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-semver"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb705876c3930b13b4c184692a1ed513fe7f84c6f920fb73f75ffa1513419ab0"
 dependencies = [
  "pyo3",
  "semver",
@@ -6615,8 +6625,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-settings"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be828b3ce4d00b0e8d23b3a9970ec48eeda82e7ebecf48a2806105cf955d3cf8"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -6629,8 +6640,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-state"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d209f2448c28f71a48bcabc8c465ea259c1b77ec2ed18bf46c66eea686042d1b"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -6639,8 +6651,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-tonic"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d11f92c588a9e426d145e5816210f9bca9b19c2fd875f26ef885826cc159699"
 dependencies = [
  "prost",
  "prost-types",
@@ -6658,8 +6671,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-tracing"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd9c9545caec998a090db4447ffc92b96e35f81d70b96cc4a718ca5c39880d4b"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -6684,8 +6698,9 @@ dependencies = [
 
 [[package]]
 name = "scouter-types"
-version = "0.22.0"
-source = "git+https://github.com/demml/scouter.git?branch=bug%2Fdatafusion-query#e8382463248fcbc332351ed623c81ccf448c4f09"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b42123c57da5f3e424fe8e7f74dc7c21d25bbfa08a24f9ee2adba272a2df7870"
 dependencies = [
  "base64 0.22.1",
  "chrono",
