@@ -172,6 +172,38 @@ def test_from_spec_no_register(mock_environment):
     # Cleanup
     opsml_service = no_register_dir / "opsml_service"
     lock_file = no_register_dir / "opsml.lock"
+    assert lock_file.exists()
     shutil.rmtree(opsml_service, ignore_errors=True)
-    if lock_file.exists():
-        os.remove(lock_file)
+    os.remove(lock_file)
+
+
+def test_from_spec_not_found(mock_environment):
+    """
+    Test that AppState.from_spec raises RuntimeError for a nonexistent spec path.
+    """
+    with pytest.raises(RuntimeError):
+        AppState.from_spec(path=Path("/nonexistent/path/to/spec"))
+
+
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+def test_from_spec_unsupported_registry_type(mock_environment, tmp_path):
+    """
+    Test that AppState.from_spec(register=False) raises RuntimeError when a Path variant
+    uses an unsupported registry type (non-Prompt).
+    """
+    spec_content = """name: test-service
+space: test
+type: Api
+service:
+  cards:
+    - alias: bad_card
+      path: "models/nonexistent.yaml"
+      registry_type: model
+"""
+    spec_file = tmp_path / "opsmlspec.yaml"
+    spec_file.write_text(spec_content)
+    (tmp_path / "models").mkdir()
+    (tmp_path / "models" / "nonexistent.yaml").touch()
+
+    with pytest.raises(RuntimeError, match="Unsupported registry type"):
+        AppState.from_spec(path=tmp_path, register=False)

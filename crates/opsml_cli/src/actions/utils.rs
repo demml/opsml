@@ -11,6 +11,17 @@ use std::collections::HashSet;
 use std::path::Path;
 use tracing::{debug, error, instrument, warn};
 
+fn validate_alias(alias: &str) -> Result<(), CliError> {
+    use std::path::Component;
+    let mut components = Path::new(alias).components();
+    match (components.next(), components.next()) {
+        (Some(Component::Normal(_)), None) => Ok(()),
+        _ => Err(CliError::Error(format!(
+            "Invalid alias '{alias}': must be a single path component with no separators or traversals"
+        ))),
+    }
+}
+
 /// Process prompt cards that have paths specified, loading and registering them
 ///
 /// # Arguments
@@ -34,11 +45,25 @@ pub fn process_prompt_card_from_path(
         return Err(CliError::ExpectedCardPathVariant);
     };
 
-    let card_path = if !card_path_variant.path.is_absolute() {
-        root_path.join(&card_path_variant.path)
-    } else {
-        card_path_variant.path.clone()
-    };
+    if card_path_variant.path.is_absolute() {
+        return Err(CliError::Error(format!(
+            "Absolute paths are not allowed in Path variants: {:?}",
+            card_path_variant.path
+        )));
+    }
+    let joined = root_path.join(&card_path_variant.path);
+    let card_path = joined.canonicalize().map_err(|e| {
+        CliError::Error(format!("Failed to resolve path {:?}: {}", joined, e))
+    })?;
+    let root_canonical = root_path.canonicalize().map_err(|e| {
+        CliError::Error(format!("Failed to resolve root path {:?}: {}", root_path, e))
+    })?;
+    if !card_path.starts_with(&root_canonical) {
+        return Err(CliError::Error(format!(
+            "Path traversal detected: {:?} escapes root {:?}",
+            card_path_variant.path, root_path
+        )));
+    }
 
     debug!(
         "Loading PromptCard from path: {:?} for alias: {}",
@@ -215,13 +240,31 @@ pub(crate) fn create_service_card_local(
     {
         for card in cards.iter_mut() {
             if let CardVariant::Path(card_path_variant) = card {
-                let card_path = if !card_path_variant.path.is_absolute() {
-                    spec.root_path.join(&card_path_variant.path)
-                } else {
-                    card_path_variant.path.clone()
-                };
+                if card_path_variant.path.is_absolute() {
+                    return Err(CliError::Error(format!(
+                        "Absolute paths are not allowed in Path variants: {:?}",
+                        card_path_variant.path
+                    )));
+                }
+                let joined = spec.root_path.join(&card_path_variant.path);
+                let card_path = joined.canonicalize().map_err(|e| {
+                    CliError::Error(format!("Failed to resolve path {:?}: {}", joined, e))
+                })?;
+                let root_canonical = spec.root_path.canonicalize().map_err(|e| {
+                    CliError::Error(format!(
+                        "Failed to resolve root path {:?}: {}",
+                        spec.root_path, e
+                    ))
+                })?;
+                if !card_path.starts_with(&root_canonical) {
+                    return Err(CliError::Error(format!(
+                        "Path traversal detected: {:?} escapes root {:?}",
+                        card_path_variant.path, spec.root_path
+                    )));
+                }
 
                 let alias = card_path_variant.alias.clone();
+                validate_alias(&alias)?;
                 let save_dir = target_path.join(&alias);
 
                 if !save_dir.exists() {
