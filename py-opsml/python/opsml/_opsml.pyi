@@ -9795,6 +9795,11 @@ class TraceFilters:
     limit: Optional[int]
     cursor_created_at: Optional[datetime.datetime]
     cursor_trace_id: Optional[str]
+    direction: Optional[str]
+    attribute_filters: Optional[List[str]]
+    trace_ids: Optional[List[str]]
+    entity_uid: Optional[str]
+    queue_uid: Optional[str]
 
     def __init__(
         self,
@@ -9806,6 +9811,11 @@ class TraceFilters:
         limit: Optional[int] = None,
         cursor_created_at: Optional[datetime.datetime] = None,
         cursor_trace_id: Optional[str] = None,
+        direction: Optional[str] = None,
+        attribute_filters: Optional[List[str]] = None,
+        trace_ids: Optional[List[str]] = None,
+        entity_uid: Optional[str] = None,
+        queue_uid: Optional[str] = None,
     ) -> None:
         """Initialize trace filters.
 
@@ -9826,6 +9836,16 @@ class TraceFilters:
                 Pagination cursor: created at timestamp
             cursor_trace_id:
                 Pagination cursor: trace ID
+            direction:
+                Pagination direction ("next" or "prev")
+            attribute_filters:
+                List of attribute filters in the format "key=value" or "key!=value"
+            trace_ids:
+                List of trace IDs to filter by
+            entity_uid:
+                Filter by associated entity UID
+            queue_uid:
+                Filter by associated queue UID
         """
 
 class TraceMetricBucket:
@@ -9941,7 +9961,9 @@ class BatchConfig:
 def init_tracer(
     service_name: str = "scouter_service",
     scope: str = "scouter.tracer.{version}",
-    transport_config: Optional[HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig | GrpcConfig] = None,
+    transport_config: Optional[
+        HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig | GrpcConfig | MockConfig
+    ] = None,
     exporter: Optional[HttpSpanExporter | GrpcSpanExporter | StdoutSpanExporter | TestSpanExporter] = None,
     batch_config: Optional[BatchConfig] = None,
     sample_ratio: Optional[float] = None,
@@ -10375,9 +10397,9 @@ class BaseTracer:
         name: str,
         kind: Optional[SpanKind] = SpanKind.Internal,
         label: Optional[str] = None,
-        attributes: Optional[dict[str, str]] = None,
-        baggage: Optional[dict[str, str]] = None,
-        tags: Optional[dict[str, str]] = None,
+        attributes: Optional[List[dict[str, str]]] = None,
+        baggage: Optional[List[dict[str, str]]] = None,
+        tags: Optional[List[dict[str, str]]] = None,
         parent_context_id: Optional[str] = None,
         trace_id: Optional[str] = None,
         span_id: Optional[str] = None,
@@ -10473,6 +10495,18 @@ class BaseTracer:
 
     def shutdown(self) -> None:
         """Shutdown the tracer and flush any remaining spans."""
+
+    def enable_local_capture(self) -> None:
+        """Enable local span capture mode on the ScouterSpanExporter."""
+
+    def disable_local_capture(self) -> None:
+        """Disable local span capture mode, discarding any buffered spans."""
+
+    def drain_local_spans(self) -> List[TraceSpanRecord]:
+        """Drain and return all locally captured spans, clearing the buffer."""
+
+    def get_local_spans_by_trace_ids(self, trace_ids: List[str]) -> List[TraceSpanRecord]:
+        """Return spans matching the given trace_ids without draining the buffer."""
 
 def get_current_active_span(self) -> ActiveSpan:
     """Get the current active span.
@@ -10719,6 +10753,15 @@ class TestSpanExporter:
 
 def shutdown_tracer() -> None:
     """Shutdown the tracer and flush any remaining spans."""
+
+def enable_local_span_capture() -> None:
+    """Enable in-process span capture. Spans are buffered instead of exported."""
+
+def disable_local_span_capture() -> None:
+    """Disable in-process span capture, discarding any buffered spans."""
+
+def drain_local_span_capture() -> List[TraceSpanRecord]:
+    """Drain and return all locally captured spans, clearing the buffer."""
 
 ### scouter/evaluate.pyi ###
 class EvaluationTaskType:
@@ -12261,6 +12304,366 @@ class TasksFile:
             path (Path):
                 Path to the YAML file containing evaluation task definitions.
         """
+
+class TokenUsage:
+    """Token usage statistics for an LLM response.
+
+    Attributes:
+        input_tokens (Optional[int]): Number of input/prompt tokens.
+        output_tokens (Optional[int]): Number of output/completion tokens.
+        total_tokens (Optional[int]): Total tokens consumed.
+    """
+
+    input_tokens: Optional[int]
+    output_tokens: Optional[int]
+    total_tokens: Optional[int]
+
+    def __new__(
+        cls,
+        input_tokens: Optional[int] = None,
+        output_tokens: Optional[int] = None,
+        total_tokens: Optional[int] = None,
+    ) -> "TokenUsage": ...
+    def __str__(self) -> str: ...
+
+class AgentAssertion:
+    """Assertion target for agent tool calls and response properties.
+
+    Defines what aspect of an agent interaction should be evaluated.
+    """
+
+    class ToolCalled:
+        name: str
+
+    class ToolNotCalled:
+        name: str
+
+    class ToolCalledWithArgs:
+        name: str
+        arguments: object
+
+    class ToolCallSequence:
+        names: List[str]
+
+    class ToolCallCount:
+        name: Optional[str]
+
+    class ToolArgument:
+        name: str
+        argument_key: str
+
+    class ToolResult:
+        name: str
+
+    class ResponseContent: ...
+    class ResponseModel: ...
+    class ResponseFinishReason: ...
+    class ResponseInputTokens: ...
+    class ResponseOutputTokens: ...
+    class ResponseTotalTokens: ...
+
+    class ResponseField:
+        path: str
+
+    def __str__(self) -> str: ...
+    @staticmethod
+    def tool_called(name: str) -> "AgentAssertion": ...
+    @staticmethod
+    def tool_not_called(name: str) -> "AgentAssertion": ...
+    @staticmethod
+    def tool_called_with_args(name: str, arguments: Dict[str, Any]) -> "AgentAssertion": ...
+    @staticmethod
+    def tool_call_sequence(names: List[str]) -> "AgentAssertion": ...
+    @staticmethod
+    def tool_call_count(name: Optional[str] = None) -> "AgentAssertion": ...
+    @staticmethod
+    def tool_argument(name: str, argument_key: str) -> "AgentAssertion": ...
+    @staticmethod
+    def tool_result(name: str) -> "AgentAssertion": ...
+    @staticmethod
+    def response_content() -> "AgentAssertion": ...
+    @staticmethod
+    def response_model() -> "AgentAssertion": ...
+    @staticmethod
+    def response_finish_reason() -> "AgentAssertion": ...
+    @staticmethod
+    def response_input_tokens() -> "AgentAssertion": ...
+    @staticmethod
+    def response_output_tokens() -> "AgentAssertion": ...
+    @staticmethod
+    def response_total_tokens() -> "AgentAssertion": ...
+    @staticmethod
+    def response_field(path: str) -> "AgentAssertion": ...
+
+class AgentAssertionTask:
+    """Agent-based evaluation task for behavioral assertions."""
+
+    def __init__(
+        self,
+        id: str,
+        assertion: AgentAssertion,
+        expected_value: Any,
+        operator: ComparisonOperator,
+        description: Optional[str] = None,
+        depends_on: Optional[List[str]] = None,
+        condition: Optional[bool] = None,
+    ) -> None: ...
+    @property
+    def id(self) -> str: ...
+    @id.setter
+    def id(self, id: str) -> None: ...
+    @property
+    def assertion(self) -> AgentAssertion: ...
+    @assertion.setter
+    def assertion(self, assertion: AgentAssertion) -> None: ...
+    @property
+    def operator(self) -> ComparisonOperator: ...
+    @operator.setter
+    def operator(self, operator: ComparisonOperator) -> None: ...
+    @property
+    def expected_value(self) -> Any: ...
+    @property
+    def description(self) -> Optional[str]: ...
+    @description.setter
+    def description(self, description: Optional[str]) -> None: ...
+    @property
+    def depends_on(self) -> List[str]: ...
+    @depends_on.setter
+    def depends_on(self, depends_on: List[str]) -> None: ...
+    @property
+    def condition(self) -> bool: ...
+    @condition.setter
+    def condition(self, condition: bool) -> None: ...
+    @property
+    def task_type(self) -> EvaluationTaskType: ...
+    @property
+    def result(self) -> Optional[AssertionResult]: ...
+    def __str__(self) -> str: ...
+    def model_dump_json(self) -> str: ...
+
+def execute_agent_assertion_tasks(tasks: List[AgentAssertionTask], context: Any) -> AssertionResults:
+    """Execute agent assertion tasks against a provided request context.
+
+    Args:
+        tasks (List[AgentAssertionTask]):
+            List of AgentAssertionTask to evaluate.
+        context (Any):
+            Python object representing the agent request/response context.
+
+    Returns:
+        AssertionResults containing results for each agent assertion task.
+    """
+
+class EvalMetrics:
+    """Aggregate evaluation metrics across all scenarios and sub-agents."""
+
+    @property
+    def overall_pass_rate(self) -> float: ...
+    @property
+    def dataset_pass_rates(self) -> Dict[str, float]: ...
+    @property
+    def scenario_pass_rate(self) -> float: ...
+    @property
+    def total_scenarios(self) -> int: ...
+    @property
+    def passed_scenarios(self) -> int: ...
+    def __str__(self) -> str: ...
+    def as_table(self) -> None: ...
+
+class ScenarioResult:
+    """Evaluation outcome for a single scenario."""
+
+    @property
+    def scenario_id(self) -> str: ...
+    @property
+    def initial_query(self) -> str: ...
+    @property
+    def eval_results(self) -> "EvalResults": ...
+    @property
+    def passed(self) -> bool: ...
+    @property
+    def pass_rate(self) -> float: ...
+    def __str__(self) -> str: ...
+
+class ScenarioDelta:
+    """Pass/fail change record for a single scenario between two evaluation runs."""
+
+    @property
+    def scenario_id(self) -> str: ...
+    @property
+    def initial_query(self) -> str: ...
+    @property
+    def baseline_passed(self) -> bool: ...
+    @property
+    def comparison_passed(self) -> bool: ...
+    @property
+    def baseline_pass_rate(self) -> float: ...
+    @property
+    def comparison_pass_rate(self) -> float: ...
+    @property
+    def status_changed(self) -> bool: ...
+    def __str__(self) -> str: ...
+
+class ScenarioComparisonResults:
+    """Regression comparison output between two ScenarioEvalResults runs."""
+
+    @property
+    def dataset_comparisons(self) -> Dict[str, "ComparisonResults"]: ...
+    @property
+    def scenario_deltas(self) -> List[ScenarioDelta]: ...
+    @property
+    def baseline_overall_pass_rate(self) -> float: ...
+    @property
+    def comparison_overall_pass_rate(self) -> float: ...
+    @property
+    def regressed(self) -> bool: ...
+    @property
+    def improved_aliases(self) -> List[str]: ...
+    @property
+    def regressed_aliases(self) -> List[str]: ...
+    @property
+    def new_aliases(self) -> List[str]: ...
+    @property
+    def removed_aliases(self) -> List[str]: ...
+    @property
+    def new_scenarios(self) -> List[str]: ...
+    @property
+    def removed_scenarios(self) -> List[str]: ...
+    @property
+    def baseline_alias_pass_rates(self) -> Dict[str, float]: ...
+    @property
+    def comparison_alias_pass_rates(self) -> Dict[str, float]: ...
+    def __str__(self) -> str: ...
+    def model_dump_json(self) -> str: ...
+    @staticmethod
+    def model_validate_json(json_string: str) -> "ScenarioComparisonResults": ...
+    def save(self, path: str) -> None: ...
+    @staticmethod
+    def load(path: str) -> "ScenarioComparisonResults": ...
+    def as_table(self) -> None: ...
+
+class ScenarioEvalResults:
+    """Complete output of an offline agent evaluation run."""
+
+    @property
+    def dataset_results(self) -> Dict[str, "EvalResults"]: ...
+    @property
+    def scenario_results(self) -> List[ScenarioResult]: ...
+    @property
+    def metrics(self) -> EvalMetrics: ...
+    def __str__(self) -> str: ...
+    def model_dump_json(self) -> str: ...
+    @staticmethod
+    def model_validate_json(json_string: str) -> "ScenarioEvalResults": ...
+    def save(self, path: str) -> None: ...
+    @staticmethod
+    def load(path: str) -> "ScenarioEvalResults": ...
+    def get_scenario_detail(self, scenario_id: str) -> ScenarioResult: ...
+    def compare_to(
+        self,
+        baseline: "ScenarioEvalResults",
+        regression_threshold: float = 0.05,
+    ) -> ScenarioComparisonResults: ...
+    def as_table(self) -> None: ...
+
+class EvalScenario:
+    """A single test case in an offline agent evaluation run."""
+
+    def __init__(
+        self,
+        initial_query: str,
+        tasks: Optional[List[Any]] = None,
+        id: Optional[str] = None,
+        expected_outcome: Optional[str] = None,
+        predefined_turns: Optional[List[str]] = None,
+        simulated_user_persona: Optional[str] = None,
+        termination_signal: Optional[str] = None,
+        max_turns: int = 10,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None: ...
+    def __str__(self) -> str: ...
+    def model_dump_json(self) -> str: ...
+    def model_dump(self) -> Dict[str, Any]: ...
+    def is_multi_turn(self) -> bool: ...
+    def is_reactive(self) -> bool: ...
+    @property
+    def id(self) -> str: ...
+    @id.setter
+    def id(self, value: str) -> None: ...
+    @property
+    def initial_query(self) -> str: ...
+    @initial_query.setter
+    def initial_query(self, value: str) -> None: ...
+    @property
+    def predefined_turns(self) -> List[str]: ...
+    @predefined_turns.setter
+    def predefined_turns(self, value: List[str]) -> None: ...
+    @property
+    def simulated_user_persona(self) -> Optional[str]: ...
+    @simulated_user_persona.setter
+    def simulated_user_persona(self, value: Optional[str]) -> None: ...
+    @property
+    def termination_signal(self) -> Optional[str]: ...
+    @termination_signal.setter
+    def termination_signal(self, value: Optional[str]) -> None: ...
+    @property
+    def max_turns(self) -> int: ...
+    @max_turns.setter
+    def max_turns(self, value: int) -> None: ...
+    @property
+    def expected_outcome(self) -> Optional[str]: ...
+    @expected_outcome.setter
+    def expected_outcome(self, value: Optional[str]) -> None: ...
+    @property
+    def assertion_tasks(self) -> List[AssertionTask]: ...
+    @property
+    def llm_judge_tasks(self) -> List[LLMJudgeTask]: ...
+    @property
+    def trace_assertion_tasks(self) -> List[TraceAssertionTask]: ...
+    @property
+    def agent_assertion_tasks(self) -> List[AgentAssertionTask]: ...
+    @property
+    def has_tasks(self) -> bool: ...
+
+class EvalScenarios:
+    """Collection of evaluation scenarios with associated data and results."""
+
+    scenarios: List[EvalScenario]
+    metrics: Optional[EvalMetrics]
+
+    def __init__(self, scenarios: List[EvalScenario]) -> None: ...
+    def __str__(self) -> str: ...
+    @property
+    def dataset_results(self) -> Dict[str, "EvalResults"]: ...
+    @property
+    def scenario_results(self) -> List[ScenarioResult]: ...
+    def __len__(self) -> int: ...
+    def __bool__(self) -> bool: ...
+    def is_evaluated(self) -> bool: ...
+    def model_dump_json(self) -> str: ...
+    @staticmethod
+    def model_validate_json(json_string: str) -> "EvalScenarios": ...
+
+class EvalRunner:
+    """Stateful evaluation engine that orchestrates scenario evaluation."""
+
+    @property
+    def scenarios(self) -> EvalScenarios: ...
+    def __init__(
+        self,
+        scenarios: EvalScenarios,
+        profiles: Dict[str, "GenAIEvalProfile"],
+    ) -> None: ...
+    def collect_scenario_data(
+        self,
+        records: Dict[str, List["EvalRecord"]],
+        response: str,
+        scenario: EvalScenario,
+    ) -> None: ...
+    def evaluate(
+        self,
+        config: Optional["EvaluationConfig"] = None,
+    ) -> ScenarioEvalResults: ...
 
 ### scouter/mock.pyi ###
 class ScouterTestServer:
@@ -14098,6 +14501,38 @@ class ScouterQueue:
         self,
     ) -> Union[KafkaConfig, RabbitMQConfig, RedisConfig, HttpConfig, MockConfig]:
         """Return the transport configuration used by the queue"""
+
+    def enable_capture(self) -> None:
+        """Enable offline EvalRecord capture across all queues.
+
+        After calling this, every EvalRecord inserted into any queue is also
+        buffered in memory. Capture is off by default.
+        """
+
+    def disable_capture(self) -> None:
+        """Disable offline record capture across all queues and discard any buffered records."""
+
+    def drain_records(self, alias: str) -> List["EvalRecord"]:
+        """Drain and return captured EvalRecords from the queue identified by *alias*.
+
+        Returns an empty list if capture is disabled or no records have been inserted.
+
+        Args:
+            alias: Key identifying the target queue (same key used in ``__getitem__``).
+
+        Raises:
+            KeyError: If *alias* does not match any registered queue.
+        """
+
+    def drain_all_records(self) -> Dict[str, List["EvalRecord"]]:
+        """Drain captured EvalRecords from all queues.
+
+        Returns a mapping of alias → records. Queues with no buffered records are
+        omitted from the result.
+        """
+
+    def genai_profiles(self) -> Dict[str, "GenAIEvalProfile"]:
+        """Returns a mapping of alias → GenAIEvalProfile for all GenAIEvalProfiles registered in the queue."""
 
 class EvalRecord:
     """LLM record containing context tied to a Large Language Model interaction
@@ -18746,11 +19181,11 @@ class ExperimentCard:
         """
 
     @property
-    def eval_metrics(self) -> "EvalMetrics":
+    def eval_metrics(self) -> "ExperimentEvalMetrics":
         """Returns the eval metrics of the `experimentcard`"""
 
     @eval_metrics.setter
-    def eval_metrics(self, metrics: "EvalMetrics") -> None:
+    def eval_metrics(self, metrics: "ExperimentEvalMetrics") -> None:
         """Set the eval metrics of the `experimentcard`
 
         Args:
@@ -19024,7 +19459,7 @@ class PromptCard:
     def create_eval_profile(
         self,
         alias: str,
-        tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask],
+        tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask],
         config: Optional[GenAIEvalConfig] = None,
     ) -> None:
         """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
@@ -19044,9 +19479,9 @@ class PromptCard:
             alias (str):
                 Unique alias for the drift profile within the prompt card.
 
-            tasks (List[LLMJudgeTask | AssertionTask | TraceAssertionTask]):
+            tasks (List[LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask]):
                 List of evaluation tasks to include in the profile. Can contain
-                a mix of LLM judge tasks, assertion tasks, and trace assertion tasks.
+                a mix of LLM judge tasks, assertion tasks, trace assertion tasks, and agent assertion tasks.
 
             config (GenAIEvalConfig | None):
                 The configuration for the GenAI drift profile containing space, name,
@@ -20181,7 +20616,7 @@ class Experiment:
                 List of metrics to log
         """
 
-    def log_eval_metrics(self, metrics: "EvalMetrics") -> None:
+    def log_eval_metrics(self, metrics: "ExperimentEvalMetrics") -> None:
         """
         Log evaluation metrics
 
@@ -20333,7 +20768,7 @@ def start_experiment(
         Experiment
     """
 
-class EvalMetrics:
+class ExperimentEvalMetrics:
     """
     Map of metrics used that can be used to evaluate a model.
     The metrics are also used when comparing a model with other models
@@ -20341,7 +20776,7 @@ class EvalMetrics:
 
     def __init__(self, metrics: Dict[str, float]) -> None:
         """
-        Initialize EvalMetrics
+        Initialize ExperimentEvalMetrics
 
         Args:
             metrics (Dict[str, float]):
@@ -23699,6 +24134,8 @@ class OpsmlServerContext:
 __all__ = [
     "ActiveSpan",
     "Agent",
+    "AgentAssertion",
+    "AgentAssertionTask",
     "AgentCapabilities",
     "AgentCardSignature",
     "AgentExtension",
@@ -23846,6 +24283,9 @@ __all__ = [
     "EvalRecord",
     "EvalResultSet",
     "EvalResults",
+    "EvalRunner",
+    "EvalScenario",
+    "EvalScenarios",
     "EvalSet",
     "EvalTaskResult",
     "EvaluationConfig",
@@ -23854,6 +24294,7 @@ __all__ = [
     "ExecutableCode",
     "Experiment",
     "ExperimentCard",
+    "ExperimentEvalMetrics",
     "ExperimentMetric",
     "ExperimentMetrics",
     "ExternalApi",
@@ -24063,6 +24504,10 @@ __all__ = [
     "SafetyRating",
     "SafetySetting",
     "SaveName",
+    "ScenarioComparisonResults",
+    "ScenarioDelta",
+    "ScenarioEvalResults",
+    "ScenarioResult",
     "Schema",
     "SchemaType",
     "Score",
@@ -24133,6 +24578,7 @@ __all__ = [
     "ThinkingBlockParam",
     "ThinkingLevel",
     "TimeInterval",
+    "TokenUsage",
     "ToolCall",
     "ToolChoiceMode",
     "ToolConfig",
@@ -24189,6 +24635,7 @@ __all__ = [
     "XGBoostModel",
     "download_artifact",
     "download_service",
+    "execute_agent_assertion_tasks",
     "flush_tracer",
     "generate_feature_schema",
     "get_experiment_metrics",

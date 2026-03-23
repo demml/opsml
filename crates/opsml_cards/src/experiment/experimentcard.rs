@@ -3,7 +3,7 @@ use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
 use opsml_storage::storage_client;
-use opsml_types::cards::{CardStatus, EvalMetrics};
+use opsml_types::cards::{CardStatus, ExperimentEvalMetrics};
 use opsml_types::contracts::{CardRecord, ExperimentCardClientRecord};
 use opsml_types::{
     RegistryType, SaveName, Suffix,
@@ -83,7 +83,7 @@ pub struct ExperimentCard {
     pub is_card: bool,
 
     #[pyo3(get, set)]
-    eval_metrics: EvalMetrics,
+    eval_metrics: ExperimentEvalMetrics,
 
     artifact_key: Option<ArtifactKey>,
 
@@ -124,7 +124,7 @@ impl ExperimentCard {
             subexperiment: false,
             is_card: true,
             opsml_version: opsml_version::version(),
-            eval_metrics: EvalMetrics::default(),
+            eval_metrics: ExperimentEvalMetrics::default(),
             status: CardStatus::Active,
         })
     }

@@ -52,11 +52,14 @@ pub fn process_prompt_card_from_path(
         )));
     }
     let joined = root_path.join(&card_path_variant.path);
-    let card_path = joined.canonicalize().map_err(|e| {
-        CliError::Error(format!("Failed to resolve path {:?}: {}", joined, e))
-    })?;
+    let card_path = joined
+        .canonicalize()
+        .map_err(|e| CliError::Error(format!("Failed to resolve path {:?}: {}", joined, e)))?;
     let root_canonical = root_path.canonicalize().map_err(|e| {
-        CliError::Error(format!("Failed to resolve root path {:?}: {}", root_path, e))
+        CliError::Error(format!(
+            "Failed to resolve root path {:?}: {}",
+            root_path, e
+        ))
     })?;
     if !card_path.starts_with(&root_canonical) {
         return Err(CliError::Error(format!(
@@ -277,16 +280,12 @@ pub(crate) fn create_service_card_local(
                             "Loading PromptCard from path: {:?} for alias: {}",
                             card_path, alias
                         );
-                        let mut prompt_card =
-                            PromptCard::from_path(card_path).map_err(|e| {
-                                CliError::Error(format!("Failed to load PromptCard: {}", e))
-                            })?;
+                        let mut prompt_card = PromptCard::from_path(card_path).map_err(|e| {
+                            CliError::Error(format!("Failed to load PromptCard: {}", e))
+                        })?;
 
                         prompt_card.save_card(save_dir).map_err(|e| {
-                            CliError::Error(format!(
-                                "Failed to save PromptCard locally: {}",
-                                e
-                            ))
+                            CliError::Error(format!("Failed to save PromptCard locally: {}", e))
                         })?;
 
                         *card = CardVariant::Card(Card {

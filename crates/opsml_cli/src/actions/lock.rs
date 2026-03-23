@@ -105,7 +105,6 @@ pub(crate) fn create_lock_artifact_from_service_card(
     }
 }
 
-
 /// Gets the write directory with a fallback default
 pub(crate) fn get_write_dir(spec: &OpsmlServiceSpec, default: &str) -> String {
     spec.service
@@ -337,10 +336,7 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
 /// * `path` - Path to the directory containing opsmlspec.yaml
 /// * `write_path` - Optional override for the base write directory
 #[instrument(skip_all)]
-pub fn install_service_locally(
-    path: PathBuf,
-    write_path: Option<PathBuf>,
-) -> Result<(), CliError> {
+pub fn install_service_locally(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), CliError> {
     debug!("Installing service locally (no registration)");
     println!(
         "{}",

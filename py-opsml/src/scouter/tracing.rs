@@ -1,10 +1,10 @@
 use pyo3::prelude::*;
 use scouter_client::{
-    flush_tracer, get_current_active_span, get_function_type,
-    get_tracing_headers_from_current_span, init_tracer, shutdown_tracer, ActiveSpan, BaseTracer,
-    BatchConfig, FunctionType, GrpcSpanExporter, HttpSpanExporter, OtelExportConfig, OtelProtocol,
-    SpanKind, StdoutSpanExporter, TestSpanExporter, TraceBaggageRecord, TraceRecord,
-    TraceSpanRecord,
+    disable_local_span_capture, drain_local_span_capture, enable_local_span_capture, flush_tracer,
+    get_current_active_span, get_function_type, get_tracing_headers_from_current_span, init_tracer,
+    shutdown_tracer, ActiveSpan, BaseTracer, BatchConfig, FunctionType, GrpcSpanExporter,
+    HttpSpanExporter, OtelExportConfig, OtelProtocol, SpanKind, StdoutSpanExporter,
+    TestSpanExporter, TraceBaggageRecord, TraceRecord, TraceSpanRecord,
 };
 
 pub fn add_tracing_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -28,5 +28,8 @@ pub fn add_tracing_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(shutdown_tracer, m)?)?;
     m.add_function(wrap_pyfunction!(get_tracing_headers_from_current_span, m)?)?;
     m.add_function(wrap_pyfunction!(get_current_active_span, m)?)?;
+    m.add_function(wrap_pyfunction!(enable_local_span_capture, m)?)?;
+    m.add_function(wrap_pyfunction!(disable_local_span_capture, m)?)?;
+    m.add_function(wrap_pyfunction!(drain_local_span_capture, m)?)?;
     Ok(())
 }

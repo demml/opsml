@@ -36,6 +36,9 @@ from ..._opsml import (
     TraceBaggageRecord,
     TraceRecord,
     TraceSpanRecord,
+    disable_local_span_capture,
+    drain_local_span_capture,
+    enable_local_span_capture,
     flush_tracer,
     get_current_active_span,
     get_function_type,
@@ -490,7 +493,7 @@ class ScouterInstrumentor(BaseInstrumentor):
 
         trace._TRACER_PROVIDER_SET_ONCE._done = False  # pylint: disable=protected-access
         trace._TRACER_PROVIDER_SET_ONCE._lock = __import__("threading").Lock()  # pylint: disable=protected-access
-        set_tracer_provider(self._provider)
+        set_tracer_provider(self._provider)  # type: ignore
 
     def instrument(
         self,
@@ -531,6 +534,22 @@ class ScouterInstrumentor(BaseInstrumentor):
             attributes=attributes,
             **kwargs,
         )
+
+    def enable_local_capture(self) -> None:
+        """Enable local span capture mode on the ScouterSpanExporter."""
+        get_tracer("scouter").enable_local_capture()
+
+    def disable_local_capture(self) -> None:
+        """Disable local span capture mode, discarding any buffered spans."""
+        get_tracer("scouter").disable_local_capture()
+
+    def drain_local_spans(self) -> List[TraceSpanRecord]:
+        """Drain and return all locally captured spans, clearing the buffer."""
+        return get_tracer("scouter").drain_local_spans()
+
+    def get_local_spans_by_trace_ids(self, trace_ids: List[str]) -> List[TraceSpanRecord]:
+        """Return captured spans matching the given trace IDs without draining the buffer."""
+        return get_tracer("scouter").get_local_spans_by_trace_ids(trace_ids)
 
     def _uninstrument(self, **kwargs) -> None:
         """Shutdown Scouter tracing and reset global provider."""
@@ -651,4 +670,7 @@ __all__ = [
     "ScouterInstrumentor",
     "instrument",
     "uninstrument",
+    "enable_local_span_capture",
+    "disable_local_span_capture",
+    "drain_local_span_capture",
 ]
