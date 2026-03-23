@@ -2,8 +2,8 @@ import { createInternalApiClient } from "$lib/api/internalClient";
 import { ServerPaths } from "$lib/components/api/routes";
 import type {
   GenAIEvalProfile,
-  GenAIEvalRecordPaginationRequest,
-  GenAIEvalRecordPaginationResponse,
+  EvalRecordPaginationRequest,
+  EvalRecordPaginationResponse,
   GenAIEvalTaskRequest,
   GenAIEvalTaskResponse,
   GenAIEvalWorkflowPaginationResponse,
@@ -14,16 +14,16 @@ import type { DriftProfile } from "../utils";
 import type { BinnedMetrics } from "../custom/types";
 import type { AssertionTask, LLMJudgeTask, TraceAssertionTask } from "./task";
 
-export async function getServerGenAIEvalRecordPage(
+export async function getServerEvalRecordPage(
   fetch: typeof globalThis.fetch,
-  request: GenAIEvalRecordPaginationRequest,
-): Promise<GenAIEvalRecordPaginationResponse> {
+  request: EvalRecordPaginationRequest,
+): Promise<EvalRecordPaginationResponse> {
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.GENAI_EVAL_RECORD_PAGE,
     request,
   );
 
-  let response = (await resp.json()) as GenAIEvalRecordPaginationResponse;
+  let response = (await resp.json()) as EvalRecordPaginationResponse;
 
   return response;
 }
@@ -38,7 +38,7 @@ export async function getServerGenAIEvalRecordPage(
  */
 export async function getServerGenAIEvalWorkflowPage(
   fetch: typeof globalThis.fetch,
-  request: GenAIEvalRecordPaginationRequest,
+  request: EvalRecordPaginationRequest,
 ): Promise<GenAIEvalWorkflowPaginationResponse> {
   let resp = await createInternalApiClient(fetch).post(
     ServerPaths.GENAI_EVAL_WORKFLOW_PAGE,

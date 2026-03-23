@@ -24,9 +24,8 @@ use opsml_types::contracts::agent::{
 use opsml_types::contracts::*;
 use opsml_types::*;
 use scouter_client::{
-    BinnedMetrics, BinnedPsiFeatureMetrics, GenAIEvalRecordPaginationResponse,
-    GenAIEvalTaskResponse, GenAIEvalTaskResult, GenAIEvalWorkflowPaginationResponse,
-    SpcDriftFeatures,
+    BinnedMetrics, BinnedPsiFeatureMetrics, EvalRecordPaginationResponse, EvalTaskResult,
+    GenAIEvalTaskResponse, GenAIEvalWorkflowPaginationResponse, SpcDriftFeatures,
 };
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
@@ -82,7 +81,7 @@ pub struct ScouterServer {
 
 impl ScouterServer {
     fn create_genai_eval_task_response() -> String {
-        let task = GenAIEvalTaskResult::default();
+        let task = EvalTaskResult::default();
         let response = GenAIEvalTaskResponse { tasks: vec![task] };
 
         serde_json::to_string(&response).unwrap()
@@ -232,8 +231,7 @@ impl ScouterServer {
             .create_async()
             .await;
 
-        let record_page =
-            serde_json::to_string(&GenAIEvalRecordPaginationResponse::default()).unwrap();
+        let record_page = serde_json::to_string(&EvalRecordPaginationResponse::default()).unwrap();
         server
             .mock("POST", "/scouter/genai/page/record")
             .match_header("content-type", mockito::Matcher::Any)

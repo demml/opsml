@@ -234,16 +234,18 @@
 <style>
   .grid-background {
     background-color: #E3DFF2;
-    background-image: 
+    background-image:
       linear-gradient(to right, #CECBDB 1px, transparent 1px),
       linear-gradient(to bottom, #CECBDB 1px, transparent 1px);
     background-size: 60px 60px;
+    background-attachment: fixed;
   }
   .alt-grid-background {
     background-color: #f8f8f8;
-    background-image: 
+    background-image:
       linear-gradient(to right, #CECBDB 1px, transparent 1px),
       linear-gradient(to bottom, #CECBDB 1px, transparent 1px);
     background-size: 60px 60px;
+    background-attachment: fixed;
   }
 </style>

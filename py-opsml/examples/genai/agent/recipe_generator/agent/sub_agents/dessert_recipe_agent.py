@@ -2,7 +2,7 @@ from agent.lifespan import prompts
 from google.adk.agents.llm_agent import Agent
 from google.adk.agents.callback_context import CallbackContext
 from typing import Optional
-from google.adk.models import LlmResponse
+from google.adk.models.llm_response import LlmResponse
 from .models import Recipe
 
 

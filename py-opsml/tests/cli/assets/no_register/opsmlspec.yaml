@@ -1,0 +1,14 @@
+name: test-service
+space: test
+type: Api
+
+metadata:
+  description: "A test service for no-register mode"
+  language: "python"
+  tags: ["test"]
+
+service:
+  cards:
+    - alias: test_prompt
+      path: "prompts/test_prompt.yaml"
+      registry_type: prompt

@@ -1,9 +1,10 @@
-use crate::actions::utils::register_service_card;
+use crate::actions::utils::{create_service_card_local, register_service_card};
 use crate::cli::arg::DownloadCard;
 use crate::download_service;
 use crate::error::CliError;
 use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
+use opsml_registry::download::download_service_sub_cards;
 use opsml_registry::error::RegistryError;
 use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_service::{OpsmlServiceSpec, service::DEFAULT_SERVICE_FILENAME};
@@ -13,7 +14,7 @@ use opsml_types::contracts::CardVariant;
 use opsml_types::{RegistryType, contracts::CardRecord};
 use pyo3::prelude::*;
 use scouter_client::{DriftType, ProfileStatusRequest};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::vec;
 use tracing::error;
@@ -90,7 +91,7 @@ fn postprocess_service_card(
 /// * `write_dir` - &str
 /// # Returns
 /// * `LockArtifact`
-fn create_lock_artifact_from_service_card(
+pub(crate) fn create_lock_artifact_from_service_card(
     service_card: &ServiceCard,
     write_dir: &str,
 ) -> LockArtifact {
@@ -104,28 +105,8 @@ fn create_lock_artifact_from_service_card(
     }
 }
 
-/// Creates a LockArtifact from an existing service record
-/// # Arguments
-/// * `service` - &CardRecord
-/// * `write_dir` - &str
-/// # Returns
-/// * `LockArtifact`
-fn create_lock_artifact_from_existing_service(
-    service: &ServiceCard,
-    write_dir: &str,
-) -> LockArtifact {
-    LockArtifact {
-        space: service.space.clone(),
-        name: service.name.clone(),
-        version: service.version.clone(),
-        uid: service.uid.clone(),
-        registry_type: service.registry_type.clone(),
-        write_dir: write_dir.to_string(),
-    }
-}
-
 /// Gets the write directory with a fallback default
-fn get_write_dir(spec: &OpsmlServiceSpec, default: &str) -> String {
+pub(crate) fn get_write_dir(spec: &OpsmlServiceSpec, default: &str) -> String {
     spec.service
         .as_ref()
         .and_then(|s| s.write_dir.clone())
@@ -192,7 +173,7 @@ fn handle_existing_service_lock(
         postprocess_service_card(cards, &service_card, registry)?;
     };
 
-    Ok(create_lock_artifact_from_existing_service(
+    Ok(create_lock_artifact_from_service_card(
         &service_card,
         &get_write_dir(spec, "opsml_service"),
     ))
@@ -237,44 +218,27 @@ pub fn lock_service_card(spec: &mut OpsmlServiceSpec) -> Result<LockArtifact, Cl
     }
 }
 
-/// Install services specified in an opsml.lock file
-/// # Arguments
-/// * `path` - PathBuf to the opsml.lock file
-/// * `write_path` - Optional PathBuf to override write directory
-/// # Returns
-/// * `Result<(), CliError>`
-#[pyfunction]
-#[pyo3(signature = (path, write_path=None))]
-pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), CliError> {
-    debug!("Installing service from lock file");
+fn create_lock_from_spec(path: &Path) -> Result<LockFile, CliError> {
+    let spec_path = path.join(DEFAULT_SERVICE_FILENAME);
 
-    println!(
-        "{}",
-        Colorize::green("Downloading service for opsml.lock file")
+    if !spec_path.exists() {
+        return Err(CliError::SpecNotFound(spec_path));
+    }
+
+    debug!(
+        "Lock file not found, creating lock from spec at path: {:?}",
+        spec_path
     );
 
-    // if lockfile cannot be read, check if path/ DEFAULT_SPEC_PATH exists as a spec file.
-    // If so, create a lockfile from it and proceed;
-    let lockfile = match LockFile::read(&path) {
-        Ok(lockfile) => lockfile,
-        Err(original_error) => {
-            let spec_path = path.join(DEFAULT_SERVICE_FILENAME);
+    lock_service(spec_path)?;
 
-            if !spec_path.exists() {
-                return Err(original_error.into());
-            }
+    Ok(LockFile::read(path)?)
+}
 
-            debug!(
-                "Lock file not found, creating lock from spec at path: {:?}",
-                spec_path
-            );
-
-            lock_service(spec_path)?;
-
-            LockFile::read(&path)?
-        }
-    };
-
+fn download_service_artifacts(
+    lockfile: LockFile,
+    write_path: Option<PathBuf>,
+) -> Result<(), CliError> {
     for artifact in lockfile.artifact {
         match artifact.registry_type {
             RegistryType::Service | RegistryType::Mcp | RegistryType::Agent => {
@@ -315,6 +279,108 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
             }
         }
     }
+    Ok(())
+}
+
+/// Install services specified in an opsmlspec.yaml file.
+/// This is primarily used in Opsml AppState to create and load a service from a spec
+/// # Arguments
+/// * `path` - PathBuf to the opsmlspec.yaml file. The function will look for opsmlspec.yaml in the provided path
+/// * `write_path` - Optional PathBuf to override write directory
+/// # Returns
+/// * `Result<(), CliError>`
+#[instrument(skip_all)]
+pub fn install_service_from_spec(
+    path: PathBuf,
+    write_path: Option<PathBuf>,
+) -> Result<(), CliError> {
+    debug!("Installing service from spec");
+
+    println!("{}", Colorize::green("Installing service from spec"));
+
+    let lockfile = create_lock_from_spec(&path)?;
+    download_service_artifacts(lockfile, write_path)?;
+    Ok(())
+}
+
+/// Install services specified in an opsml.lock file
+/// # Arguments
+/// * `path` - PathBuf to the opsml.lock file
+/// * `write_path` - Optional PathBuf to override write directory
+/// # Returns
+/// * `Result<(), CliError>`
+#[pyfunction]
+#[pyo3(signature = (path, write_path=None))]
+pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), CliError> {
+    debug!("Installing service from lock file");
+
+    println!("{}", Colorize::green("Installing service"));
+
+    // if lockfile cannot be read, check if path/ DEFAULT_SPEC_PATH exists as a spec file.
+    // If so, create a lockfile from it and proceed;
+    let lockfile = match LockFile::read(&path) {
+        Ok(lockfile) => lockfile,
+        Err(_) => create_lock_from_spec(&path)?,
+    };
+
+    download_service_artifacts(lockfile, write_path)?;
+    Ok(())
+}
+
+/// Install a service locally without registering a ServiceCard.
+/// Creates the ServiceCard from the spec, saves it to disk, downloads sub-card
+/// artifacts from the registry (for Card variants), and writes a lock file.
+/// Path variant cards are loaded from disk and saved locally instead.
+///
+/// # Arguments
+/// * `path` - Path to the directory containing opsmlspec.yaml
+/// * `write_path` - Optional override for the base write directory
+#[instrument(skip_all)]
+pub fn install_service_locally(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), CliError> {
+    debug!("Installing service locally (no registration)");
+    println!(
+        "{}",
+        Colorize::green("Installing service locally (no registration)")
+    );
+
+    let spec_path = path.join(DEFAULT_SERVICE_FILENAME);
+    if !spec_path.exists() {
+        return Err(CliError::SpecNotFound(spec_path));
+    }
+
+    let mut spec = OpsmlServiceSpec::from_path(&spec_path).inspect_err(|e| {
+        error!("Failed to read service spec: {:?}", e);
+    })?;
+
+    let space = spec.space().to_string();
+    let name = spec.name.to_string();
+    let write_dir = get_write_dir(&spec, "opsml_service");
+
+    let base_path = write_path.unwrap_or(path.clone());
+    let target_path = base_path.join(&write_dir);
+
+    if !target_path.exists() {
+        std::fs::create_dir_all(&target_path)?;
+    }
+
+    // Create ServiceCard locally (no registration)
+    let (service, local_aliases) =
+        create_service_card_local(&mut spec, &space, &name, &target_path)?;
+
+    // Save the ServiceCard to disk
+    service
+        .save_card(target_path.clone())
+        .map_err(|e| CliError::Error(format!("Failed to save ServiceCard: {}", e)))?;
+
+    // Download sub-cards from registry, skipping locally-saved Path variant cards
+    download_service_sub_cards(&service, &target_path, &local_aliases)?;
+
+    // Write lock file
+    let lock_artifact = create_lock_artifact_from_service_card(&service, &write_dir);
+    let lock_file = LockFile {
+        artifact: vec![lock_artifact],
+    };
+    lock_file.write(&base_path)?;
 
     Ok(())
 }

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { X, FileJson, AlertCircle, Clock, Tag, ChevronDown, ChevronUp } from 'lucide-svelte';
-  import type { GenAIEvalRecord } from '../types';
+  import type { EvalRecord } from '../types';
   import { Status } from '../types';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
 
@@ -9,7 +9,7 @@
     onClose,
     showCloseButton = true,
   }: {
-    record: GenAIEvalRecord;
+    record: EvalRecord;
     onClose?: () => void;
     showCloseButton?: boolean;
   } = $props();

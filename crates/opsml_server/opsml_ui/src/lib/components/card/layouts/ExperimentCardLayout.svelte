@@ -15,7 +15,7 @@
   }
 
   let { data, registryType, children }: ExperimentLayoutProps = $props();
-  let metadata: ExperimentCard = data.metadata;
+  let metadata = $derived(data.metadata as ExperimentCard);
 
   /**
    * Determines the active tab based on the current URL path
@@ -23,7 +23,7 @@
    */
   let activeTab = $derived.by(() => {
     const last = page.url.pathname.split('/').pop() ?? '';
-    if (['card', 'files', 'metrics', 'hardware', 'observability', 'versions', 'figures', 'view'].includes(last)) return last;
+    if (['card', 'files', 'metrics', 'hardware', 'versions', 'figures', 'view'].includes(last)) return last;
     return 'card';
   });
 
@@ -72,12 +72,6 @@
       icon: Activity,
       isActive: (tab: string) => tab === 'hardware',
       description: 'System resource usage and monitoring'
-    },
-    {key: 'observability',
-      label: 'Observability',
-      icon: Activity,
-      isActive: (tab: string) => tab === 'observability',
-      description: 'Distributed traces and performance monitoring'
     },
     {
       key: 'versions',

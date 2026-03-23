@@ -69,7 +69,6 @@ __all__ = [
     "mock",
     "scouter",
     "genai",
-    "cli",
     ## App
     "AppState",
     "ReloadConfig",

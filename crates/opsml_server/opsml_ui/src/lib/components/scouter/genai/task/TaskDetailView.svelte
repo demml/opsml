@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getAssertion, type GenAIEvalTaskResult } from '../task';
+  import { getAssertion, type EvalTaskResult } from '../task';
   import { Info, Activity, AlertCircle, GitBranch, CheckCircle2, XCircle, TrendingUp, MessageSquareText } from 'lucide-svelte';
   import Pill from '$lib/components/utils/Pill.svelte';
   import ComparisonView from './ComparisonView.svelte';
@@ -10,11 +10,11 @@
   import PromptModal from '$lib/components/card/prompt/common/PromptModal.svelte';
 
   let { task, profile } = $props<{
-    task: GenAIEvalTaskResult;
+    task: EvalTaskResult;
     profile: GenAIEvalProfile;
   }>();
 
-  const active_task: GenAIEvalTaskResult = $derived(task);
+  const active_task: EvalTaskResult = $derived(task);
   const assertion = $derived(getAssertion(task));
 
   const isTraceAssertion = $derived(

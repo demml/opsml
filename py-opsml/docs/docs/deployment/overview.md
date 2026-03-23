@@ -275,6 +275,39 @@ app_state = AppState.from_path(
 | reload_config    | `ReloadConfig` (no)       | Configuration for the reload behavior of the AppState.      |
 | load_kwargs      | `dict` (no)    | Dictionary of keyword arguments to pass to when loading - [docs](/opsml/docs/api/opsml/#opsml._opsml.AppState.from_path).|
 
+### Loading from Spec
+
+`AppState.from_spec()` combines lock, install, and load into a single call. It reads the `opsmlspec.yaml` in the given directory, resolves card versions, downloads artifacts, and returns a fully loaded `AppState`.
+
+```python
+from pathlib import Path
+from opsml.app import AppState, ReloadConfig
+from opsml.scouter import HttpConfig
+
+# Standard — registers the service
+app_state = AppState.from_spec(
+    path=Path("./"),
+    transport_config=HttpConfig(),
+    reload_config=ReloadConfig(cron="0 0 0 * * *"),
+)
+
+# Debug — no registration, encryption, or uploads
+app_state = AppState.from_spec(
+    path=Path("./"),
+    transport_config=HttpConfig(),
+    register=False,
+)
+```
+
+#### `from_spec` Arguments
+
+| Argument         | Type (Required)                 | Description                                                                 |
+|------------------|---------------------------------|-----------------------------------------------------------------------------|
+| path             | `Path` (no)                     | Directory containing `opsmlspec.yaml`. Defaults to current directory.       |
+| transport_config | transport config (no)           | Configuration for the `ScouterQueue` transport (Http, Kafka, Redis, etc.).  |
+| reload_config    | `ReloadConfig` (no)             | Cron-based reload configuration.                                            |
+| load_kwargs      | `dict` (no)                     | Per-card load kwargs (same format as `from_path`).                          |
+| register         | `bool` (no)                     | Whether to register the `ServiceCard`. Defaults to `True`. When `False`, skips registration, encryption, and uploads. |
 
 ### Dynamic Reloading
 

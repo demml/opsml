@@ -37,7 +37,12 @@ from .opsml import (
     ServiceConfig,
     ServiceMetadata,
 )
-from .scouter.evaluate import *
+from .scouter.evaluate import (
+    AgentAssertionTask,
+    AssertionTask,
+    LLMJudgeTask,
+    TraceAssertionTask,
+)
 from .scouter.scouter import *
 from .service.agent import AgentSpec
 from .types import VersionType
@@ -763,7 +768,7 @@ class ExperimentCard:
     def get_metrics(
         self,
         names: Optional[list[str]] = None,
-    ) -> Metrics:
+    ) -> "ExperimentMetrics":
         """
         Get metrics of an experiment
 
@@ -772,7 +777,7 @@ class ExperimentCard:
                 Names of the metrics to get. If None, all metrics will be returned.
 
         Returns:
-            Metrics
+            ExperimentMetrics
         """
 
     def get_parameters(
@@ -830,11 +835,11 @@ class ExperimentCard:
         """
 
     @property
-    def eval_metrics(self) -> "EvalMetrics":
+    def eval_metrics(self) -> "ExperimentEvalMetrics":
         """Returns the eval metrics of the `experimentcard`"""
 
     @eval_metrics.setter
-    def eval_metrics(self, metrics: "EvalMetrics") -> None:
+    def eval_metrics(self, metrics: "ExperimentEvalMetrics") -> None:
         """Set the eval metrics of the `experimentcard`
 
         Args:
@@ -882,11 +887,11 @@ class ExperimentCard:
                 The experiment card uid to add
         """
 
-    def list_artifacts(self, path: Optional[Path]) -> List[str]:
+    def list_artifacts(self, path: Optional[Path | str] = None) -> List[str]:
         """List the artifacts associated with the experiment card
 
         Args:
-            path (Path):
+            path (Path | str | None):
                 Specific path you wish to list artifacts from. If not provided,
                 all artifacts will be listed.
 
@@ -901,30 +906,30 @@ class ExperimentCard:
 
     def download_artifacts(
         self,
-        path: Optional[Path] = None,
-        lpath: Optional[Path] = None,
+        path: Optional[Path | str] = None,
+        lpath: Optional[Path | str] = None,
     ) -> None:
         """Download artifacts associated with the ExperimentCard
 
         Args:
-            path (Path | None):
+            path (Path | str | None):
                 Specific path you wish to download artifacts from. If not provided,
                 all artifacts will be downloaded.
 
-            lpath (Path | None):
+            lpath (Path | str | None):
                 Local path to save the artifacts. If not provided, the artifacts will be saved
                 to a directory called "artifacts"
         """
 
     def download_artifact(
         self,
-        path: Path,
+        path: Path | str,
         lpath: Optional[Path] = None,
     ) -> None:
         """Download a specific artifact associated with the ExperimentCard
 
         Args:
-            path (Path):
+            path (Path | str):
                 Path to the artifact to download
             lpath (Path | None):
                 Local path to save the artifact. If not provided, the artifact will be saved
@@ -1108,7 +1113,7 @@ class PromptCard:
     def create_eval_profile(
         self,
         alias: str,
-        tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask],
+        tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask],
         config: Optional[GenAIEvalConfig] = None,
     ) -> None:
         """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
@@ -1128,9 +1133,9 @@ class PromptCard:
             alias (str):
                 Unique alias for the drift profile within the prompt card.
 
-            tasks (List[LLMJudgeTask | AssertionTask | TraceAssertionTask]):
+            tasks (List[LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask]):
                 List of evaluation tasks to include in the profile. Can contain
-                a mix of LLM judge tasks, assertion tasks, and trace assertion tasks.
+                a mix of LLM judge tasks, assertion tasks, trace assertion tasks, and agent assertion tasks.
 
             config (GenAIEvalConfig | None):
                 The configuration for the GenAI drift profile containing space, name,
@@ -1699,7 +1704,7 @@ class CardRegistry(Generic[CardT]):
         """
 
 class ModelCardRegistry(CardRegistry):
-    def register_card(
+    def register_card(  # type: ignore
         self,
         card: ModelCard,
         version_type: VersionType = VersionType.Minor,
@@ -1723,7 +1728,7 @@ class ModelCardRegistry(CardRegistry):
 
         """
 
-    def load_card(
+    def load_card(  # type: ignore
         self,
         uid: Optional[str] = None,
         space: Optional[str] = None,
@@ -1776,7 +1781,7 @@ class ModelCardRegistry(CardRegistry):
         """
 
 class DataCardRegistry(CardRegistry):
-    def register_card(
+    def register_card(  # type: ignore
         self,
         card: DataCard,
         version_type: VersionType = VersionType.Minor,
@@ -1800,7 +1805,7 @@ class DataCardRegistry(CardRegistry):
 
         """
 
-    def load_card(
+    def load_card(  # type: ignore
         self,
         uid: Optional[str] = None,
         space: Optional[str] = None,
@@ -2156,6 +2161,8 @@ class ExperimentMetric:
         Created at of the metric
         """
 
+    def __str__(self) -> str: ...
+
 class ExperimentMetrics:
     def __str__(self): ...
     def __getitem__(self, index: int) -> Metric: ...
@@ -2263,7 +2270,7 @@ class Experiment:
                 List of metrics to log
         """
 
-    def log_eval_metrics(self, metrics: "EvalMetrics") -> None:
+    def log_eval_metrics(self, metrics: "ExperimentEvalMetrics") -> None:
         """
         Log evaluation metrics
 
@@ -2315,14 +2322,14 @@ class Experiment:
 
     def log_figure_from_path(
         self,
-        lpath: Path,
+        lpath: Path | str,
         rpath: Optional[str] = None,
     ) -> None:
         """
         Log a figure
 
         Args:
-            lpath (Path):
+            lpath (Path | str):
                 The local path where the figure has been saved to. Must be an image type
                 (e.g. jpeg, tiff, png, etc.)
             rpath (Optional[str]):
@@ -2415,7 +2422,7 @@ def start_experiment(
         Experiment
     """
 
-class EvalMetrics:
+class ExperimentEvalMetrics:
     """
     Map of metrics used that can be used to evaluate a model.
     The metrics are also used when comparing a model with other models
@@ -2423,7 +2430,7 @@ class EvalMetrics:
 
     def __init__(self, metrics: Dict[str, float]) -> None:
         """
-        Initialize EvalMetrics
+        Initialize ExperimentEvalMetrics
 
         Args:
             metrics (Dict[str, float]):
@@ -2436,7 +2443,7 @@ class EvalMetrics:
 def get_experiment_metrics(
     experiment_uid: str,
     names: Optional[list[str]] = None,
-) -> Metrics:
+) -> ExperimentMetrics:
     """
     Get metrics of an experiment
 
@@ -2447,7 +2454,7 @@ def get_experiment_metrics(
             Names of the metrics to get. If None, all metrics will be returned.
 
     Returns:
-        Metrics
+        ExperimentMetrics
     """
 
 def get_experiment_parameters(
@@ -2469,7 +2476,7 @@ def get_experiment_parameters(
 
 def download_artifact(
     experiment_uid: str,
-    path: Path,
+    path: Path | str,
     lpath: Optional[Path] = None,
 ) -> None:
     """
@@ -2477,7 +2484,7 @@ def download_artifact(
     Args:
         experiment_uid (str):
             UID of the experiment
-        path (Path):
+        path (Path | str):
             Path of the artifact to download
         lpath (Path | None):
             Local path to download the artifact to. If None, the artifact will be downloaded to the current working directory.
@@ -2515,7 +2522,7 @@ __all__ = [
     "Parameters",
     "Experiment",
     "start_experiment",
-    "EvalMetrics",
+    "ExperimentEvalMetrics",
     "get_experiment_metrics",
     "get_experiment_parameters",
     "download_artifact",

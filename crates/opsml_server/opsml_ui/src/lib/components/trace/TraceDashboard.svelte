@@ -4,7 +4,7 @@
   import TraceTable from './TraceTable.svelte';
   import TimeRangeFilter from './TimeRangeFilter.svelte';
   import type { DateTime } from '$lib/types';
-  import {setCookie} from './utils';
+  import {setCookie, calculateTimeRange} from './utils';
   import { getServerTraceMetrics, getServerTracePage } from './utils';
 
   let {
@@ -33,8 +33,6 @@
       ...filters.filters,
     };
 
-    console.log('Fetching trace metrics with request:', metricsRequest);
-
     let traceMetrics = await getServerTraceMetrics(fetch, metricsRequest);
     return traceMetrics.metrics;
   }
@@ -49,25 +47,25 @@
   }
 
   /**
-   * Refresh data - updates time range if in live mode
+   * Refresh data - always recomputes timestamps from selected range name
    */
-  async function refreshData(isLiveUpdate = false) {
+  async function refreshData() {
     if (isUpdating) return;
     isUpdating = true;
 
     try {
-      // If live mode, update the time range to current time
-      if (isLiveUpdate && selectedTimeRange.value === '15min-live') {
-        const now = new Date();
-        const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
-
+      // Always recompute timestamps from the selected range name so they never go stale.
+      // Custom ranges keep their absolute timestamps as-is.
+      if (selectedTimeRange.value !== 'custom') {
+        const { startTime, endTime, bucketInterval } = calculateTimeRange(selectedTimeRange.value);
         filters = {
           ...filters,
           filters: {
             ...filters.filters,
-            start_time: fifteenMinutesAgo.toISOString() as DateTime,
-            end_time: now.toISOString() as DateTime,
+            start_time: startTime as DateTime,
+            end_time: endTime as DateTime,
           },
+          bucket_interval: bucketInterval,
         };
       }
 
@@ -136,6 +134,7 @@
           end_time: range.endTime,
         },
         selected_range: range.value,
+        bucket_interval: range.bucketInterval,
       };
 
       [traceMetrics, tracePage] = await Promise.all([
@@ -184,7 +183,7 @@
     if (selectedTimeRange.value === '15min-live') {
       console.log('🔴 Starting live polling (30s interval)');
       pollInterval = setInterval(() => {
-        refreshData(true);
+        refreshData();
       }, LIVE_POLL_INTERVAL);
     }
 
@@ -228,7 +227,7 @@
 
       <div class="flex items-center gap-2">
         <button
-          onclick={() => refreshData(false)}
+          onclick={() => refreshData()}
           disabled={isUpdating}
           class="flex items-center gap-1.5 px-3 py-2 text-sm font-bold bg-white border-2 border-black shadow-small shadow-hover rounded-base text-primary-800 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Refresh data"

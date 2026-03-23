@@ -360,6 +360,29 @@ opsml install service
 
 This will download the service and its cards to a local directory (by default, `./opsml_service` unless otherwise specified in the `opsmlspec.yaml` file). You can then load the service in your application using the path to the downloaded service. While Opsml gives you the flexibility to load the service as you see fit, we recommend using `AppState` in applications to manage the lifecycle of the service ([link](/opsml/docs/deployment/overview#appstate)).
 
+### Loading from Spec
+
+Instead of manually running `opsml lock` and `opsml install`, you can use `AppState.from_spec()` to handle everything in a single call. This method reads your `opsmlspec.yaml`, resolves cards, downloads artifacts, and returns a ready-to-use `AppState`.
+
+#### Standard usage (registers the service)
+
+```python
+from pathlib import Path
+from opsml.app import AppState
+
+app_state = AppState.from_spec(path=Path("./"))
+```
+
+#### Debug mode (no registration)
+
+When iterating locally, you can skip registration entirely. No `ServiceCard` is created in the registry, no encryption keys are generated, and no artifacts are uploaded. Cards defined as `path` variants in the spec are loaded directly from disk. Cards defined as registry references (`Card` variants) are still downloaded from the registry.
+
+```python
+app_state = AppState.from_spec(path=Path("./"), register=False)
+```
+
+This is useful during development when you want to test your service end-to-end without polluting the registry with intermediate versions.
+
 ### Load from Registry
 You can load a `ServiceCard` from the registry using the `CardRegistry`:
 

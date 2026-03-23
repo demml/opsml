@@ -103,3 +103,16 @@ evaluation:
       description: "Verifies recipe prep time is less than 120 minutes"
       depends_on: []
       condition: false
+
+    - task_type: TraceAssertion
+      id: verify_eval_call
+      operator: Equals
+      expected_value: 1
+      description: Ensure retries are within limit
+      depends_on: []
+      condition: false
+      assertion:
+        SpanCount:
+          filter:
+            ByName:
+              name: vegan_recipe_evaluation
