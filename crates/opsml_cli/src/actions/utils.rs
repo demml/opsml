@@ -210,74 +210,97 @@ pub(crate) fn create_service_card_local(
     let mut local_aliases = HashSet::new();
 
     // Process Path variants: load from disk and save to target_path
-    if let Some(service_config) = &mut spec.service {
-        if let Some(cards) = &mut service_config.cards {
-            for card in cards.iter_mut() {
-                if let CardVariant::Path(card_path_variant) = card {
-                    let card_path = if !card_path_variant.path.is_absolute() {
-                        spec.root_path.join(&card_path_variant.path)
-                    } else {
-                        card_path_variant.path.clone()
-                    };
+    if let Some(service_config) = &mut spec.service
+        && let Some(cards) = &mut service_config.cards
+    {
+        for card in cards.iter_mut() {
+            if let CardVariant::Path(card_path_variant) = card {
+                let card_path = if !card_path_variant.path.is_absolute() {
+                    spec.root_path.join(&card_path_variant.path)
+                } else {
+                    card_path_variant.path.clone()
+                };
 
-                    let alias = card_path_variant.alias.clone();
-                    let save_dir = target_path.join(&alias);
+                let alias = card_path_variant.alias.clone();
+                let save_dir = target_path.join(&alias);
 
-                    if !save_dir.exists() {
-                        std::fs::create_dir_all(&save_dir)?;
-                    }
+                if !save_dir.exists() {
+                    std::fs::create_dir_all(&save_dir)?;
+                }
 
-                    match card_path_variant.registry_type {
-                        RegistryType::Prompt => {
-                            debug!(
-                                "Loading PromptCard from path: {:?} for alias: {}",
-                                card_path, alias
-                            );
-                            let mut prompt_card = PromptCard::from_path(card_path).map_err(
-                                |e| {
-                                    CliError::Error(format!(
-                                        "Failed to load PromptCard: {}",
-                                        e
-                                    ))
-                                },
-                            )?;
-
-                            prompt_card.save_card(save_dir).map_err(|e| {
-                                CliError::Error(format!(
-                                    "Failed to save PromptCard locally: {}",
-                                    e
-                                ))
+                match card_path_variant.registry_type {
+                    RegistryType::Prompt => {
+                        debug!(
+                            "Loading PromptCard from path: {:?} for alias: {}",
+                            card_path, alias
+                        );
+                        let mut prompt_card =
+                            PromptCard::from_path(card_path).map_err(|e| {
+                                CliError::Error(format!("Failed to load PromptCard: {}", e))
                             })?;
 
-                            *card = CardVariant::Card(Card {
-                                alias: card_path_variant.alias.clone(),
-                                registry_type: card_path_variant.registry_type.clone(),
-                                space: prompt_card.space.clone(),
-                                name: prompt_card.name.clone(),
-                                version: Some(prompt_card.version.clone()),
-                                uid: Some(prompt_card.uid.clone()),
-                                drift: card_path_variant.drift.clone(),
-                                version_type: card_path_variant.version_type.clone(),
-                            });
-                        }
-                        _ => {
-                            return Err(CliError::Error(format!(
-                                "Unsupported registry type for local Path variant: {:?}",
-                                card_path_variant.registry_type
-                            )));
-                        }
-                    }
+                        prompt_card.save_card(save_dir).map_err(|e| {
+                            CliError::Error(format!(
+                                "Failed to save PromptCard locally: {}",
+                                e
+                            ))
+                        })?;
 
-                    local_aliases.insert(alias);
+                        *card = CardVariant::Card(Card {
+                            alias: card_path_variant.alias.clone(),
+                            registry_type: card_path_variant.registry_type.clone(),
+                            space: prompt_card.space.clone(),
+                            name: prompt_card.name.clone(),
+                            version: Some(prompt_card.version.clone()),
+                            uid: Some(prompt_card.uid.clone()),
+                            drift: card_path_variant.drift.clone(),
+                            version_type: card_path_variant.version_type.clone(),
+                        });
+                    }
+                    _ => {
+                        return Err(CliError::Error(format!(
+                            "Unsupported registry type for local Path variant: {:?}",
+                            card_path_variant.registry_type
+                        )));
+                    }
                 }
+
+                local_aliases.insert(alias);
             }
         }
     }
 
-    let cards = extract_and_validate_cards(spec)?;
+    let cards = extract_cards(spec)?;
 
     let service = ServiceCard::rust_new(space.to_string(), name.to_string(), cards, spec)
         .map_err(CliError::CreateServiceError)?;
 
     Ok((service, local_aliases))
+}
+
+/// Extracts Card variants from the spec without registry validation.
+/// All Path variants must already be converted to Card variants before calling this.
+fn extract_cards(spec: &OpsmlServiceSpec) -> Result<Vec<Card>, CliError> {
+    let Some(service_config) = &spec.service else {
+        return Ok(Vec::new());
+    };
+
+    let Some(cards) = &service_config.cards else {
+        return Ok(Vec::new());
+    };
+
+    let mut result = Vec::with_capacity(cards.len());
+
+    for card in cards {
+        match card {
+            CardVariant::Card(c) => result.push(c.clone()),
+            CardVariant::Path(_) => {
+                return Err(CliError::Error(
+                    "Card paths must be processed before creating service card".to_string(),
+                ));
+            }
+        }
+    }
+
+    Ok(result)
 }

@@ -1,0 +1,19 @@
+space: test
+name: test-prompt
+prompt:
+  model: gpt-4o
+  provider: openai
+  messages:
+    - |
+      You are a helpful assistant that answers questions concisely.
+evaluation:
+  alias: test_eval
+  tasks:
+    - task_type: Assertion
+      id: validate_response
+      context_path: response
+      operator: HasLengthGreaterThan
+      expected_value: 0
+      description: "Verifies response is not empty"
+      depends_on: []
+      condition: false
