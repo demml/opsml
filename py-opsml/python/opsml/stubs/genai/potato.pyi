@@ -1,5 +1,7 @@
 #### begin imports ####
 
+# pylint: disable=redefined-builtin, invalid-name, dangerous-default-value
+
 import datetime
 from pathlib import Path
 from typing import (
@@ -41,6 +43,9 @@ class Provider:
 
     Anthropic: "Provider"
     """Anthropic provider"""
+
+    GoogleAdk: "Provider"
+    """Google ADK (Agent Development Kit) provider"""
 
     Undefined: "Provider"
     """Undefined provider"""
@@ -3841,6 +3846,9 @@ class FinishReason:
     NoImage = "FinishReason"
     """Expected image but none generated"""
 
+    Language = "FinishReason"
+    """Stopped due to unsupported language"""
+
 class EmbeddingTaskType:
     """Task type for embedding generation.
 
@@ -7183,6 +7191,14 @@ class GroundingMetadata:
     def google_maps_widget_context_token(self) -> Optional[str]:
         """Maps widget context token."""
 
+    @property
+    def retrieval_queries(self) -> Optional[List[str]]:
+        """Retrieval queries used."""
+
+    @property
+    def image_search_queries(self) -> Optional[List[str]]:
+        """Image search queries used."""
+
 class SafetyRating:
     """Safety rating for content.
 
@@ -7457,6 +7473,271 @@ class GenerateContentResponse:
     @property
     def usage_metadata(self) -> Optional[UsageMetadata]:
         """Token usage metadata."""
+
+class AdkToolCallInfo:
+    """Tool call info returned from AdkLlmResponse.get_tool_calls()."""
+
+    @property
+    def name(self) -> str:
+        """Tool/function name."""
+
+    @property
+    def call_id(self) -> Optional[str]:
+        """Optional call identifier."""
+
+    @property
+    def arguments_json(self) -> str:
+        """Serialized JSON string of the function arguments."""
+
+class AdkPart:
+    """A single content part in an ADK response.
+
+    Uses individual Optional fields rather than a union enum to handle
+    Pydantic's wire format which serializes all fields including null values.
+    """
+
+    @property
+    def text(self) -> Optional[str]:
+        """Text content."""
+
+    @property
+    def function_call(self) -> Optional[FunctionCall]:
+        """Function call, if present."""
+
+    @property
+    def function_response(self) -> Optional[FunctionResponse]:
+        """Function response, if present."""
+
+    @property
+    def inline_data(self) -> Optional[Blob]:
+        """Inline binary data, if present."""
+
+    @property
+    def file_data(self) -> Optional[FileData]:
+        """File data reference, if present."""
+
+    @property
+    def executable_code(self) -> Optional[ExecutableCode]:
+        """Executable code, if present."""
+
+    @property
+    def code_execution_result(self) -> Optional[CodeExecutionResult]:
+        """Code execution result, if present."""
+
+class AdkContent:
+    """Content container in an ADK response."""
+
+    @property
+    def parts(self) -> List[AdkPart]:
+        """Content parts."""
+
+    @property
+    def role(self) -> str:
+        """Content role (e.g. 'model')."""
+
+class AdkUsageMetadata:
+    """Token usage metadata from an ADK response."""
+
+    @property
+    def prompt_token_count(self) -> Optional[int]:
+        """Input prompt tokens."""
+
+    @property
+    def candidates_token_count(self) -> Optional[int]:
+        """Output/candidate tokens."""
+
+    @property
+    def total_token_count(self) -> Optional[int]:
+        """Total tokens."""
+
+    @property
+    def cached_content_token_count(self) -> Optional[int]:
+        """Cached content tokens."""
+
+    @property
+    def thoughts_token_count(self) -> Optional[int]:
+        """Thinking/thoughts tokens."""
+
+    @property
+    def tool_use_prompt_token_count(self) -> Optional[int]:
+        """Tool use prompt tokens."""
+
+    @property
+    def cache_tokens_details(self) -> Optional[List[ModalityTokenCount]]:
+        """Cache token breakdown by modality."""
+
+    @property
+    def candidates_tokens_details(self) -> Optional[List[ModalityTokenCount]]:
+        """Candidate token breakdown by modality."""
+
+    @property
+    def prompt_tokens_details(self) -> Optional[List[ModalityTokenCount]]:
+        """Prompt token breakdown by modality."""
+
+    @property
+    def tool_use_prompt_tokens_details(self) -> Optional[List[ModalityTokenCount]]:
+        """Tool use prompt token breakdown by modality."""
+
+    @property
+    def traffic_type(self) -> Optional[TrafficType]:
+        """Traffic type for the request."""
+
+class AdkTranscription:
+    """Input or output transcription from an ADK live session."""
+
+    @property
+    def text(self) -> Optional[str]:
+        """Transcription text."""
+
+    @property
+    def finished(self) -> Optional[bool]:
+        """Whether transcription is complete."""
+
+class AdkCacheMetadata:
+    """Cache metadata from an ADK response."""
+
+    @property
+    def cache_name(self) -> Optional[str]:
+        """Cache name."""
+
+    @property
+    def expire_time(self) -> Optional[float]:
+        """Cache expiry timestamp."""
+
+    @property
+    def fingerprint(self) -> str:
+        """Cache fingerprint."""
+
+    @property
+    def invocations_used(self) -> Optional[int]:
+        """Number of invocations used."""
+
+    @property
+    def contents_count(self) -> int:
+        """Number of cached contents."""
+
+    @property
+    def created_at(self) -> Optional[float]:
+        """Cache creation timestamp."""
+
+class AdkLiveSessionResumptionUpdate:
+    """Live session resumption update from an ADK response."""
+
+    @property
+    def new_handle(self) -> Optional[str]:
+        """New session handle."""
+
+    @property
+    def resumable(self) -> Optional[bool]:
+        """Whether session can be resumed."""
+
+    @property
+    def last_consumed_client_message_index(self) -> Optional[int]:
+        """Last consumed client message index."""
+
+class AdkLlmResponse:
+    """Google ADK LlmResponse — flat snake_case structure.
+
+    Discriminated by the presence of the ``partial`` field (ADK-specific).
+
+    Examples:
+        >>> resp = AdkLlmResponse.model_validate_json(llm_resp.model_dump_json())
+        >>> resp.response_text()
+        'hello from adk'
+    """
+
+    @property
+    def model_version(self) -> Optional[str]:
+        """Model version string."""
+
+    @property
+    def content(self) -> Optional[AdkContent]:
+        """Response content."""
+
+    @property
+    def grounding_metadata(self) -> Optional[GroundingMetadata]:
+        """Grounding metadata."""
+
+    @property
+    def partial(self) -> Optional[bool]:
+        """Whether this is a partial (streaming) response."""
+
+    @property
+    def turn_complete(self) -> Optional[bool]:
+        """Whether the turn is complete."""
+
+    @property
+    def finish_reason(self) -> Optional[FinishReason]:
+        """Finish reason enum value."""
+
+    @property
+    def error_code(self) -> Optional[str]:
+        """Error code, if any."""
+
+    @property
+    def error_message(self) -> Optional[str]:
+        """Error message, if any."""
+
+    @property
+    def interrupted(self) -> Optional[bool]:
+        """Whether the response was interrupted."""
+
+    @property
+    def usage_metadata(self) -> Optional[AdkUsageMetadata]:
+        """Token usage metadata."""
+
+    @property
+    def avg_logprobs(self) -> Optional[float]:
+        """Average log probabilities."""
+
+    @property
+    def logprobs_result(self) -> Optional[LogprobsResult]:
+        """Log probabilities result."""
+
+    @property
+    def cache_metadata(self) -> Optional[AdkCacheMetadata]:
+        """Cache metadata."""
+
+    @property
+    def citation_metadata(self) -> Optional[CitationMetadata]:
+        """Citation metadata."""
+
+    @property
+    def interaction_id(self) -> Optional[str]:
+        """Interaction identifier."""
+
+    @property
+    def live_session_resumption_update(self) -> Optional[AdkLiveSessionResumptionUpdate]:
+        """Live session resumption update."""
+
+    @property
+    def input_transcription(self) -> Optional[AdkTranscription]:
+        """Input transcription."""
+
+    @property
+    def output_transcription(self) -> Optional[AdkTranscription]:
+        """Output transcription."""
+
+    @staticmethod
+    def model_validate_json(json_string: str) -> "AdkLlmResponse":
+        """Deserialize from a JSON string."""
+
+    def model_dump_json(self) -> str:
+        """Serialize to a JSON string."""
+
+    def response_text(self) -> str:
+        """Extract the last non-empty text part."""
+
+    def model_name_str(self) -> Optional[str]:
+        """Return the model version string."""
+
+    def finish_reason_str(self) -> Optional[str]:
+        """Return the finish reason as a string (e.g. 'STOP')."""
+
+    def get_tool_calls(self) -> List[AdkToolCallInfo]:
+        """Return all function/tool calls in this response."""
+
+    def __str__(self) -> str: ...
 
 class PredictRequest:
     """Prediction API request.
@@ -9538,23 +9819,28 @@ class LLMTestServer:
         """
 
 __all__ = [
+    #######_______________________ main _________________________######
     "Prompt",
     "Role",
     "ModelSettings",
     "Provider",
     "Score",
     "ResponseType",
+    # Workflow
     "TaskEvent",
     "EventDetails",
     "WorkflowResult",
     "Workflow",
     "WorkflowTask",
     "TaskList",
+    # Agents
     "Agent",
     "Task",
     "TaskStatus",
     "AgentResponse",
+    # Embeddings
     "Embedder",
+    #######_______________________ OpenAI _________________________######
     "AllowedTools",
     "AllowedToolsMode",
     "AudioParam",
@@ -9580,6 +9866,7 @@ __all__ = [
     "OpenAIToolChoice",
     "ToolChoiceMode",
     "ToolDefinition",
+    # Request types
     "ChatMessage",
     "File",
     "FileContentPart",
@@ -9588,6 +9875,7 @@ __all__ = [
     "InputAudioContentPart",
     "InputAudioData",
     "TextContentPart",
+    # Response types
     "Annotations",
     "Audio",
     "ChatCompletionMessage",
@@ -9602,31 +9890,38 @@ __all__ = [
     "TopLogProbs",
     "Usage",
     "UrlCitation",
+    # Embedding types
     "EmbeddingObject",
     "OpenAIEmbeddingConfig",
     "OpenAIEmbeddingResponse",
     "UsageObject",
+    #######_______________________ Gemini _________________________######
+    # Request - Schema and Safety
     "SchemaType",
     "Schema",
     "HarmCategory",
     "HarmBlockThreshold",
     "HarmBlockMethod",
     "SafetySetting",
+    # Request - Modality and Media
     "Modality",
     "MediaResolution",
     "ModelRoutingPreference",
     "ThinkingLevel",
     "GeminiThinkingConfig",
     "ImageConfig",
+    # Request - Routing
     "AutoRoutingMode",
     "ManualRoutingMode",
     "RoutingConfigMode",
     "RoutingConfig",
+    # Request - Speech/Voice
     "PrebuiltVoiceConfig",
     "VoiceConfig",
     "SpeakerVoiceConfig",
     "MultiSpeakerVoiceConfig",
     "SpeechConfig",
+    # Request - Generation and Configuration
     "GenerationConfig",
     "ModelArmorConfig",
     "Mode",
@@ -9635,6 +9930,7 @@ __all__ = [
     "RetrievalConfig",
     "ToolConfig",
     "GeminiSettings",
+    # Request - Code and Functions
     "Language",
     "Outcome",
     "FileData",
@@ -9644,12 +9940,15 @@ __all__ = [
     "FunctionResponse",
     "ExecutableCode",
     "CodeExecutionResult",
+    # Request - Content Parts
     "VideoMetadata",
     "PartMetadata",
     "Part",
     "GeminiContent",
+    # Request - Tools and Functions
     "Behavior",
     "FunctionDeclaration",
+    # Request - Retrieval
     "DataStoreSpec",
     "VertexAISearch",
     "VertexRagStore",
@@ -9660,6 +9959,7 @@ __all__ = [
     "LlmRanker",
     "RankingConfig",
     "Ranking",
+    # Request - External API
     "ApiSpecType",
     "SimpleSearchParams",
     "ElasticSearchParams",
@@ -9676,6 +9976,7 @@ __all__ = [
     "ExternalApi",
     "RetrievalSource",
     "Retrieval",
+    # Request - Search
     "Interval",
     "GoogleSearch",
     "PhishBlockThreshold",
@@ -9687,17 +9988,20 @@ __all__ = [
     "DynamicRetrievalConfig",
     "GoogleSearchRetrieval",
     "GoogleMaps",
+    # Request - Computer Use and Context
     "CodeExecution",
     "ComputerUseEnvironment",
     "ComputerUse",
     "UrlContext",
     "FileSearch",
     "GeminiTool",
+    # Response - Usage and Metadata
     "TrafficType",
     "ModalityTokenCount",
     "UsageMetadata",
     "BlockedReason",
     "PromptFeedback",
+    # Response - URL and Retrieval
     "UrlRetrievalStatus",
     "UrlMetadata",
     "UrlContextMetadata",
@@ -9726,23 +10030,35 @@ __all__ = [
     "CitationMetadata",
     "Candidate",
     "GenerateContentResponse",
+    "AdkToolCallInfo",
+    "AdkPart",
+    "AdkContent",
+    "AdkUsageMetadata",
+    "AdkTranscription",
+    "AdkCacheMetadata",
+    "AdkLiveSessionResumptionUpdate",
+    "AdkLlmResponse",
     "PredictRequest",
     "PredictResponse",
     "EmbeddingTaskType",
     "GeminiEmbeddingConfig",
     "ContentEmbedding",
     "GeminiEmbeddingResponse",
+    # Settings and Configuration
     "AnthropicSettings",
     "CacheControl",
     "Metadata",
+    # Tools
     "AnthropicThinkingConfig",
     "AnthropicTool",
     "AnthropicToolChoice",
+    # Request - Citation Locations
     "CitationCharLocationParam",
     "CitationPageLocationParam",
     "CitationContentBlockLocationParam",
     "CitationWebSearchResultLocationParam",
     "CitationSearchResultLocationParam",
+    # Request - Content Blocks
     "TextBlockParam",
     "Base64ImageSource",
     "UrlImageSource",
@@ -9762,11 +10078,13 @@ __all__ = [
     "WebSearchToolResultBlockParam",
     "MessageParam",
     "SystemPrompt",
+    # Response - Citation Locations
     "CitationCharLocation",
     "CitationPageLocation",
     "CitationContentBlockLocation",
     "CitationsWebSearchResultLocation",
     "CitationsSearchResultLocation",
+    # Response - Content Blocks
     "TextBlock",
     "ThinkingBlock",
     "RedactedThinkingBlock",
@@ -9775,6 +10093,7 @@ __all__ = [
     "WebSearchResultBlock",
     "WebSearchToolResultError",
     "WebSearchToolResultBlock",
+    # Response - Message
     "StopReason",
     "AnthropicUsage",
     "AnthropicMessageResponse",
