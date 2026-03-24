@@ -83,7 +83,7 @@
 
 <div class="flex col-span-full items-center justify-center pb-16 md:pb-0">
 <section class="border-gray-100">
-  <form class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5 min-h-fit" onsubmit={handleRegister}>
+  <form class="z-10 mx-auto rounded-base bg-surface-50 border-black border-2 shadow p-4 md:w-96 md:px-5 min-h-fit" onsubmit={handleRegister}>
     <img alt="OpsML logo" class="mx-auto -mt-12 mb-3 w-20" src={logo}>
     <h1 class="pt-1 text-center text-lg font-bold text-primary-800">Register a new profile</h1>
 

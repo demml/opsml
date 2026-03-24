@@ -5,12 +5,13 @@ import type {
   TraceMetricsResponse,
 } from "$lib/components/trace/types";
 import { getTraceMetrics } from "$lib/server/trace/utils";
-import { getMockTraceMetrics } from "$lib/server/trace/mockData";
 
 export const POST: RequestHandler = async ({ request, fetch }) => {
   const requestBody: TraceMetricsRequest = await request.json();
 
+  // DEV ONLY: static mock data. This branch is dead in production builds.
   if (dev) {
+    const { getMockTraceMetrics } = await import("$lib/server/trace/mockData");
     return json({ response: getMockTraceMetrics(requestBody), error: null });
   }
 
@@ -25,6 +26,7 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
       "Scouter backend unavailable, serving mock metric data:",
       error instanceof Error ? error.message : error,
     );
+    const { getMockTraceMetrics } = await import("$lib/server/trace/mockData");
     return json({ response: getMockTraceMetrics(requestBody), error: null });
   }
 };

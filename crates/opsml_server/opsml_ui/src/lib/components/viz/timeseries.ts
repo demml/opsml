@@ -4,6 +4,7 @@ import "chartjs-plugin-annotation";
 import { format } from "date-fns";
 import {
   generateColors,
+  getCssVar,
   handleResize,
   getTooltip,
   getChartTheme,
@@ -44,14 +45,14 @@ export function buildTimeChart(
               type: "line",
               yMin: baselineValue,
               yMax: baselineValue,
-              borderColor: "rgb(255, 99, 132)",
+              borderColor: getCssVar('--chart-axis-color', 'rgb(0,0,0)'),
               borderWidth: 2,
               borderDash: [5, 5],
               label: {
                 display: true,
                 content: `Threshold: ${baselineValue.toFixed(2)}`,
                 position: "end",
-                backgroundColor: "rgb(255, 99, 132)",
+                backgroundColor: getCssVar('--chart-axis-color', 'rgb(0,0,0)'),
                 color: "white",
                 padding: 4,
               },

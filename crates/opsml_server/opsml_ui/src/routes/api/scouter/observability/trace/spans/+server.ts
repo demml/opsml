@@ -5,12 +5,13 @@ import type {
   TraceSpansResponse,
 } from "$lib/components/trace/types";
 import { getTraceSpans } from "$lib/server/trace/utils";
-import { getMockTraceSpans } from "$lib/server/trace/mockData";
 
 export const POST: RequestHandler = async ({ request, fetch }) => {
   const filters: TraceRequest = await request.json();
 
+  // DEV ONLY: static mock data. This branch is dead in production builds.
   if (dev) {
+    const { getMockTraceSpans } = await import("$lib/server/trace/mockData");
     return json({ response: getMockTraceSpans(filters), error: null });
   }
 
@@ -22,6 +23,7 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
       "Scouter backend unavailable, serving mock span data:",
       error instanceof Error ? error.message : error,
     );
+    const { getMockTraceSpans } = await import("$lib/server/trace/mockData");
     return json({ response: getMockTraceSpans(filters), error: null });
   }
 };

@@ -28,7 +28,7 @@ export interface ChartTheme {
   zoomBg: string;
 }
 
-function getCssVar(name: string, fallback: string): string {
+export function getCssVar(name: string, fallback: string): string {
   if (!browser) return fallback;
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 }
@@ -114,22 +114,6 @@ export function getTooltip() {
   };
 }
 
-export const tooltip = {
-  cornerRadius: 1,
-  backgroundColor: "rgba(255, 255, 255, 1)",
-  borderColor: "rgb(0, 0, 0)",
-  borderWidth: 1,
-  enabled: true,
-  titleColor: "rgb(0, 0, 0)",
-  titleFont: {
-    size: 14,
-  },
-  bodyColor: "rgb(0, 0, 0)",
-  bodyFont: {
-    size: 12,
-  },
-};
-
 export function getZoom() {
   const theme = getChartTheme();
   return {
@@ -149,23 +133,6 @@ export function getZoom() {
     },
   };
 }
-
-export const zoom = {
-  pan: {
-    enabled: true,
-    mode: "xy",
-    modifierKey: "ctrl",
-  },
-  zoom: {
-    mode: "xy",
-    drag: {
-      enabled: true,
-      borderColor: "rgb(163, 135, 239)",
-      borderWidth: 1,
-      backgroundColor: "rgba(163, 135, 239, 0.3)",
-    },
-  },
-};
 
 export function getLegend(
   showLegend: boolean = true,

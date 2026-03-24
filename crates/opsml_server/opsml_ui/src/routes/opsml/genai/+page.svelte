@@ -68,15 +68,15 @@
     <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center">
       Explore GenAI Registries
     </h2>
-    
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {#each registryCards as card}
-        <div class="flex flex-col items-start bg-surface-50 border-primary-800 border-3 shadow-primary rounded-2xl p-8">
+        <div class="flex flex-col items-start bg-surface-50 border-primary-800 border-3 shadow-primary rounded-base p-8">
 
           <h3 class="text-xl font-bold text-gray-900 mb-4">
             {card.title}
           </h3>
-          
+
           <p class="text-gray-600 text-left leading-relaxed mb-6">
             {card.description}
           </p>

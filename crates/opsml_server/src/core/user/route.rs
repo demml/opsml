@@ -197,7 +197,10 @@ async fn update_user(
         user.favorite_spaces = hash_set.into_iter().collect();
     }
 
-    if let Some(theme_preference) = update_req.theme_preference.filter(|p| ["light", "dark", "system"].contains(&p.as_str())) {
+    let valid_theme = update_req
+        .theme_preference
+        .filter(|p| ["light", "dark", "system"].contains(&p.as_str()));
+    if let Some(theme_preference) = valid_theme {
         user.theme_preference = theme_preference;
     }
 

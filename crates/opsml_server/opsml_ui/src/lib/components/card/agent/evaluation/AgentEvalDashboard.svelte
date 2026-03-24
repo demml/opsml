@@ -24,6 +24,7 @@
   import { timeRangeState } from '$lib/components/utils/timeState.svelte';
   import { getRegistryPath, RegistryType,  getMaxDataPoints  } from '$lib/utils';
   import { generateColors, getChartTheme, getPlugins } from '$lib/components/viz/utils';
+  import { themeStore } from '$lib/components/settings/theme.svelte';
   import { browser } from '$app/environment';
   import { Chart } from 'chart.js/auto';
   import { Filler } from 'chart.js';
@@ -168,17 +169,6 @@
   let chart: Chart | null = null;
   let resetZoomTrigger = $state(0);
   let lastResetTrigger = 0;
-  let isDark = $state(browser && document.documentElement.classList.contains('theme-dark'));
-
-  $effect(() => {
-    if (!browser) return;
-    const observer = new MutationObserver(() => {
-      isDark = document.documentElement.classList.contains('theme-dark');
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  });
-
   $effect(() => {
     if (resetZoomTrigger !== lastResetTrigger && chart) {
       chart.resetZoom();
@@ -258,7 +248,7 @@
   $effect(() => {
     void selectedMetricName;
     void evalData;
-    void isDark;
+    const _ = themeStore.resolved;
     buildChart();
   });
 

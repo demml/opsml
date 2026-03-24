@@ -19,7 +19,7 @@
 </script>
 
 
-<svelte:window on:click={handleClickOutside}/>
+<svelte:window onclick={handleClickOutside} />
 
 <div class="dropdown w-full h-full">
     <button 

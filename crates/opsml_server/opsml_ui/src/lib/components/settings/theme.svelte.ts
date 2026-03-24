@@ -6,6 +6,8 @@ const STORAGE_KEY = 'opsml-theme';
 
 class ThemeStore {
     mode = $state<ThemeMode>('system');
+    private _username: string = '';
+    private _mediaListener: (() => void) | null = null;
 
     get resolved(): 'light' | 'dark' {
         if (this.mode === 'system') {
@@ -15,7 +17,8 @@ class ThemeStore {
         return this.mode;
     }
 
-    initialize(serverPreference?: string) {
+    initialize(serverPreference?: string, username?: string) {
+        if (username) this._username = username;
         // Priority: localStorage (fast) > server preference > system
         if (browser) {
             const stored = localStorage.getItem(STORAGE_KEY) as ThemeMode | null;
@@ -26,12 +29,12 @@ class ThemeStore {
             }
             this.apply();
 
-            // Listen for system theme changes when in "system" mode
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-                if (this.mode === 'system') {
-                    this.apply();
-                }
-            });
+            // Listen for system theme changes when in "system" mode (register once only)
+            if (!this._mediaListener) {
+                this._mediaListener = () => { if (this.mode === 'system') this.apply(); };
+                window.matchMedia('(prefers-color-scheme: dark)')
+                    .addEventListener('change', this._mediaListener);
+            }
         }
     }
 
@@ -72,17 +75,15 @@ class ThemeStore {
     }
 
     private async persistToServer() {
+        if (!browser || !this._username || this.mode === 'system') return;
         try {
-            const response = await fetch('/opsml/api/user/theme', {
+            await fetch(`/opsml/api/user/${this._username}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ theme_preference: this.mode }),
             });
-            if (!response.ok) {
-                // Silently ignore — localStorage handles persistence
-            }
         } catch {
-            // Network error — localStorage handles persistence
+            // Best-effort — localStorage handles persistence
         }
     }
 }

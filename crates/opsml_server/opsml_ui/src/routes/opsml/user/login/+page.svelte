@@ -89,7 +89,7 @@
 <div class="col-span-12 flex items-center justify-center px-4">
   
 <section class="border-gray-100">
-  <div class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-80 md:px-4">
+  <div class="z-10 mx-auto rounded-base bg-surface-50 border-black border-2 shadow p-4 md:w-80 md:px-4">
     <form method="POST" onsubmit={handleLogin}>
 
       <img alt="OpsML logo" class="mx-auto -mt-12 mb-2 w-20" src={logo}>

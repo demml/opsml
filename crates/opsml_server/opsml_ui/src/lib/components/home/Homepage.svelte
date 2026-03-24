@@ -62,25 +62,25 @@
     </div>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
+      <div class="bg-surface-50 border-2 border-primary-700 rounded-base p-4 text-center">
         <div class="text-2xl font-bold text-primary-700 mb-1">
           {stats.nbrModels || 0}
         </div>
         <div class="text-sm text-gray-600">Recent Models</div>
       </div>
-      <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
+      <div class="bg-surface-50 border-2 border-primary-700 rounded-base p-4 text-center">
         <div class="text-2xl font-bold text-primary-700 mb-1">
           {stats.nbrData || 0}
         </div>
         <div class="text-sm text-gray-600">Data Assets</div>
       </div>
-      <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
+      <div class="bg-surface-50 border-2 border-primary-700 rounded-base p-4 text-center">
         <div class="text-2xl font-bold text-primary-700 mb-1">
           {stats.nbrPrompts || 0}
         </div>
         <div class="text-sm text-gray-600">Prompts</div>
       </div>
-      <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
+      <div class="bg-surface-50 border-2 border-primary-700 rounded-base p-4 text-center">
         <div class="text-2xl font-bold text-primary-700 mb-1">
           {stats.nbrExperiments || 0}
         </div>
@@ -164,7 +164,7 @@
     <div class="max-w-6xl mx-auto mb-16">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         {#each registryInfo as registry}
-          <div class="flex flex-col items-start bg-surface-50 border-primary-800 border-3 shadow-primary rounded-2xl p-8">
+          <div class="flex flex-col items-start bg-surface-50 border-primary-800 border-3 shadow-primary rounded-base p-8">
 
             <h3 class="text-xl font-bold text-gray-900 mb-4">
               {registry.title}
@@ -193,7 +193,7 @@
 
 <div class="flex-1 mx-auto w-11/12 pt-6 px-4 pb-10">
   <div class="max-w-4xl mx-auto">
-    <div class="rounded-2xl p-8 bg-surface-50 border-black border-3 shadow">
+    <div class="rounded-base p-8 bg-surface-50 border-black border-3 shadow">
       <h3 class="text-xl font-bold text-gray-900 mb-4">
         Ready to Get Started?
       </h3>

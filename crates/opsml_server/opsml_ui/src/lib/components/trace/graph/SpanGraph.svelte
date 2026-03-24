@@ -17,6 +17,7 @@
   } from './utils';
   import SpanNode from './SpanNode.svelte';
   import { browser } from '$app/environment';
+  import { themeStore } from '$lib/components/settings/theme.svelte';
 
   let {
     spans,
@@ -28,7 +29,7 @@
     onSpanSelect: (span: TraceSpan) => void;
   } = $props();
 
-  let isDark = $state(browser && document.documentElement.classList.contains('theme-dark'));
+  const isDark = $derived(themeStore.resolved === 'dark');
 
   const nodeTypes = {
     span: SpanNode,
@@ -55,16 +56,6 @@
   );
 
   const containerHeight = $derived(Math.max(300, Math.min(bounds.height + 100, 600)));
-
-  // Detect dark mode reactively via MutationObserver
-  $effect(() => {
-    if (!browser) return;
-    const observer = new MutationObserver(() => {
-      isDark = document.documentElement.classList.contains('theme-dark');
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  });
 
   function handleNodeClick(event: any) {
     const node = event.detail?.node || event.node;

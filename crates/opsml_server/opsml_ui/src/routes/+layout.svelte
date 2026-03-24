@@ -1,6 +1,5 @@
 <script lang="ts">
     import "../app.css";
-    import "github-markdown-css/github-markdown-light.css";
     import favicon from "$lib/images/opsml-green.ico";
     import Navbar from "$lib/components/nav/Navbar.svelte";
     import { onMount } from 'svelte';
@@ -15,7 +14,7 @@
     // Initial sync: runs client-side only, after SSR hydration.
     onMount(() => {
         uiSettingsStore.initialize(data.settings);
-        themeStore.initialize(data.settings?.theme_preference);
+        themeStore.initialize(data.settings?.theme_preference, data.username);
         setTimeout(() => {
           show = true;
         }, 50);
@@ -32,6 +31,11 @@
 
   <svelte:head>
     <link rel="icon" type="image/x-icon" href={favicon}/>
+    {#if themeStore.resolved === 'dark'}
+      <link rel="stylesheet" href="/node_modules/github-markdown-css/github-markdown-dark.css" />
+    {:else}
+      <link rel="stylesheet" href="/node_modules/github-markdown-css/github-markdown-light.css" />
+    {/if}
   </svelte:head>
 
 {#if show}

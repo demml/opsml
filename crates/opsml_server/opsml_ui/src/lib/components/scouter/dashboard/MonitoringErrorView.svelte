@@ -96,8 +96,8 @@
               inline-flex items-center justify-center gap-2 px-6 py-3
               bg-primary-500 text-white font-bold text-base
               border-3 border-black
-              shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
-              hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]
+              shadow
+              hover:shadow-small
               hover:translate-x-[2px] hover:translate-y-[2px]
               active:shadow-none active:translate-x-[4px] active:translate-y-[4px]
               transition-all duration-150
@@ -116,8 +116,8 @@
                 inline-flex items-center justify-center gap-2 px-6 py-3
                 bg-white text-black font-bold text-base
                 border-3 border-black
-                shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]
-                hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]
+                shadow
+                hover:shadow-small
                 hover:translate-x-[2px] hover:translate-y-[2px]
                 active:shadow-none active:translate-x-[4px] active:translate-y-[4px]
                 transition-all duration-150
