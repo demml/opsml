@@ -3,8 +3,8 @@
 ###################################################################################################
 
 from opsml.cli import (
-    lock_service,
-    install_service,
+    lock_service,  # type: ignore
+    install_service,  # type: ignore
 )
 from opsml.mock import MockConfig
 import pandas as pd
@@ -151,33 +151,59 @@ def test_from_spec(
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
-def test_from_spec_no_register(
-    mock_environment,
-    random_forest_classifier: SklearnModel,
-    chat_prompt: Prompt,
-    example_dataframe: pd.DataFrame,
-):
+def test_from_spec_no_register(mock_environment):
     """
-    Test that AppState.from_spec with register=False loads the service
-    without registering a new ServiceCard.
+    Test that AppState.from_spec with register=False loads a service
+    from local Path variant cards without registering a ServiceCard.
     """
-    with OpsmlTestServer(True, CURRENT_DIRECTORY):
-        # Register model and prompt cards so they exist for download
-        run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
+    no_register_dir = CURRENT_DIRECTORY / "no_register"
 
-        app = AppState.from_spec(
-            path=CURRENT_DIRECTORY,
-            transport_config=opsml.scouter.HttpConfig(),
-            register=False,
-        )
+    app = AppState.from_spec(
+        path=no_register_dir,
+        transport_config=opsml.scouter.HttpConfig(),
+        register=False,
+    )
 
-        assert app.service is not None
-        assert app.queue is not None
-        assert isinstance(app.queue.transport_config, MockConfig)
+    assert app.service is not None
+    assert app.service["test_prompt"] is not None
+    assert app.queue is not None
+    assert isinstance(app.queue.transport_config, MockConfig)
 
-        # Cleanup
-        opsml_service = CURRENT_DIRECTORY / "opsml_service"
-        lock_file = CURRENT_DIRECTORY / "opsml.lock"
-        shutil.rmtree(opsml_service, ignore_errors=True)
-        if lock_file.exists():
-            os.remove(lock_file)
+    # Cleanup
+    opsml_service = no_register_dir / "opsml_service"
+    lock_file = no_register_dir / "opsml.lock"
+    assert lock_file.exists()
+    shutil.rmtree(opsml_service, ignore_errors=True)
+    os.remove(lock_file)
+
+
+def test_from_spec_not_found(mock_environment):
+    """
+    Test that AppState.from_spec raises RuntimeError for a nonexistent spec path.
+    """
+    with pytest.raises(RuntimeError):
+        AppState.from_spec(path=Path("/nonexistent/path/to/spec"))
+
+
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+def test_from_spec_unsupported_registry_type(mock_environment, tmp_path):
+    """
+    Test that AppState.from_spec(register=False) raises RuntimeError when a Path variant
+    uses an unsupported registry type (non-Prompt).
+    """
+    spec_content = """name: test-service
+space: test
+type: Api
+service:
+  cards:
+    - alias: bad_card
+      path: "models/nonexistent.yaml"
+      registry_type: model
+"""
+    spec_file = tmp_path / "opsmlspec.yaml"
+    spec_file.write_text(spec_content)
+    (tmp_path / "models").mkdir()
+    (tmp_path / "models" / "nonexistent.yaml").touch()
+
+    with pytest.raises(RuntimeError, match="Unsupported registry type"):
+        AppState.from_spec(path=tmp_path, register=False)

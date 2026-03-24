@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { IdCard, FolderTree, Tag, Activity, Search } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Activity } from 'lucide-svelte';
   import { page } from '$app/state';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
   import { getRegistryPath } from '$lib/utils';
@@ -106,16 +106,6 @@
           <span>Monitoring</span>
         </a>
       {/if}
-
-      <a
-        class="flex items-center gap-x-2 border-b-3 {activeTab === 'observability' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"
-        href="{basePath}/observability"
-        data-sveltekit-preload-data="hover"
-        aria-current={activeTab === 'observability' ? 'page' : undefined}
-      >
-        <Search color="var(--color-primary-500)" size={16} />
-        <span>Observability</span>
-      </a>
 
       <a
         class="flex items-center gap-x-2 border-b-3 {activeTab === 'versions' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3"

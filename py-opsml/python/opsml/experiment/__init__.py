@@ -1,6 +1,6 @@
 # mypy: disable-error-code="attr-defined"
 # python/opsml/card/__init__.py
-from .._opsml import EvalMetrics, Experiment
+from .._opsml import Experiment, ExperimentEvalMetrics
 from .._opsml import ExperimentMetric as Metric
 from .._opsml import ExperimentMetrics as Metrics
 from .._opsml import (
@@ -17,7 +17,7 @@ __all__ = [
     "start_experiment",
     "Metric",
     "Metrics",
-    "EvalMetrics",
+    "ExperimentEvalMetrics",
     "Parameter",
     "Parameters",
     "get_experiment_metrics",

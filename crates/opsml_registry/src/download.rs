@@ -113,7 +113,6 @@ pub fn download_service_sub_cards(
     write_path: &Path,
     skip_aliases: &HashSet<String>,
 ) -> Result<(), RegistryError> {
-    let registry = OpsmlCardRegistry::new(service.registry_type.clone())?;
     let mut mapping = ServiceCardMapping::new();
     let current_dir = std::env::current_dir()?;
 
@@ -139,6 +138,7 @@ pub fn download_service_sub_cards(
                 return Ok(());
             }
 
+            let registry = OpsmlCardRegistry::new(card.registry_type.clone())?;
             let query_args = CardQueryArgs {
                 uid: card.uid.clone(),
                 name: Some(card.name.clone()),
@@ -202,7 +202,7 @@ pub fn download_service_from_registry(
     println!(
         "Downloading service card for card {} to path {}",
         Colorize::purple(&service_name),
-        Colorize::green(write_path.to_str().unwrap())
+        Colorize::green(&write_path.display().to_string())
     );
 
     // Download sub-cards with no skips

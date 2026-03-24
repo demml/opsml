@@ -73,12 +73,6 @@
       isActive: (tab: string) => tab === 'hardware',
       description: 'System resource usage and monitoring'
     },
-    {key: 'observability',
-      label: 'Observability',
-      icon: Activity,
-      isActive: (tab: string) => tab === 'observability',
-      description: 'Distributed traces and performance monitoring'
-    },
     {
       key: 'versions',
       label: 'Versions',

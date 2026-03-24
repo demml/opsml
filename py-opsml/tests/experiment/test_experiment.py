@@ -29,7 +29,7 @@ import uuid
 import shutil
 from tests.conftest import WINDOWS_EXCLUDE
 import pytest
-from opsml.experiment import EvalMetrics
+from opsml.experiment import ExperimentEvalMetrics
 
 
 def cleanup_manually_created_directories():
@@ -76,7 +76,7 @@ def plot_residuals(
     y_pred: np.ndarray,
     style: str = "seaborn-v0_8",
     plot_size: tuple = (10, 8),
-) -> plt.Figure:
+) -> plt.Figure:  # type: ignore
     """
     Plot residuals for PyTorch model predictions.
 
@@ -131,7 +131,7 @@ def test_experimentcard():
             exp.log_metric(name="test", value=1.0)
             exp.log_metrics([metric1, metric2])
 
-            exp.log_eval_metrics(EvalMetrics({"mape": 0.1}))
+            exp.log_eval_metrics(ExperimentEvalMetrics({"mape": 0.1}))
 
             exp.log_parameter(name="test", value=1.0)
             exp.log_parameters([Parameter(name="test1", value=1.0)])
@@ -275,7 +275,7 @@ def test_experimentcard_register(
                 ],
             )
             exp.register_card(service)
-            exp.log_eval_metrics(EvalMetrics({"mape": 0.1}))
+            exp.log_eval_metrics(ExperimentEvalMetrics({"mape": 0.1}))
 
         loaded_card: ExperimentCard = reg.experiment.load_card(uid=exp.card.uid)
 

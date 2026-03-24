@@ -105,26 +105,6 @@ pub(crate) fn create_lock_artifact_from_service_card(
     }
 }
 
-/// Creates a LockArtifact from an existing service record
-/// # Arguments
-/// * `service` - &CardRecord
-/// * `write_dir` - &str
-/// # Returns
-/// * `LockArtifact`
-fn create_lock_artifact_from_existing_service(
-    service: &ServiceCard,
-    write_dir: &str,
-) -> LockArtifact {
-    LockArtifact {
-        space: service.space.clone(),
-        name: service.name.clone(),
-        version: service.version.clone(),
-        uid: service.uid.clone(),
-        registry_type: service.registry_type.clone(),
-        write_dir: write_dir.to_string(),
-    }
-}
-
 /// Gets the write directory with a fallback default
 pub(crate) fn get_write_dir(spec: &OpsmlServiceSpec, default: &str) -> String {
     spec.service
@@ -193,7 +173,7 @@ fn handle_existing_service_lock(
         postprocess_service_card(cards, &service_card, registry)?;
     };
 
-    Ok(create_lock_artifact_from_existing_service(
+    Ok(create_lock_artifact_from_service_card(
         &service_card,
         &get_write_dir(spec, "opsml_service"),
     ))
@@ -309,6 +289,7 @@ fn download_service_artifacts(
 /// * `write_path` - Optional PathBuf to override write directory
 /// # Returns
 /// * `Result<(), CliError>`
+#[instrument(skip_all)]
 pub fn install_service_from_spec(
     path: PathBuf,
     write_path: Option<PathBuf>,
@@ -354,10 +335,8 @@ pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(),
 /// # Arguments
 /// * `path` - Path to the directory containing opsmlspec.yaml
 /// * `write_path` - Optional override for the base write directory
-pub fn install_service_locally(
-    path: PathBuf,
-    write_path: Option<PathBuf>,
-) -> Result<(), CliError> {
+#[instrument(skip_all)]
+pub fn install_service_locally(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), CliError> {
     debug!("Installing service locally (no registration)");
     println!(
         "{}",
@@ -401,7 +380,7 @@ pub fn install_service_locally(
     let lock_file = LockFile {
         artifact: vec![lock_artifact],
     };
-    lock_file.write(&path)?;
+    lock_file.write(&base_path)?;
 
     Ok(())
 }

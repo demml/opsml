@@ -180,23 +180,25 @@ impl AppState {
         })
     }
 
-    /// This method will load an application state from an opsmlspec.yaml file. This is intended to be a
-    /// convenience method for users who want to load an application state from a directory containing an opsmlspec.yaml file without having to manually call lock_service or install_service first.
-    ///  This method will attempt to find an opsmlspec.yaml file in the provided path (or current directory if no path is provided), install the service using the lock_service function,
-    /// and then load the service and queue using the from_path method. This method skips checking an opsml.lock file if present
+    /// Loads an `AppState` from an `opsmlspec.yaml` file.
+    ///
+    /// Finds `opsmlspec.yaml` in `path` (or the current directory if `None`), installs the
+    /// service, then delegates to [`AppState::from_path`].
+    ///
+    /// When `register` is `true` (default), cards are registered normally.
+    /// When `register` is `false`, the service is installed locally — no `ServiceCard`
+    /// registration, no encryption keys, no uploads. `Path` variant sub-cards are loaded
+    /// directly from disk; `Card` variant sub-cards are still downloaded from the registry.
+    ///
     /// # Arguments
-    /// * `py` - Python interpreter state
-    /// * `path` - The root path to the application directory containing the opsmlspec.yaml file. If not provided, the current directory will be used.
-    /// * `transport_config` - The transport config to use with the ScouterQueue. If not provided, no queue will be created.
-    /// * `reload_config` - The reload config to use with the ServiceReloader. If not provided, no reloader will be created.
-    /// * `load_kwargs` - Load kwargs to pass to the ServiceCard loader
+    /// * `path` - Directory containing `opsmlspec.yaml`. Defaults to current directory.
+    /// * `transport_config` - Transport config for the `ScouterQueue`. Pass `None` to skip.
+    /// * `reload_config` - Reload config for `ServiceReloader`. Pass `None` to skip.
+    /// * `load_kwargs` - Per-card load kwargs (same format as `from_path`).
+    /// * `register` - Whether to register the `ServiceCard`. Defaults to `true`.
+    ///
     /// # Returns
-    /// * `AppState` - The loaded application state
-    /// This method will load an application state from an opsmlspec.yaml file.
-    /// When `register` is `True` (default), the service is registered normally.
-    /// When `register` is `False`, the service is installed locally without
-    /// registering a new ServiceCard — no encryption keys, no uploads. Sub-card
-    /// artifacts for Card variants are still downloaded from the registry.
+    /// * `AppState` — the fully loaded application state.
     #[staticmethod]
     #[pyo3(signature = (path=None, transport_config=None, reload_config=None, load_kwargs=None, register=None))]
     pub fn from_spec(
@@ -324,9 +326,8 @@ impl AppState {
                             ReloadEvent::Ready => {
                                 info!("Received reload event");
                                 // Set reload ready to true
-                                let mut retry_count = 0;
+                                let mut retry_count: u32 = 0;
 
-                                retry_count += 1;
                                 while retry_count < reload_state.max_retries {
                                     match Self::reload_service(&reload_state) {
                                         Ok(()) => {
@@ -345,7 +346,10 @@ impl AppState {
                                                 "Failed to reload service: {:?}, retry attempt: {}",
                                                 e, retry_count
                                             );
-                                            sleep(Duration::from_millis(100 * 2_u64.pow(retry_count))).await;
+                                            sleep(Duration::from_millis(
+                                                100 * 2_u64.pow(retry_count.min(10)),
+                                            ))
+                                            .await;
                                             retry_count += 1;
                                         }
                                     }
@@ -391,22 +395,15 @@ impl AppState {
     }
 
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
-        let service = self.service.read().unwrap();
-        visit.call(&*service)?;
-
-        match self.queue {
-            Some(ref queue_state) => {
-                let queue_guard = &queue_state.read().unwrap().queue;
-                visit.call(queue_guard)?
-            }
-            None => return Ok(()),
-        };
-
-        if let Some(queue) = &self.queue {
-            let config_guard = &queue.read().unwrap().transport_config;
-            visit.call(config_guard)?;
+        if let Ok(service) = self.service.read() {
+            visit.call(&*service)?;
         }
-
+        if let Some(queue_state) = &self.queue
+            && let Ok(guard) = queue_state.read()
+        {
+            visit.call(&guard.queue)?;
+            visit.call(&guard.transport_config)?;
+        }
         Ok(())
     }
 

@@ -4,6 +4,7 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
 
 from ..header import SerializedType
+from .mock import MockConfig
 from .scouter import (
     CompressionType,
     EvalRecord,
@@ -87,6 +88,11 @@ class TraceFilters:
     limit: Optional[int]
     cursor_created_at: Optional[datetime.datetime]
     cursor_trace_id: Optional[str]
+    direction: Optional[str]
+    attribute_filters: Optional[List[str]]
+    trace_ids: Optional[List[str]]
+    entity_uid: Optional[str]
+    queue_uid: Optional[str]
 
     def __init__(
         self,
@@ -98,6 +104,11 @@ class TraceFilters:
         limit: Optional[int] = None,
         cursor_created_at: Optional[datetime.datetime] = None,
         cursor_trace_id: Optional[str] = None,
+        direction: Optional[str] = None,
+        attribute_filters: Optional[List[str]] = None,
+        trace_ids: Optional[List[str]] = None,
+        entity_uid: Optional[str] = None,
+        queue_uid: Optional[str] = None,
     ) -> None:
         """Initialize trace filters.
 
@@ -118,6 +129,16 @@ class TraceFilters:
                 Pagination cursor: created at timestamp
             cursor_trace_id:
                 Pagination cursor: trace ID
+            direction:
+                Pagination direction ("next" or "prev")
+            attribute_filters:
+                List of attribute filters in the format "key=value" or "key!=value"
+            trace_ids:
+                List of trace IDs to filter by
+            entity_uid:
+                Filter by associated entity UID
+            queue_uid:
+                Filter by associated queue UID
         """
 
 class TraceMetricBucket:
@@ -233,7 +254,9 @@ class BatchConfig:
 def init_tracer(
     service_name: str = "scouter_service",
     scope: str = "scouter.tracer.{version}",
-    transport_config: Optional[HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig | GrpcConfig] = None,
+    transport_config: Optional[
+        HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig | GrpcConfig | MockConfig
+    ] = None,
     exporter: Optional[HttpSpanExporter | GrpcSpanExporter | StdoutSpanExporter | TestSpanExporter] = None,
     batch_config: Optional[BatchConfig] = None,
     sample_ratio: Optional[float] = None,
@@ -667,9 +690,9 @@ class BaseTracer:
         name: str,
         kind: Optional[SpanKind] = SpanKind.Internal,
         label: Optional[str] = None,
-        attributes: Optional[dict[str, str]] = None,
-        baggage: Optional[dict[str, str]] = None,
-        tags: Optional[dict[str, str]] = None,
+        attributes: Optional[List[dict[str, str]]] = None,
+        baggage: Optional[List[dict[str, str]]] = None,
+        tags: Optional[List[dict[str, str]]] = None,
         parent_context_id: Optional[str] = None,
         trace_id: Optional[str] = None,
         span_id: Optional[str] = None,
@@ -765,6 +788,18 @@ class BaseTracer:
 
     def shutdown(self) -> None:
         """Shutdown the tracer and flush any remaining spans."""
+
+    def enable_local_capture(self) -> None:
+        """Enable local span capture mode on the ScouterSpanExporter."""
+
+    def disable_local_capture(self) -> None:
+        """Disable local span capture mode, discarding any buffered spans."""
+
+    def drain_local_spans(self) -> List[TraceSpanRecord]:
+        """Drain and return all locally captured spans, clearing the buffer."""
+
+    def get_local_spans_by_trace_ids(self, trace_ids: List[str]) -> List[TraceSpanRecord]:
+        """Return spans matching the given trace_ids without draining the buffer."""
 
 def get_current_active_span(self) -> ActiveSpan:
     """Get the current active span.
@@ -1012,6 +1047,15 @@ class TestSpanExporter:
 def shutdown_tracer() -> None:
     """Shutdown the tracer and flush any remaining spans."""
 
+def enable_local_span_capture() -> None:
+    """Enable in-process span capture. Spans are buffered instead of exported."""
+
+def disable_local_span_capture() -> None:
+    """Disable in-process span capture, discarding any buffered spans."""
+
+def drain_local_span_capture() -> List[TraceSpanRecord]:
+    """Drain and return all locally captured spans, clearing the buffer."""
+
 __all__ = [
     "init_tracer",
     "SpanKind",
@@ -1030,5 +1074,4 @@ __all__ = [
     "flush_tracer",
     "BatchConfig",
     "shutdown_tracer",
-    "TraceMetricsRequest",
 ]

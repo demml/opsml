@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { IdCard, FolderTree, Tag, BookOpenText, Search } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, BookOpenText } from 'lucide-svelte';
   import { page } from '$app/state';
   import { getRegistryPath } from '$lib/utils';
   import type { RegistryType } from '$lib/utils';
@@ -54,13 +54,6 @@
       label: 'Profile',
       icon: BookOpenText,
       isActive: (tab: string) => tab === 'profile'
-    },
-    {
-      key: 'observability',
-      label: 'Observability',
-      icon: Search,
-      isActive: (tab: string) => tab === 'observability',
-      iconProps: { fill: 'var(--color-primary-500)' }
     },
     {
       key: 'versions',

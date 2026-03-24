@@ -11,7 +11,7 @@ use opsml_semver::VersionType;
 use opsml_storage::storage_client;
 use opsml_types::CommonKwargs;
 use opsml_types::RegistryType;
-use opsml_types::cards::{CardStatus, EvalMetrics, Metrics, Parameters};
+use opsml_types::cards::{CardStatus, ExperimentEvalMetrics, Metrics, Parameters};
 use opsml_types::contracts::{
     ArtifactKey, ArtifactQueryArgs, ArtifactType, GetMetricRequest, GetParameterRequest,
     MetricRequest, ParameterRequest,
@@ -570,7 +570,7 @@ impl Experiment {
     pub fn log_eval_metrics(
         &self,
         py: Python<'_>,
-        metrics: EvalMetrics,
+        metrics: ExperimentEvalMetrics,
     ) -> Result<(), ExperimentError> {
         let metric_request = MetricRequest {
             experiment_uid: self.uid.clone(),
