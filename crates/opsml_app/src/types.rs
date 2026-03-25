@@ -3,8 +3,8 @@ use crate::error::AppError;
 use opsml_cards::ServiceCard;
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict};
-use scouter_client::{ScouterQueue, TaskState};
-use std::collections::HashMap;
+use scouter_client::ScouterQueue;
+use std::fmt;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -15,24 +15,24 @@ use tracing::{debug, error};
 /// QueueState consists of the ScouterQueue and its associated event loops
 /// The event loops are pulled out into a separate field so that we can close the loops without needing
 /// access to the python GIL - usually we would need to call queue.bind(py).call_method("shutdown")?
-#[derive(Debug)]
 pub struct QueueState {
     pub queue: Option<Py<ScouterQueue>>,
-    pub task_state: Arc<HashMap<String, TaskState>>,
+    pub shutdown_fn: Arc<dyn Fn() -> Result<(), AppError> + Send + Sync>,
     pub transport_config: Py<PyAny>,
+}
+
+impl fmt::Debug for QueueState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("QueueState")
+            .field("queue", &self.queue)
+            .finish_non_exhaustive()
+    }
 }
 
 impl QueueState {
     /// Shutdown the ScouterQueue and its associated event loops
     pub fn shutdown(&self) -> Result<(), AppError> {
-        // add delay to allow for any insertions to finish
-        for (alias, task_state) in self.task_state.iter() {
-            debug!("Shutting down queue: {}", alias);
-            // shutdown the queue
-            task_state.shutdown_tasks()?;
-        }
-
-        Ok(())
+        (self.shutdown_fn)()
     }
 
     pub fn get_queue<'py>(&self, py: Python<'py>) -> Bound<'py, ScouterQueue> {

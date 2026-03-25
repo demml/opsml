@@ -58,10 +58,18 @@ pub fn create_scouter_queue(
         let scouter_queue =
             ScouterQueue::from_path_rs(py, card_map.drift_paths, config, wait_for_startup)?;
         let event_state = scouter_queue.queue_state.clone();
+        let shutdown_fn: Arc<dyn Fn() -> Result<(), AppError> + Send + Sync> =
+            Arc::new(move || {
+                for (alias, task_state) in event_state.iter() {
+                    debug!("Shutting down queue: {}", alias);
+                    task_state.shutdown_tasks()?;
+                }
+                Ok(())
+            });
 
         Some(QueueState {
             queue: Some(Py::new(py, scouter_queue)?),
-            task_state: event_state,
+            shutdown_fn,
             transport_config: config.clone().unbind(),
         })
     } else {
@@ -579,7 +587,12 @@ impl AppState {
         })?;
 
         // set queue to None to drop
-        queue_guard.queue = new_queue_state.and_then(|q| q.queue);
+        if let Some(new_state) = new_queue_state {
+            queue_guard.queue = new_state.queue;
+            queue_guard.shutdown_fn = new_state.shutdown_fn;
+        } else {
+            queue_guard.queue = None;
+        }
         debug!("New queue state created");
 
         Ok(())
