@@ -232,47 +232,48 @@ class Prompt(Generic[OutputType]):
 
     The Prompt class handles message parsing, provider-specific formatting, and
     structured output configuration for LLM interactions.
+
+    Args:
+        messages (PromptMessage):
+            The user message(s) to use in the prompt.
+        model (str):
+            The model identifier to use (e.g., "gpt-4o", "claude-3-5-sonnet-20241022").
+        provider (Provider | str):
+            The provider to use for the prompt (e.g., "openai", "anthropic", "google").
+        system_instructions (Optional[PromptMessage]):
+            Optional system instruction(s).
+        model_settings (Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings]):
+            Optional model-specific settings (temperature, max_tokens, etc.).
+            If None, provider default settings will be used.
+        output_type (Optional[Type[OutputType]]):
+            Optional structured output type. The provided format will be parsed into a
+            JSON schema for structured outputs. This is typically a pydantic BaseModel.
+
+    Raises:
+        TypeError: If message types are invalid or incompatible with the provider.
     """
 
-    def __init__(
-        self,
+    @overload
+    def __new__(
+        cls,
         messages: PromptMessage,
         model: str,
         provider: Provider | str,
-        system_instructions: Optional[PromptMessage] = None,
-        model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = None,
-        output_type: Optional[Type[OutputType]] = None,
-    ) -> None:
-        """Initialize a Prompt object.
-
-        Main parsing logic:
-        1. Extract model settings if provided, otherwise use provider default settings
-        2. Messages and system instructions are parsed into provider-specific formats
-           (OpenAIChatMessage, AnthropicMessage, or GeminiContent)
-        3. String messages are automatically converted to appropriate message types based on provider
-        4. Lists of messages are parsed with each item checked and converted accordingly
-        5. After parsing, a complete provider request structure is built
-
-        Args:
-            message (PromptMessage):
-                The user message(s) to use in the prompt
-            model (str):
-                The model identifier to use (e.g., "gpt-4o", "claude-3-5-sonnet-20241022")
-            provider (Provider | str):
-                The provider to use for the prompt (e.g., "openai", "anthropic", "google")
-            system_instruction (Optional[PromptMessage]):
-                Optional system instruction(s). Can be:
-            model_settings (Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings]):
-                Optional model-specific settings (temperature, max_tokens, etc.)
-                If None, provider default settings will be used
-            output_type (Optional[OutputT]):
-                Optional structured output type.The provided format will be parsed into a JSON schema for structured outputs.
-                This is typically a pydantic BaseModel.
-
-        Raises:
-            TypeError: If message types are invalid or incompatible with the provider
-        """
-
+        system_instructions: Optional[PromptMessage] = ...,
+        model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = ...,
+        *,
+        output_type: Type[OutputType],
+    ) -> Prompt[OutputType]: ...
+    @overload
+    def __new__(
+        cls,
+        messages: PromptMessage,
+        model: str,
+        provider: Provider | str,
+        system_instructions: Optional[PromptMessage] = ...,
+        model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = ...,
+        output_type: None = ...,
+    ) -> Prompt[None]: ...
     @property
     def model(self) -> str:
         """The model identifier to use for the prompt (e.g., "gpt-4o")."""

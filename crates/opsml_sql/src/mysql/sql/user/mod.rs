@@ -19,7 +19,9 @@ impl FromRow<'_, MySqlRow> for User {
         let role = row.try_get("role")?;
         let refresh_token = row.try_get("refresh_token")?;
         let authentication_type: String = row.try_get("authentication_type")?;
-        let theme_preference: String = row.try_get("theme_preference").unwrap_or("system".to_string());
+        let theme_preference: String = row
+            .try_get("theme_preference")
+            .unwrap_or("system".to_string());
 
         let group_permissions: Vec<String> =
             serde_json::from_value(row.try_get("group_permissions")?).unwrap_or_default();
