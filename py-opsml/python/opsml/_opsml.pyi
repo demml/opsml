@@ -467,7 +467,7 @@ class Prompt(Generic[OutputType]):
         model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = ...,
         *,
         output_type: Type[OutputType],
-    ) -> Prompt[OutputType]: ...
+    ) -> "Prompt[OutputType]": ...
     @overload
     def __new__(
         cls,
@@ -477,7 +477,7 @@ class Prompt(Generic[OutputType]):
         system_instructions: Optional[PromptMessage] = ...,
         model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = ...,
         output_type: None = ...,
-    ) -> Prompt[None]: ...
+    ) -> "Prompt[None]": ...
     @property
     def model(self) -> str:
         """The model identifier to use for the prompt (e.g., "gpt-4o")."""
