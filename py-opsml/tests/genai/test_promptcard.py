@@ -96,6 +96,9 @@ def test_load_prompt_from_file():
         prompt_card.prompt.system_instructions[0].text == "You are a helpful assistant"
     )
     settings = cast(GeminiSettings, prompt_card.prompt.model_settings)
+    assert settings.generation_config is not None
+    assert settings.generation_config.temperature is not None
+    assert settings.generation_config.top_p is not None
 
     assert round(settings.generation_config.temperature, 1) == 0.7
     assert settings.generation_config.max_output_tokens == 1024
