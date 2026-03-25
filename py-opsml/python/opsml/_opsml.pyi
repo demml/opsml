@@ -20792,6 +20792,17 @@ class PromptCard:
                 The GenAIEvalProfile to set for the prompt card.
         """
 
+    @staticmethod
+    def from_path(path: Path) -> "PromptCard":
+        """Static method to load a PromptCard from a given path.
+
+        Args:
+            path (Path): The path to load the PromptCard from.
+
+        Returns:
+            PromptCard: The loaded PromptCard object.
+        """
+
 class Card:
     """Represents a card from a given registry that can be used in a service card"""
 
@@ -20850,7 +20861,7 @@ class Card:
         Example:
 
         ```python
-        from opsml import Card, ServiceCard, RegistryType
+        from opsml import Card, RegistryType, ServiceCard
 
         # With arguments
         card = Card(
