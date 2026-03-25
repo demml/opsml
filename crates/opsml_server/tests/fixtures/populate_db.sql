@@ -37,6 +37,53 @@ INSERT INTO opsml_experiment_registry (uid, created_at, app_env, name, space, ma
 ('550e8400-e29b-41d4-a716-446655440008', '2023-11-29 00:00:00', 'development', 'Run9', 'repo9', 3, 0, 0, 'iota', 'build9', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]',  '["modelcard1"]'),
 ('550e8400-e29b-41d4-a716-446655440009', '2023-11-29 00:00:00', 'development', 'Run10', 'repo10', 3, 0, 1, 'kappa', 'build10', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]');
 
+-- Populate opsml_skill_registry
+INSERT INTO opsml_skill_registry
+    (uid, created_at, app_env, space, name, major, minor, patch,
+     pre_tag, build_tag, version, tags, compatible_tools, dependencies,
+     description, license, content_hash, opsml_version, username)
+VALUES
+    ('550e8400-e29b-41d4-a716-446655440001', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Skill1', 1, 0, 0, NULL, NULL, '1.0.0',
+     '["tag1","tag2"]', '["claude-code"]', '[]',
+     'Skill one', 'MIT', '', '2.0.0', 'guest'),
+    ('550e8400-e29b-41d4-a716-446655440002', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Skill2', 1, 1, 0, NULL, NULL, '1.1.0',
+     '[]', '[]', '[]',
+     'Skill two', 'Apache-2.0', '', '2.0.0', 'guest'),
+    ('550e8400-e29b-41d4-a716-446655440003', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Skill3', 2, 0, 0, NULL, NULL, '2.0.0',
+     '["tag1"]', '["codex"]', '[]',
+     'Skill three', 'MIT', '', '2.0.0', 'guest'),
+    ('550e8400-e29b-41d4-a716-446655440004', '2023-11-29 00:00:00', 'development',
+     'repo1', 'Skill4', 1, 0, 1, NULL, NULL, '1.0.1',
+     '[]', '[]', '[]',
+     NULL, NULL, '', '2.0.0', 'guest'),
+    ('550e8400-e29b-41d4-a716-446655440005', '2023-11-29 00:00:00', 'development',
+     'repo2', 'Skill5', 1, 0, 0, NULL, NULL, '1.0.0',
+     '[]', '["gemini-cli"]', '[]',
+     'Skill five', 'MIT', '', '2.0.0', 'guest'),
+    ('550e8400-e29b-41d4-a716-446655440006', '2023-11-29 00:00:00', 'development',
+     'repo2', 'Skill6', 1, 1, 0, NULL, NULL, '1.1.0',
+     '[]', '[]', '[]',
+     NULL, NULL, '', '2.0.0', 'guest'),
+    ('550e8400-e29b-41d4-a716-446655440007', '2023-11-29 00:00:00', 'development',
+     'repo2', 'Skill7', 2, 0, 0, NULL, NULL, '2.0.0',
+     '["tag2"]', '["claude-code","codex"]', '[]',
+     'Skill seven', 'MIT', '', '2.0.0', 'guest'),
+    ('550e8400-e29b-41d4-a716-446655440008', '2023-11-29 00:00:00', 'development',
+     'repo1', 'Skill8', 3, 0, 0, NULL, NULL, '3.0.0',
+     '[]', '[]', '[]',
+     NULL, NULL, '', '2.0.0', 'guest'),
+    ('550e8400-e29b-41d4-a716-446655440009', '2023-11-29 00:00:00', 'development',
+     'repo1', 'Skill9', 1, 2, 0, NULL, NULL, '1.2.0',
+     '[]', '[]', '[]',
+     'Skill nine', 'Apache-2.0', '', '2.0.0', 'guest'),
+    ('550e8400-e29b-41d4-a716-44665544000a', '2023-11-29 00:00:00', 'development',
+     'repo2', 'Skill10', 1, 0, 2, NULL, NULL, '1.0.2',
+     '["tag1","tag2"]', '[]', '[]',
+     'Skill ten', 'MIT', '', '2.0.0', 'guest');
+
 -- Populate opsml_audit_registry
 INSERT INTO opsml_audit_registry (uid, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, approved, datacard_uids, modelcard_uids, experimentcard_uids) VALUES 
 ('550e8400-e29b-41d4-a716-446655440000', 'development', 'Audit1', 'repo1', 1, 0, 0, 'alpha', 'build1', '0.0.0', '[]', 1, '[]', '[]', '[]'), 

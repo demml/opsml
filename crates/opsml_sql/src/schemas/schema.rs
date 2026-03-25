@@ -6,7 +6,7 @@ use opsml_types::contracts::evaluation::{EvaluationProvider, EvaluationType};
 use opsml_types::contracts::{
     ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
     ExperimentCardClientRecord, McpServer, ModelCardClientRecord, PromptCardClientRecord,
-    ServiceCardClientRecord, ServiceConfig,
+    ServiceCardClientRecord, ServiceConfig, SkillCardClientRecord, SkillDependency,
 };
 use opsml_types::contracts::{ArtifactType, DeploymentConfig, ServiceMetadata, ServiceType};
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
@@ -208,8 +208,8 @@ impl DataCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: version.pre.to_string().parse().ok(),
-            build_tag: version.build.to_string().parse().ok(),
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
             version: version.to_string(),
             tags: Json(tags),
             data_type,
@@ -242,8 +242,8 @@ impl DataCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: Some(version.pre.to_string()),
-            build_tag: Some(version.build.to_string()),
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
             version: client_card.version,
             tags: Json(client_card.tags),
             data_type: client_card.data_type,
@@ -336,8 +336,8 @@ impl ModelCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: version.pre.to_string().parse().ok(),
-            build_tag: version.build.to_string().parse().ok(),
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
             version: version.to_string(),
             tags: Json(tags),
             datacard_uid,
@@ -374,8 +374,8 @@ impl ModelCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: Some(version.pre.to_string()),
-            build_tag: Some(version.build.to_string()),
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
             version: client_card.version,
             tags: Json(client_card.tags),
             datacard_uid: client_card.datacard_uid,
@@ -499,8 +499,8 @@ impl ExperimentCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: version.pre.to_string().parse().ok(),
-            build_tag: version.build.to_string().parse().ok(),
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
             version: version.to_string(),
             tags: Json(tags),
             datacard_uids: Json(datacard_uids),
@@ -536,8 +536,8 @@ impl ExperimentCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: Some(version.pre.to_string()),
-            build_tag: Some(version.build.to_string()),
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
             version: client_card.version,
             tags: Json(client_card.tags),
             datacard_uids: Json(client_card.datacard_uids),
@@ -601,8 +601,8 @@ impl AuditCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: version.pre.to_string().parse().ok(),
-            build_tag: version.build.to_string().parse().ok(),
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
             version: version.to_string(),
             tags: Json(tags),
             approved,
@@ -635,8 +635,8 @@ impl AuditCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: Some(version.pre.to_string()),
-            build_tag: Some(version.build.to_string()),
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
             version: client_card.version,
             tags: Json(client_card.tags),
             approved: client_card.approved,
@@ -721,8 +721,8 @@ impl PromptCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: version.pre.to_string().parse().ok(),
-            build_tag: version.build.to_string().parse().ok(),
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
             version: version.to_string(),
             tags: Json(tags),
             experimentcard_uid,
@@ -755,8 +755,8 @@ impl PromptCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: Some(version.pre.to_string()),
-            build_tag: Some(version.build.to_string()),
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
             version: client_card.version,
             tags: Json(client_card.tags),
             experimentcard_uid: client_card.experimentcard_uid,
@@ -845,8 +845,8 @@ impl ServiceCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: version.pre.to_string().parse().ok(),
-            build_tag: version.build.to_string().parse().ok(),
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
             version: version.to_string(),
             cards: Json(cards),
             opsml_version,
@@ -877,8 +877,8 @@ impl ServiceCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: Some(version.pre.to_string()),
-            build_tag: Some(version.build.to_string()),
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
             version: client_card.version,
             cards: Json(client_card.cards),
             opsml_version: client_card.opsml_version,
@@ -997,8 +997,8 @@ impl ArtifactSqlRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: version.pre.to_string().parse().ok(),
-            build_tag: version.build.to_string().parse().ok(),
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
             version: version.to_string(),
             media_type,
             updated_at,
@@ -1101,6 +1101,142 @@ impl EvaluationSqlRecord {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct SkillCardRecord {
+    pub uid: String,
+    pub created_at: DateTime<Utc>,
+    pub app_env: String,
+    pub name: String,
+    pub space: String,
+    pub major: i32,
+    pub minor: i32,
+    pub patch: i32,
+    pub pre_tag: Option<String>,
+    pub build_tag: Option<String>,
+    pub version: String,
+    pub tags: Json<Vec<String>>,
+    pub compatible_tools: Json<Vec<String>>,
+    pub dependencies: Json<Vec<SkillDependency>>,
+    pub description: Option<String>,
+    pub license: Option<String>,
+    pub content_hash: Vec<u8>,
+    pub opsml_version: String,
+    pub username: String,
+    pub download_count: i64,
+    pub input_schema: Option<Json<Value>>,
+}
+
+#[allow(clippy::too_many_arguments)]
+impl SkillCardRecord {
+    pub fn new(
+        name: String,
+        space: String,
+        version: Version,
+        tags: Vec<String>,
+        compatible_tools: Vec<String>,
+        dependencies: Vec<SkillDependency>,
+        description: Option<String>,
+        license: Option<String>,
+        opsml_version: String,
+        username: String,
+        content_hash: Vec<u8>,
+        input_schema: Option<Value>,
+    ) -> Self {
+        let created_at = get_utc_datetime();
+        let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
+        let uid = create_uuid7();
+
+        SkillCardRecord {
+            uid,
+            created_at,
+            app_env,
+            name,
+            space,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            version: version.to_string(),
+            tags: Json(tags),
+            compatible_tools: Json(compatible_tools),
+            dependencies: Json(dependencies),
+            description,
+            license,
+            content_hash,
+            opsml_version,
+            username,
+            download_count: 0,
+            input_schema: input_schema.map(Json),
+        }
+    }
+
+    pub fn uri(&self) -> String {
+        format!(
+            "{}/{}/{}/v{}",
+            CardTable::Skill,
+            self.space,
+            self.name,
+            self.version
+        )
+    }
+
+    pub fn from_client_card(client_card: SkillCardClientRecord) -> Result<Self, SqlError> {
+        let version = Version::parse(&client_card.version).map_err(VersionError::InvalidVersion)?;
+        Ok(SkillCardRecord {
+            uid: client_card.uid,
+            created_at: client_card.created_at,
+            app_env: client_card.app_env,
+            name: client_card.name,
+            space: client_card.space,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
+            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            version: client_card.version,
+            tags: Json(client_card.tags),
+            compatible_tools: Json(client_card.compatible_tools),
+            dependencies: Json(client_card.dependencies),
+            description: client_card.description,
+            license: client_card.license,
+            content_hash: client_card.content_hash,
+            opsml_version: client_card.opsml_version,
+            username: client_card.username,
+            download_count: 0,
+            input_schema: client_card.input_schema.map(Json),
+        })
+    }
+}
+
+impl Default for SkillCardRecord {
+    fn default() -> Self {
+        SkillCardRecord {
+            uid: create_uuid7(),
+            created_at: get_utc_datetime(),
+            app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
+            name: CommonKwargs::Undefined.to_string(),
+            space: CommonKwargs::Undefined.to_string(),
+            major: 1,
+            minor: 0,
+            patch: 0,
+            pre_tag: None,
+            build_tag: None,
+            version: Version::new(1, 0, 0).to_string(),
+            tags: Json(Vec::new()),
+            compatible_tools: Json(Vec::new()),
+            dependencies: Json(Vec::new()),
+            description: None,
+            license: None,
+            content_hash: Vec::new(),
+            opsml_version: opsml_version::version(),
+            username: CommonKwargs::Undefined.to_string(),
+            download_count: 0,
+            input_schema: None,
+        }
+    }
+}
+
 // create enum that takes vec of cards
 // TODO: There should also be a client side enum that matches this (don't want to install opsml_sql on client)
 #[derive(Debug, Serialize, Deserialize)]
@@ -1111,6 +1247,7 @@ pub enum CardResults {
     Audit(Vec<AuditCardRecord>),
     Prompt(Vec<PromptCardRecord>),
     Service(Vec<ServiceCardRecord>),
+    Skill(Vec<SkillCardRecord>),
 }
 
 impl CardResults {
@@ -1122,6 +1259,7 @@ impl CardResults {
             CardResults::Audit(cards) => cards.len(),
             CardResults::Prompt(cards) => cards.len(),
             CardResults::Service(cards) => cards.len(),
+            CardResults::Skill(cards) => cards.len(),
         }
     }
     pub fn is_empty(&self) -> bool {
@@ -1132,6 +1270,7 @@ impl CardResults {
             CardResults::Audit(cards) => cards.is_empty(),
             CardResults::Prompt(cards) => cards.is_empty(),
             CardResults::Service(cards) => cards.is_empty(),
+            CardResults::Skill(cards) => cards.is_empty(),
         }
     }
     pub fn to_json(&self) -> Vec<String> {
@@ -1160,6 +1299,10 @@ impl CardResults {
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
+            CardResults::Skill(cards) => cards
+                .iter()
+                .map(|card| serde_json::to_string_pretty(card).unwrap())
+                .collect(),
         }
     }
 }
@@ -1172,6 +1315,8 @@ pub enum ServerCard {
     Audit(AuditCardRecord),
     Prompt(PromptCardRecord),
     Service(Box<ServiceCardRecord>),
+    // Not boxed — SkillCardRecord is small enough that boxing adds overhead without benefit
+    Skill(SkillCardRecord),
 }
 
 impl ServerCard {
@@ -1183,6 +1328,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.uid.as_str(),
             ServerCard::Prompt(card) => card.uid.as_str(),
             ServerCard::Service(card) => card.uid.as_str(),
+            ServerCard::Skill(card) => card.uid.as_str(),
         }
     }
 
@@ -1194,10 +1340,10 @@ impl ServerCard {
             ServerCard::Audit(_) => RegistryType::Audit.to_string(),
             ServerCard::Prompt(_) => RegistryType::Prompt.to_string(),
             ServerCard::Service(card) => {
-                // Derive RegistryType from the service_type field
                 let service_type = ServiceType::from(card.service_type.as_str());
                 RegistryType::from(&service_type).to_string()
             }
+            ServerCard::Skill(_) => RegistryType::Skill.to_string(),
         }
     }
 
@@ -1209,6 +1355,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.version.clone(),
             ServerCard::Prompt(card) => card.version.clone(),
             ServerCard::Service(card) => card.version.clone(),
+            ServerCard::Skill(card) => card.version.clone(),
         }
     }
 
@@ -1220,6 +1367,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.space.clone(),
             ServerCard::Prompt(card) => card.space.clone(),
             ServerCard::Service(card) => card.space.clone(),
+            ServerCard::Skill(card) => card.space.clone(),
         }
     }
 
@@ -1231,6 +1379,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.name.clone(),
             ServerCard::Prompt(card) => card.name.clone(),
             ServerCard::Service(card) => card.name.clone(),
+            ServerCard::Skill(card) => card.name.clone(),
         }
     }
 
@@ -1242,6 +1391,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.uri(),
             ServerCard::Prompt(card) => card.uri(),
             ServerCard::Service(card) => card.uri(),
+            ServerCard::Skill(card) => card.uri(),
         }
     }
 
@@ -1253,6 +1403,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.app_env.clone(),
             ServerCard::Prompt(card) => card.app_env.clone(),
             ServerCard::Service(card) => card.app_env.clone(),
+            ServerCard::Skill(card) => card.app_env.clone(),
         }
     }
 
@@ -1264,6 +1415,7 @@ impl ServerCard {
             ServerCard::Audit(card) => card.created_at,
             ServerCard::Prompt(card) => card.created_at,
             ServerCard::Service(card) => card.created_at,
+            ServerCard::Skill(card) => card.created_at,
         }
     }
 
@@ -1289,6 +1441,9 @@ impl ServerCard {
             CardRecord::Service(card) => Ok(ServerCard::Service(Box::new(
                 ServiceCardRecord::from_client_card(*card)?,
             ))),
+            CardRecord::Skill(card) => {
+                Ok(ServerCard::Skill(SkillCardRecord::from_client_card(card)?))
+            }
         }
     }
 }

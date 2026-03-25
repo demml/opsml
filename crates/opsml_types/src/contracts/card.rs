@@ -1,7 +1,7 @@
 use crate::cards::CardStatus;
 use crate::contracts::{
     ArtifactKey, AuditableRequest, DeploymentConfig, ResourceType, ServiceConfig, ServiceMetadata,
-    ServiceType,
+    ServiceType, SkillDependency,
 };
 use crate::error::TypeError;
 use crate::{
@@ -731,6 +731,50 @@ impl Default for ServiceCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct SkillCardClientRecord {
+    pub uid: String,
+    pub created_at: DateTime<Utc>,
+    pub app_env: String,
+    pub space: String,
+    pub name: String,
+    pub version: String,
+    pub tags: Vec<String>,
+    pub compatible_tools: Vec<String>,
+    pub dependencies: Vec<SkillDependency>,
+    pub description: Option<String>,
+    pub license: Option<String>,
+    pub content_hash: Vec<u8>,
+    pub opsml_version: String,
+    pub username: String,
+    pub download_count: i64,
+    pub input_schema: Option<serde_json::Value>,
+}
+
+impl Default for SkillCardClientRecord {
+    fn default() -> Self {
+        Self {
+            uid: "".to_string(),
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
+            space: "".to_string(),
+            name: "".to_string(),
+            version: "".to_string(),
+            tags: Vec::new(),
+            compatible_tools: Vec::new(),
+            dependencies: Vec::new(),
+            description: None,
+            license: None,
+            content_hash: Vec::new(),
+            opsml_version: opsml_version::version(),
+            username: "guest".to_string(),
+            download_count: 0,
+            input_schema: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 #[pyclass]
 pub enum CardRecord {
@@ -740,6 +784,7 @@ pub enum CardRecord {
     Audit(AuditCardClientRecord),
     Prompt(PromptCardClientRecord),
     Service(Box<ServiceCardClientRecord>),
+    Skill(SkillCardClientRecord),
 }
 
 #[pymethods]
@@ -757,6 +802,7 @@ impl CardRecord {
             Self::Audit(card) => &card.uid,
             Self::Prompt(card) => &card.uid,
             Self::Service(card) => &card.uid,
+            Self::Skill(card) => &card.uid,
         }
     }
 
@@ -769,6 +815,7 @@ impl CardRecord {
             Self::Audit(card) => card.created_at,
             Self::Prompt(card) => card.created_at,
             Self::Service(card) => card.created_at,
+            Self::Skill(card) => card.created_at,
         }
     }
 
@@ -781,6 +828,7 @@ impl CardRecord {
             Self::Audit(card) => card.app_env.as_ref(),
             Self::Prompt(card) => card.app_env.as_ref(),
             Self::Service(card) => card.app_env.as_ref(),
+            Self::Skill(card) => card.app_env.as_ref(),
         }
     }
 
@@ -793,6 +841,7 @@ impl CardRecord {
             Self::Audit(card) => card.name.as_ref(),
             Self::Prompt(card) => card.name.as_ref(),
             Self::Service(card) => card.name.as_ref(),
+            Self::Skill(card) => card.name.as_ref(),
         }
     }
 
@@ -805,6 +854,7 @@ impl CardRecord {
             Self::Audit(card) => card.space.as_ref(),
             Self::Prompt(card) => card.space.as_ref(),
             Self::Service(card) => card.space.as_ref(),
+            Self::Skill(card) => card.space.as_ref(),
         }
     }
 
@@ -817,6 +867,7 @@ impl CardRecord {
             Self::Audit(card) => card.version.as_ref(),
             Self::Prompt(card) => card.version.as_ref(),
             Self::Service(card) => card.version.as_ref(),
+            Self::Skill(card) => card.version.as_ref(),
         }
     }
 
@@ -830,6 +881,7 @@ impl CardRecord {
             Self::Audit(card) => &card.tags,
             Self::Prompt(card) => &card.tags,
             Self::Service(_card) => &EMPTY_TAGS,
+            Self::Skill(card) => &card.tags,
         }
     }
 
@@ -842,6 +894,7 @@ impl CardRecord {
             Self::Audit(card) => Some(card.datacard_uids.iter().map(String::as_str).collect()),
             Self::Prompt(_) => None,
             Self::Service(_) => None,
+            Self::Skill(_) => None,
         }
     }
 
@@ -856,6 +909,7 @@ impl CardRecord {
             Self::Audit(card) => Some(card.modelcard_uids.iter().map(String::as_str).collect()),
             Self::Prompt(_) => None,
             Self::Service(_) => None,
+            Self::Skill(_) => None,
         }
     }
 
@@ -868,6 +922,7 @@ impl CardRecord {
             Self::Audit(_) => None,
             Self::Prompt(card) => Some(vec![&card.uid]),
             Self::Service(_) => None,
+            Self::Skill(_) => None,
         }
     }
 
@@ -885,6 +940,7 @@ impl CardRecord {
             ),
             Self::Prompt(card) => Some(vec![&card.experimentcard_uid.as_deref().unwrap()]),
             Self::Service(_) => None,
+            Self::Skill(_) => None,
         }
     }
 
@@ -897,6 +953,7 @@ impl CardRecord {
             Self::Audit(card) => Some(&card.uid),
             Self::Prompt(card) => card.auditcard_uid.as_deref(),
             Self::Service(_) => None,
+            Self::Skill(_) => None,
         }
     }
 
@@ -909,6 +966,7 @@ impl CardRecord {
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
             Self::Service(_) => None,
+            Self::Skill(_) => None,
         }
     }
 
@@ -921,6 +979,7 @@ impl CardRecord {
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
             Self::Service(_) => None,
+            Self::Skill(_) => None,
         }
     }
 
@@ -933,6 +992,7 @@ impl CardRecord {
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
             Self::Service(_) => None,
+            Self::Skill(_) => None,
         }
     }
 
@@ -945,6 +1005,7 @@ impl CardRecord {
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
             Self::Service(_) => None,
+            Self::Skill(_) => None,
         }
     }
 }
@@ -958,6 +1019,7 @@ impl CardRecord {
             Self::Audit(_) => None,
             Self::Prompt(_) => None,
             Self::Service(card) => Some(card.cards.clone()),
+            Self::Skill(_) => None,
         }
     }
 
@@ -1020,6 +1082,16 @@ impl CardRecord {
                 let uri = format!("{}/{}/{}/v{}", table, card.space, card.name, card.version);
                 Ok(Path::new(&uri).to_path_buf())
             }
+            Self::Skill(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Skill,
+                    card.space,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
         }
     }
 
@@ -1031,6 +1103,7 @@ impl CardRecord {
             Self::Audit(_) => RegistryType::Audit,
             Self::Prompt(_) => RegistryType::Prompt,
             Self::Service(card) => RegistryType::from(&card.service_type),
+            Self::Skill(_) => RegistryType::Skill,
         }
     }
 }

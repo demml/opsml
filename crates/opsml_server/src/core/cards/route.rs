@@ -399,6 +399,9 @@ pub async fn list_cards(
                 .map(convert_servicecard)
                 .collect::<Vec<_>>(),
         ),
+        CardResults::Skill(data) => {
+            Json(data.into_iter().map(convert_skillcard).collect::<Vec<_>>())
+        }
     };
 
     // Create response and add audit context

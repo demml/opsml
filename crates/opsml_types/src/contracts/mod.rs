@@ -8,6 +8,7 @@ pub mod file;
 pub mod mcp;
 pub mod scouter;
 pub mod service;
+pub mod skill;
 pub mod traits;
 
 pub use agent::*;
@@ -19,4 +20,5 @@ pub use file::*;
 pub use mcp::*;
 pub use scouter::*;
 pub use service::*;
+pub use skill::*;
 pub use traits::*;

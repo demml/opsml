@@ -1324,6 +1324,138 @@ async fn test_opsml_server_card_promptcard_crud() {
 }
 
 #[tokio::test]
+async fn test_opsml_server_card_skillcard_crud() {
+    retry_flaky_test!({
+        let helper = TestHelper::new(None).await;
+
+        let card_version_request = CardVersionRequest {
+            name: "skill".to_string(),
+            space: "repo1".to_string(),
+            version: Some("1.0.0".to_string()),
+            version_type: VersionType::Minor,
+            pre_tag: None,
+            build_tag: None,
+        };
+
+        let card_request = CreateCardRequest {
+            card: CardRecord::Skill(SkillCardClientRecord {
+                name: "skill".to_string(),
+                space: "repo1".to_string(),
+                version: "1.0.0".to_string(),
+                ..SkillCardClientRecord::default()
+            }),
+            registry_type: RegistryType::Skill,
+            version_request: card_version_request,
+        };
+
+        let body = serde_json::to_string(&card_request).unwrap();
+
+        let request = Request::builder()
+            .uri("/opsml/api/card/create")
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body))
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let create_response: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+        assert!(create_response.registered);
+
+        // get card by uid
+        let list_cards = CardQueryArgs {
+            uid: Some(create_response.key.uid),
+            registry_type: RegistryType::Skill,
+            ..Default::default()
+        };
+
+        let query_string = serde_qs::to_string(&list_cards).unwrap();
+
+        let request = Request::builder()
+            .uri(format!("/opsml/api/card/list?{query_string}"))
+            .method("GET")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let card_results: Vec<CardRecord> = serde_json::from_slice(&body).unwrap();
+
+        assert_eq!(card_results.len(), 1);
+
+        let card = match card_results[0].clone() {
+            CardRecord::Skill(card) => card,
+            _ => panic!("Card not found"),
+        };
+
+        let card_request = UpdateCardRequest {
+            registry_type: RegistryType::Skill,
+            card: CardRecord::Skill(SkillCardClientRecord {
+                name: "skill".to_string(),
+                space: "repo1".to_string(),
+                version: "1.0.1".to_string(),
+                uid: card.uid.clone(),
+                app_env: card.app_env,
+                created_at: card.created_at,
+                tags: card.tags,
+                compatible_tools: card.compatible_tools,
+                dependencies: card.dependencies,
+                description: card.description,
+                license: card.license,
+                content_hash: card.content_hash,
+                opsml_version: card.opsml_version,
+                username: std::env::var("OPSML_USERNAME")
+                    .unwrap_or_else(|_| "guest".to_string()),
+            }),
+        };
+
+        let body = serde_json::to_string(&card_request).unwrap();
+
+        let request = Request::builder()
+            .uri("/opsml/api/card/update")
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body))
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let update_response: UpdateCardResponse = serde_json::from_slice(&body).unwrap();
+        assert!(update_response.updated);
+
+        let delete_args = DeleteCardRequest {
+            uid: card.uid.clone(),
+            space: card.space.clone(),
+            registry_type: RegistryType::Skill,
+        };
+
+        let query_string = serde_qs::to_string(&delete_args).unwrap();
+
+        let request = Request::builder()
+            .uri(format!("/opsml/api/card/delete?{query_string}"))
+            .method("DELETE")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let delete_response: UidResponse = serde_json::from_slice(&body).unwrap();
+
+        assert!(!delete_response.exists);
+
+        helper.cleanup();
+    });
+}
+
+#[tokio::test]
 async fn test_opsml_server_card_get_card() {
     retry_flaky_test!({
         let helper = TestHelper::new(None).await;
