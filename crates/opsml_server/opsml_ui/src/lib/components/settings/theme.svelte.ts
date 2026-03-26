@@ -75,7 +75,7 @@ class ThemeStore {
     }
 
     private async persistToServer() {
-        if (!browser || !this._username || this.mode === 'system') return;
+        if (!browser || !this._username) return;
         try {
             await fetch(`/opsml/api/user/${this._username}`, {
                 method: 'PUT',
