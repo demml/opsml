@@ -208,8 +208,14 @@ impl DataCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: version.to_string(),
             tags: Json(tags),
             data_type,
@@ -242,8 +248,14 @@ impl DataCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: client_card.version,
             tags: Json(client_card.tags),
             data_type: client_card.data_type,
@@ -336,8 +348,14 @@ impl ModelCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: version.to_string(),
             tags: Json(tags),
             datacard_uid,
@@ -374,8 +392,14 @@ impl ModelCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: client_card.version,
             tags: Json(client_card.tags),
             datacard_uid: client_card.datacard_uid,
@@ -499,8 +523,14 @@ impl ExperimentCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: version.to_string(),
             tags: Json(tags),
             datacard_uids: Json(datacard_uids),
@@ -536,8 +566,14 @@ impl ExperimentCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: client_card.version,
             tags: Json(client_card.tags),
             datacard_uids: Json(client_card.datacard_uids),
@@ -601,8 +637,14 @@ impl AuditCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: version.to_string(),
             tags: Json(tags),
             approved,
@@ -635,8 +677,14 @@ impl AuditCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: client_card.version,
             tags: Json(client_card.tags),
             approved: client_card.approved,
@@ -721,8 +769,14 @@ impl PromptCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: version.to_string(),
             tags: Json(tags),
             experimentcard_uid,
@@ -755,8 +809,14 @@ impl PromptCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: client_card.version,
             tags: Json(client_card.tags),
             experimentcard_uid: client_card.experimentcard_uid,
@@ -845,8 +905,14 @@ impl ServiceCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: version.to_string(),
             cards: Json(cards),
             opsml_version,
@@ -877,8 +943,14 @@ impl ServiceCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: client_card.version,
             cards: Json(client_card.cards),
             opsml_version: client_card.opsml_version,
@@ -997,8 +1069,14 @@ impl ArtifactSqlRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: version.to_string(),
             media_type,
             updated_at,
@@ -1155,8 +1233,14 @@ impl SkillCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: version.to_string(),
             tags: Json(tags),
             compatible_tools: Json(compatible_tools),
@@ -1192,8 +1276,14 @@ impl SkillCardRecord {
             major: version.major as i32,
             minor: version.minor as i32,
             patch: version.patch as i32,
-            pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-            build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
             version: client_card.version,
             tags: Json(client_card.tags),
             compatible_tools: Json(client_card.compatible_tools),

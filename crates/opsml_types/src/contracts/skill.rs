@@ -59,7 +59,12 @@ pub struct SkillDependency {
 impl SkillDependency {
     #[new]
     #[pyo3(signature = (name, space, kind, version_req=None))]
-    pub fn new(name: String, space: String, kind: DependencyKind, version_req: Option<String>) -> Self {
+    pub fn new(
+        name: String,
+        space: String,
+        kind: DependencyKind,
+        version_req: Option<String>,
+    ) -> Self {
         SkillDependency {
             name,
             space,
@@ -119,7 +124,10 @@ mod tests {
     fn test_compatible_tool_github_copilot_roundtrip() {
         let tool = CompatibleTool::GithubCopilotCli;
         assert_eq!(tool.to_string(), "github-copilot-cli");
-        assert_eq!(CompatibleTool::from("github-copilot-cli"), CompatibleTool::GithubCopilotCli);
+        assert_eq!(
+            CompatibleTool::from("github-copilot-cli"),
+            CompatibleTool::GithubCopilotCli
+        );
         let json = serde_json::to_string(&tool).unwrap();
         let roundtripped: CompatibleTool = serde_json::from_str(&json).unwrap();
         assert_eq!(tool, roundtripped);
@@ -130,7 +138,13 @@ mod tests {
         assert_eq!(CompatibleTool::ClaudeCode.to_string(), "claude-code");
         assert_eq!(CompatibleTool::Codex.to_string(), "codex");
         assert_eq!(CompatibleTool::GeminiCli.to_string(), "gemini-cli");
-        assert_eq!(CompatibleTool::GithubCopilotCli.to_string(), "github-copilot-cli");
-        assert_eq!(CompatibleTool::Custom("my-tool".to_string()).to_string(), "my-tool");
+        assert_eq!(
+            CompatibleTool::GithubCopilotCli.to_string(),
+            "github-copilot-cli"
+        );
+        assert_eq!(
+            CompatibleTool::Custom("my-tool".to_string()).to_string(),
+            "my-tool"
+        );
     }
 }

@@ -140,6 +140,7 @@ pub async fn insert_card_into_db(
                 client_card.opsml_version,
                 client_card.username,
                 client_card.content_hash,
+                client_card.input_schema,
             );
             ServerCard::Skill(server_card)
         }
