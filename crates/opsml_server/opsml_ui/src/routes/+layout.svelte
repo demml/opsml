@@ -32,9 +32,9 @@
   <svelte:head>
     <link rel="icon" type="image/x-icon" href={favicon}/>
     {#if themeStore.resolved === 'dark'}
-      <link rel="stylesheet" href="/node_modules/github-markdown-css/github-markdown-dark.css" />
+      <link rel="stylesheet" href="/github-markdown-dark.css" />
     {:else}
-      <link rel="stylesheet" href="/node_modules/github-markdown-css/github-markdown-light.css" />
+      <link rel="stylesheet" href="/github-markdown-light.css" />
     {/if}
   </svelte:head>
 

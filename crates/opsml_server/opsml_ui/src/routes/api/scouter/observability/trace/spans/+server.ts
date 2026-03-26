@@ -19,11 +19,13 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
     const response: TraceSpansResponse = await getTraceSpans(fetch, filters);
     return json({ response, error: null });
   } catch (error) {
-    console.warn(
-      "Scouter backend unavailable, serving mock span data:",
-      error instanceof Error ? error.message : error,
+    console.error("Error fetching trace spans:", error);
+    return json(
+      {
+        response: null,
+        error: error instanceof Error ? error.message : "Failed to fetch trace spans",
+      },
+      { status: 500 },
     );
-    const { getMockTraceSpans } = await import("$lib/server/trace/mockData");
-    return json({ response: getMockTraceSpans(filters), error: null });
   }
 };
