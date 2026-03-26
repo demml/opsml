@@ -30,8 +30,7 @@ class ThemeStore {
             this.apply();
 
             // Listen for system theme changes when in "system" mode (register once only)
-            if (!this._mediaListener) {
-                this._mediaListener = () => { if (this.mode === 'system') this.apply(); };
+                this._mediaListener = () => { if (this.mode === 'system') { this.mode = 'system'; this.apply(); } };
                 window.matchMedia('(prefers-color-scheme: dark)')
                     .addEventListener('change', this._mediaListener);
             }
