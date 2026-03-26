@@ -1,13 +1,14 @@
 UPDATE opsml_user
 SET
-active = ?, 
-password_hash = ?, 
+active = ?,
+password_hash = ?,
 hashed_recovery_codes = ?,
-permissions = ?, 
+permissions = ?,
 group_permissions = ?,
 favorite_spaces = ?,
 refresh_token = ?,
 email = ?,
 authentication_type = ?,
+theme_preference = ?,
 updated_at = CURRENT_TIMESTAMP
 WHERE username = ? AND authentication_type = ?;

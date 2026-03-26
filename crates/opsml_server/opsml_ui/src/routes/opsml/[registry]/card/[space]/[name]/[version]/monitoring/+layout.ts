@@ -8,6 +8,7 @@ import {
   getSortedDriftTypes,
 } from "$lib/components/scouter/dashboard/utils";
 import { driftTypeFromString } from "$lib/components/scouter/types";
+import { dev } from "$app/environment";
 
 export const load: LayoutLoad = async ({ parent, fetch, url }) => {
   const parentData = await parent();
@@ -21,6 +22,30 @@ export const load: LayoutLoad = async ({ parent, fetch, url }) => {
   }
 
   if (!settings?.scouter_enabled) {
+    if (dev) {
+      const { getMockMonitoringProfiles, getMockDriftTypes } =
+        await import("$lib/components/scouter/monitoring/mockData");
+      const profiles = getMockMonitoringProfiles();
+      const driftTypes = getMockDriftTypes();
+
+      const currentDriftType = driftTypeFromString(
+        url.pathname.split("/").pop() || "",
+      );
+      if (!currentDriftType || !driftTypes.includes(currentDriftType)) {
+        throw redirect(
+          303,
+          `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${metadata.name}/${metadata.version}/monitoring/${driftTypes[0].toLowerCase()}`,
+        );
+      }
+
+      return {
+        registryType,
+        metadata,
+        profiles,
+        driftTypes,
+        mockMode: true,
+      };
+    }
     return {
       registryType,
       metadata,
@@ -56,5 +81,6 @@ export const load: LayoutLoad = async ({ parent, fetch, url }) => {
     metadata,
     profiles,
     driftTypes,
+    mockMode: false,
   };
 };

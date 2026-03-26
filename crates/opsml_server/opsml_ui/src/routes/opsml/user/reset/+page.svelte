@@ -153,9 +153,9 @@ async function handleReset(event: SubmitEvent & { currentTarget: EventTarget & H
             onclick={togglePasswordVisibility}
           >
             {#if passwordVisible}
-              <Eye size={16} color="#5948a3"/>
+              <Eye size={16} color="currentColor"/>
             {:else}
-              <EyeOff size={16} color="#5948a3" />
+              <EyeOff size={16} color="currentColor" />
             {/if}
           </button>
         </div>
@@ -180,9 +180,9 @@ async function handleReset(event: SubmitEvent & { currentTarget: EventTarget & H
             onclick={togglePasswordVisibility}
           >
             {#if passwordVisible}
-              <Eye size={16} color="#5948a3"/>
+              <Eye size={16} color="currentColor"/>
             {:else}
-              <EyeOff size={16} color="#5948a3" />
+              <EyeOff size={16} color="currentColor" />
             {/if}
           </button>
         </div>

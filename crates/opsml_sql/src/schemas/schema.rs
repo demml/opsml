@@ -1342,6 +1342,7 @@ pub struct User {
     pub email: String,
     pub updated_at: DateTime<Utc>,
     pub authentication_type: String,
+    pub theme_preference: String,
 }
 
 impl User {
@@ -1374,6 +1375,7 @@ impl User {
             email,
             updated_at: created_at,
             authentication_type: authentication_type.unwrap_or("basic".to_string()),
+            theme_preference: "system".to_string(),
         }
     }
 
@@ -1396,6 +1398,7 @@ impl User {
             email: email.to_string(),
             updated_at: created_at,
             authentication_type: "sso".to_string(),
+            theme_preference: "system".to_string(),
         }
     }
 
@@ -1425,6 +1428,10 @@ impl User {
         map.insert(
             "authentication_type".to_string(),
             self.authentication_type.clone().into(),
+        );
+        map.insert(
+            "theme_preference".to_string(),
+            self.theme_preference.clone().into(),
         );
 
         // convert to JSON

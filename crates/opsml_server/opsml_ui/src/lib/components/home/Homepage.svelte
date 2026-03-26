@@ -19,7 +19,7 @@
       color: "gradient-primary"
     },
     {
-      title: "Data", 
+      title: "Data",
       description: "Manage datasets with versioning and lineage tracking. Process, validate, and share data.",
       icon: Table,
       path: "/opsml/data",
@@ -28,7 +28,7 @@
     {
       title: "Prompts",
       description: "Create, test, and version GenAI prompts. Build consistent prompt templates for reliable AI interactions.",
-      icon: NotebookText, 
+      icon: NotebookText,
       path: "/opsml/genai/prompt",
       color: "gradient-success"
     },
@@ -36,7 +36,7 @@
       title: "Experiments",
       description: "Track ML experiments, compare results, and reproduce successful runs. Organize your research workflow.",
       icon: FlaskConical,
-      path: "/opsml/experiment", 
+      path: "/opsml/experiment",
       color: "gradient-warning"
     }
   ];
@@ -62,25 +62,25 @@
     </div>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
+      <div class="bg-surface-50 border-2 border-primary-700 rounded-base p-4 text-center">
         <div class="text-2xl font-bold text-primary-700 mb-1">
           {stats.nbrModels || 0}
         </div>
         <div class="text-sm text-gray-600">Recent Models</div>
       </div>
-      <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
+      <div class="bg-surface-50 border-2 border-primary-700 rounded-base p-4 text-center">
         <div class="text-2xl font-bold text-primary-700 mb-1">
           {stats.nbrData || 0}
         </div>
         <div class="text-sm text-gray-600">Data Assets</div>
       </div>
-      <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
+      <div class="bg-surface-50 border-2 border-primary-700 rounded-base p-4 text-center">
         <div class="text-2xl font-bold text-primary-700 mb-1">
           {stats.nbrPrompts || 0}
         </div>
         <div class="text-sm text-gray-600">Prompts</div>
       </div>
-      <div class="bg-surface-50 border-2 border-primary-700 rounded-xl p-4 text-center">
+      <div class="bg-surface-50 border-2 border-primary-700 rounded-base p-4 text-center">
         <div class="text-2xl font-bold text-primary-700 mb-1">
           {stats.nbrExperiments || 0}
         </div>
@@ -101,7 +101,7 @@
   </div>
 
 </section>
-<div class="w-full h-2 bg-black rounded"></div>
+<div class="w-full h-2 bg-primary-800 rounded"></div>
 
 <section class="grid-background py-6">
   <div class="mb-8 mx-auto w-11/12">
@@ -111,45 +111,45 @@
         Recent Activity
       </h2>
     </div>
-    
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mx-4 md:mx-8">
-      <HomeCard 
-        header="Models" 
+      <HomeCard
+        header="Models"
         cards={cards.modelcards}
-        headerColor="bg-primary-500" 
-        headerTextColor="text-black" 
-        iconColor="#8059b6"
-        badgeColor="#8059b6"
+        headerColor="bg-primary-500"
+        headerTextColor="text-black"
+        iconColor="currentColor"
+        badgeColor="currentColor"
       />
-      <HomeCard 
+      <HomeCard
         header="Data"
         cards={cards.datacards}
         headerColor="bg-primary-500"
-        headerTextColor="text-black" 
-        iconColor="#8059b6"
-        badgeColor="#8059b6"
+        headerTextColor="text-black"
+        iconColor="currentColor"
+        badgeColor="currentColor"
       />
-      
-      <HomeCard 
-        header="Prompts" 
+
+      <HomeCard
+        header="Prompts"
         cards={cards.promptcards}
-        headerColor="bg-primary-500" 
-        headerTextColor="text-black" 
-        iconColor="#8059b6"
-        badgeColor="#8059b6"
+        headerColor="bg-primary-500"
+        headerTextColor="text-black"
+        iconColor="currentColor"
+        badgeColor="currentColor"
       />
-      <HomeCard 
+      <HomeCard
         header="Experiments"
         cards={cards.experimentcards}
-        headerColor="bg-primary-500" 
+        headerColor="bg-primary-500"
         headerTextColor="text-black"
-        iconColor="#8059b6"
-        badgeColor="#8059b6"
+        iconColor="currentColor"
+        badgeColor="currentColor"
       />
     </div>
   </div>
 </section>
-<div class="w-full h-2 bg-black rounded"></div>
+<div class="w-full h-2 bg-primary-800 rounded"></div>
 
 <section class="alt-grid-background py-6">
   <div class="mx-auto w-11/12 px-4">
@@ -164,16 +164,16 @@
     <div class="max-w-6xl mx-auto mb-16">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         {#each registryInfo as registry}
-          <div class="flex flex-col items-start bg-surface-50 border-primary-800 border-3 shadow-primary rounded-2xl p-8">
-          
+          <div class="flex flex-col items-start bg-surface-50 border-primary-800 border-3 shadow-primary rounded-base p-8">
+
             <h3 class="text-xl font-bold text-gray-900 mb-4">
               {registry.title}
             </h3>
-            
+
             <p class="text-gray-600 text-left leading-relaxed mb-6 flex-1">
               {registry.description}
             </p>
-            
+
             <a
               href={registry.path}
               data-sveltekit-preload-data="hover"
@@ -189,11 +189,11 @@
 
   </div>
 </section>
-<div class="w-full h-2 bg-black rounded"></div>
+<div class="w-full h-2 bg-primary-800 rounded"></div>
 
 <div class="flex-1 mx-auto w-11/12 pt-6 px-4 pb-10">
   <div class="max-w-4xl mx-auto">
-    <div class="rounded-2xl p-8 bg-surface-50 border-black border-3 shadow">
+    <div class="rounded-base p-8 bg-surface-50 border-black border-3 shadow">
       <h3 class="text-xl font-bold text-gray-900 mb-4">
         Ready to Get Started?
       </h3>
@@ -233,18 +233,18 @@
 
 <style>
   .grid-background {
-    background-color: #E3DFF2;
+    background-color: var(--grid-bg, #E3DFF2);
     background-image:
-      linear-gradient(to right, #CECBDB 1px, transparent 1px),
-      linear-gradient(to bottom, #CECBDB 1px, transparent 1px);
+      linear-gradient(to right, var(--grid-line, #CECBDB) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line, #CECBDB) 1px, transparent 1px);
     background-size: 60px 60px;
     background-attachment: fixed;
   }
   .alt-grid-background {
-    background-color: #f8f8f8;
+    background-color: var(--grid-alt-bg, #f8f8f8);
     background-image:
-      linear-gradient(to right, #CECBDB 1px, transparent 1px),
-      linear-gradient(to bottom, #CECBDB 1px, transparent 1px);
+      linear-gradient(to right, var(--grid-line, #CECBDB) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line, #CECBDB) 1px, transparent 1px);
     background-size: 60px 60px;
     background-attachment: fixed;
   }

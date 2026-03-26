@@ -169,7 +169,7 @@
           onclick={handlePreviousPage}
           disabled={!currentPage.has_previous}
         >
-          <ArrowLeft class="w-4 h-4" color="#5948a3"/>
+          <ArrowLeft class="w-4 h-4" color="currentColor"/>
         </button>
 
         <button
@@ -177,7 +177,7 @@
           onclick={handleNextPage}
           disabled={!currentPage.has_next}
         >
-          <ArrowRight class="w-4 h-4" color="#5948a3"/>
+          <ArrowRight class="w-4 h-4" color="currentColor"/>
         </button>
       </div>
     {/if}

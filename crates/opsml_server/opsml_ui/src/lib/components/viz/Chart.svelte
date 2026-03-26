@@ -9,6 +9,7 @@
   import { Filler } from 'chart.js';
   import { PlotType, type GroupedMetrics } from '../card/experiment/types';
   import { createLineChart, createGroupedBarChart } from './chart';
+  import { themeStore } from '$lib/components/settings/theme.svelte';
 
   let {
     groupedMetrics,
@@ -49,6 +50,15 @@
       if (resetZoomTrigger !== lastTriggerValue && chart) {
         chart.resetZoom();
         lastTriggerValue = resetZoomTrigger;
+      }
+    });
+
+    // Re-render chart when theme changes
+    $effect(() => {
+      // Access resolved to track changes
+      const _ = themeStore.resolved;
+      if (chart && canvas) {
+        initChart();
       }
     });
 

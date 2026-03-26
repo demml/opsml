@@ -125,6 +125,16 @@ pub fn add_google_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<Candidate>()?;
     m.add_class::<GenerateContentResponse>()?;
 
+    // ADK response types
+    m.add_class::<AdkCacheMetadata>()?;
+    m.add_class::<AdkContent>()?;
+    m.add_class::<AdkLiveSessionResumptionUpdate>()?;
+    m.add_class::<AdkLlmResponse>()?;
+    m.add_class::<AdkPart>()?;
+    m.add_class::<AdkToolCallInfo>()?;
+    m.add_class::<AdkTranscription>()?;
+    m.add_class::<AdkUsageMetadata>()?;
+
     // embedding types
     m.add_class::<PredictRequest>()?;
     m.add_class::<PredictResponse>()?;

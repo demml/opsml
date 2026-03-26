@@ -74,7 +74,7 @@
       label: 'Versions',
       icon: Tag,
       isActive: (tab: string) => tab === 'versions',
-      iconProps: { fill: '#8059b6' },
+      iconProps: { fill: 'var(--color-primary-500)' },
       description: 'Service version history and releases'
     }
   ];
@@ -115,7 +115,7 @@
     return agentItems;
   });
 
-  const iconColor = '#8059b6';
+  const iconColor = 'var(--color-primary-500)';
 </script>
 
 <!-- Service Header with sticky navigation -->

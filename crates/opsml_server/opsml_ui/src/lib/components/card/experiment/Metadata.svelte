@@ -40,7 +40,7 @@ experimentcard = registry.load_card(uid="${card.uid}")
   <div class="flex flex-row justify-between pb-2 mb-2 items-center border-b-2 border-black">
     
     <div class="flex flex-row items-center pt-2">
-      <Info color="#8059b6"/>
+      <Info color="currentColor"/>
       <header class="pl-2 text-primary-950 font-bold">Metadata</header>
     </div>
 
@@ -67,7 +67,7 @@ experimentcard = registry.load_card(uid="${card.uid}")
 
   {#if card.uids.datacard_uids || card.uids.modelcard_uids ||  card.uids.promptcard_uids ||  card.uids.experimentcard_uids}
     <div class="flex flex-row items-center pb-1 border-b-2 border-black">
-      <Diamond color="#8059b6" fill="#8059b6"/>
+      <Diamond color="currentColor" fill="currentColor"/>
       <header class="pl-2 text-primary-900 text-sm font-bold">Cards</header>
     </div>
 
@@ -107,7 +107,7 @@ experimentcard = registry.load_card(uid="${card.uid}")
   {#if card.tags.length > 0}
     <div class="flex flex-col space-y-1 gap-1">
       <div class="flex flex-row items-center mb-1 border-b-2 border-black">
-        <Tags color="#8059b6" />
+        <Tags color="currentColor" />
         <header class="pl-2 text-primary-900 text-sm font-bold">Tags</header>
       </div>
     </div>
@@ -122,7 +122,7 @@ experimentcard = registry.load_card(uid="${card.uid}")
   {/if}
 
   <div class="flex flex-row items-center pb-1 border-b-2 border-black">
-    <HardDrive color="#8059b6" />
+    <HardDrive color="currentColor" />
     <header class="pl-2 text-primary-900 text-sm font-bold">Compute Environment</header>
   </div>
 

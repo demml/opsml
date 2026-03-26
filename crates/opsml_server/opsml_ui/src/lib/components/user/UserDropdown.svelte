@@ -19,7 +19,7 @@
 </script>
 
 
-<svelte:window on:click={handleClickOutside}/>
+<svelte:window onclick={handleClickOutside} />
 
 <div class="dropdown w-full h-full">
     <button 
@@ -27,7 +27,7 @@
         onclick={toggleDropdown}
         class="w-full h-full flex items-center justify-center"
     >
-        <UserRound color="#5948a3" size={24}/>
+        <UserRound color="currentColor" size={24}/>
     </button>
 
     {#if isOpen}

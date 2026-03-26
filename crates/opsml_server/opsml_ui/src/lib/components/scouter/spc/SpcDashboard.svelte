@@ -56,7 +56,7 @@
 
     <div class="lg:col-span-3 flex flex-col gap-6">
 
-      <div class="bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl flex flex-col gap-5">
+      <div class="bg-white border-2 border-black p-4 shadow rounded-base flex flex-col gap-5">
         <div class="flex flex-col gap-2">
           <label for="metric-selector" class="text-xs font-black uppercase text-slate-500 tracking-wider">
             Select Feature
@@ -76,7 +76,7 @@
         </div>
       </div>
 
-      <div class="bg-white border-2 border-black p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl">
+      <div class="bg-white border-2 border-black p-4 shadow rounded-base">
         <SpcConfigHeader
           config={config}
           alertConfig={config.alert_config}
@@ -89,7 +89,7 @@
     </div>
 
     <div class="lg:col-span-9 h-full min-h-[500px]">
-      <div class="h-full bg-white border-2 border-black p-0 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl flex flex-col overflow-hidden">
+      <div class="h-full bg-white border-2 border-black p-0 shadow rounded-base flex flex-col overflow-hidden">
         <div class="px-4 py-3 border-b-2 border-black bg-slate-50 flex justify-between items-center">
           <div class="flex items-center gap-2">
             <div class="w-3 h-3 rounded-full bg-green-500 border border-black"></div>
@@ -123,7 +123,7 @@
 
   <div class="max-w-2/3 min-w-0 mx-auto">
      {#if driftAlerts && driftAlerts.items}
-      <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl overflow-hidden flex flex-col h-full">
+      <div class="bg-white border-2 border-black shadow rounded-base overflow-hidden flex flex-col h-full">
         <div class="bg-error-100 border-b-2 border-black px-5 py-3 flex items-center justify-between flex-shrink-0">
           <h3 class="font-black text-lg uppercase tracking-tight flex items-center gap-2 text-slate-900">
             <Siren class="w-5 h-5 text-error-700" />

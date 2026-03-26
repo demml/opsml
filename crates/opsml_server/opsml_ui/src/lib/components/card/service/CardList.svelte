@@ -3,8 +3,8 @@
   import  CardButton from "./CardButton.svelte";
   import { type CardList } from "../card_interfaces/servicecard";
 
-  let badgeColor = "#40328b";
-  let iconColor = "#40328b";
+  let badgeColor = "currentColor";
+  let iconColor = "currentColor";
 
 
   let {

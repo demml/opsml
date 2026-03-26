@@ -1,12 +1,12 @@
 <script lang="ts">
     import "../app.css";
-    import "github-markdown-css/github-markdown-light.css";
     import favicon from "$lib/images/opsml-green.ico";
     import Navbar from "$lib/components/nav/Navbar.svelte";
     import { onMount } from 'svelte';
     import { afterNavigate } from '$app/navigation';
     import { ToastProvider } from '@skeletonlabs/skeleton-svelte';
     import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
+    import { themeStore } from "$lib/components/settings/theme.svelte";
 
     let { data, children } = $props();
     let show = $state(false);
@@ -14,6 +14,7 @@
     // Initial sync: runs client-side only, after SSR hydration.
     onMount(() => {
         uiSettingsStore.initialize(data.settings);
+        themeStore.initialize(data.settings?.theme_preference, data.username);
         setTimeout(() => {
           show = true;
         }, 50);
@@ -30,6 +31,11 @@
 
   <svelte:head>
     <link rel="icon" type="image/x-icon" href={favicon}/>
+    {#if themeStore.resolved === 'dark'}
+      <link rel="stylesheet" href="/github-markdown-dark.css" />
+    {:else}
+      <link rel="stylesheet" href="/github-markdown-light.css" />
+    {/if}
   </svelte:head>
 
 {#if show}
@@ -54,10 +60,10 @@
 
 <style>
   .grid-background {
-    background-color: #E3DFF2;
+    background-color: var(--grid-bg, #E3DFF2);
     background-image:
-      linear-gradient(to right, #CECBDB 1px, transparent 1px),
-      linear-gradient(to bottom, #CECBDB 1px, transparent 1px);
+      linear-gradient(to right, var(--grid-line, #CECBDB) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line, #CECBDB) 1px, transparent 1px);
     background-size: 60px 60px;
     background-attachment: fixed;
   }

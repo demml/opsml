@@ -8,6 +8,7 @@
   import { Filler } from 'chart.js';
   import type { Histogram } from '../card/data/types';
   import { createHistogramViz } from './hist';
+  import { themeStore } from '$lib/components/settings/theme.svelte';
 
   let {
     histData,
@@ -42,6 +43,14 @@
       if (resetZoomTrigger !== lastTriggerValue && chart) {
         chart.resetZoom();
         lastTriggerValue = resetZoomTrigger;
+      }
+    });
+
+    // Re-render on theme change
+    $effect(() => {
+      const _ = themeStore.resolved;
+      if (chart && canvas) {
+        initChart();
       }
     });
 

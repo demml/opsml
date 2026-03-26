@@ -43,7 +43,7 @@
   <div class="justify-items-start mb-8 w-11/12 mx-auto">
     <h1 class="text-4xl md:text-5xl font-black text-black leading-tight mb-8">
       Get Started with
-      <span class="inline-block px-3 py-1 md:px-4 md:py-2 bg-primary-500 text-white border-4 border-black shadow-brutal -rotate-2 text-4xl md:text-5xl align-top">GenAI</span>
+      <span class="genai-accent inline-block px-3 py-1 md:px-4 md:py-2 bg-primary-500 text-white border-4 border-black shadow-brutal -rotate-2 text-4xl md:text-5xl align-top">GenAI</span>
     </h1>
     <p class="text-xl text-gray-600 max-w-3xl mb-8">
       To get started with GenAI, check out our tutorials. To explore prompts, MCPs, and agents, 
@@ -68,15 +68,15 @@
     <h2 class="text-2xl font-bold text-gray-900 mb-8 text-center">
       Explore GenAI Registries
     </h2>
-    
+
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
       {#each registryCards as card}
-        <div class="flex flex-col items-start bg-surface-50 border-primary-800 border-3 shadow-primary rounded-2xl p-8">
+        <div class="flex flex-col items-start bg-surface-50 border-primary-800 border-3 shadow-primary rounded-base p-8">
 
           <h3 class="text-xl font-bold text-gray-900 mb-4">
             {card.title}
           </h3>
-          
+
           <p class="text-gray-600 text-left leading-relaxed mb-6">
             {card.description}
           </p>
@@ -98,20 +98,28 @@
 
 <style>
   .grid-background {
-    background-color: #f8f8f8;
+    background-color: var(--grid-alt-bg, #f8f8f8);
     background-image:
-      linear-gradient(to right, #CECBDB 1px, transparent 1px),
-      linear-gradient(to bottom, #CECBDB 1px, transparent 1px);
+      linear-gradient(to right, var(--grid-line, #CECBDB) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line, #CECBDB) 1px, transparent 1px);
     background-size: 60px 60px;
     background-attachment: fixed;
   }
 
   .alt-grid-background {
-    background-color: #E3DFF2;
+    background-color: var(--grid-bg, #E3DFF2);
     background-image:
-      linear-gradient(to right, #CECBDB 1px, transparent 1px),
-      linear-gradient(to bottom, #CECBDB 1px, transparent 1px);
+      linear-gradient(to right, var(--grid-line, #CECBDB) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line, #CECBDB) 1px, transparent 1px);
     background-size: 60px 60px;
     background-attachment: fixed;
+  }
+
+  :global([data-theme='opsml'].theme-dark) .genai-accent {
+    background-color: oklch(35% 0.15 295) !important;
+    border-color: oklch(50% 0.18 295 / 0.7) !important;
+    color: oklch(85% 0.12 295) !important;
+    text-shadow: 0 0 10px oklch(65% 0.20 295 / 0.5);
+    box-shadow: 4px 4px 0 oklch(30% 0.12 295 / 0.6);
   }
 </style>

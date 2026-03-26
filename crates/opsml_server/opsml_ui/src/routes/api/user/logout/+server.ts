@@ -1,5 +1,4 @@
 import type { RequestHandler } from "./$types";
-import { setTokenInCookies } from "$lib/server/auth/validateToken";
 import type { LogOutResponse } from "$lib/components/user/types";
 import { RoutePaths } from "$lib/components/api/routes";
 import { json } from "@sveltejs/kit";
@@ -10,8 +9,7 @@ import { createOpsmlClient } from "$lib/server/api/opsmlClient";
  * @returns
  */
 async function logout(
-  fetch: typeof globalThis.fetch,
-  jwt_token?: string
+  fetch: typeof globalThis.fetch
 ): Promise<LogOutResponse> {
   let opsmlClient = createOpsmlClient(fetch);
   let path = `${RoutePaths.LOGOUT}`;
@@ -20,16 +18,18 @@ async function logout(
 }
 
 /**
- * Handles login requests and sets JWT cookie.
- * Only authentication and cookie logic here; UI navigation is handled client-side.
+ * Handles logout requests and clears JWT cookie.
+ * Always clears cookies and returns success — backend failure (e.g. expired token) is not an error.
  */
 export const GET: RequestHandler = async ({ cookies, fetch }) => {
-  let loggedOut = await logout(fetch);
-
-  if (loggedOut) {
-    // update the user store
-    setTokenInCookies(cookies, ""); // clear the cookie
+  try {
+    await logout(fetch);
+  } catch {
+    // Backend call failed (token already expired or invalid) — proceed with local cleanup
   }
 
-  return json(loggedOut);
+  cookies.delete("jwt_token", { path: "/" });
+  cookies.delete("username", { path: "/" });
+
+  return json({ logged_out: true } satisfies LogOutResponse);
 };

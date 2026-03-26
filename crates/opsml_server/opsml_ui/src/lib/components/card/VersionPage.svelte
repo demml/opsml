@@ -43,7 +43,7 @@
       <!-- Header -->
       <div class="flex flex-row items-center gap-2 pb-2">
         <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
-          <Settings color="#40328b" />
+          <Settings color="currentColor" />
         </div>
         <h2 class="font-bold text-primary-800 text-lg">Artifacts</h2>
       </div>
@@ -76,7 +76,7 @@
             version={summary.version}
             updated_at={summary.created_at}
             registry={registry}
-            bgColor={"bg-primary-400"}
+            bgColor={"bg-surface-300"}
           />
         {/each}
       </div>
@@ -88,7 +88,7 @@
             class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9"
             onclick={handlePreviousPage}
           >
-            <ArrowLeft color="#5948a3"/>
+            <ArrowLeft color="currentColor"/>
           </button>
         {/if}
 
@@ -103,7 +103,7 @@
             class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9"
             onclick={handleNextPage}
           >
-            <ArrowRight color="#5948a3"/>
+            <ArrowRight color="currentColor"/>
           </button>
         {/if}
       </div>

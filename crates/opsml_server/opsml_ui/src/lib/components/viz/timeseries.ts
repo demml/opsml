@@ -4,8 +4,10 @@ import "chartjs-plugin-annotation";
 import { format } from "date-fns";
 import {
   generateColors,
+  getCssVar,
   handleResize,
-  tooltip,
+  getTooltip,
+  getChartTheme,
   type ChartjsBarDataset,
   type ChartjsLineDataset,
 } from "$lib/components/viz/utils";
@@ -43,14 +45,14 @@ export function buildTimeChart(
               type: "line",
               yMin: baselineValue,
               yMax: baselineValue,
-              borderColor: "rgb(255, 99, 132)",
+              borderColor: getCssVar('--chart-axis-color', 'rgb(0,0,0)'),
               borderWidth: 2,
               borderDash: [5, 5],
               label: {
                 display: true,
                 content: `Threshold: ${baselineValue.toFixed(2)}`,
                 position: "end",
-                backgroundColor: "rgb(255, 99, 132)",
+                backgroundColor: getCssVar('--chart-axis-color', 'rgb(0,0,0)'),
                 color: "white",
                 padding: 4,
               },
@@ -61,10 +63,12 @@ export function buildTimeChart(
         }
       : undefined;
 
+  const theme = getChartTheme();
+
   // Build ticks config conditionally
   const ticksConfig: any = {
     maxTicksLimit: isMultiDay ? 12 : 25,
-    color: "rgb(0,0,0)",
+    color: theme.textColor,
     font: {
       size: 12,
     },
@@ -94,7 +98,7 @@ export function buildTimeChart(
     },
     options: {
       plugins: {
-        tooltip: tooltip,
+        tooltip: getTooltip(),
         //@ts-ignore
         zoom: {
           pan: {
@@ -106,9 +110,9 @@ export function buildTimeChart(
             mode: "xy",
             drag: {
               enabled: true,
-              borderColor: "rgb(163, 135, 239)",
+              borderColor: theme.zoomBorder,
               borderWidth: 1,
-              backgroundColor: "rgba(163, 135, 239, 0.3)",
+              backgroundColor: theme.zoomBg,
             },
           },
         },
@@ -128,7 +132,7 @@ export function buildTimeChart(
           border: {
             display: true,
             width: 2,
-            color: "rgb(0, 0, 0)",
+            color: theme.axisColor,
           },
           time: {
             displayFormats: {
@@ -145,14 +149,14 @@ export function buildTimeChart(
           },
           grid: {
             display: true,
-            color: "rgba(0, 0, 0, 0.1)",
+            color: theme.gridColor,
             tickLength: 8,
             drawTicks: true,
           },
           title: {
             display: showXLabel ?? false,
             text: x_label,
-            color: "rgb(0,0,0)",
+            color: theme.textColor,
             font: {
               size: 14,
             },
@@ -165,14 +169,14 @@ export function buildTimeChart(
           title: {
             display: showYLabel ?? false,
             text: y_label,
-            color: "rgb(0,0,0)",
+            color: theme.textColor,
             font: {
               size: 14,
             },
           },
           ticks: {
             maxTicksLimit: 10,
-            color: "rgb(0,0,0)",
+            color: theme.textColor,
             font: {
               size: 12,
             },
@@ -180,11 +184,11 @@ export function buildTimeChart(
           border: {
             display: true,
             width: 2,
-            color: "rgb(0, 0, 0)",
+            color: theme.axisColor,
           },
           grid: {
             display: true,
-            color: "rgba(0, 0, 0, 0.1)",
+            color: theme.gridColor,
             tickLength: 8,
             drawTicks: true,
           },

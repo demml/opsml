@@ -16,7 +16,8 @@
     highlightPathEdges
   } from './utils';
   import SpanNode from './SpanNode.svelte';
-  import { max } from 'date-fns';
+  import { browser } from '$app/environment';
+  import { themeStore } from '$lib/components/settings/theme.svelte';
 
   let {
     spans,
@@ -28,12 +29,14 @@
     onSpanSelect: (span: TraceSpan) => void;
   } = $props();
 
+  const isDark = $derived(themeStore.resolved === 'dark');
+
   const nodeTypes = {
     span: SpanNode,
   };
 
   const { nodes: initialNodes, edges: initialEdges, bounds } = $derived(
-    createSpanGraph(spans, slowestSpan)
+    createSpanGraph(spans, slowestSpan, isDark)
   );
 
   let selectedNodeId = $state<string | null>(null);
@@ -81,6 +84,7 @@
 
 <div
   class="span-graph-container"
+  class:span-graph-dark={isDark}
   style="height: {containerHeight}px;"
   class:has-selection={selectedNodeId !== null}
 >
@@ -88,6 +92,7 @@
     nodes={nodes}
     {edges}
     {nodeTypes}
+    colorMode={isDark ? 'dark' : 'light'}
     fitView={true}
     fitViewOptions={{
       minZoom: 0.2,
@@ -99,7 +104,6 @@
     defaultEdgeOptions={{
       type: 'smoothstep',
       animated: true,
-      style: 'stroke: #000; stroke-width: 2;',
       markerEnd: {
         type: 'arrowclosed'
       },
@@ -113,6 +117,7 @@
 </div>
 
 <style>
+  /* ─── Container ───────────────────────────────────────────────────────── */
   .span-graph-container {
     width: 100%;
     border: 2px solid black;
@@ -121,50 +126,72 @@
     overflow: hidden;
   }
 
-  :global(.span-graph-container .svelte-flow__background) {
-    background-color: var(--color-surface-500);
+  .span-graph-container.span-graph-dark {
+    border-color: oklch(35% 0.05 150 / 0.5);
+    background: oklch(8% 0.003 150);
   }
 
+  /* ─── Light mode: override --xy-* vars for opsml brutalist style ────── */
+  .span-graph-container :global(.svelte-flow) {
+    --xy-edge-stroke: black;
+    --xy-edge-stroke-width: 1;
+    --xy-edge-stroke-selected: black;
+    --xy-background-color: transparent;
+    --xy-background-pattern-dots-color-default: #91919a;
+    --xy-node-background-color: transparent;
+    --xy-node-border: none;
+    --xy-node-boxshadow-hover: none;
+    --xy-node-boxshadow-selected: none;
+    --xy-handle-background-color: black;
+    --xy-handle-border-color: white;
+    --xy-controls-button-background-color: white;
+    --xy-controls-button-background-color-hover: var(--color-primary-100);
+    --xy-controls-button-color: black;
+    --xy-controls-button-border-color: black;
+    --xy-controls-box-shadow: var(--shadow-small);
+  }
+
+  /* ─── Dark mode: green-hued phosphor terminal look ─────────────────── */
+  .span-graph-container.span-graph-dark :global(.svelte-flow) {
+    --xy-edge-stroke: oklch(60% 0.10 150);
+    --xy-edge-stroke-width: 1;
+    --xy-edge-stroke-selected: oklch(72% 0.14 150);
+    --xy-background-color: oklch(8% 0.003 150);
+    --xy-background-pattern-dots-color-default: oklch(30% 0.04 150 / 0.4);
+    --xy-node-background-color: transparent;
+    --xy-node-border: none;
+    --xy-node-boxshadow-hover: none;
+    --xy-node-boxshadow-selected: none;
+    --xy-handle-background-color: oklch(60% 0.10 150);
+    --xy-handle-border-color: oklch(12% 0.003 150);
+    --xy-controls-button-background-color: oklch(12% 0.003 150);
+    --xy-controls-button-background-color-hover: oklch(18% 0.004 150);
+    --xy-controls-button-color: oklch(60% 0.10 150);
+    --xy-controls-button-border-color: oklch(25% 0.01 150 / 0.3);
+    --xy-controls-box-shadow: none;
+  }
+
+  /* ─── Controls brutalist border override ───────────────────────────── */
   :global(.span-graph-container .svelte-flow__controls) {
-    background: white;
     border: 2px solid black;
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow-small);
   }
 
-  :global(.span-graph-container .svelte-flow__controls-button) {
-    background: white;
-    border: none;
-    border-bottom: 1px solid black;
-    padding: 8px;
-    width: 100%;
-    transition: all 0.2s ease;
+  .span-graph-dark :global(.svelte-flow__controls) {
+    border-color: oklch(35% 0.05 150 / 0.5);
   }
 
-  :global(.span-graph-container .svelte-flow__controls-button:last-child) {
-    border-bottom: none;
-  }
-
-  :global(.span-graph-container .svelte-flow__controls-button:hover) {
-    background: var(--color-primary-100);
-  }
-
-  :global(.span-graph-container .svelte-flow__controls-button svg) {
-    fill: black;
-  }
-
-  /* Edge styling */
-  :global(.span-graph-container .svelte-flow__edge-path) {
-    stroke: black;
-    stroke-width: 2;
-    transition: stroke-width 0.2s ease, stroke 0.2s ease;
-  }
-
+  /* ─── Edge animation (dashed flow) ─────────────────────────────────── */
   :global(.span-graph-container .svelte-flow__edge.animated .svelte-flow__edge-path) {
     stroke-dasharray: 8 4;
     animation: edge-flow 1s linear infinite;
   }
 
+  :global(.span-graph-container .svelte-flow__edge-path) {
+    transition: stroke-width 0.2s ease, stroke 0.2s ease;
+  }
+
+  /* ─── In-path highlight (selected node ancestry) ───────────────────── */
   :global(.span-graph-container .svelte-flow__edge.in-path .svelte-flow__edge-path) {
     stroke: var(--color-primary-500);
     stroke-width: 3;
@@ -172,6 +199,23 @@
     animation: edge-flow 0.7s linear infinite;
   }
 
+  :global(.span-graph-container .svelte-flow__edge.in-path .svelte-flow__edge-marker),
+  :global(.span-graph-container .svelte-flow__edge.in-path .svelte-flow__arrowhead polyline) {
+    fill: var(--color-primary-500);
+    stroke: var(--color-primary-500);
+  }
+
+  .span-graph-dark :global(.svelte-flow__edge.in-path .svelte-flow__edge-path) {
+    stroke: oklch(72% 0.14 150);
+  }
+
+  .span-graph-dark :global(.svelte-flow__edge.in-path .svelte-flow__edge-marker),
+  .span-graph-dark :global(.svelte-flow__edge.in-path .svelte-flow__arrowhead polyline) {
+    fill: oklch(72% 0.14 150);
+    stroke: oklch(72% 0.14 150);
+  }
+
+  /* ─── Error edge styling ───────────────────────────────────────────── */
   :global(.span-graph-container .svelte-flow__edge.error .svelte-flow__edge-path) {
     stroke: var(--color-error-600);
     stroke-width: 2;
@@ -183,33 +227,30 @@
     animation: edge-flow 0.5s linear infinite;
   }
 
-  :global(.span-graph-container .svelte-flow__edge .svelte-flow__edge-marker) {
-    fill: black;
-    transition: fill 0.2s ease;
-  }
-
-  :global(.span-graph-container .svelte-flow__edge.in-path .svelte-flow__edge-marker) {
-    fill: var(--color-primary-500);
-  }
-
   :global(.span-graph-container .svelte-flow__edge.error .svelte-flow__edge-marker) {
     fill: var(--color-error-600);
   }
 
-  @keyframes edge-flow {
-    to {
-      stroke-dashoffset: -12;
-    }
+  .span-graph-dark :global(.svelte-flow__edge.error .svelte-flow__edge-path) {
+    stroke: oklch(60% 0.15 14);
   }
 
+  .span-graph-dark :global(.svelte-flow__edge.error .svelte-flow__edge-marker) {
+    fill: oklch(60% 0.15 14);
+  }
+
+  /* ─── Edge hover ───────────────────────────────────────────────────── */
   :global(.span-graph-container .svelte-flow__edge:hover .svelte-flow__edge-path) {
     stroke-width: 3;
   }
 
+  /* ─── Selection dimming ────────────────────────────────────────────── */
   :global(.span-graph-container.has-selection .svelte-flow__node:not(.in-path):not(.selected)) {
     opacity: 0.3;
     transition: opacity 0.2s ease;
   }
+
+
 
   :global(.span-graph-container.has-selection .svelte-flow__edge:not(.in-path)) {
     opacity: 0.3;
@@ -227,6 +268,9 @@
     transition: opacity 0.2s ease;
   }
 
-
-
+  @keyframes edge-flow {
+    to {
+      stroke-dashoffset: -12;
+    }
+  }
 </style>

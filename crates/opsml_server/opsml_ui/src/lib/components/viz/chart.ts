@@ -3,6 +3,7 @@ import "chartjs-plugin-zoom";
 import {
   generateColors,
   handleResize,
+  getChartTheme,
   type ChartjsLineDataset,
   type ChartjsBarDataset,
 } from "$lib/components/viz/utils";
@@ -17,6 +18,7 @@ export function buildChart(
   showLegend: boolean = false,
   chartType: "line" | "bar" = "line"
 ): ChartConfiguration {
+  const theme = getChartTheme();
   const baseConfig = {
     //@ts-ignore
     type: chartType,
@@ -28,15 +30,15 @@ export function buildChart(
       plugins: {
         tooltip: {
           cornerRadius: 1,
-          backgroundColor: "rgba(255, 255, 255, 1)",
-          borderColor: "rgb(0, 0, 0)",
+          backgroundColor: theme.tooltipBg,
+          borderColor: theme.tooltipBorder,
           borderWidth: 1,
           enabled: true,
-          titleColor: "rgb(0, 0, 0)",
+          titleColor: theme.tooltipText,
           titleFont: {
             size: 14,
           },
-          bodyColor: "rgb(0, 0, 0)",
+          bodyColor: theme.tooltipText,
           bodyFont: {
             size: 12,
           },
@@ -52,9 +54,9 @@ export function buildChart(
             mode: "xy",
             drag: {
               enabled: true,
-              borderColor: "rgb(163, 135, 239)",
+              borderColor: theme.zoomBorder,
               borderWidth: 1,
-              backgroundColor: "rgba(163, 135, 239, 0.3)",
+              backgroundColor: theme.zoomBg,
             },
           },
         },
@@ -63,9 +65,9 @@ export function buildChart(
           position: "bottom",
           labels: {
             font: {
-              size: 12, // Increase legend font size (in pixels)
+              size: 12,
             },
-            color: "rgb(0, 0, 0)",
+            color: theme.textColor,
           },
         },
       },
@@ -79,25 +81,25 @@ export function buildChart(
           border: {
             display: true,
             width: 2,
-            color: "rgb(0, 0, 0)",
+            color: theme.axisColor,
           },
           grid: {
             display: true,
-            color: "rgba(0, 0, 0, 0.1)",
+            color: theme.gridColor,
             tickLength: 8,
             drawTicks: true,
           },
           title: {
             display: true,
             text: x_label,
-            color: "rgb(0,0,0)",
+            color: theme.textColor,
             font: {
               size: 14,
             },
           },
           ticks: {
             maxTicksLimit: 10,
-            color: "rgb(0,0,0)",
+            color: theme.textColor,
             font: {
               size: 12,
             },
@@ -107,14 +109,14 @@ export function buildChart(
           title: {
             display: true,
             text: y_label,
-            color: "rgb(0,0,0)",
+            color: theme.textColor,
             font: {
               size: 14,
             },
           },
           ticks: {
             maxTicksLimit: 10,
-            color: "rgb(0,0,0)",
+            color: theme.textColor,
             font: {
               size: 12,
             },
@@ -122,13 +124,13 @@ export function buildChart(
           border: {
             display: true,
             width: 2,
-            color: "rgb(0, 0, 0)",
+            color: theme.axisColor,
           },
           grace: "10%",
           padding: { top: 10 },
           grid: {
             display: true,
-            color: "rgba(0, 0, 0, 0.1)",
+            color: theme.gridColor,
             tickLength: 8,
             drawTicks: true,
           },

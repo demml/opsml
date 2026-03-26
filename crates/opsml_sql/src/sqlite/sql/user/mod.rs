@@ -19,6 +19,9 @@ impl FromRow<'_, SqliteRow> for User {
         let role = row.try_get("role")?;
         let refresh_token = row.try_get("refresh_token")?;
         let authentication_type: String = row.try_get("authentication_type")?;
+        let theme_preference: String = row
+            .try_get("theme_preference")
+            .unwrap_or("system".to_string());
 
         let group_permissions: Vec<String> =
             serde_json::from_value(row.try_get("group_permissions")?).unwrap_or_default();
@@ -47,6 +50,7 @@ impl FromRow<'_, SqliteRow> for User {
             group_permissions,
             favorite_spaces,
             authentication_type,
+            theme_preference,
         })
     }
 }
@@ -167,6 +171,7 @@ impl UserLogicTrait for UserLogicSqliteClient {
             .bind(&user.refresh_token)
             .bind(&user.email)
             .bind(&user.authentication_type)
+            .bind(&user.theme_preference)
             .bind(&user.username)
             .bind(&user.authentication_type)
             .execute(&self.pool)

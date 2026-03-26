@@ -110,7 +110,7 @@ export class PromptHelper {
         return prompt.request.contents as unknown as MessageNum[];
 
       default:
-        return assertNever(prompt as never);
+        return [];
     }
   }
 

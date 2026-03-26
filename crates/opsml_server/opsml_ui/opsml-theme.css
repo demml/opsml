@@ -1,4 +1,10 @@
-[data-theme='opsml'] {
+/* ═══════════════════════════════════════════════════════════════════════════
+   OpsML Theme — Light (purple/magenta brutalist) + Dark (phosphor terminal green)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Light theme (default) ─── */
+[data-theme='opsml'].theme-light,
+[data-theme='opsml']:not(.theme-dark) {
 	--text-scaling: 1.067;
 	--base-font-color: 0 0 0;
 	--base-font-color-dark: 255 255 255;
@@ -202,41 +208,375 @@
 	--color-surface-contrast-800: var(--color-surface-contrast-dark);
 	--color-surface-contrast-900: var(--color-surface-contrast-dark);
 	--color-surface-contrast-950: var(--color-surface-contrast-light);
+
+	/* Grid background */
+	--grid-bg: #E3DFF2;
+	--grid-line: #CECBDB;
+	--grid-alt-bg: #f8f8f8;
+
+	/* Chart colors */
+	--chart-text-color: rgb(0, 0, 0);
+	--chart-grid-color: rgba(0, 0, 0, 0.1);
+	--chart-axis-color: rgb(0, 0, 0);
+	--chart-tooltip-bg: rgba(255, 255, 255, 1);
+	--chart-tooltip-border: rgb(0, 0, 0);
+	--chart-tooltip-text: rgb(0, 0, 0);
+	--chart-series-1: rgba(163, 135, 239, 1);
+	--chart-series-2: rgba(95, 214, 141, 1);
+	--chart-series-3: rgba(135, 170, 240, 1);
+	--chart-series-4: rgba(253, 220, 90, 1);
+	--chart-series-5: rgba(249, 178, 94, 1);
+	--chart-series-6: rgba(254, 108, 107, 1);
+	--chart-zoom-border: rgb(163, 135, 239);
+	--chart-zoom-bg: rgba(163, 135, 239, 0.3);
 }
 
-[data-theme='opsml'] {
-  /* You can fine‑tune these without touching classes */
-  --retro-primary-from: oklch(88% 0.18 302deg); /* soft neon magenta */
+/* ─── Light theme retro gradients ─── */
+[data-theme='opsml'].theme-light,
+[data-theme='opsml']:not(.theme-dark) {
+  --retro-primary-from: oklch(88% 0.18 302deg);
   --retro-primary-mid:  oklch(84% 0.22 295deg);
   --retro-primary-to:   oklch(79% 0.20 288deg);
 
-  --retro-secondary-from: oklch(90% 0.14 190deg); /* cyan / aqua */
+  --retro-secondary-from: oklch(90% 0.14 190deg);
   --retro-secondary-mid:  oklch(86% 0.18 182deg);
   --retro-secondary-to:   oklch(82% 0.20 174deg);
 
-  --retro-tertiary-from: oklch(89% 0.16 265deg); /* violet */
+  --retro-tertiary-from: oklch(89% 0.16 265deg);
   --retro-tertiary-mid:  oklch(85% 0.19 258deg);
   --retro-tertiary-to:   oklch(80% 0.21 252deg);
 
-  --retro-success-from: oklch(90% 0.18 125deg); /* lime / acid */
+  --retro-success-from: oklch(90% 0.18 125deg);
   --retro-success-mid:  oklch(86% 0.22 112deg);
   --retro-success-to:   oklch(81% 0.24 100deg);
 
-  --retro-warning-from: oklch(92% 0.14 80deg);  /* peach / apricot */
+  --retro-warning-from: oklch(92% 0.14 80deg);
   --retro-warning-mid:  oklch(88% 0.18 70deg);
   --retro-warning-to:   oklch(83% 0.20 60deg);
 
   --retro-error-base: oklch(95.798% 0.01325 28.451);
-  --retro-error-from: oklch(92% 0.15 25deg);    
-  --retro-error-mid:  oklch(83% 0.22 18deg);   
+  --retro-error-from: oklch(92% 0.15 25deg);
+  --retro-error-mid:  oklch(83% 0.22 18deg);
   --retro-error-to:   oklch(72% 0.24 12deg);
 
+  --retro-orange-from: oklch(96.697% 0.01554 42.084);
+  --retro-orange-to:   oklch(63.473% 0.19743 38.716);
 
-  --retro-orange-from: oklch(96.697% 0.01554 42.084);  /* bright neon tangerine - hot glow */  /* intense neon orange - fire core */
-  --retro-orange-to:   oklch(63.473% 0.19743 38.716); /* vivid orange-red - ember edge */
+  --neo-glow-color: oklch(82% 0.20 295deg / 0.55);
 }
 
-/* Replace originals (or keep both; this fully overrides existing gradient-* if order is last) */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark Theme — Phosphor Terminal Green
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark {
+	--text-scaling: 1.067;
+	/* Base font: vibrant phosphor green (#8ddb9f) */
+	--base-font-color: 141 219 159;
+	--base-font-color-dark: 141 219 159;
+	--base-font-family: inherit;
+	--base-font-size: inherit;
+	--base-line-height: inherit;
+	--base-font-weight: 500;
+	--base-font-style: inherit;
+	--base-letter-spacing: 0em;
+	--heading-font-color: inherit;
+	--heading-font-color-dark: inherit;
+	--heading-font-family: inherit;
+	--heading-font-weight: bold;
+	--heading-font-style: normal;
+	--heading-letter-spacing: inherit;
+	--anchor-font-color: var(--color-primary-700);
+	--anchor-font-color-dark: var(--color-primary-700);
+	--anchor-font-family: inherit;
+	--anchor-font-size: inherit;
+	--anchor-line-height: inherit;
+	--anchor-font-weight: inherit;
+	--anchor-font-style: inherit;
+	--anchor-letter-spacing: inherit;
+	--anchor-text-decoration: none;
+	--anchor-text-decoration-hover: underline;
+	--anchor-text-decoration-active: none;
+	--anchor-text-decoration-focus: none;
+	--spacing: 0.25rem;
+	--radius-base: 0.375rem;
+	--radius-container: 0.75rem;
+	--default-border-width: 1px;
+	--default-divide-width: 1px;
+	--default-ring-width: 1px;
+	--body-background-color: var(--color-surface-950);
+	--body-background-color-dark: var(--color-surface-950);
+
+	/* ── Primary: Phosphor Green ──
+	   Derived from inspiration hex samples:
+	   Background #0e120e = oklch(10% 0.01 150)
+	   Card bg    #0a100b = oklch(8% 0.01 150)
+	   Pill fill  #24522a = oklch(36% 0.09 148)
+	   Text       #8ddb9f = oklch(82% 0.14 152)
+	   Bright     #89df98 = oklch(83% 0.15 150)
+
+	   Low numbers = dark fills/backgrounds
+	   High numbers = visible phosphor green text/accents */
+	--color-primary-50:  oklch(10% 0.01 150);
+	--color-primary-100: oklch(20% 0.01 150);
+	--color-primary-200: oklch(24% 0.05 150);
+	--color-primary-300: oklch(28% 0.06 150);
+	--color-primary-400: oklch(36% 0.09 148);
+	--color-primary-500: oklch(45% 0.11 150);
+	--color-primary-600: oklch(55% 0.13 150);
+	--color-primary-700: oklch(65% 0.14 150);
+	--color-primary-800: oklch(75% 0.15 150);
+	--color-primary-900: oklch(80% 0.14 152);
+	--color-primary-950: oklch(83% 0.15 150);
+	--color-primary-contrast-dark: var(--color-primary-50);
+	--color-primary-contrast-light: var(--color-primary-950);
+	--color-primary-contrast-50: var(--color-primary-contrast-light);
+	--color-primary-contrast-100: var(--color-primary-contrast-light);
+	--color-primary-contrast-200: var(--color-primary-contrast-light);
+	--color-primary-contrast-300: var(--color-primary-contrast-light);
+	--color-primary-contrast-400: var(--color-primary-contrast-light);
+	--color-primary-contrast-500: var(--color-primary-contrast-light);
+	--color-primary-contrast-600: var(--color-primary-contrast-dark);
+	--color-primary-contrast-700: var(--color-primary-contrast-dark);
+	--color-primary-contrast-800: var(--color-primary-contrast-dark);
+	--color-primary-contrast-900: var(--color-primary-contrast-dark);
+	--color-primary-contrast-950: var(--color-primary-contrast-dark);
+
+	/* ── Secondary: Same green family, slightly cooler ── */
+	--color-secondary-50:  oklch(10% 0.01 155);
+	--color-secondary-100: oklch(20% 0.04 155);
+	--color-secondary-200: oklch(20% 0.04 155);
+	--color-secondary-300: oklch(28% 0.06 155);
+	--color-secondary-400: oklch(36% 0.09 155);
+	--color-secondary-500: oklch(45% 0.11 155);
+	--color-secondary-600: oklch(55% 0.13 155);
+	--color-secondary-700: oklch(65% 0.14 155);
+	--color-secondary-800: oklch(75% 0.15 155);
+	--color-secondary-900: oklch(80% 0.14 155);
+	--color-secondary-950: oklch(83% 0.13 155);
+	--color-secondary-contrast-dark: var(--color-secondary-50);
+	--color-secondary-contrast-light: var(--color-secondary-950);
+	--color-secondary-contrast-50: var(--color-secondary-contrast-light);
+	--color-secondary-contrast-100: var(--color-secondary-contrast-light);
+	--color-secondary-contrast-200: var(--color-secondary-contrast-light);
+	--color-secondary-contrast-300: var(--color-secondary-contrast-light);
+	--color-secondary-contrast-400: var(--color-secondary-contrast-light);
+	--color-secondary-contrast-500: var(--color-secondary-contrast-light);
+	--color-secondary-contrast-600: var(--color-secondary-contrast-dark);
+	--color-secondary-contrast-700: var(--color-secondary-contrast-dark);
+	--color-secondary-contrast-800: var(--color-secondary-contrast-dark);
+	--color-secondary-contrast-900: var(--color-secondary-contrast-dark);
+	--color-secondary-contrast-950: var(--color-secondary-contrast-dark);
+
+	/* ── Tertiary: Blue-gray for muted elements (#444a5b) ── */
+	--color-tertiary-50:  oklch(10% 0.01 265);
+	--color-tertiary-100: oklch(14% 0.015 265);
+	--color-tertiary-200: oklch(20% 0.02 265);
+	--color-tertiary-300: oklch(28% 0.025 265);
+	--color-tertiary-400: oklch(35% 0.03 265);
+	--color-tertiary-500: oklch(38% 0.03 265);
+	--color-tertiary-600: oklch(45% 0.03 265);
+	--color-tertiary-700: oklch(52% 0.03 265);
+	--color-tertiary-800: oklch(60% 0.03 265);
+	--color-tertiary-900: oklch(68% 0.02 265);
+	--color-tertiary-950: oklch(75% 0.02 265);
+	--color-tertiary-contrast-dark: var(--color-tertiary-50);
+	--color-tertiary-contrast-light: var(--color-tertiary-950);
+	--color-tertiary-contrast-50: var(--color-tertiary-contrast-light);
+	--color-tertiary-contrast-100: var(--color-tertiary-contrast-light);
+	--color-tertiary-contrast-200: var(--color-tertiary-contrast-light);
+	--color-tertiary-contrast-300: var(--color-tertiary-contrast-light);
+	--color-tertiary-contrast-400: var(--color-tertiary-contrast-light);
+	--color-tertiary-contrast-500: var(--color-tertiary-contrast-light);
+	--color-tertiary-contrast-600: var(--color-tertiary-contrast-dark);
+	--color-tertiary-contrast-700: var(--color-tertiary-contrast-dark);
+	--color-tertiary-contrast-800: var(--color-tertiary-contrast-dark);
+	--color-tertiary-contrast-900: var(--color-tertiary-contrast-dark);
+	--color-tertiary-contrast-950: var(--color-tertiary-contrast-dark);
+
+	/* ── Success: Bright phosphor green (same as primary) ── */
+	--color-success-50:  oklch(10% 0.01 148);
+	--color-success-100: oklch(14% 0.02 148);
+	--color-success-200: oklch(20% 0.04 148);
+	--color-success-300: oklch(28% 0.07 148);
+	--color-success-400: oklch(36% 0.09 148);
+	--color-success-500: oklch(45% 0.11 148);
+	--color-success-600: oklch(55% 0.13 148);
+	--color-success-700: oklch(65% 0.14 148);
+	--color-success-800: oklch(75% 0.15 148);
+	--color-success-900: oklch(80% 0.14 148);
+	--color-success-950: oklch(83% 0.13 148);
+	--color-success-contrast-dark: var(--color-success-50);
+	--color-success-contrast-light: var(--color-success-950);
+	--color-success-contrast-50: var(--color-success-contrast-light);
+	--color-success-contrast-100: var(--color-success-contrast-light);
+	--color-success-contrast-200: var(--color-success-contrast-light);
+	--color-success-contrast-300: var(--color-success-contrast-light);
+	--color-success-contrast-400: var(--color-success-contrast-light);
+	--color-success-contrast-500: var(--color-success-contrast-light);
+	--color-success-contrast-600: var(--color-success-contrast-dark);
+	--color-success-contrast-700: var(--color-success-contrast-dark);
+	--color-success-contrast-800: var(--color-success-contrast-dark);
+	--color-success-contrast-900: var(--color-success-contrast-dark);
+	--color-success-contrast-950: var(--color-success-contrast-dark);
+
+	/* ── Warning: Amber (dim on CRT, visible only at high numbers) ── */
+	--color-warning-50:  oklch(10% 0.01 75);
+	--color-warning-100: oklch(14% 0.02 75);
+	--color-warning-200: oklch(20% 0.04 72);
+	--color-warning-300: oklch(28% 0.06 70);
+	--color-warning-400: oklch(36% 0.08 68);
+	--color-warning-500: oklch(45% 0.10 65);
+	--color-warning-600: oklch(55% 0.12 63);
+	--color-warning-700: oklch(65% 0.12 60);
+	--color-warning-800: oklch(72% 0.11 58);
+	--color-warning-900: oklch(78% 0.10 55);
+	--color-warning-950: oklch(82% 0.09 52);
+	--color-warning-contrast-dark: var(--color-warning-50);
+	--color-warning-contrast-light: var(--color-warning-950);
+	--color-warning-contrast-50: var(--color-warning-contrast-light);
+	--color-warning-contrast-100: var(--color-warning-contrast-light);
+	--color-warning-contrast-200: var(--color-warning-contrast-light);
+	--color-warning-contrast-300: var(--color-warning-contrast-light);
+	--color-warning-contrast-400: var(--color-warning-contrast-light);
+	--color-warning-contrast-500: var(--color-warning-contrast-light);
+	--color-warning-contrast-600: var(--color-warning-contrast-dark);
+	--color-warning-contrast-700: var(--color-warning-contrast-dark);
+	--color-warning-contrast-800: var(--color-warning-contrast-dark);
+	--color-warning-contrast-900: var(--color-warning-contrast-dark);
+	--color-warning-contrast-950: var(--color-warning-contrast-dark);
+
+	/* ── Error: Red (muted on CRT) ── */
+	--color-error-50:  oklch(10% 0.01 20);
+	--color-error-100: oklch(14% 0.03 20);
+	--color-error-200: oklch(20% 0.05 18);
+	--color-error-300: oklch(28% 0.08 17);
+	--color-error-400: oklch(36% 0.10 16);
+	--color-error-500: oklch(45% 0.13 15);
+	--color-error-600: oklch(55% 0.15 14);
+	--color-error-700: oklch(62% 0.14 14);
+	--color-error-800: oklch(68% 0.13 13);
+	--color-error-900: oklch(74% 0.12 12);
+	--color-error-950: oklch(80% 0.10 11);
+	--color-error-contrast-dark: var(--color-error-50);
+	--color-error-contrast-light: var(--color-error-950);
+	--color-error-contrast-50: var(--color-error-contrast-light);
+	--color-error-contrast-100: var(--color-error-contrast-light);
+	--color-error-contrast-200: var(--color-error-contrast-light);
+	--color-error-contrast-300: var(--color-error-contrast-light);
+	--color-error-contrast-400: var(--color-error-contrast-light);
+	--color-error-contrast-500: var(--color-error-contrast-dark);
+	--color-error-contrast-600: var(--color-error-contrast-dark);
+	--color-error-contrast-700: var(--color-error-contrast-dark);
+	--color-error-contrast-800: var(--color-error-contrast-dark);
+	--color-error-contrast-900: var(--color-error-contrast-dark);
+	--color-error-contrast-950: var(--color-error-contrast-dark);
+
+	/* ── Surface: Dark charcoal with green hue ──
+	   From inspiration: bg #0e120e, card #0a100b
+	   50 = lightest surface (card body) — slightly above page bg
+	   950 = deepest (page background) */
+	--color-surface-50:  oklch(15% 0.004 150);
+	--color-surface-100: oklch(13% 0.003 150);
+	--color-surface-200: oklch(10% 0.003 150);
+	--color-surface-300: oklch(18% 0.004 150);
+	--color-surface-400: oklch(8.5% 0.003 150);
+	--color-surface-500: oklch(8% 0.003 150);
+	--color-surface-600: oklch(7.5% 0.003 150);
+	--color-surface-700: oklch(7% 0.003 150);
+	--color-surface-800: oklch(6.5% 0.003 150);
+	--color-surface-900: oklch(6% 0.003 150);
+	--color-surface-950: oklch(5.5% 0.003 150);
+	--color-surface-contrast-dark: var(--color-surface-50);
+	--color-surface-contrast-light: var(--color-surface-950);
+	--color-surface-contrast-50: var(--color-surface-contrast-light);
+	--color-surface-contrast-100: var(--color-surface-contrast-light);
+	--color-surface-contrast-200: var(--color-surface-contrast-light);
+	--color-surface-contrast-300: var(--color-surface-contrast-light);
+	--color-surface-contrast-400: var(--color-surface-contrast-light);
+	--color-surface-contrast-500: var(--color-surface-contrast-dark);
+	--color-surface-contrast-600: var(--color-surface-contrast-dark);
+	--color-surface-contrast-700: var(--color-surface-contrast-dark);
+	--color-surface-contrast-800: var(--color-surface-contrast-dark);
+	--color-surface-contrast-900: var(--color-surface-contrast-dark);
+	--color-surface-contrast-950: var(--color-surface-contrast-dark);
+
+	/* ── Retro gradients: very dark, nearly invisible ── */
+	--retro-primary-from: oklch(16% 0.01 150);
+	--retro-primary-mid:  oklch(12% 0.007 150);
+	--retro-primary-to:   oklch(8% 0.004 150);
+
+	--retro-secondary-from: oklch(16% 0.01 155);
+	--retro-secondary-mid:  oklch(12% 0.007 155);
+	--retro-secondary-to:   oklch(8% 0.004 155);
+
+	--retro-tertiary-from: oklch(16% 0.02 265);
+	--retro-tertiary-mid:  oklch(12% 0.015 265);
+	--retro-tertiary-to:   oklch(8% 0.01 265);
+
+	--retro-success-from: oklch(16% 0.01 148);
+	--retro-success-mid:  oklch(12% 0.007 148);
+	--retro-success-to:   oklch(8% 0.004 148);
+
+	--retro-warning-from: oklch(16% 0.02 75);
+	--retro-warning-mid:  oklch(12% 0.015 72);
+	--retro-warning-to:   oklch(8% 0.01 70);
+
+	--retro-error-base: oklch(8% 0.01 15);
+	--retro-error-from: oklch(16% 0.03 15);
+	--retro-error-mid:  oklch(12% 0.02 13);
+	--retro-error-to:   oklch(8% 0.01 11);
+
+	--retro-orange-from: oklch(8% 0.01 45);
+	--retro-orange-to:   oklch(16% 0.03 40);
+
+	--neo-glow-color: oklch(65% 0.14 150 / 0.3);
+
+	/* ── Grid: subtle phosphor grid on near-black (#0e120e bg) ── */
+	--grid-bg: oklch(5.5% 0.004 150);
+	--grid-line: oklch(65% 0.14 150 / 0.06);
+	--grid-alt-bg: oklch(7% 0.006 150);
+
+	/* ── Chart colors ── */
+	--chart-text-color: oklch(82% 0.14 152);
+	--chart-grid-color: oklch(65% 0.14 150 / 0.12);
+	--chart-axis-color: oklch(65% 0.12 150);
+	--chart-tooltip-bg: oklch(8% 0.01 150);
+	--chart-tooltip-border: oklch(50% 0.10 150 / 0.3);
+	--chart-tooltip-text: oklch(82% 0.14 152);
+	--chart-series-1: oklch(75% 0.15 150);
+	--chart-series-2: oklch(70% 0.12 80);
+	--chart-series-3: oklch(70% 0.12 195);
+	--chart-series-4: oklch(75% 0.14 148);
+	--chart-series-5: oklch(60% 0.10 150);
+	--chart-series-6: oklch(55% 0.12 15);
+	--chart-zoom-border: oklch(65% 0.14 150);
+	--chart-zoom-bg: oklch(65% 0.14 150 / 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Auth pages dark mode — login, logout, register, reset
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark form p,
+[data-theme='opsml'].theme-dark form label {
+  color: var(--color-primary-950) !important;
+}
+[data-theme='opsml'].theme-dark form input {
+  color: var(--color-primary-950) !important;
+  background-color: var(--color-surface-100) !important;
+}
+[data-theme='opsml'].theme-dark form input::placeholder {
+  color: var(--color-primary-700) !important;
+  opacity: 1 !important;
+}
+[data-theme='opsml'].theme-dark form a {
+  color: var(--color-primary-700) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Gradient classes (both themes)
+   ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme='opsml'] .gradient-primary {
   background:
     linear-gradient(135deg,
@@ -280,13 +620,22 @@
       var(--retro-error-to) 100%);
 }
 
-/* Optional neon glow + crisp brutalist edge */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Neo-glow + utility classes
+   ═══════════════════════════════════════════════════════════════════════════ */
 [data-theme='opsml'] .neo-glow {
   position: relative;
   box-shadow:
     0 0 0 2px #000,
     3px 3px 0 0 #000,
-    0 0 12px 2px oklch(82% 0.20 295deg / 0.55);
+    0 0 12px 2px var(--neo-glow-color);
+}
+[data-theme='opsml'].theme-dark .neo-glow {
+  box-shadow:
+    0 0 0 1px oklch(45% 0.10 160 / 0.3),
+    3px 3px 0 0 oklch(30% 0.06 160 / 0.4),
+    0 0 8px 1px var(--neo-glow-color);
 }
 [data-theme='opsml'] .neo-glow::after {
   content: "";
@@ -298,7 +647,7 @@
   border-radius: inherit;
 }
 
-/* Utility for grainy texture (optional) */
+/* Grain texture */
 [data-theme='opsml'] .grain {
   position: relative;
 }
@@ -316,15 +665,568 @@
   filter: contrast(120%) brightness(105%);
 }
 
+/* Warn color utility */
 [data-theme='opsml'] .warn-color {
-  background-color: var(--retro-orange-from);  /* Light coral background */
-  border: 1px solid var(--retro-orange-to);     /* Dark coral border */
-  color: var(--retro-orange-to);                /* Dark coral text */
+  background-color: var(--retro-orange-from);
+  border: 1px solid var(--retro-orange-to);
+  color: var(--retro-orange-to);
 }
 
-/* ─── sRGB fallbacks for browsers without OKLCH support (Safari < 15.4) ─── */
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — border overrides (green glow borders)
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* ── Dark mode: Navbar — dark charcoal strip, not green ── */
+[data-theme='opsml'].theme-dark nav.bg-primary-700,
+[data-theme='opsml'].theme-dark .bg-primary-700 {
+    background-color: oklch(15% 0.01 150);
+}
+/* Nav icon buttons — inset hardware squares */
+[data-theme='opsml'].theme-dark nav .bg-surface-50 {
+    background-color: oklch(10% 0.008 150);
+}
+
+/* Dark borders: 1px solid green, like hardware panel lines */
+[data-theme='opsml'].theme-dark .border-black,
+[data-theme='opsml'].theme-dark .border-b-black,
+[data-theme='opsml'].theme-dark .border-t-black,
+[data-theme='opsml'].theme-dark .border-l-black,
+[data-theme='opsml'].theme-dark .border-r-black {
+    border-color: oklch(40% 0.08 150 / 0.3);
+}
+/* Stronger borders for containers — visible panel outlines */
+[data-theme='opsml'].theme-dark .border-2.border-black,
+[data-theme='opsml'].theme-dark .border-3.border-black,
+[data-theme='opsml'].theme-dark .border-4.border-black {
+    border-color: oklch(50% 0.10 150 / 0.4);
+}
+/* Subtle separator for file tree rows and similar low-opacity borders */
+[data-theme='opsml'].theme-dark .border-black\/10 {
+    border-color: oklch(30% 0.04 150 / 0.15);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — text color overrides
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* Dark text: phosphor green (#8ddb9f) with bloom */
+[data-theme='opsml'].theme-dark .text-black {
+    color: oklch(76% 0.10 150);
+}
+[data-theme='opsml'].theme-dark .text-black\/60 {
+    color: oklch(60% 0.08 150 / 0.7);
+}
+[data-theme='opsml'].theme-dark .text-black\/80 {
+    color: oklch(72% 0.10 150 / 0.85);
+}
+[data-theme='opsml'].theme-dark .text-white {
+    color: oklch(78% 0.12 150);
+}
+[data-theme='opsml'].theme-dark .text-gray-600 {
+    color: oklch(65% 0.08 150);
+}
+[data-theme='opsml'].theme-dark .text-gray-700 {
+    color: oklch(70% 0.09 150);
+}
+[data-theme='opsml'].theme-dark .text-gray-800 {
+    color: oklch(72% 0.10 150);
+}
+[data-theme='opsml'].theme-dark .text-gray-900 {
+    color: oklch(78% 0.11 150);
+}
+/* Slate text overrides — used in GenAI task cards and tables */
+[data-theme='opsml'].theme-dark .text-slate-400 {
+    color: oklch(55% 0.07 150);
+}
+[data-theme='opsml'].theme-dark .text-slate-500 {
+    color: oklch(65% 0.10 150);
+}
+[data-theme='opsml'].theme-dark .text-slate-600 {
+    color: oklch(65% 0.09 150);
+}
+[data-theme='opsml'].theme-dark .text-slate-700 {
+    color: oklch(70% 0.09 150);
+}
+/* Primary text overrides — pills and badges */
+[data-theme='opsml'].theme-dark .text-primary-800 {
+    color: oklch(75% 0.15 150);
+}
+[data-theme='opsml'].theme-dark .text-primary-900 {
+    color: oklch(78% 0.14 150);
+}
+[data-theme='opsml'].theme-dark .text-primary-950 {
+    color: oklch(80% 0.14 150);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — background overrides
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-white {
+    background-color: oklch(8% 0.003 150);
+}
+/* Gray hover/highlight backgrounds → dark terminal tones */
+[data-theme='opsml'].theme-dark .bg-gray-50,
+[data-theme='opsml'].theme-dark .hover\:bg-gray-50:hover {
+    background-color: oklch(14% 0.003 150);
+}
+[data-theme='opsml'].theme-dark .bg-gray-100,
+[data-theme='opsml'].theme-dark .hover\:bg-gray-100:hover {
+    background-color: oklch(16% 0.003 150);
+}
+[data-theme='opsml'].theme-dark .bg-gray-300 {
+    background-color: oklch(30% 0.015 150);
+}
+/* Primary hover/highlight backgrounds */
+[data-theme='opsml'].theme-dark .hover\:bg-primary-50:hover {
+    background-color: oklch(12% 0.008 150);
+}
+[data-theme='opsml'].theme-dark .hover\:bg-primary-100:hover {
+    background-color: oklch(15% 0.012 150);
+}
+[data-theme='opsml'].theme-dark .hover\:bg-primary-200:hover {
+    background-color: oklch(18% 0.015 150);
+}
+[data-theme='opsml'].theme-dark .hover\:bg-slate-50:hover {
+    background-color: oklch(14% 0.003 150);
+}
+[data-theme='opsml'].theme-dark .bg-black {
+    background-color: oklch(40% 0.04 150);
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — scanline CRT effect
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* ── CRT scanline overlay ── */
+[data-theme='opsml'].theme-dark::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.06) 2px,
+        rgba(0, 0, 0, 0.06) 4px
+    );
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+}
+
+/* ── CRT vignette: darken edges to simulate curved screen ── */
+[data-theme='opsml'].theme-dark::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(
+        ellipse at center,
+        transparent 60%,
+        rgba(0, 0, 0, 0.25) 100%
+    );
+    z-index: 99;
+    pointer-events: none;
+}
+
+/* ── Phosphor bloom: text glow on all dark mode text ── */
+[data-theme='opsml'].theme-dark {
+    text-shadow: 0 0 1px oklch(75% 0.08 150 / 0.12);
+}
+/* Remove bloom from elements that shouldn't glow */
+[data-theme='opsml'].theme-dark input,
+[data-theme='opsml'].theme-dark textarea,
+[data-theme='opsml'].theme-dark select,
+[data-theme='opsml'].theme-dark pre,
+[data-theme='opsml'].theme-dark code,
+[data-theme='opsml'].theme-dark .shiki,
+[data-theme='opsml'].theme-dark .shiki code,
+[data-theme='opsml'].theme-dark .cm-editor,
+[data-theme='opsml'].theme-dark .hljs,
+[data-theme='opsml'].theme-dark .markdown-body pre,
+[data-theme='opsml'].theme-dark .markdown-body code {
+    text-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-theme='opsml'].theme-dark::after,
+    [data-theme='opsml'].theme-dark::before {
+        display: none;
+    }
+    [data-theme='opsml'].theme-dark {
+        text-shadow: none;
+    }
+}
+
+/* ── Card subnav: name segment in purple ── */
+[data-theme='opsml'].theme-dark .sticky h1 .font-bold.text-primary-800 {
+    color: oklch(75% 0.15 295);
+}
+
+/* ── Textarea: dark background for agent playground and other textareas ── */
+[data-theme='opsml'].theme-dark textarea {
+    background-color: oklch(8% 0.01 150);
+    color: oklch(75% 0.06 150);
+}
+
+/* ── Sidebar nav items: green outline on hover ── */
+[data-theme='opsml'].theme-dark nav button.border:hover {
+    border-color: oklch(55% 0.08 150 / 0.5);
+}
+/* ── Sidebar sub-menu items (GenAI dropdown): green outline on hover ── */
+[data-theme='opsml'].theme-dark nav .ms-6 button:hover {
+    outline: 1px solid oklch(55% 0.08 150 / 0.5);
+    outline-offset: -1px;
+    border-radius: 0.375rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — monospace font
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — outlined buttons/badges (not filled)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-primary-500 {
+    background-color: oklch(28% 0.05 148);
+    border-color: oklch(40% 0.06 150 / 0.6);
+}
+[data-theme='opsml'].theme-dark .bg-primary-500:hover {
+    background-color: oklch(33% 0.06 148);
+}
+[data-theme='opsml'].theme-dark .bg-secondary-500 {
+    background-color: oklch(28% 0.05 155);
+    border-color: oklch(40% 0.06 155 / 0.6);
+}
+[data-theme='opsml'].theme-dark .bg-secondary-500:hover {
+    background-color: oklch(33% 0.06 155);
+}
+[data-theme='opsml'].theme-dark .bg-success-300 {
+    background-color: oklch(25% 0.04 148);
+    border-color: oklch(40% 0.06 148 / 0.6);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — title banner: pure text, no box
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-primary-500.text-white {
+    background-color: oklch(12% 0.012 150);
+    border-color: oklch(40% 0.05 150 / 0.5);
+    box-shadow: inset 0 0 30px oklch(30% 0.03 150 / 0.15), 0 0 15px oklch(45% 0.06 150 / 0.1);
+    color: oklch(87% 0.16 150);
+    text-shadow: 0 0 10px oklch(75% 0.10 150 / 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — dividers: thin terminal rules
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .h-2.bg-primary-800 {
+    height: 1px;
+    background-color: oklch(45% 0.06 150 / 0.25);
+    border-radius: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — nav active: lighter weight for terminal feel
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark nav a.active {
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — stat card borders: subdued
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .border-primary-700 {
+    border-color: oklch(35% 0.05 150 / 0.5);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — toast/error overrides: outlined style
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-error-500 {
+    background-color: transparent;
+    border: 1px solid oklch(55% 0.15 14 / 0.6);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — navbar underlines: bright phosphor green
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark nav a:hover,
+[data-theme='opsml'].theme-dark nav a:focus,
+[data-theme='opsml'].theme-dark nav a.active {
+    text-decoration-color: oklch(65% 0.14 150);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — slate backgrounds: dark terminal panels
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-slate-100 {
+    background-color: oklch(12% 0.003 150);
+}
+[data-theme='opsml'].theme-dark .bg-slate-200 {
+    background-color: oklch(14% 0.003 150);
+}
+[data-theme='opsml'].theme-dark .bg-slate-300 {
+    background-color: oklch(18% 0.008 150);
+}
+[data-theme='opsml'].theme-dark .bg-slate-700 {
+    background-color: oklch(10% 0.004 150);
+}
+[data-theme='opsml'].theme-dark .bg-slate-900 {
+    background-color: oklch(8% 0.003 150);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — gray backgrounds: close/cancel buttons in modals
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-gray-200,
+[data-theme='opsml'].theme-dark .hover\:bg-gray-200:hover {
+    background-color: oklch(20% 0.008 150);
+}
+[data-theme='opsml'].theme-dark .bg-gray-400 {
+    background-color: oklch(30% 0.015 150);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — green semantic backgrounds (message bubbles, success states)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-green-50 {
+    background-color: oklch(12% 0.008 150);
+}
+[data-theme='opsml'].theme-dark .bg-green-100 {
+    background-color: oklch(16% 0.012 150);
+}
+[data-theme='opsml'].theme-dark .bg-green-300 {
+    background-color: oklch(25% 0.03 148);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — border-primary-800: brighter than border-primary-700
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .border-primary-800 {
+    border-color: oklch(40% 0.055 150 / 0.55);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — text-black opacity variants (agent descriptions, capabilities)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .text-black\/70 {
+    color: oklch(75% 0.04 150 / 0.9);
+}
+[data-theme='opsml'].theme-dark .text-black\/50 {
+    color: oklch(55% 0.03 150 / 0.8);
+}
+[data-theme='opsml'].theme-dark .text-black\/40 {
+    color: oklch(50% 0.025 150 / 0.7);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — gray text overrides (catch-all for remaining gray text)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .text-gray-300 {
+    color: oklch(45% 0.025 150);
+}
+[data-theme='opsml'].theme-dark .text-gray-400 {
+    color: oklch(50% 0.025 150);
+}
+[data-theme='opsml'].theme-dark .text-gray-500 {
+    color: oklch(58% 0.03 150);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — retro-orange badge → phosphor green (card table version badge)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-retro-orange-100 {
+    background-color: oklch(14% 0.008 150);
+}
+[data-theme='opsml'].theme-dark .border-retro-orange-900 {
+    border-color: oklch(50% 0.05 150 / 0.5);
+}
+[data-theme='opsml'].theme-dark .text-retro-orange-900 {
+    color: oklch(70% 0.07 150);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — Markdown preview: dark bg, phosphor green text
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .markdown-body {
+    background-color: oklch(8% 0.01 150);
+    color: oklch(75% 0.06 150);
+}
+[data-theme='opsml'].theme-dark .markdown-body h1,
+[data-theme='opsml'].theme-dark .markdown-body h2,
+[data-theme='opsml'].theme-dark .markdown-body h3,
+[data-theme='opsml'].theme-dark .markdown-body h4,
+[data-theme='opsml'].theme-dark .markdown-body h5,
+[data-theme='opsml'].theme-dark .markdown-body h6 {
+    color: oklch(82% 0.14 152);
+    border-bottom-color: oklch(30% 0.06 150 / 0.4);
+}
+[data-theme='opsml'].theme-dark .markdown-body a {
+    color: oklch(72% 0.14 150);
+}
+[data-theme='opsml'].theme-dark .markdown-body a:hover {
+    color: oklch(82% 0.15 150);
+}
+[data-theme='opsml'].theme-dark .markdown-body code {
+    background-color: oklch(14% 0.008 150);
+    color: oklch(70% 0.06 150);
+}
+[data-theme='opsml'].theme-dark .markdown-body pre {
+    background-color: oklch(10% 0.015 150);
+    border: 1px solid oklch(30% 0.06 150 / 0.3);
+}
+[data-theme='opsml'].theme-dark .markdown-body pre code {
+    background-color: transparent;
+    color: oklch(70% 0.12 150);
+}
+[data-theme='opsml'].theme-dark .markdown-body blockquote {
+    color: oklch(60% 0.08 150);
+    border-left-color: oklch(40% 0.08 150 / 0.5);
+}
+[data-theme='opsml'].theme-dark .markdown-body table th,
+[data-theme='opsml'].theme-dark .markdown-body table td {
+    border-color: oklch(30% 0.06 150 / 0.3);
+}
+[data-theme='opsml'].theme-dark .markdown-body table tr {
+    background-color: oklch(8% 0.01 150);
+    border-top-color: oklch(30% 0.06 150 / 0.3);
+}
+[data-theme='opsml'].theme-dark .markdown-body table tr:nth-child(2n) {
+    background-color: oklch(10% 0.015 150);
+}
+[data-theme='opsml'].theme-dark .markdown-body hr {
+    background-color: oklch(30% 0.06 150 / 0.3);
+}
+[data-theme='opsml'].theme-dark .markdown-body img {
+    background-color: transparent;
+}
+/* highlight.js code blocks in dark mode */
+[data-theme='opsml'].theme-dark .markdown-body .hljs {
+    background-color: oklch(10% 0.015 150);
+    color: oklch(70% 0.12 150);
+}
+
+/* ── Fix C: brighter secondary-300 for eval task expected values ── */
+[data-theme='opsml'].theme-dark .text-secondary-300 {
+    color: oklch(78% 0.14 160);
+}
+
+/* ── Fix D: slate text + bg overrides for prompt/tool call components ── */
+[data-theme='opsml'].theme-dark .text-slate-800 {
+    color: oklch(72% 0.10 150);
+}
+[data-theme='opsml'].theme-dark .text-slate-900 {
+    color: oklch(78% 0.11 150);
+}
+[data-theme='opsml'].theme-dark .bg-slate-50 {
+    background-color: oklch(10% 0.003 150);
+}
+
+/* ── Fix E: semi-transparent white badge background ── */
+[data-theme='opsml'].theme-dark .bg-white\/50 {
+    background-color: oklch(15% 0.02 150 / 0.5);
+}
+
+/* ── Fix G: remap inline arbitrary shadow values to soft glow ── */
+[data-theme='opsml'].theme-dark [class*="shadow-["] {
+    box-shadow: 0 0 12px oklch(40% 0.10 150 / 0.25) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — Fix A: Eval Tasks accordion hover (GenAITaskAccordion)
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .hover\:bg-slate-100:hover {
+    background-color: oklch(16% 0.003 150);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — Fix B: CardButton / VersionButton / CardPage bg-primary-400
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-primary-400 {
+    background-color: oklch(14% 0.008 150);
+    border-color: oklch(40% 0.05 150 / 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — Fix C: Trace / Observability component overrides
+   ═══════════════════════════════════════════════════════════════════════════ */
+[data-theme='opsml'].theme-dark .bg-surface-500 {
+    background-color: oklch(12% 0.005 150);
+}
+[data-theme='opsml'].theme-dark .bg-primary-800 {
+    background-color: oklch(20% 0.025 150);
+}
+[data-theme='opsml'].theme-dark .border-gray-100 {
+    border-color: oklch(20% 0.008 150 / 0.3);
+}
+[data-theme='opsml'].theme-dark .border-gray-200 {
+    border-color: oklch(25% 0.01 150 / 0.3);
+}
+[data-theme='opsml'].theme-dark .text-gray-900 {
+    color: oklch(78% 0.04 150);
+}
+[data-theme='opsml'].theme-dark .border-gray-900 {
+    border-color: oklch(50% 0.04 150 / 0.4);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dark mode — SpanNode overrides (Tailwind class fights)
+   SvelteFlow theming is handled via --xy-* vars + colorMode in SpanGraph.svelte
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* SpanNode CSS custom properties for dark mode */
+[data-theme='opsml'].theme-dark .span-graph-container {
+    --span-node-text: oklch(80% 0.06 150);
+    --span-node-shadow: 2px 2px 0 0 oklch(25% 0.03 150 / 0.6);
+    --span-node-ring: oklch(55% 0.12 150);
+    --span-badge-text: oklch(85% 0.04 150);
+    --span-badge-border: oklch(35% 0.05 150 / 0.5);
+    --span-handle-bg: oklch(60% 0.10 150);
+    --span-handle-border: oklch(12% 0.003 150);
+}
+
+/* Node backgrounds — override Tailwind bg/border classes */
+[data-theme='opsml'].theme-dark .span-graph-container :global(.span-node) {
+    background: oklch(12% 0.003 150) !important;
+    border-color: oklch(35% 0.05 150 / 0.6) !important;
+}
+[data-theme='opsml'].theme-dark .span-graph-container :global(.span-node.is-selected) {
+    background: oklch(15% 0.01 150) !important;
+    border-color: oklch(50% 0.10 150 / 0.8) !important;
+}
+[data-theme='opsml'].theme-dark .span-graph-container :global(.span-node:has(.text-error-600)) {
+    background: oklch(12% 0.01 14) !important;
+    border-color: oklch(45% 0.10 14 / 0.6) !important;
+}
+
+/* Service badge */
+[data-theme='opsml'].theme-dark .span-graph-container :global(.service-badge) {
+    background: oklch(14% 0.004 150) !important;
+    border-color: oklch(35% 0.05 150 / 0.5) !important;
+    color: oklch(70% 0.06 150) !important;
+}
+
+/* Duration text — override Tailwind text-primary-700 */
+[data-theme='opsml'].theme-dark .span-graph-container :global(.span-duration) {
+    color: oklch(55% 0.04 150) !important;
+}
+
+/* Depth badge — override Tailwind bg classes */
+[data-theme='opsml'].theme-dark .span-graph-container :global(.depth-badge) {
+    background: oklch(25% 0.04 150) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   sRGB fallbacks for browsers without OKLCH support (Safari < 15.4)
+   ═══════════════════════════════════════════════════════════════════════════ */
 @supports not (color: oklch(0 0 0)) {
-  [data-theme='opsml'] {
+  [data-theme='opsml'].theme-light,
+  [data-theme='opsml']:not(.theme-dark) {
     /* Primary — purple/lavender */
     --color-primary-50:  #ffffff;
     --color-primary-100: #ece7f5;
@@ -452,5 +1354,36 @@
       0 0 0 2px #000,
       3px 3px 0 0 #000,
       0 0 12px 2px rgba(200, 120, 222, 0.55);
+  }
+
+  /* Dark mode sRGB fallbacks — Nostromo terminal */
+  [data-theme='opsml'].theme-dark {
+    --color-primary-50:  #0a100b;
+    --color-primary-100: #0e1610;
+    --color-primary-200: #152218;
+    --color-primary-300: #1e3220;
+    --color-primary-400: #24522a;
+    --color-primary-500: #336e38;
+    --color-primary-600: #448a4e;
+    --color-primary-700: #5aa866;
+    --color-primary-800: #74c480;
+    --color-primary-900: #82d490;
+    --color-primary-950: #8ddb9f;
+
+    --color-surface-50:  #0e120e;
+    --color-surface-100: #0c100c;
+    --color-surface-200: #0a0e0a;
+    --color-surface-300: #080c08;
+    --color-surface-400: #070b07;
+    --color-surface-500: #060a06;
+    --color-surface-600: #050905;
+    --color-surface-700: #040804;
+    --color-surface-800: #040704;
+    --color-surface-900: #030603;
+    --color-surface-950: #020402;
+
+    --grid-bg: #020402;
+    --grid-line: rgba(90, 168, 102, 0.06);
+    --grid-alt-bg: #040804;
   }
 }

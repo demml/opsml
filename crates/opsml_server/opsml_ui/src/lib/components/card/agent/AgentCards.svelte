@@ -6,8 +6,8 @@
 
   let { cards } = $props<{ cards: Card[] }>();
 
-  const badgeColor = "#40328b";
-  const iconColor = "#40328b";
+  const badgeColor = "currentColor";
+  const iconColor = "currentColor";
 </script>
 
 <div class="rounded-base border-2 border-black shadow bg-surface-50 p-4">

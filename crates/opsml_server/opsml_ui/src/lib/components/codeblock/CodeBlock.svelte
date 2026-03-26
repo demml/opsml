@@ -1,7 +1,7 @@
 <script module>
   import { createHighlighterCoreSync } from 'shiki/core';
   import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
-  import { customTheme, tracebackTheme } from './customTheme';
+  import { customTheme, customDarkTheme, tracebackTheme } from './customTheme';
 
   import console from 'shiki/langs/console.mjs';
   import html from 'shiki/langs/html.mjs';
@@ -16,13 +16,14 @@
 
   const shiki = createHighlighterCoreSync({
     engine: createJavaScriptRegexEngine(),
-    themes: [customTheme, tracebackTheme],
+    themes: [customTheme, customDarkTheme, tracebackTheme],
     langs: [console, html, css, js, python, rust, json, md, bash],
   });
 </script>
 
 <script lang="ts">
   import type { CodeBlockProps } from './types';
+  import { themeStore } from '$lib/components/settings/theme.svelte';
 
   let {
     code = '',
@@ -39,8 +40,13 @@
     preClasses = '[&>pre]:whitespace-pre [&>pre]:overflow-x-auto'
   }: CodeBlockProps = $props();
 
+  // Resolve theme: if using default custom theme, switch based on dark mode
+  const resolvedTheme = $derived(
+    theme === 'custom-light' && themeStore.resolved === 'dark' ? 'custom-dark' : theme
+  );
+
   // Shiki convert to HTML — must be $derived so it recomputes when code/lang/theme props change
-  const generatedHtml = $derived(shiki.codeToHtml(code, { lang, theme }));
+  const generatedHtml = $derived(shiki.codeToHtml(code, { lang, theme: resolvedTheme }));
 </script>
 
 <div class="w-full {base} {shadow} {classes} {preBase} {prePadding} {preClasses}" class:show-line-numbers={showLineNumbers}>

@@ -78,7 +78,7 @@
       label: 'Versions',
       icon: Tag,
       isActive: (tab: string) => tab === 'versions',
-      iconProps: { fill: '#8059b6' },
+      iconProps: { fill: 'var(--color-primary-500)' },
       description: 'Version history and comparisons'
     }
   ];
@@ -86,7 +86,7 @@
   /**
    * Primary color for consistent icon styling
    */
-  const iconColor = '#8059b6';
+  const iconColor = 'var(--color-primary-500)';
 </script>
 
 <div class="sticky top-14 z-10 flex-none pt-2 pb-1 border-b-2 border-black bg-surface-100">

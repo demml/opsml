@@ -10,6 +10,9 @@
 @import '@fontsource/roboto/500.css';
 @import '@fontsource/roboto/700.css';
 @import '@fontsource/roboto/900.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/700.css';
 
 @source '../node_modules/@skeletonlabs/skeleton-svelte/dist';
 
@@ -98,8 +101,20 @@
 
 
 ::selection {
-    @apply bg-secondary-100; /* Replace with your desired color */
-    @apply text-secondary-900; /* Optional: change the text color when selected */
+    @apply bg-secondary-100;
+    @apply text-secondary-900;
   }
 
-  
+/* ─── Dark mode: Nostromo Terminal shadows + tokens ─── */
+[data-theme='opsml'].theme-dark {
+    --shadow: 0 0 12px oklch(40% 0.10 150 / 0.25);
+    --shadow-primary: 0 0 12px oklch(50% 0.12 150 / 0.3);
+    --shadow-small: 0 0 6px oklch(40% 0.10 150 / 0.2);
+    --shadow-primary-small: 0 0 6px oklch(50% 0.12 150 / 0.25);
+    --reverse-shadow-small: 0 0 6px oklch(40% 0.10 150 / 0.2);
+    --border: oklch(45% 0.10 150 / 0.25);
+    --text: oklch(76% 0.10 150);
+    --ring: oklch(45% 0.10 150 / 0.25);
+    --mtext: oklch(76% 0.10 150);
+    --ring-offset: oklch(5.5% 0.004 150);
+}

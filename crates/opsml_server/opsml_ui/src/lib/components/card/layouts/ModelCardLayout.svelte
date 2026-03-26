@@ -81,7 +81,7 @@
         data-sveltekit-preload-data="hover"
         aria-current={activeTab === 'card' ? 'page' : undefined}
       >
-        <IdCard color="#8059b6" size={16} />
+        <IdCard color="var(--color-primary-500)" size={16} />
         <span>Card</span>
       </a>
 
@@ -91,7 +91,7 @@
         data-sveltekit-preload-data="hover"
         aria-current={activeTab === 'files' || activeTab === 'view' ? 'page' : undefined}
       >
-        <FolderTree color="#8059b6" size={16} />
+        <FolderTree color="var(--color-primary-500)" size={16} />
         <span>Files</span>
       </a>
 
@@ -102,7 +102,7 @@
           data-sveltekit-preload-data="hover"
           aria-current={activeTab === 'monitoring' ? 'page' : undefined}
         >
-          <Activity color="#8059b6" size={16} />
+          <Activity color="var(--color-primary-500)" size={16} />
           <span>Monitoring</span>
         </a>
       {/if}
@@ -113,7 +113,7 @@
         data-sveltekit-preload-data="hover"
         aria-current={activeTab === 'versions' ? 'page' : undefined}
       >
-        <Tag color="#8059b6" fill="#8059b6" size={16} />
+        <Tag color="var(--color-primary-500)" fill="var(--color-primary-500)" size={16} />
         <span>Versions</span>
       </a>
     </nav>

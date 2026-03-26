@@ -19,6 +19,7 @@ pub struct UpdateUserRequest {
     pub group_permissions: Option<Vec<String>>,
     pub active: Option<bool>,
     pub favorite_spaces: Option<Vec<String>>,
+    pub theme_preference: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -43,6 +44,7 @@ pub struct UserResponse {
     pub permissions: Vec<String>,
     pub group_permissions: Vec<String>,
     pub favorite_spaces: Vec<String>,
+    pub theme_preference: String,
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -85,6 +87,7 @@ impl From<User> for UserResponse {
             email: user.email,
             role: user.role,
             favorite_spaces: user.favorite_spaces,
+            theme_preference: user.theme_preference,
         }
     }
 }

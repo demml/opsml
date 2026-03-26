@@ -89,12 +89,12 @@
 <div class="col-span-12 flex items-center justify-center px-4">
   
 <section class="border-gray-100">
-  <div class="z-10 mx-auto rounded-2xl bg-surface-50 border-black border-2 shadow p-4 md:w-80 md:px-4">
+  <div class="z-10 mx-auto rounded-base bg-surface-50 border-black border-2 shadow p-4 md:w-80 md:px-4">
     <form method="POST" onsubmit={handleLogin}>
 
       <img alt="OpsML logo" class="mx-auto -mt-12 mb-2 w-20" src={logo}>
       <h1 class="pt-1 text-center text-lg font-bold text-primary-800">Log In</h1>
-      <p class="mb-4 text-center text-surface-950 text-sm">New to OpsML?
+      <p class="mb-4 text-center text-primary-800 text-sm">New to OpsML?
         <a class="underline hover:text-primary-700" href={UiPaths.REGISTER}>Register</a>
       </p>
 
@@ -105,10 +105,10 @@
       {/if}
 
       <div class="mb-4 grid grid-cols-1 gap-3">
-        <label class="text-surface-950 text-sm">Username
+        <label class="text-primary-800 text-sm">Username
           <input
-            class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
-            type="text" 
+            class="input text-sm rounded-base bg-surface-50 text-primary-950 disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
+            type="text"
             placeholder="Username"
             name="username"
           />
@@ -119,10 +119,10 @@
         </label>
 
 
-        <label class="text-surface-950 text-sm">Password
+        <label class="text-primary-800 text-sm">Password
           <input
-            class="input text-sm rounded-base bg-surface-50 text-black disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
-            type="password" 
+            class="input text-sm rounded-base bg-surface-50 text-primary-950 disabled:opacity-50 placeholder-surface-800 placeholder-text-sm focus-visible:ring-2 focus-visible:ring-primary-800"
+            type="password"
             placeholder="Password"
             name="password"
           />
@@ -143,7 +143,7 @@
 
     {#if uiSettingsStore.ssoEnabled}
       <div class="grid justify-items-center gap-1">
-        <span class="px-4 text-surface-950 bg-surface-50">or</span>
+        <span class="px-4 text-primary-800 bg-surface-50">or</span>
         <button class="btn text-sm bg-secondary-500 rounded-lg md:w-64 justify-self-center text-black mb-2 ring-offset-white  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2 border-black border-2 border-border shadow transition-all hover:translate-x-[4px] hover:translate-y-[4px] hover:shadow-none" onclick={redirectToSsoUrl}>
           Login with SSO
         </button>

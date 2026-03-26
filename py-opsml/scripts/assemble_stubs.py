@@ -29,7 +29,7 @@ def strip_imports_section(content: str) -> str:
 def assemble():
     final_content = [
         "# AUTO-GENERATED STUB FILE. DO NOT EDIT.",
-        "# pylint: disable=redefined-builtin, invalid-name, dangerous-default-value, missing-final-newline, arguments-differ",
+        "# pylint: disable=redefined-builtin, invalid-name, dangerous-default-value",
     ]
     master_all = []
 
@@ -38,7 +38,6 @@ def assemble():
     for filename in STUB_FILES:
         file_path = STUB_DIR / filename
         if not file_path.exists():
-            print(f"Warning: {file_path} not found, skipping...")
             continue
 
         raw_text = file_path.read_text(encoding="utf-8")
@@ -49,39 +48,26 @@ def assemble():
 
         match = all_pattern.search(raw_text)
         if match:
-            items = [
-                i.strip().replace('"', "").replace("'", "")
-                for i in match.group(1).split(",")
-                if i.strip()
-            ]
-            master_all.extend(items)
+            items = re.findall(r'"([^"]+)"|\'([^\']+)\'', match.group(1))
+            master_all.extend(a or b for a, b in items)
 
             text_to_append = all_pattern.sub("", raw_text)
         else:
             text_to_append = raw_text
 
-        # Use the relative path as the section marker for clarity
         final_content.append(f"### {filename} ###")
         final_content.append(text_to_append.strip())
         final_content.append("\n")
 
     final_content.append("### GLOBAL EXPORTS ###")
     final_content.append("__all__ = [")
-    for item in sorted(set(master_all)):
+    for item in sorted(list(set(master_all))):
         final_content.append(f'    "{item}",')
     final_content.append("]")
 
-    # Ensure output directory exists
-    OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
-
     with OUTPUT_FILE.open("w", encoding="utf-8") as f:
         f.write("\n".join(final_content))
-
-    print(f"[OK] Compiled {len(set(master_all))} unique exports into {OUTPUT_FILE}")
-    print(f"  Processed {len(STUB_FILES)} stub files:")
-    for stub in STUB_FILES:
-        status = "[OK]" if (STUB_DIR / stub).exists() else "[MISSING]"
-        print(f"    {status} {stub}")
+    print(f"Compiled {len(master_all)} exports into {OUTPUT_FILE}")
 
 
 if __name__ == "__main__":

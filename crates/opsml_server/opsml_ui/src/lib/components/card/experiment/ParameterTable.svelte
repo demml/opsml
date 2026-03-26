@@ -27,7 +27,7 @@
     <div class="flex flex-row justify-between">
       <div class="flex flex-row">
         <div class="self-center" aria-label="Time Interval">
-          <Cog color="#8059b6"/>
+          <Cog color="currentColor"/>
         </div>
         <header class="pl-2 text-primary-800 self-center font-bold">Parameters</header>
       </div>
@@ -64,7 +64,7 @@
   <div class="flex flex-row justify-between justify-between">
     <div class="flex flex-row">
       <div class="self-center" aria-label="Time Interval">
-        <Cog color="#8059b6"/>
+        <Cog color="currentColor"/>
       </div>
       <header class="pl-2 text-primary-800 self-center font-bold">Parameters</header>
     </div>

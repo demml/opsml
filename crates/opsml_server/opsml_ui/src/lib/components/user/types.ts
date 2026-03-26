@@ -16,6 +16,7 @@ export interface UserResponse {
   email: string;
   role: string;
   favorite_spaces: string[];
+  theme_preference: string;
 }
 
 export interface CreateUserResponse {
@@ -65,6 +66,7 @@ export interface UpdateUserRequest {
   group_permissions?: string[];
   favorite_spaces?: string[];
   active?: boolean;
+  theme_preference?: string;
 }
 
 export interface SsoAuthUrl {

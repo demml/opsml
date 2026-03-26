@@ -111,7 +111,7 @@
     <div class="col-span-1 lg:col-span-4 gap-1 p-4 flex-1 flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 h-auto">
       <div class="flex flex-row items-center gap-2 pb-2">
         <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
-          <Settings color="#40328b" />
+          <Settings color="currentColor" />
         </div>
         <h2 class="font-bold text-primary-800 text-lg">{artifactTitle}</h2>
       </div>
