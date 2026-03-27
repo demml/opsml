@@ -270,6 +270,30 @@ pub fn new(space: String, name: String, interface: Option<Py<PyAny>>, kwargs: ..
 
 **Python `ModelInterface` subclassing**: users subclass `ModelInterface` in Python and override `save()` / `load()`. The Rust side calls these via `pyo3::Python::with_gil`. Keep GIL acquisition scoped as tightly as possible.
 
+**`#[pyclass]` fields inside `#[pyclass]` structs**: If a struct is `#[pyclass]` and one of its fields is itself a `#[pyclass]` type, do **not** apply `#[pyo3(get, set)]` to that field. PyO3's auto-generated accessors require a Python lifetime (`'py`) at the call site, which makes the field inaccessible in pure-Rust code (e.g. unit tests). Instead, implement getters and setters manually in `#[pymethods]` using `IntoPyObjectExt` / `extract`:
+
+```rust
+#[pymethods]
+impl SkillCard {
+    #[getter]
+    pub fn skill<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, CardError> {
+        Ok(self.skill.clone().into_bound_py_any(py)?)
+    }
+
+    #[setter]
+    pub fn set_skill(&mut self, skill: &Bound<'_, PyAny>) -> Result<(), CardError> {
+        self.skill = skill.extract::<AgentSkillStandard>()?;
+        Ok(())
+    }
+}
+```
+
+See `crates/opsml_cards/src/skill/card.rs` (`skill` and `dependencies` fields) for the canonical example.
+
+**GIL / linker errors in Rust tests**: If `cargo test` fails with errors about Python linking, GIL acquisition, or missing `libpython`, a Python lifetime has leaked into pure-Rust code. Common causes:
+- A `#[pyclass]` field has `#[pyo3(get, set)]` applied — remove it and implement manual accessors (see above).
+- A method returns `PyErr` directly instead of a Rust error type — `PyErr` should only appear at the PyO3 boundary. Map it through the crate's error enum via `#[from] PyErr` and `impl From<MyError> for PyErr`.
+
 ### Two registry modes
 
 `CardRegistry` operates in one of two modes, selected automatically from `OpsmlConfig`:

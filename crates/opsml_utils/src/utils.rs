@@ -12,6 +12,7 @@ use tracing::debug;
 use uuid::Uuid;
 const PUNCTUATION: &str = "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~";
 const NAME_SPACE_PATTERN: &str = r"^[a-z0-9]+(?:[-a-z0-9]+)*/[-a-z0-9]+$";
+use pythonize::depythonize;
 
 /// Clean a string by removing punctuation and converting to lowercase
 ///
@@ -356,6 +357,54 @@ pub fn convert_keys_to_snake_case(value: Value) -> Value {
         }
         other => other,
     }
+}
+
+pub fn is_pydantic_basemodel(py: Python, obj: &Bound<'_, PyAny>) -> Result<bool, UtilError> {
+    let pydantic = match py.import("pydantic") {
+        Ok(module) => module,
+        // return false if pydantic cannot be imported
+        Err(_) => return Ok(false),
+    };
+
+    let basemodel = pydantic.getattr("BaseModel")?;
+
+    // check if context is a pydantic model
+    let is_basemodel = obj
+        .is_instance(&basemodel)
+        .map_err(|e| UtilError::FailedToCheckPydanticModel(e.to_string()))?;
+
+    Ok(is_basemodel)
+}
+
+fn process_dict_with_nested_models(
+    py: Python<'_>,
+    dict: &Bound<'_, PyAny>,
+) -> Result<Value, UtilError> {
+    let py_dict = dict.cast::<PyDict>()?;
+    let mut result = serde_json::Map::new();
+
+    for (key, value) in py_dict.iter() {
+        let key_str: String = key.extract()?;
+        let processed_value = depythonize_object_to_value(py, &value)?;
+        result.insert(key_str, processed_value);
+    }
+
+    Ok(Value::Object(result))
+}
+
+pub fn depythonize_object_to_value<'py>(
+    py: Python<'py>,
+    value: &Bound<'py, PyAny>,
+) -> Result<Value, UtilError> {
+    let py_value = if is_pydantic_basemodel(py, value)? {
+        let model = value.call_method0("model_dump")?;
+        depythonize(&model)?
+    } else if value.is_instance_of::<PyDict>() {
+        process_dict_with_nested_models(py, value)?
+    } else {
+        depythonize(value)?
+    };
+    Ok(py_value)
 }
 
 #[cfg(test)]

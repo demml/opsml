@@ -4,6 +4,7 @@ pub mod experiment;
 pub mod model;
 pub mod prompt;
 pub mod service;
+pub mod skill;
 pub mod traits;
 pub mod utils;
 

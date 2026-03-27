@@ -1,5 +1,6 @@
 use pyo3::PyErr;
 use pyo3::exceptions::PyRuntimeError;
+use pythonize::PythonizeError;
 use thiserror::Error;
 use tracing::error;
 
@@ -85,6 +86,12 @@ impl From<UtilError> for PyErr {
 
 impl From<PyErr> for UtilError {
     fn from(err: PyErr) -> UtilError {
+        UtilError::PyError(err.to_string())
+    }
+}
+
+impl From<PythonizeError> for UtilError {
+    fn from(err: PythonizeError) -> Self {
         UtilError::PyError(err.to_string())
     }
 }
