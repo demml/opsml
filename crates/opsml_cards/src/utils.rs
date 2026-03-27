@@ -1,4 +1,4 @@
-use crate::error::CardError;
+use crate::error::ArgError;
 use names::Generator;
 use opsml_state::{StateError, app_state};
 use opsml_types::error::TypeError;
@@ -27,7 +27,7 @@ impl BaseArgs {
         version: Option<&str>,
         uid: Option<&str>,
         registry_type: &RegistryType,
-    ) -> Result<BaseArgsResult, CardError> {
+    ) -> Result<BaseArgsResult, ArgError> {
         let name = clean_string(&Self::get_value("name", name, registry_type)?)?;
         let space = clean_string(&Self::get_value("space", space, registry_type)?)?;
 
@@ -49,7 +49,7 @@ impl BaseArgs {
         key: &str,
         value: Option<&str>,
         registry_type: &RegistryType,
-    ) -> Result<String, CardError> {
+    ) -> Result<String, ArgError> {
         let config_value = Self::get_config_value(key, registry_type)?;
 
         // exception for experiment card. If not name provided, default to random name

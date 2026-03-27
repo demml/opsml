@@ -51,7 +51,6 @@ pub struct SkillDependency {
     pub space: String,
     #[pyo3(get, set)]
     pub version_req: Option<String>,
-    #[pyo3(get, set)]
     pub kind: DependencyKind,
 }
 

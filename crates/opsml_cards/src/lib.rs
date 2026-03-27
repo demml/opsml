@@ -13,4 +13,5 @@ pub use experiment::*;
 pub use model::*;
 pub use prompt::*;
 pub use service::*;
+pub use skill::*;
 pub use utils::*;

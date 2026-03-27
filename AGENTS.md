@@ -292,7 +292,7 @@ See `crates/opsml_cards/src/skill/card.rs` (`skill` and `dependencies` fields) f
 
 **GIL / linker errors in Rust tests**: If `cargo test` fails with errors about Python linking, GIL acquisition, or missing `libpython`, a Python lifetime has leaked into pure-Rust code. Common causes:
 - A `#[pyclass]` field has `#[pyo3(get, set)]` applied — remove it and implement manual accessors (see above).
-- A method returns `PyErr` directly instead of a Rust error type — `PyErr` should only appear at the PyO3 boundary. Map it through the crate's error enum via `#[from] PyErr` and `impl From<MyError> for PyErr`.
+- An error type stores `PyErr` directly as an enum variant via `#[from] PyErr` or `#[error(transparent)] Python(#[from] PyErr)`. **This is wrong.** `PyErr` carries a Python lifetime; storing it in an enum makes the entire error type unusable in pure-Rust tests. Instead, implement the conversions manually: `From<PyErr> for MyError` converts to a `String`-backed variant, and `From<MyError> for PyErr` is the boundary conversion. This rule applies transitively — all errors wrapped via `#[from]` must also follow it. See `crates/opsml_cards/src/skill/error.rs` for the canonical example.
 
 ### Two registry modes
 

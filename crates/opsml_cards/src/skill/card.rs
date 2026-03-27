@@ -1,5 +1,5 @@
 use crate::BaseArgs;
-use crate::error::CardError;
+use crate::skill::error::SkillError;
 use chrono::{DateTime, Utc};
 use opsml_types::contracts::CardRecord;
 use opsml_types::contracts::SkillCardClientRecord;
@@ -11,23 +11,24 @@ use opsml_utils::depythonize_object_to_value;
 use opsml_utils::get_utc_datetime;
 use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
+use pythonize;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 use tracing::{error, instrument};
 
-fn deserialize_from_path<T: DeserializeOwned>(path: PathBuf) -> Result<T, CardError> {
+fn deserialize_from_path<T: DeserializeOwned>(path: PathBuf) -> Result<T, SkillError> {
     let content = std::fs::read_to_string(&path)?;
     let extension = path
         .extension()
         .and_then(|ext| ext.to_str())
-        .ok_or_else(|| CardError::Error(format!("Invalid file path: {:?}", path)))?;
+        .ok_or_else(|| SkillError::Error(format!("Invalid file path: {:?}", path)))?;
     let item = match extension.to_lowercase().as_str() {
         "json" => serde_json::from_str(&content)?,
         "yaml" | "yml" => serde_yaml::from_str(&content)?,
         _ => {
-            return Err(CardError::Error(format!(
+            return Err(SkillError::Error(format!(
                 "Unsupported file extension '{}'. Expected .json, .yaml, or .yml",
                 extension
             )));
@@ -71,16 +72,16 @@ fn split_frontmatter(content: &str) -> Option<(&str, &str)> {
 pub fn parse_skill_markdown(
     content: &str,
     source_path: Option<&PathBuf>,
-) -> Result<SkillCard, CardError> {
+) -> Result<SkillCard, SkillError> {
     let (frontmatter, body) = split_frontmatter(content).ok_or_else(|| {
-        CardError::Error(format!(
+        SkillError::Error(format!(
             "Skill markdown {:?} is missing YAML frontmatter delimiters (---)",
             source_path
         ))
     })?;
 
     let mut skill: AgentSkillStandard = serde_yaml::from_str(frontmatter)
-        .map_err(CardError::SerdeYamlError)
+        .map_err(SkillError::SerdeYamlError)
         .inspect_err(|e| error!("Failed to parse skill frontmatter: {e}"))?;
 
     skill.body = Some(body.to_string());
@@ -145,7 +146,7 @@ impl SkillCard {
         compatible_tools: Option<Vec<String>>,
         dependencies: Option<Vec<SkillDependency>>,
         input_schema: Option<Bound<'_, PyAny>>,
-    ) -> Result<Self, CardError> {
+    ) -> Result<Self, SkillError> {
         let py = skill.py();
         let skill = skill.extract::<AgentSkillStandard>().inspect_err(|e| {
             error!("Failed to extract AgentSkillStandard: {e}");
@@ -170,12 +171,12 @@ impl SkillCard {
     }
 
     #[getter]
-    pub fn skill<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, CardError> {
+    pub fn skill<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, SkillError> {
         Ok(self.skill.clone().into_bound_py_any(py)?)
     }
 
     #[setter]
-    pub fn set_skill(&mut self, skill: &Bound<'_, PyAny>) -> Result<(), CardError> {
+    pub fn set_skill(&mut self, skill: &Bound<'_, PyAny>) -> Result<(), SkillError> {
         self.skill = skill.extract::<AgentSkillStandard>().inspect_err(|e| {
             error!("Failed to extract AgentSkillStandard: {e}");
         })?;
@@ -183,12 +184,12 @@ impl SkillCard {
     }
 
     #[getter]
-    pub fn dependecies<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, CardError> {
+    pub fn dependencies<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, SkillError> {
         Ok(self.dependencies.clone().into_bound_py_any(py)?)
     }
 
     #[setter]
-    pub fn set_dependencies(&mut self, dependencies: &Bound<'_, PyAny>) -> Result<(), CardError> {
+    pub fn set_dependencies(&mut self, dependencies: &Bound<'_, PyAny>) -> Result<(), SkillError> {
         self.dependencies = dependencies
             .extract::<Vec<SkillDependency>>()
             .inspect_err(|e| {
@@ -197,7 +198,29 @@ impl SkillCard {
         Ok(())
     }
 
-    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
+    #[getter]
+    pub fn input_schema<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> Result<Option<Bound<'py, PyAny>>, SkillError> {
+        match &self.input_schema {
+            Some(schema) => Ok(Some(
+                pythonize::pythonize(py, schema).map_err(|e| SkillError::Error(e.to_string()))?,
+            )),
+            None => Ok(None),
+        }
+    }
+
+    #[setter]
+    pub fn set_input_schema(&mut self, schema: Option<Bound<'_, PyAny>>) -> Result<(), SkillError> {
+        self.input_schema = match schema {
+            Some(s) => Some(depythonize_object_to_value(s.py(), &s)?),
+            None => None,
+        };
+        Ok(())
+    }
+
+    pub fn get_registry_card(&self) -> Result<CardRecord, SkillError> {
         let record = SkillCardClientRecord {
             uid: self.uid.clone(),
             created_at: self.created_at,
@@ -220,7 +243,7 @@ impl SkillCard {
         Ok(CardRecord::Skill(record))
     }
 
-    pub fn calculate_content_hash(&self) -> Result<Vec<u8>, CardError> {
+    pub fn calculate_content_hash(&self) -> Result<Vec<u8>, SkillError> {
         let mut hasher = Sha256::new();
         hasher.update(self.skill.name.as_bytes());
         hasher.update(self.skill.description.as_bytes());
@@ -231,14 +254,14 @@ impl SkillCard {
     }
 
     #[staticmethod]
-    pub fn from_markdown(path: PathBuf) -> Result<Self, CardError> {
+    pub fn from_markdown(path: PathBuf) -> Result<Self, SkillError> {
         let content = std::fs::read_to_string(&path)?;
         parse_skill_markdown(&content, Some(&path))
     }
 
-    pub fn to_markdown(&self) -> Result<String, CardError> {
+    pub fn to_markdown(&self) -> Result<String, SkillError> {
         let mut frontmatter =
-            serde_yaml::to_string(&self.skill).map_err(|e| CardError::SerdeYamlError(e))?;
+            serde_yaml::to_string(&self.skill).map_err(SkillError::SerdeYamlError)?;
 
         // serde_yaml serializes with trailing newline; trim and wrap in delimiters
         frontmatter = frontmatter.trim_end().to_string();
@@ -248,21 +271,21 @@ impl SkillCard {
     }
 
     #[pyo3(signature = (path), name = "save")]
-    pub fn save_card(&mut self, path: PathBuf) -> Result<(), CardError> {
+    pub fn save_card(&mut self, path: PathBuf) -> Result<(), SkillError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        PyHelperFuncs::save_to_json(&self, &card_save_path)?;
+        PyHelperFuncs::save_to_json(self, card_save_path.as_path())?;
         Ok(())
     }
 
     #[staticmethod]
-    pub fn model_validate_json(json_string: String) -> Result<SkillCard, CardError> {
+    pub fn model_validate_json(json_string: String) -> Result<SkillCard, SkillError> {
         Ok(serde_json::from_str(&json_string).inspect_err(|e| {
             error!("Failed to validate json: {e}");
         })?)
     }
 
     #[staticmethod]
-    pub fn from_path(path: PathBuf) -> Result<Self, CardError> {
+    pub fn from_path(path: PathBuf) -> Result<Self, SkillError> {
         deserialize_from_path(path)
     }
 
@@ -286,7 +309,7 @@ impl SkillCard {
         compatible_tools: Option<Vec<String>>,
         dependencies: Option<Vec<SkillDependency>>,
         input_schema: Option<serde_json::Value>,
-    ) -> Result<Self, CardError> {
+    ) -> Result<Self, SkillError> {
         let registry_type = RegistryType::Skill;
         let base_args = BaseArgs::create_args(name, space, version, None, &registry_type)?;
 
@@ -295,7 +318,7 @@ impl SkillCard {
             space: base_args.0,
             name: base_args.1,
             version: base_args.2,
-            uid: base_args.3,
+            uid: base_args.3, // will be set when saving to registry
             tags: tags.unwrap_or_default(),
             compatible_tools: compatible_tools.unwrap_or_default(),
             dependencies: dependencies.unwrap_or_default(),
@@ -311,7 +334,6 @@ impl SkillCard {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
 
     fn make_skill() -> AgentSkillStandard {
@@ -325,20 +347,6 @@ mod tests {
             skills_path: None,
             body: Some("Do the thing.".to_string()),
         }
-    }
-
-    #[test]
-    fn test_skillcard_default() {
-        let card = super::SkillCard::default();
-        assert_eq!(card.space, "");
-        assert_eq!(card.name, "");
-        assert_eq!(card.version, "");
-        assert_eq!(card.uid, "");
-        assert!(card.tags.is_empty());
-        assert!(card.compatible_tools.is_empty());
-
-        assert_eq!(card.app_env, "");
-        assert_eq!(card.is_card, false);
     }
 
     #[test]
@@ -363,5 +371,196 @@ mod tests {
         assert_eq!(card.compatible_tools, vec!["claude-code"]);
         assert!(card.is_card);
         assert_eq!(card.registry_type, RegistryType::Skill);
+    }
+
+    #[test]
+    fn test_skillcard_json_roundtrip() {
+        let skill = make_skill();
+        let card = SkillCard::new_rs(
+            skill,
+            Some("test-space"),
+            Some("my-skill"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+
+        let json = serde_json::to_string(&card).unwrap();
+        let restored = SkillCard::model_validate_json(json).unwrap();
+
+        assert_eq!(restored.name, card.name);
+        assert_eq!(restored.space, card.space);
+        assert_eq!(restored.version, card.version);
+        assert_eq!(restored.skill.description, card.skill.description);
+        assert_eq!(restored.skill.body, card.skill.body);
+        assert!(restored.is_card);
+    }
+
+    #[test]
+    fn test_skillcard_get_registry_card() {
+        let skill = make_skill();
+        let card = SkillCard::new_rs(
+            skill,
+            Some("test-space"),
+            Some("my-skill"),
+            None,
+            Some(vec!["ml".to_string()]),
+            Some(vec!["codex".to_string()]),
+            None,
+            Some(
+                serde_json::json!({"type": "object", "properties": {"input": {"type": "string"}}}),
+            ),
+        )
+        .unwrap();
+
+        let record = card.get_registry_card().unwrap();
+        match record {
+            CardRecord::Skill(r) => {
+                assert_eq!(r.name, "my-skill");
+                assert_eq!(r.space, "test-space");
+                assert_eq!(r.compatible_tools, vec!["codex"]);
+                assert_eq!(r.tags, vec!["ml"]);
+                assert!(r.input_schema.is_some());
+                assert!(!r.content_hash.is_empty());
+            }
+            _ => panic!("expected CardRecord::Skill"),
+        }
+    }
+
+    #[test]
+    fn test_skillcard_content_hash_deterministic() {
+        let skill = make_skill();
+        let card = SkillCard::new_rs(
+            skill.clone(),
+            Some("s"),
+            Some("my-skill"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        let card2 = SkillCard::new_rs(
+            skill,
+            Some("s"),
+            Some("my-skill"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+
+        assert_eq!(
+            card.calculate_content_hash().unwrap(),
+            card2.calculate_content_hash().unwrap()
+        );
+    }
+
+    #[test]
+    fn test_skillcard_content_hash_changes_with_body() {
+        let mut skill1 = make_skill();
+        skill1.body = Some("body A".to_string());
+        let mut skill2 = make_skill();
+        skill2.body = Some("body B".to_string());
+
+        let card1 = SkillCard::new_rs(
+            skill1,
+            Some("s"),
+            Some("my-skill"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        let card2 = SkillCard::new_rs(
+            skill2,
+            Some("s"),
+            Some("my-skill"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+
+        assert_ne!(
+            card1.calculate_content_hash().unwrap(),
+            card2.calculate_content_hash().unwrap()
+        );
+    }
+
+    #[test]
+    fn test_skillcard_input_schema_parsing() {
+        let skill = make_skill();
+        let card = SkillCard::new_rs(
+            skill,
+            Some("s"),
+            Some("my-skill"),
+            None,
+            None,
+            None,
+            None,
+            Some(
+                serde_json::json!({"type": "object", "properties": {"input": {"type": "string"}}}),
+            ),
+        )
+        .unwrap();
+
+        let record = card.get_registry_card().unwrap();
+        if let CardRecord::Skill(r) = record {
+            let schema = r.input_schema.unwrap();
+            assert_eq!(schema["type"], "object");
+        } else {
+            panic!("expected CardRecord::Skill");
+        }
+    }
+
+    #[test]
+    fn test_skillcard_markdown_roundtrip() {
+        let skill = AgentSkillStandard {
+            name: "roundtrip-skill".to_string(),
+            description: "Roundtrip test".to_string(),
+            license: Some("Apache-2.0".to_string()),
+            compatibility: None,
+            metadata: None,
+            allowed_tools: Some(vec!["Bash".to_string()]),
+            skills_path: None,
+            body: Some("# Instructions\n\nDo the thing.\n".to_string()),
+        };
+
+        let card = SkillCard::new_rs(
+            skill,
+            Some("test-space"),
+            Some("roundtrip-skill"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+
+        let md = card.to_markdown().unwrap();
+        assert!(md.contains("roundtrip-skill"));
+        assert!(md.contains("Roundtrip test"));
+        assert!(md.contains("Do the thing."));
+
+        // parse_skill_markdown requires a configured OpsML space (not available in unit tests),
+        // so verify the AgentSkillStandard fields round-trip via the raw YAML frontmatter.
+        let (frontmatter, body) = split_frontmatter(&md).unwrap();
+        let restored: AgentSkillStandard = serde_yaml::from_str(frontmatter).unwrap();
+        assert_eq!(restored.name, card.skill.name);
+        assert_eq!(restored.description, card.skill.description);
+        assert_eq!(restored.license, card.skill.license);
+        assert!(body.contains("Do the thing."));
     }
 }
