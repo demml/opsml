@@ -205,6 +205,8 @@ mod tests {
 
             DELETE
             FROM opsml_evaluation_registry;
+
+            DELETE FROM opsml_skill_registry;
             "#,
         )
         .fetch_all(pool)
