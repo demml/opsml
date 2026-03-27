@@ -397,7 +397,9 @@ pub fn depythonize_object_to_value<'py>(
     value: &Bound<'py, PyAny>,
 ) -> Result<Value, UtilError> {
     let py_value = if is_pydantic_basemodel(py, value)? {
-        let model = value.call_method0("model_dump")?;
+        let kwargs = pyo3::types::PyDict::new(py);
+        kwargs.set_item("mode", "json")?;
+        let model = value.call_method("model_dump", (), Some(&kwargs))?;
         depythonize(&model)?
     } else if value.is_instance_of::<PyDict>() {
         process_dict_with_nested_models(py, value)?

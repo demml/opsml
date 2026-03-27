@@ -50,10 +50,17 @@ fn split_frontmatter(content: &str) -> Option<(&str, &str)> {
     let end = rest.find("\n---").or_else(|| rest.find("\r\n---"))?;
     let frontmatter = &rest[..end];
     let after_delim = &rest[end..];
-    // skip past the closing `---` line
+    // after_delim starts with "\n---\n..." or "\r\n---\r\n..."
+    // Skip the leading line ending, then skip past the entire "---" line
     let body_start = after_delim
         .find('\n')
-        .map(|i| i + 1)
+        .map(|i| {
+            let after_nl = &after_delim[i + 1..];
+            after_nl
+                .find('\n')
+                .map(|j| i + 1 + j + 1)
+                .unwrap_or(i + 1 + after_nl.len())
+        })
         .unwrap_or(after_delim.len());
     let body = &after_delim[body_start..];
     Some((frontmatter, body))
@@ -245,11 +252,8 @@ impl SkillCard {
 
     pub fn calculate_content_hash(&self) -> Result<Vec<u8>, SkillError> {
         let mut hasher = Sha256::new();
-        hasher.update(self.skill.name.as_bytes());
-        hasher.update(self.skill.description.as_bytes());
-        if let Some(body) = &self.skill.body {
-            hasher.update(body.as_bytes());
-        }
+        let canonical = serde_json::to_vec(&self.skill)?;
+        hasher.update(&canonical);
         Ok(hasher.finalize().to_vec())
     }
 
@@ -278,6 +282,7 @@ impl SkillCard {
     }
 
     #[staticmethod]
+    #[pyo3(signature = (json_string))]
     pub fn model_validate_json(json_string: String) -> Result<SkillCard, SkillError> {
         Ok(serde_json::from_str(&json_string).inspect_err(|e| {
             error!("Failed to validate json: {e}");
@@ -561,6 +566,94 @@ mod tests {
         assert_eq!(restored.name, card.skill.name);
         assert_eq!(restored.description, card.skill.description);
         assert_eq!(restored.license, card.skill.license);
+        assert!(!body.starts_with("---"));
         assert!(body.contains("Do the thing."));
+        assert!(body.trim_start_matches('\n').starts_with("# Instructions"));
+    }
+
+    #[test]
+    fn test_split_frontmatter_edge_cases() {
+        assert!(split_frontmatter("no delimiters here").is_none());
+        assert!(split_frontmatter("---\nkey: value\n").is_none());
+
+        let crlf = "---\r\nname: skill\r\n---\r\nbody text\r\n";
+        let (fm, body) = split_frontmatter(crlf).unwrap();
+        assert!(fm.contains("name: skill"));
+        assert!(!body.starts_with("---"));
+        assert!(body.contains("body text"));
+
+        let empty_body = "---\nname: skill\n---\n";
+        let (_, body) = split_frontmatter(empty_body).unwrap();
+        assert_eq!(body, "");
+    }
+
+    #[test]
+    fn test_parse_skill_markdown_invalid_yaml() {
+        let bad = "---\n: invalid: yaml: {{\n---\nbody";
+        assert!(matches!(
+            parse_skill_markdown(bad, None),
+            Err(SkillError::SerdeYamlError(_))
+        ));
+    }
+
+    #[test]
+    fn test_parse_skill_markdown_missing_delimiter() {
+        let no_delims = "name: my-skill\ndescription: test\n";
+        assert!(matches!(
+            parse_skill_markdown(no_delims, None),
+            Err(SkillError::Error(_))
+        ));
+    }
+
+    #[test]
+    fn test_skillcard_content_hash_no_body() {
+        let mut skill = make_skill();
+        skill.body = None;
+        let card = SkillCard::new_rs(
+            skill.clone(),
+            Some("s"),
+            Some("my-skill"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        let card2 = SkillCard::new_rs(
+            skill,
+            Some("s"),
+            Some("my-skill"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        let h1 = card.calculate_content_hash().unwrap();
+        let h2 = card2.calculate_content_hash().unwrap();
+        assert!(!h1.is_empty());
+        assert_eq!(h1, h2);
+    }
+
+    #[test]
+    fn test_skillcard_to_markdown_no_body() {
+        let mut skill = make_skill();
+        skill.body = None;
+        let card = SkillCard::new_rs(
+            skill,
+            Some("s"),
+            Some("my-skill"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        let md = card.to_markdown().unwrap();
+        let (_, body) = split_frontmatter(&md).unwrap();
+        assert_eq!(body, "");
     }
 }
