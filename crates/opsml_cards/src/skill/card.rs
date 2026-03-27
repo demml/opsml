@@ -37,62 +37,16 @@ fn deserialize_from_path<T: DeserializeOwned>(path: PathBuf) -> Result<T, SkillE
     Ok(item)
 }
 
-/// Helper function to split frontmatter and body from markdown content
-/// Returns None if frontmatter delimiters are not found
-/// Assumes frontmatter is delimited by `---` on its own line, and body starts after closing `---`
-fn split_frontmatter(content: &str) -> Option<(&str, &str)> {
-    let content = content.trim_start();
-    let rest = content.strip_prefix("---")?;
-    // accept `---\n` or `---\r\n`
-    let rest = rest
-        .strip_prefix('\n')
-        .or_else(|| rest.strip_prefix("\r\n"))?;
-    let end = rest.find("\n---").or_else(|| rest.find("\r\n---"))?;
-    let frontmatter = &rest[..end];
-    let after_delim = &rest[end..];
-    // after_delim starts with "\n---\n..." or "\r\n---\r\n..."
-    // Skip the leading line ending, then skip past the entire "---" line
-    let body_start = after_delim
-        .find('\n')
-        .map(|i| {
-            let after_nl = &after_delim[i + 1..];
-            after_nl
-                .find('\n')
-                .map(|j| i + 1 + j + 1)
-                .unwrap_or(i + 1 + after_nl.len())
-        })
-        .unwrap_or(after_delim.len());
-    let body = &after_delim[body_start..];
-    Some((frontmatter, body))
-}
-
-/// Parse a skill markdown file (YAML frontmatter + markdown body).
-///
-/// The file format is:
-/// ```
-/// ---
-/// <yaml frontmatter matching AgentSkillStandard fields>
-/// ---
-/// <markdown body>
-/// ```
+/// Parse a skill markdown file (YAML frontmatter + markdown body) into a SkillCard.
 #[instrument(skip_all)]
 pub fn parse_skill_markdown(
     content: &str,
     source_path: Option<&PathBuf>,
 ) -> Result<SkillCard, SkillError> {
-    let (frontmatter, body) = split_frontmatter(content).ok_or_else(|| {
-        SkillError::Error(format!(
-            "Skill markdown {:?} is missing YAML frontmatter delimiters (---)",
-            source_path
-        ))
+    let skill = AgentSkillStandard::from_markdown(content).map_err(|e| {
+        error!("Failed to parse skill markdown {:?}: {e}", source_path);
+        SkillError::AgentConfigError(e)
     })?;
-
-    let mut skill: AgentSkillStandard = serde_yaml::from_str(frontmatter)
-        .map_err(SkillError::SerdeYamlError)
-        .inspect_err(|e| error!("Failed to parse skill frontmatter: {e}"))?;
-
-    skill.body = Some(body.to_string());
-
     let name = skill.name.clone();
     SkillCard::new_rs(skill, None, Some(&name), None, None, None, None, None)
 }
@@ -264,14 +218,7 @@ impl SkillCard {
     }
 
     pub fn to_markdown(&self) -> Result<String, SkillError> {
-        let mut frontmatter =
-            serde_yaml::to_string(&self.skill).map_err(SkillError::SerdeYamlError)?;
-
-        // serde_yaml serializes with trailing newline; trim and wrap in delimiters
-        frontmatter = frontmatter.trim_end().to_string();
-
-        let body = self.skill.body.as_deref().unwrap_or("");
-        Ok(format!("---\n{frontmatter}\n---\n{body}"))
+        Ok(self.skill.to_markdown()?)
     }
 
     #[pyo3(signature = (path), name = "save")]
@@ -559,32 +506,15 @@ mod tests {
         assert!(md.contains("Roundtrip test"));
         assert!(md.contains("Do the thing."));
 
-        // parse_skill_markdown requires a configured OpsML space (not available in unit tests),
-        // so verify the AgentSkillStandard fields round-trip via the raw YAML frontmatter.
-        let (frontmatter, body) = split_frontmatter(&md).unwrap();
-        let restored: AgentSkillStandard = serde_yaml::from_str(frontmatter).unwrap();
+        // Round-trip via AgentSkillStandard::from_markdown
+        let restored = AgentSkillStandard::from_markdown(&md).unwrap();
         assert_eq!(restored.name, card.skill.name);
         assert_eq!(restored.description, card.skill.description);
         assert_eq!(restored.license, card.skill.license);
+        let body = restored.body.as_deref().unwrap_or("");
         assert!(!body.starts_with("---"));
         assert!(body.contains("Do the thing."));
         assert!(body.trim_start_matches('\n').starts_with("# Instructions"));
-    }
-
-    #[test]
-    fn test_split_frontmatter_edge_cases() {
-        assert!(split_frontmatter("no delimiters here").is_none());
-        assert!(split_frontmatter("---\nkey: value\n").is_none());
-
-        let crlf = "---\r\nname: skill\r\n---\r\nbody text\r\n";
-        let (fm, body) = split_frontmatter(crlf).unwrap();
-        assert!(fm.contains("name: skill"));
-        assert!(!body.starts_with("---"));
-        assert!(body.contains("body text"));
-
-        let empty_body = "---\nname: skill\n---\n";
-        let (_, body) = split_frontmatter(empty_body).unwrap();
-        assert_eq!(body, "");
     }
 
     #[test]
@@ -592,7 +522,7 @@ mod tests {
         let bad = "---\n: invalid: yaml: {{\n---\nbody";
         assert!(matches!(
             parse_skill_markdown(bad, None),
-            Err(SkillError::SerdeYamlError(_))
+            Err(SkillError::AgentConfigError(_))
         ));
     }
 
@@ -601,7 +531,7 @@ mod tests {
         let no_delims = "name: my-skill\ndescription: test\n";
         assert!(matches!(
             parse_skill_markdown(no_delims, None),
-            Err(SkillError::Error(_))
+            Err(SkillError::AgentConfigError(_))
         ));
     }
 
@@ -638,6 +568,43 @@ mod tests {
     }
 
     #[test]
+    fn test_skillcard_to_markdown_body_not_in_frontmatter() {
+        let skill = AgentSkillStandard {
+            name: "fm-test".to_string(),
+            description: "Frontmatter body exclusion test".to_string(),
+            license: None,
+            compatibility: None,
+            metadata: None,
+            allowed_tools: None,
+            skills_path: None,
+            body: Some("# Steps\n\nDo the thing.\n".to_string()),
+        };
+        let card = SkillCard::new_rs(
+            skill,
+            Some("s"),
+            Some("fm-test"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+
+        let md = card.to_markdown().unwrap();
+        let restored = AgentSkillStandard::from_markdown(&md).unwrap();
+
+        // body content must NOT appear as a YAML key in the frontmatter
+        assert!(
+            !md[..md.find("\n---\n# ").unwrap_or(md.len())].contains("body:"),
+            "frontmatter should not contain a 'body:' key"
+        );
+        // body content must appear in the parsed body
+        let body = restored.body.as_deref().unwrap_or("");
+        assert!(body.contains("Do the thing."));
+    }
+
+    #[test]
     fn test_skillcard_to_markdown_no_body() {
         let mut skill = make_skill();
         skill.body = None;
@@ -653,7 +620,7 @@ mod tests {
         )
         .unwrap();
         let md = card.to_markdown().unwrap();
-        let (_, body) = split_frontmatter(&md).unwrap();
-        assert_eq!(body, "");
+        let restored = AgentSkillStandard::from_markdown(&md).unwrap();
+        assert_eq!(restored.body.as_deref().unwrap_or(""), "");
     }
 }

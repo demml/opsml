@@ -26,6 +26,9 @@ pub enum SkillError {
 
     #[error(transparent)]
     ArgError(#[from] ArgError),
+
+    #[error(transparent)]
+    AgentConfigError(#[from] opsml_types::error::AgentConfigError),
 }
 
 impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for SkillError {

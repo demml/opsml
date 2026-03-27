@@ -75,7 +75,7 @@ impl SkillDependency {
 
     #[getter]
     pub fn kind<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
-        Ok(self.kind.clone().into_bound_py_any(py)?)
+        self.kind.clone().into_bound_py_any(py)
     }
 
     #[setter]
