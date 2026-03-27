@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS opsml_skill_registry (
     opsml_version VARCHAR(255) NOT NULL DEFAULT '0.0.0',
     username VARCHAR(255) NOT NULL DEFAULT 'guest',
     download_count BIGINT NOT NULL DEFAULT 0,
-    input_schema TEXT
+    input_schema JSON
 );
 
 CREATE INDEX idx_opsml_skill_registry_space_name ON opsml_skill_registry (space, name);
