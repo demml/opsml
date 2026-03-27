@@ -1,3 +1,4 @@
+use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -51,7 +52,6 @@ pub struct SkillDependency {
     pub space: String,
     #[pyo3(get, set)]
     pub version_req: Option<String>,
-    #[pyo3(get, set)]
     pub kind: DependencyKind,
 }
 
@@ -71,6 +71,17 @@ impl SkillDependency {
             version_req,
             kind,
         }
+    }
+
+    #[getter]
+    pub fn kind<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
+        self.kind.clone().into_bound_py_any(py)
+    }
+
+    #[setter]
+    pub fn set_kind(&mut self, kind: &Bound<'_, PyAny>) -> PyResult<()> {
+        self.kind = kind.extract::<DependencyKind>()?;
+        Ok(())
     }
 
     pub fn __repr__(&self) -> String {

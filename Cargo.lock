@@ -5036,6 +5036,7 @@ dependencies = [
  "chrono",
  "colored_json",
  "pyo3",
+ "pythonize",
  "regex",
  "serde",
  "serde_json",

@@ -15,15 +15,30 @@ use thiserror::Error;
 use tracing::error;
 
 #[derive(Error, Debug)]
+pub enum ArgError {
+    #[error("{0}")]
+    Error(String),
+
+    #[error(transparent)]
+    UtilError(#[from] UtilError),
+
+    #[error(transparent)]
+    StateError(#[from] StateError),
+
+    #[error(transparent)]
+    TypeError(#[from] TypeError),
+}
+
+#[derive(Error, Debug)]
 pub enum CardError {
     #[error(transparent)]
     AgentConfigError(#[from] AgentConfigError),
 
     #[error(transparent)]
-    TypeError(#[from] TypeError),
+    ArgError(#[from] ArgError),
 
     #[error(transparent)]
-    StateError(#[from] StateError),
+    TypeError(#[from] TypeError),
 
     #[error(transparent)]
     UtilError(#[from] UtilError),

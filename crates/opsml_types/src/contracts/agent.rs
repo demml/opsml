@@ -6,6 +6,7 @@ use pythonize::depythonize;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use serde_yaml;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
@@ -280,7 +281,49 @@ pub struct AgentSkillStandard {
     pub body: Option<String>,
 }
 
+fn split_frontmatter(content: &str) -> Option<(&str, &str)> {
+    let content = content.trim_start();
+    let rest = content.strip_prefix("---")?;
+    let rest = rest
+        .strip_prefix('\n')
+        .or_else(|| rest.strip_prefix("\r\n"))?;
+    let end = rest.find("\n---").or_else(|| rest.find("\r\n---"))?;
+    let frontmatter = &rest[..end];
+    let after_delim = &rest[end..];
+    let body_start = after_delim
+        .find('\n')
+        .map(|i| {
+            let after_nl = &after_delim[i + 1..];
+            after_nl
+                .find('\n')
+                .map(|j| i + 1 + j + 1)
+                .unwrap_or(i + 1 + after_nl.len())
+        })
+        .unwrap_or(after_delim.len());
+    Some((frontmatter, &after_delim[body_start..]))
+}
+
 impl AgentSkillStandard {
+    pub fn to_markdown(&self) -> Result<String, AgentConfigError> {
+        let mut skill_for_frontmatter = self.clone();
+        skill_for_frontmatter.body = None;
+        let mut frontmatter = serde_yaml::to_string(&skill_for_frontmatter)?;
+        frontmatter = frontmatter.trim_end().to_string();
+        let body = self.body.as_deref().unwrap_or("");
+        Ok(format!("---\n{frontmatter}\n---\n{body}"))
+    }
+
+    pub fn from_markdown(content: &str) -> Result<Self, AgentConfigError> {
+        let (frontmatter, body) = split_frontmatter(content).ok_or_else(|| {
+            AgentConfigError::ParseError(
+                "Skill markdown is missing YAML frontmatter delimiters (---)".to_string(),
+            )
+        })?;
+        let mut skill: AgentSkillStandard = serde_yaml::from_str(frontmatter)?;
+        skill.body = Some(body.to_string());
+        Ok(skill)
+    }
+
     /// Validate the name field per Agent Skills specification
     fn validate_name(&self) -> Result<(), AgentConfigError> {
         let name = self.name.trim();
@@ -1208,5 +1251,74 @@ impl AgentSpec {
         }
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_split_frontmatter_edge_cases() {
+        assert!(AgentSkillStandard::from_markdown("no delimiters here").is_err());
+        assert!(AgentSkillStandard::from_markdown("---\nkey: value\n").is_err());
+
+        let crlf = "---\r\nname: crlf-skill\r\ndescription: test\r\n---\r\nbody text\r\n";
+        let skill = AgentSkillStandard::from_markdown(crlf).unwrap();
+        assert_eq!(skill.name, "crlf-skill");
+        let body = skill.body.as_deref().unwrap_or("");
+        assert!(!body.starts_with("---"));
+        assert!(body.contains("body text"));
+
+        let empty_body = "---\nname: empty-body-skill\ndescription: test\n---\n";
+        let skill = AgentSkillStandard::from_markdown(empty_body).unwrap();
+        assert_eq!(skill.body.as_deref().unwrap_or("non-empty"), "");
+    }
+
+    #[test]
+    fn test_to_markdown_body_not_in_frontmatter() {
+        let skill = AgentSkillStandard {
+            name: "fm-test".to_string(),
+            description: "test".to_string(),
+            license: None,
+            compatibility: None,
+            metadata: None,
+            allowed_tools: None,
+            skills_path: None,
+            body: Some("# Steps\n\nDo the thing.\n".to_string()),
+        };
+        let md = skill.to_markdown().unwrap();
+        let close = md.find("\n---\n").unwrap();
+        let frontmatter_section = &md[..close];
+        assert!(!frontmatter_section.contains("body:"));
+        let restored = AgentSkillStandard::from_markdown(&md).unwrap();
+        assert!(
+            restored
+                .body
+                .as_deref()
+                .unwrap_or("")
+                .contains("Do the thing.")
+        );
+    }
+
+    #[test]
+    fn test_to_markdown_roundtrip() {
+        let skill = AgentSkillStandard {
+            name: "roundtrip".to_string(),
+            description: "Roundtrip test".to_string(),
+            license: Some("MIT".to_string()),
+            compatibility: None,
+            metadata: None,
+            allowed_tools: Some(vec!["Bash".to_string()]),
+            skills_path: None,
+            body: Some("# Instructions\n\nDo the thing.\n".to_string()),
+        };
+        let md = skill.to_markdown().unwrap();
+        let restored = AgentSkillStandard::from_markdown(&md).unwrap();
+        assert_eq!(restored.name, skill.name);
+        assert_eq!(restored.description, skill.description);
+        assert_eq!(restored.license, skill.license);
+        assert_eq!(restored.allowed_tools, skill.allowed_tools);
+        assert_eq!(restored.body, skill.body);
     }
 }

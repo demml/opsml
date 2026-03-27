@@ -101,6 +101,9 @@ pub enum AgentConfigError {
     #[error("{0}")]
     PyError(String),
 
+    #[error("{0}")]
+    ParseError(String),
+
     #[error(transparent)]
     SerdeYamlError(#[from] serde_yaml::Error),
 
