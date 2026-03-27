@@ -37,6 +37,7 @@ pub enum CardTable {
     Evaluation,
     Mcp,
     Agent,
+    Skill,
 }
 
 impl fmt::Display for CardTable {
@@ -58,6 +59,7 @@ impl fmt::Display for CardTable {
             CardTable::Artifact => "opsml_artifact_registry",
             CardTable::Evaluation => "opsml_evaluation_registry",
             CardTable::Agent => "opsml_agent_registry",
+            CardTable::Skill => "opsml_skill_registry",
         };
         write!(f, "{table_name}")
     }
@@ -81,6 +83,7 @@ impl CardTable {
             RegistryType::Evaluation => CardTable::Evaluation,
             RegistryType::Mcp => CardTable::Mcp,
             RegistryType::Agent => CardTable::Agent,
+            RegistryType::Skill => CardTable::Skill,
         }
     }
 

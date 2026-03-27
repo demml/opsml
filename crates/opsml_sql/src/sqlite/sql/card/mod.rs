@@ -6,8 +6,8 @@ use tracing::instrument;
 use crate::error::SqlError;
 use crate::schemas::schema::{
     AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
-    ModelCardRecord, PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, VersionResult,
-    VersionSummary,
+    ModelCardRecord, PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SkillCardRecord,
+    VersionResult, VersionSummary,
 };
 
 use crate::traits::CardLogicTrait;
@@ -195,6 +195,12 @@ impl CardLogicTrait for CardLogicSqliteClient {
                     query_cards_generic::<ServiceCardRecord>(&self.pool, &query, query_args, 1000)
                         .await?;
                 Ok(CardResults::Service(cards))
+            }
+            CardTable::Skill => {
+                let cards =
+                    query_cards_generic::<SkillCardRecord>(&self.pool, &query, query_args, 50)
+                        .await?;
+                Ok(CardResults::Skill(cards))
             }
             _ => Err(SqlError::InvalidTableName),
         }
@@ -386,6 +392,38 @@ impl CardLogicTrait for CardLogicSqliteClient {
                 }
             },
 
+            CardTable::Skill => match card {
+                ServerCard::Skill(record) => {
+                    let query = SqliteQueryHelper::get_skillcard_insert_query();
+                    sqlx::query(query)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.tags)
+                        .bind(&record.compatible_tools)
+                        .bind(&record.dependencies)
+                        .bind(&record.description)
+                        .bind(&record.license)
+                        .bind(&record.content_hash)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.input_schema)
+                        .execute(&self.pool)
+                        .await?;
+                    Ok(())
+                }
+                _ => {
+                    return Err(SqlError::InvalidCardType);
+                }
+            },
+
             _ => {
                 return Err(SqlError::InvalidTableName);
             }
@@ -401,17 +439,11 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
-                        .bind(record.major)
-                        .bind(record.minor)
-                        .bind(record.patch)
-                        .bind(&record.version)
                         .bind(&record.data_type)
                         .bind(&record.interface_type)
                         .bind(&record.tags)
                         .bind(&record.experimentcard_uid)
                         .bind(&record.auditcard_uid)
-                        .bind(&record.pre_tag)
-                        .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
@@ -430,10 +462,6 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
-                        .bind(record.major)
-                        .bind(record.minor)
-                        .bind(record.patch)
-                        .bind(&record.version)
                         .bind(&record.datacard_uid)
                         .bind(&record.data_type)
                         .bind(&record.model_type)
@@ -442,8 +470,6 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.tags)
                         .bind(&record.experimentcard_uid)
                         .bind(&record.auditcard_uid)
-                        .bind(&record.pre_tag)
-                        .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
@@ -462,18 +488,12 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
-                        .bind(record.major)
-                        .bind(record.minor)
-                        .bind(record.patch)
-                        .bind(&record.version)
                         .bind(&record.tags)
                         .bind(&record.datacard_uids)
                         .bind(&record.modelcard_uids)
                         .bind(&record.promptcard_uids)
                         .bind(&record.service_card_uids)
                         .bind(&record.experimentcard_uids)
-                        .bind(&record.pre_tag)
-                        .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.status)
@@ -493,17 +513,11 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
-                        .bind(record.major)
-                        .bind(record.minor)
-                        .bind(record.patch)
-                        .bind(&record.version)
                         .bind(&record.tags)
                         .bind(record.approved)
                         .bind(&record.datacard_uids)
                         .bind(&record.modelcard_uids)
                         .bind(&record.experimentcard_uids)
-                        .bind(&record.pre_tag)
-                        .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.uid)
@@ -523,15 +537,9 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
-                        .bind(record.major)
-                        .bind(record.minor)
-                        .bind(record.patch)
-                        .bind(&record.version)
                         .bind(&record.tags)
                         .bind(&record.experimentcard_uid)
                         .bind(&record.auditcard_uid)
-                        .bind(&record.pre_tag)
-                        .bind(&record.build_tag)
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.content_hash)
@@ -566,6 +574,32 @@ impl CardLogicTrait for CardLogicSqliteClient {
                         .bind(&record.service_config)
                         .bind(&record.tags)
                         .bind(&record.content_hash)
+                        .bind(&record.uid)
+                        .execute(&self.pool)
+                        .await?;
+                    Ok(())
+                }
+                _ => {
+                    return Err(SqlError::InvalidCardType);
+                }
+            },
+
+            CardTable::Skill => match card {
+                ServerCard::Skill(record) => {
+                    let query = SqliteQueryHelper::get_skillcard_update_query();
+                    sqlx::query(query)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(&record.tags)
+                        .bind(&record.compatible_tools)
+                        .bind(&record.dependencies)
+                        .bind(&record.description)
+                        .bind(&record.license)
+                        .bind(&record.content_hash)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.input_schema)
                         .bind(&record.uid)
                         .execute(&self.pool)
                         .await?;

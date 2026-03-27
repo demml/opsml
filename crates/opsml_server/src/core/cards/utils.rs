@@ -127,6 +127,23 @@ pub async fn insert_card_into_db(
             );
             ServerCard::Service(Box::new(server_card))
         }
+        CardRecord::Skill(client_card) => {
+            let server_card = SkillCardRecord::new(
+                client_card.name,
+                client_card.space,
+                version,
+                client_card.tags,
+                client_card.compatible_tools,
+                client_card.dependencies,
+                client_card.description,
+                client_card.license,
+                client_card.opsml_version,
+                client_card.username,
+                client_card.content_hash,
+                client_card.input_schema,
+            );
+            ServerCard::Skill(server_card)
+        }
     };
     sql_client.insert_card(table, &card).await?;
 

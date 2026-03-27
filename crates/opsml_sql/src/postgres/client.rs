@@ -74,7 +74,7 @@ mod tests {
     use crate::schemas::schema::{
         ArtifactSqlRecord, AuditCardRecord, CardResults, DataCardRecord, ExperimentCardRecord,
         HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-        ServerCard, ServiceCardRecord, User,
+        ServerCard, ServiceCardRecord, SkillCardRecord, User,
     };
     use crate::traits::EvaluationLogicTrait;
     use crate::traits::{
@@ -205,6 +205,8 @@ mod tests {
 
             DELETE
             FROM opsml_evaluation_registry;
+
+            DELETE FROM opsml_skill_registry;
             "#,
         )
         .fetch_all(pool)
@@ -225,6 +227,7 @@ mod tests {
             CardTable::Audit => ServerCard::Audit(AuditCardRecord::default()),
             CardTable::Prompt => ServerCard::Prompt(PromptCardRecord::default()),
             CardTable::Service => ServerCard::Service(Box::default()),
+            CardTable::Skill => ServerCard::Skill(SkillCardRecord::default()),
             _ => panic!("Invalid card type"),
         };
 
@@ -236,6 +239,7 @@ mod tests {
             ServerCard::Audit(c) => c.uid.clone(),
             ServerCard::Prompt(c) => c.uid.clone(),
             ServerCard::Service(c) => c.uid.clone(),
+            ServerCard::Skill(c) => c.uid.clone(),
         };
 
         // Test Insert
@@ -304,6 +308,14 @@ mod tests {
                 };
                 ServerCard::Service(Box::new(c))
             }
+            CardTable::Skill => {
+                let c = SkillCardRecord {
+                    uid: uid.clone(),
+                    name: updated_name.to_string(),
+                    ..Default::default()
+                };
+                ServerCard::Skill(c)
+            }
             _ => panic!("Invalid card type"),
         };
 
@@ -328,6 +340,7 @@ mod tests {
             CardResults::Audit(cards) => assert_eq!(cards[0].name, updated_name),
             CardResults::Prompt(cards) => assert_eq!(cards[0].name, updated_name),
             CardResults::Service(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Skill(cards) => assert_eq!(cards[0].name, updated_name),
         }
 
         // delete card
@@ -582,6 +595,9 @@ mod tests {
             .await
             .unwrap();
         test_card_crud(&client, &CardTable::Service, "UpdatedDeckName")
+            .await
+            .unwrap();
+        test_card_crud(&client, &CardTable::Skill, "UpdatedSkillName")
             .await
             .unwrap();
     }

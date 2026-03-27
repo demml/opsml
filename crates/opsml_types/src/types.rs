@@ -28,6 +28,7 @@ pub enum RegistryType {
     Artifact,
     Evaluation,
     Agent,
+    Skill,
 }
 
 impl<'de> Deserialize<'de> for RegistryType {
@@ -52,6 +53,7 @@ impl<'de> Deserialize<'de> for RegistryType {
             "evaluation" => Ok(RegistryType::Evaluation),
             "mcp" => Ok(RegistryType::Mcp),
             "agent" => Ok(RegistryType::Agent),
+            "skill" => Ok(RegistryType::Skill),
             _ => Err(serde::de::Error::custom(format!(
                 "Invalid registry type: {s}"
             ))),
@@ -77,6 +79,7 @@ impl Display for RegistryType {
             RegistryType::Evaluation => write!(f, "evaluation"),
             RegistryType::Mcp => write!(f, "mcp"),
             RegistryType::Agent => write!(f, "agent"),
+            RegistryType::Skill => write!(f, "skill"),
         }
     }
 }
@@ -98,6 +101,7 @@ impl RegistryType {
             "evaluation" => Ok(RegistryType::Evaluation),
             "mcp" => Ok(RegistryType::Mcp),
             "agent" => Ok(RegistryType::Agent),
+            "skill" => Ok(RegistryType::Skill),
             _ => Err(TypeError::InvalidRegistryType),
         }
     }
@@ -119,6 +123,7 @@ impl RegistryType {
             RegistryType::Evaluation => b"evaluation",
             RegistryType::Mcp => b"mcp",
             RegistryType::Agent => b"agent",
+            RegistryType::Skill => b"skill",
         }
     }
 }

@@ -1,0 +1,21 @@
+INSERT INTO opsml_skill_registry (
+    uid,
+    app_env,
+    name,
+    space,
+    major,
+    minor,
+    patch,
+    version,
+    pre_tag,
+    build_tag,
+    tags,
+    compatible_tools,
+    dependencies,
+    description,
+    license,
+    content_hash,
+    username,
+    opsml_version,
+    input_schema
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
