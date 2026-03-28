@@ -19668,6 +19668,7 @@ class RegistryType:
     Audit: "RegistryType"
     Prompt: "RegistryType"
     Service: "RegistryType"
+    Skill: "RegistryType"
 
 class RegistryMode:
     Client: "RegistryMode"
@@ -25518,6 +25519,7 @@ __all__ = [
     "AgentProvider",
     "AgentResponse",
     "AgentSkill",
+    "AgentSkillStandard",
     "AgentSpec",
     "AggregationType",
     "Alert",
@@ -25630,6 +25632,7 @@ __all__ = [
     "DataSplitter",
     "DataStoreSpec",
     "DataType",
+    "DependencyKind",
     "DependentVars",
     "DeviceCodeFlow",
     "Distinct",
@@ -25902,6 +25905,8 @@ __all__ = [
     "ServiceCard",
     "ServiceType",
     "SimpleSearchParams",
+    "SkillCard",
+    "SkillDependency",
     "SklearnModel",
     "SlackDispatchConfig",
     "SourceFlaggingUri",

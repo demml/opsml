@@ -59,6 +59,7 @@ class RegistryType:
     Audit: "RegistryType"
     Prompt: "RegistryType"
     Service: "RegistryType"
+    Skill: "RegistryType"
 
 class RegistryMode:
     Client: "RegistryMode"
@@ -2631,4 +2632,8 @@ __all__ = [
     "get_experiment_parameters",
     "download_artifact",
     "ProtocolBinding",
+    "AgentSkillStandard",
+    "DependencyKind",
+    "SkillCard",
+    "SkillDependency",
 ]
