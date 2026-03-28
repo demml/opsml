@@ -798,7 +798,7 @@ impl SkillLogicTrait for CardLogicPostgresClient {
         name: &str,
     ) -> Result<SkillCardRecord, SqlError> {
         let record = sqlx::query_as::<_, SkillCardRecord>(
-            "SELECT * FROM opsml_skill_registry WHERE space = $1 AND name = $2 ORDER BY major DESC, minor DESC, patch DESC LIMIT 1"
+            PostgresQueryHelper::get_skill_card_by_name_query()
         )
         .bind(space)
         .bind(name)
@@ -815,7 +815,7 @@ impl SkillLogicTrait for CardLogicPostgresClient {
         version: &str,
     ) -> Result<SkillCardRecord, SqlError> {
         let record = sqlx::query_as::<_, SkillCardRecord>(
-            "SELECT * FROM opsml_skill_registry WHERE space = $1 AND name = $2 AND version = $3 LIMIT 1"
+            PostgresQueryHelper::get_skill_card_by_version_query()
         )
         .bind(space)
         .bind(name)
@@ -828,7 +828,7 @@ impl SkillLogicTrait for CardLogicPostgresClient {
 
     async fn increment_skill_download_count(&self, uid: &str) -> Result<(), SqlError> {
         let result = sqlx::query(
-            "UPDATE opsml_skill_registry SET download_count = download_count + 1 WHERE uid = $1"
+            PostgresQueryHelper::get_increment_skill_download_count_query()
         )
         .bind(uid)
         .execute(&self.pool)
@@ -844,10 +844,7 @@ impl SkillLogicTrait for CardLogicPostgresClient {
         space: &str,
     ) -> Result<Vec<SkillCardRecord>, SqlError> {
         let records = sqlx::query_as::<_, SkillCardRecord>(
-            "SELECT DISTINCT ON (name) *
-             FROM opsml_skill_registry
-             WHERE space = $1
-             ORDER BY name, major DESC, minor DESC, patch DESC"
+            PostgresQueryHelper::get_list_skill_cards_by_space_query()
         )
         .bind(space)
         .fetch_all(&self.pool)
@@ -857,7 +854,7 @@ impl SkillLogicTrait for CardLogicPostgresClient {
 
     async fn get_featured_skills(&self, limit: i64) -> Result<Vec<SkillCardRecord>, SqlError> {
         let records = sqlx::query_as::<_, SkillCardRecord>(
-            "SELECT * FROM opsml_skill_registry ORDER BY download_count DESC LIMIT $1"
+            PostgresQueryHelper::get_featured_skills_query()
         )
         .bind(limit)
         .fetch_all(&self.pool)
@@ -867,7 +864,7 @@ impl SkillLogicTrait for CardLogicPostgresClient {
 
     async fn get_all_skill_tags(&self) -> Result<Vec<String>, SqlError> {
         let tags: Vec<String> = sqlx::query_scalar(
-            "SELECT DISTINCT jsonb_array_elements_text(tags::jsonb) AS tag FROM opsml_skill_registry WHERE tags IS NOT NULL"
+            PostgresQueryHelper::get_all_skill_tags_query()
         )
         .fetch_all(&self.pool)
         .await?;
@@ -876,7 +873,7 @@ impl SkillLogicTrait for CardLogicPostgresClient {
 
     async fn get_marketplace_stats(&self) -> Result<MarketplaceStats, SqlError> {
         let row: (i64, i64, i64) = sqlx::query_as(
-            "SELECT COUNT(*), COUNT(DISTINCT space), COALESCE(SUM(download_count), 0) FROM opsml_skill_registry"
+            PostgresQueryHelper::get_marketplace_stats_query()
         )
         .fetch_one(&self.pool)
         .await?;

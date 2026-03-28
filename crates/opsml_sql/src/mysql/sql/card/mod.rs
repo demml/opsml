@@ -829,7 +829,7 @@ impl SkillLogicTrait for CardLogicMySqlClient {
         name: &str,
     ) -> Result<SkillCardRecord, SqlError> {
         let record = sqlx::query_as::<_, SkillCardRecord>(
-            "SELECT * FROM opsml_skill_registry WHERE space = ? AND name = ? ORDER BY major DESC, minor DESC, patch DESC LIMIT 1"
+            MySqlQueryHelper::get_skill_card_by_name_query()
         )
         .bind(space)
         .bind(name)
@@ -846,7 +846,7 @@ impl SkillLogicTrait for CardLogicMySqlClient {
         version: &str,
     ) -> Result<SkillCardRecord, SqlError> {
         let record = sqlx::query_as::<_, SkillCardRecord>(
-            "SELECT * FROM opsml_skill_registry WHERE space = ? AND name = ? AND version = ? LIMIT 1"
+            MySqlQueryHelper::get_skill_card_by_version_query()
         )
         .bind(space)
         .bind(name)
@@ -859,7 +859,7 @@ impl SkillLogicTrait for CardLogicMySqlClient {
 
     async fn increment_skill_download_count(&self, uid: &str) -> Result<(), SqlError> {
         let result = sqlx::query(
-            "UPDATE opsml_skill_registry SET download_count = download_count + 1 WHERE uid = ?"
+            MySqlQueryHelper::get_increment_skill_download_count_query()
         )
         .bind(uid)
         .execute(&self.pool)
@@ -875,15 +875,7 @@ impl SkillLogicTrait for CardLogicMySqlClient {
         space: &str,
     ) -> Result<Vec<SkillCardRecord>, SqlError> {
         let records = sqlx::query_as::<_, SkillCardRecord>(
-            "SELECT s.* FROM opsml_skill_registry s
-             INNER JOIN (
-                 SELECT name, MAX(major) AS max_major, MAX(minor) AS max_minor, MAX(patch) AS max_patch
-                 FROM opsml_skill_registry WHERE space = ? GROUP BY name
-             ) latest ON s.name = latest.name
-                 AND s.major = latest.max_major
-                 AND s.minor = latest.max_minor
-                 AND s.patch = latest.max_patch
-             WHERE s.space = ? ORDER BY s.name"
+            MySqlQueryHelper::get_list_skill_cards_by_space_query()
         )
         .bind(space)
         .bind(space)
@@ -894,7 +886,7 @@ impl SkillLogicTrait for CardLogicMySqlClient {
 
     async fn get_featured_skills(&self, limit: i64) -> Result<Vec<SkillCardRecord>, SqlError> {
         let records = sqlx::query_as::<_, SkillCardRecord>(
-            "SELECT * FROM opsml_skill_registry ORDER BY download_count DESC LIMIT ?"
+            MySqlQueryHelper::get_featured_skills_query()
         )
         .bind(limit)
         .fetch_all(&self.pool)
@@ -904,7 +896,7 @@ impl SkillLogicTrait for CardLogicMySqlClient {
 
     async fn get_all_skill_tags(&self) -> Result<Vec<String>, SqlError> {
         let tags: Vec<String> = sqlx::query_scalar(
-            "SELECT DISTINCT jt.tag FROM opsml_skill_registry, JSON_TABLE(tags, '$[*]' COLUMNS(tag VARCHAR(255) PATH '$')) AS jt WHERE tags IS NOT NULL"
+            MySqlQueryHelper::get_all_skill_tags_query()
         )
         .fetch_all(&self.pool)
         .await?;
@@ -913,7 +905,7 @@ impl SkillLogicTrait for CardLogicMySqlClient {
 
     async fn get_marketplace_stats(&self) -> Result<MarketplaceStats, SqlError> {
         let row: (i64, i64, i64) = sqlx::query_as(
-            "SELECT COUNT(*), COUNT(DISTINCT space), COALESCE(SUM(download_count), 0) FROM opsml_skill_registry"
+            MySqlQueryHelper::get_marketplace_stats_query()
         )
         .fetch_one(&self.pool)
         .await?;
