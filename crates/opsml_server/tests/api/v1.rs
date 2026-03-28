@@ -1,5 +1,8 @@
 use crate::common::TestHelper;
-use axum::{body::Body, http::{Request, StatusCode}};
+use axum::{
+    body::Body,
+    http::{Request, StatusCode},
+};
 use http_body_util::BodyExt;
 use opsml_server::core::agentic::schema::{ArtifactMeta, MapResponse};
 use opsml_types::contracts::skill::MarketplaceStats;

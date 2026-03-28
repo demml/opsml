@@ -11,11 +11,11 @@ use crate::traits::{
     ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, ExperimentLogicTrait, SkillLogicTrait,
     SpaceLogicTrait, UserLogicTrait,
 };
-use opsml_types::contracts::skill::MarketplaceStats;
 use anyhow::Context;
 use anyhow::Result as AnyhowResult;
 use async_trait::async_trait;
 use opsml_settings::config::DatabaseSettings;
+use opsml_types::contracts::skill::MarketplaceStats;
 use opsml_types::contracts::{
     ArtifactQueryArgs, ArtifactRecord, AuditEvent, DashboardStats, SpaceNameEvent, SpaceRecord,
     SpaceStats,
@@ -647,7 +647,9 @@ impl SkillLogicTrait for SqlClientEnum {
         name: &str,
     ) -> Result<SkillCardRecord, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.card.get_skill_card_by_name(space, name).await,
+            SqlClientEnum::Postgres(client) => {
+                client.card.get_skill_card_by_name(space, name).await
+            }
             SqlClientEnum::Sqlite(client) => client.card.get_skill_card_by_name(space, name).await,
             SqlClientEnum::MySql(client) => client.card.get_skill_card_by_name(space, name).await,
         }
@@ -660,15 +662,32 @@ impl SkillLogicTrait for SqlClientEnum {
         version: &str,
     ) -> Result<SkillCardRecord, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.card.get_skill_card_by_version(space, name, version).await,
-            SqlClientEnum::Sqlite(client) => client.card.get_skill_card_by_version(space, name, version).await,
-            SqlClientEnum::MySql(client) => client.card.get_skill_card_by_version(space, name, version).await,
+            SqlClientEnum::Postgres(client) => {
+                client
+                    .card
+                    .get_skill_card_by_version(space, name, version)
+                    .await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client
+                    .card
+                    .get_skill_card_by_version(space, name, version)
+                    .await
+            }
+            SqlClientEnum::MySql(client) => {
+                client
+                    .card
+                    .get_skill_card_by_version(space, name, version)
+                    .await
+            }
         }
     }
 
     async fn increment_skill_download_count(&self, uid: &str) -> Result<(), SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.card.increment_skill_download_count(uid).await,
+            SqlClientEnum::Postgres(client) => {
+                client.card.increment_skill_download_count(uid).await
+            }
             SqlClientEnum::Sqlite(client) => client.card.increment_skill_download_count(uid).await,
             SqlClientEnum::MySql(client) => client.card.increment_skill_download_count(uid).await,
         }

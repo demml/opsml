@@ -10,8 +10,8 @@ use crate::schemas::schema::{
 };
 use crate::traits::{CardLogicTrait, SkillLogicTrait};
 use async_trait::async_trait;
-use opsml_types::contracts::skill::MarketplaceStats;
 use opsml_semver::VersionValidator;
+use opsml_types::contracts::skill::MarketplaceStats;
 use opsml_types::{
     RegistryType,
     contracts::{ArtifactKey, CardQueryArgs, DashboardStats, ServiceQueryArgs, VersionCursor},
@@ -828,14 +828,13 @@ impl SkillLogicTrait for CardLogicMySqlClient {
         space: &str,
         name: &str,
     ) -> Result<SkillCardRecord, SqlError> {
-        let record = sqlx::query_as::<_, SkillCardRecord>(
-            MySqlQueryHelper::get_skill_card_by_name_query()
-        )
-        .bind(space)
-        .bind(name)
-        .fetch_optional(&self.pool)
-        .await?
-        .ok_or_else(|| SqlError::MissingField(format!("{}/{}", space, name)))?;
+        let record =
+            sqlx::query_as::<_, SkillCardRecord>(MySqlQueryHelper::get_skill_card_by_name_query())
+                .bind(space)
+                .bind(name)
+                .fetch_optional(&self.pool)
+                .await?
+                .ok_or_else(|| SqlError::MissingField(format!("{}/{}", space, name)))?;
         Ok(record)
     }
 
@@ -846,7 +845,7 @@ impl SkillLogicTrait for CardLogicMySqlClient {
         version: &str,
     ) -> Result<SkillCardRecord, SqlError> {
         let record = sqlx::query_as::<_, SkillCardRecord>(
-            MySqlQueryHelper::get_skill_card_by_version_query()
+            MySqlQueryHelper::get_skill_card_by_version_query(),
         )
         .bind(space)
         .bind(name)
@@ -858,14 +857,14 @@ impl SkillLogicTrait for CardLogicMySqlClient {
     }
 
     async fn increment_skill_download_count(&self, uid: &str) -> Result<(), SqlError> {
-        let result = sqlx::query(
-            MySqlQueryHelper::get_increment_skill_download_count_query()
-        )
-        .bind(uid)
-        .execute(&self.pool)
-        .await?;
+        let result = sqlx::query(MySqlQueryHelper::get_increment_skill_download_count_query())
+            .bind(uid)
+            .execute(&self.pool)
+            .await?;
         if result.rows_affected() == 0 {
-            return Err(SqlError::MissingField(format!("skill uid not found: {uid}")));
+            return Err(SqlError::MissingField(format!(
+                "skill uid not found: {uid}"
+            )));
         }
         Ok(())
     }
@@ -875,7 +874,7 @@ impl SkillLogicTrait for CardLogicMySqlClient {
         space: &str,
     ) -> Result<Vec<SkillCardRecord>, SqlError> {
         let records = sqlx::query_as::<_, SkillCardRecord>(
-            MySqlQueryHelper::get_list_skill_cards_by_space_query()
+            MySqlQueryHelper::get_list_skill_cards_by_space_query(),
         )
         .bind(space)
         .bind(space)
@@ -885,30 +884,25 @@ impl SkillLogicTrait for CardLogicMySqlClient {
     }
 
     async fn get_featured_skills(&self, limit: i64) -> Result<Vec<SkillCardRecord>, SqlError> {
-        let records = sqlx::query_as::<_, SkillCardRecord>(
-            MySqlQueryHelper::get_featured_skills_query()
-        )
-        .bind(limit)
-        .fetch_all(&self.pool)
-        .await?;
+        let records =
+            sqlx::query_as::<_, SkillCardRecord>(MySqlQueryHelper::get_featured_skills_query())
+                .bind(limit)
+                .fetch_all(&self.pool)
+                .await?;
         Ok(records)
     }
 
     async fn get_all_skill_tags(&self) -> Result<Vec<String>, SqlError> {
-        let tags: Vec<String> = sqlx::query_scalar(
-            MySqlQueryHelper::get_all_skill_tags_query()
-        )
-        .fetch_all(&self.pool)
-        .await?;
+        let tags: Vec<String> = sqlx::query_scalar(MySqlQueryHelper::get_all_skill_tags_query())
+            .fetch_all(&self.pool)
+            .await?;
         Ok(tags)
     }
 
     async fn get_marketplace_stats(&self) -> Result<MarketplaceStats, SqlError> {
-        let row: (i64, i64, i64) = sqlx::query_as(
-            MySqlQueryHelper::get_marketplace_stats_query()
-        )
-        .fetch_one(&self.pool)
-        .await?;
+        let row: (i64, i64, i64) = sqlx::query_as(MySqlQueryHelper::get_marketplace_stats_query())
+            .fetch_one(&self.pool)
+            .await?;
 
         Ok(MarketplaceStats {
             total_skills: row.0,

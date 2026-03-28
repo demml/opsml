@@ -58,12 +58,10 @@ const GET_DASHBOARD_STATS_SQL: &str = include_str!("sql/card/get_dashboard_stats
 
 // skill queries
 const GET_SKILL_CARD_BY_NAME_SQL: &str = include_str!("sql/skill/get_skill_card_by_name.sql");
-const GET_SKILL_CARD_BY_VERSION_SQL: &str =
-    include_str!("sql/skill/get_skill_card_by_version.sql");
+const GET_SKILL_CARD_BY_VERSION_SQL: &str = include_str!("sql/skill/get_skill_card_by_version.sql");
 const INCREMENT_SKILL_DOWNLOAD_COUNT_SQL: &str =
     include_str!("sql/skill/increment_skill_download_count.sql");
-const LIST_SKILL_CARDS_BY_SPACE_SQL: &str =
-    include_str!("sql/skill/list_skill_cards_by_space.sql");
+const LIST_SKILL_CARDS_BY_SPACE_SQL: &str = include_str!("sql/skill/list_skill_cards_by_space.sql");
 const GET_FEATURED_SKILLS_SQL: &str = include_str!("sql/skill/get_featured_skills.sql");
 const GET_ALL_SKILL_TAGS_SQL: &str = include_str!("sql/skill/get_all_skill_tags.sql");
 const GET_MARKETPLACE_STATS_SQL: &str = include_str!("sql/skill/get_marketplace_stats.sql");

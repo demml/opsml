@@ -1,3 +1,4 @@
+pub mod agentic;
 pub mod app;
 pub mod audit;
 pub mod auth;
@@ -17,4 +18,3 @@ pub mod setup;
 pub mod shutdown;
 pub mod state;
 pub mod user;
-pub mod agentic;

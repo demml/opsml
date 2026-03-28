@@ -1,6 +1,6 @@
+use crate::core::agentic::schema::{ArtifactMeta, MapResponse};
 use crate::core::error::{OpsmlServerError, internal_server_error};
 use crate::core::state::AppState;
-use crate::core::agentic::schema::{ArtifactMeta, MapResponse};
 use anyhow::Result;
 use axum::{
     Extension, Json, Router,
@@ -177,14 +177,10 @@ pub async fn get_featured_skills(
     State(state): State<Arc<AppState>>,
     Extension(_perms): Extension<UserPermissions>,
 ) -> Result<Json<Vec<ArtifactMeta>>, (StatusCode, Json<OpsmlServerError>)> {
-    let records = state
-        .sql_client
-        .get_featured_skills(6)
-        .await
-        .map_err(|e| {
-            error!("Failed to get featured skills: {e}");
-            internal_server_error(e, "Failed to get featured skills", None)
-        })?;
+    let records = state.sql_client.get_featured_skills(6).await.map_err(|e| {
+        error!("Failed to get featured skills: {e}");
+        internal_server_error(e, "Failed to get featured skills", None)
+    })?;
 
     let skills = records
         .into_iter()
@@ -255,9 +251,7 @@ async fn load_skill_markdown(
     })?;
 
     let tmp_path = tmp_dir.path();
-    let lpath = tmp_path
-        .join(SaveName::Card)
-        .with_extension(Suffix::Json);
+    let lpath = tmp_path.join(SaveName::Card).with_extension(Suffix::Json);
     let rpath = key
         .storage_path()
         .join(SaveName::Card)
@@ -314,18 +308,12 @@ pub async fn get_agentic_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
             &format!("{prefix}/v1/skill/{{space}}/{{name}}/{{version}}"),
             get(get_skill_pinned),
         )
-        .route(
-            &format!("{prefix}/v1/map/{{space}}"),
-            get(get_skill_map),
-        )
+        .route(&format!("{prefix}/v1/map/{{space}}"), get(get_skill_map))
         .route(
             &format!("{prefix}/v1/marketplace/featured"),
             get(get_featured_skills),
         )
-        .route(
-            &format!("{prefix}/v1/marketplace/tags"),
-            get(get_all_tags),
-        )
+        .route(&format!("{prefix}/v1/marketplace/tags"), get(get_all_tags))
         .route(
             &format!("{prefix}/v1/marketplace/stats"),
             get(get_marketplace_stats),

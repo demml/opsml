@@ -1,3 +1,4 @@
+use crate::core::agentic::route::get_agentic_router;
 use crate::core::auth::middleware::auth_api_middleware;
 use crate::core::auth::route::get_auth_router;
 use crate::core::cards::route::get_card_router;
@@ -13,7 +14,6 @@ use crate::core::scouter::route::get_scouter_router;
 use crate::core::settings::route::get_settings_router;
 use crate::core::state::AppState;
 use crate::core::user::route::get_user_router;
-use crate::core::agentic::route::get_agentic_router;
 use anyhow::Result;
 use axum::http::{
     Method,
