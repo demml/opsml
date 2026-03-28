@@ -43,7 +43,7 @@ fn create_drift_profile(key: ArtifactKey) -> SpcDriftProfile {
     );
 
     let profile_save_path = save_path.join(filename).with_extension(Suffix::Json);
-    let encryption_key = key.get_decrypt_key().unwrap();
+    let encryption_key = key.get_crypt_key().unwrap();
 
     profile
         .save_to_json(Some(profile_save_path.clone()))

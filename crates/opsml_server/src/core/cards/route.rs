@@ -721,7 +721,7 @@ pub async fn get_card(
             internal_server_error(e, "Failed to get card", None)
         })?;
 
-    let decryption_key = key.get_decrypt_key().map_err(|e| {
+    let decryption_key = key.get_crypt_key().map_err(|e| {
         error!("Failed to get decryption key: {e}");
         internal_server_error(e, "Failed to get decryption key", None)
     })?;

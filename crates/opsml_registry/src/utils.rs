@@ -217,11 +217,10 @@ pub fn card_from_string<'py>(
         }
 
         RegistryType::Skill => {
-            let card = SkillCard::model_validate_json(card_json)
-                .map_err(|e| {
-                    error!("Failed to validate SkillCard: {e}");
-                    RegistryError::Error(e.to_string())
-                })?;
+            let card = SkillCard::model_validate_json(card_json).map_err(|e| {
+                error!("Failed to validate SkillCard: {e}");
+                RegistryError::Error(e.to_string())
+            })?;
 
             CardEnum::SkillCard(Box::new(card))
         }
@@ -256,7 +255,7 @@ pub fn download_card<'py>(
     key: ArtifactKey,
     interface: Option<&Bound<'py, PyAny>>,
 ) -> Result<Bound<'py, PyAny>, RegistryError> {
-    let decryption_key = key.get_decrypt_key().inspect_err(|e| {
+    let decryption_key = key.get_crypt_key().inspect_err(|e| {
         error!("Failed to get decryption key: {e}");
     })?;
 
@@ -328,7 +327,7 @@ pub fn download_card<'py>(
 pub fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), RegistryError> {
     // create temp path for saving
     // TODO: why is this named decrypt key?
-    let encryption_key = key.get_decrypt_key()?;
+    let encryption_key = key.get_crypt_key()?;
 
     encrypt_directory(&path, &encryption_key)?;
     debug!("Encrypted card artifacts");
