@@ -25,3 +25,4 @@ CREATE TABLE IF NOT EXISTS opsml_skill_registry (
 
 CREATE INDEX idx_opsml_skill_registry_space_name ON opsml_skill_registry (space, name);
 CREATE INDEX idx_opsml_skill_registry_uid ON opsml_skill_registry (uid);
+CREATE INDEX idx_opsml_skill_registry_download_count ON opsml_skill_registry (download_count DESC);

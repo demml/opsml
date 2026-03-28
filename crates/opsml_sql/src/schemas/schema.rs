@@ -1293,6 +1293,9 @@ impl SkillCardRecord {
             content_hash: client_card.content_hash,
             opsml_version: client_card.opsml_version,
             username: client_card.username,
+            // New records start at 0. The partial-column UPDATE SQL does NOT include
+            // download_count, so accumulated counts are preserved on update. If ever
+            // changed to a full-row upsert, fetch the current count from DB first.
             download_count: 0,
             input_schema: client_card.input_schema.map(Json),
         })

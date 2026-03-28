@@ -17,3 +17,4 @@ pub mod setup;
 pub mod shutdown;
 pub mod state;
 pub mod user;
+pub mod agentic;

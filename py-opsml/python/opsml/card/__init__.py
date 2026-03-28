@@ -7,6 +7,7 @@ from .._opsml import (
     AgentInterface,
     AgentProvider,
     AgentSkill,
+    AgentSkillStandard,
     AgentSpec,
     ApiKeySecurityScheme,
     AuthorizationCodeFlow,
@@ -19,6 +20,7 @@ from .._opsml import (
     ComputeEnvironment,
     DataCard,
     DataCardMetadata,
+    DependencyKind,
     DeviceCodeFlow,
     ExperimentCard,
     HttpAuthSecurityScheme,
@@ -37,6 +39,8 @@ from .._opsml import (
     SecurityRequirement,
     SecurityScheme,
     ServiceCard,
+    SkillCard,
+    SkillDependency,
 )
 
 
@@ -82,6 +86,10 @@ __all__ = [
     "ImplicitAuthFlow",
     "PassWordAuthFlow",
     "AgentCardSignature",
+    "AgentSkillStandard",
     "AgentSpec",
+    "DependencyKind",
     "ProtocolBinding",
+    "SkillCard",
+    "SkillDependency",
 ]

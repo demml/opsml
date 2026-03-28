@@ -1194,6 +1194,99 @@ class PromptCard:
             PromptCard: The loaded PromptCard object.
         """
 
+class AgentSkillStandard:
+    name: str
+    description: str
+    license: Optional[str]
+    compatibility: Optional[str]
+    metadata: Optional[Dict[str, str]]
+    allowed_tools: Optional[List[str]]
+    skills_path: Optional[Path]
+    body: Optional[str]
+
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        license: Optional[str] = None,
+        compatibility: Optional[str] = None,
+        metadata: Optional[Dict[str, str]] = None,
+        allowed_tools: Optional[List[str]] = None,
+        skills_path: Optional[Path] = None,
+        body: Optional[str] = None,
+    ) -> None: ...
+    def __str__(self) -> str: ...
+
+class DependencyKind:
+    Skill: "DependencyKind"
+    McpServer: "DependencyKind"
+
+class SkillDependency:
+    name: str
+    space: str
+    version_req: Optional[str]
+
+    def __init__(
+        self,
+        name: str,
+        space: str,
+        kind: DependencyKind,
+        version_req: Optional[str] = None,
+    ) -> None: ...
+    @property
+    def kind(self) -> DependencyKind: ...
+    @kind.setter
+    def kind(self, value: DependencyKind) -> None: ...
+    def __repr__(self) -> str: ...
+
+class SkillCard:
+    space: str
+    name: str
+    version: str
+    uid: str
+    tags: List[str]
+    compatible_tools: List[str]
+    app_env: str
+    is_card: bool
+    opsml_version: str
+    created_at: datetime.datetime
+    registry_type: RegistryType
+
+    def __init__(
+        self,
+        skill: AgentSkillStandard,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        compatible_tools: Optional[List[str]] = None,
+        dependencies: Optional[List[SkillDependency]] = None,
+        input_schema: Optional[Any] = None,
+    ) -> None: ...
+    @property
+    def skill(self) -> AgentSkillStandard: ...
+    @skill.setter
+    def skill(self, value: AgentSkillStandard) -> None: ...
+    @property
+    def dependencies(self) -> List[SkillDependency]: ...
+    @dependencies.setter
+    def dependencies(self, value: List[SkillDependency]) -> None: ...
+    @property
+    def input_schema(self) -> Optional[Any]: ...
+    @input_schema.setter
+    def input_schema(self, value: Optional[Any]) -> None: ...
+    def save(self, path: Path) -> None: ...
+    @staticmethod
+    def from_path(path: Path) -> "SkillCard": ...
+    @staticmethod
+    def from_markdown(path: Path) -> "SkillCard": ...
+    def to_markdown(self) -> str: ...
+    @staticmethod
+    def model_validate_json(json_string: str) -> "SkillCard": ...
+    def get_registry_card(self) -> CardRecord: ...
+    def add_tags(self, tags: List[str]) -> None: ...
+    def __str__(self) -> str: ...
+
 class Card:
     """Represents a card from a given registry that can be used in a service card"""
 

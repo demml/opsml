@@ -10,8 +10,9 @@ use crate::schemas::schema::{
     VersionResult, VersionSummary,
 };
 
-use crate::traits::CardLogicTrait;
+use crate::traits::{CardLogicTrait, SkillLogicTrait};
 use async_trait::async_trait;
+use opsml_types::contracts::skill::MarketplaceStats;
 use opsml_semver::VersionValidator;
 use opsml_types::{
     RegistryType,
@@ -826,5 +827,112 @@ impl CardLogicTrait for CardLogicSqliteClient {
             .await?;
 
         Ok(records)
+    }
+}
+
+#[async_trait]
+impl SkillLogicTrait for CardLogicSqliteClient {
+    async fn get_skill_card_by_name(
+        &self,
+        space: &str,
+        name: &str,
+    ) -> Result<SkillCardRecord, SqlError> {
+        let record = sqlx::query_as::<_, SkillCardRecord>(
+            "SELECT * FROM opsml_skill_registry WHERE space = ? AND name = ? ORDER BY major DESC, minor DESC, patch DESC LIMIT 1"
+        )
+        .bind(space)
+        .bind(name)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or_else(|| SqlError::MissingField(format!("{}/{}", space, name)))?;
+        Ok(record)
+    }
+
+    async fn get_skill_card_by_version(
+        &self,
+        space: &str,
+        name: &str,
+        version: &str,
+    ) -> Result<SkillCardRecord, SqlError> {
+        let record = sqlx::query_as::<_, SkillCardRecord>(
+            "SELECT * FROM opsml_skill_registry WHERE space = ? AND name = ? AND version = ? LIMIT 1"
+        )
+        .bind(space)
+        .bind(name)
+        .bind(version)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or_else(|| SqlError::MissingField(format!("{}/{}/{}", space, name, version)))?;
+        Ok(record)
+    }
+
+    async fn increment_skill_download_count(&self, uid: &str) -> Result<(), SqlError> {
+        let result = sqlx::query(
+            "UPDATE opsml_skill_registry SET download_count = download_count + 1 WHERE uid = ?"
+        )
+        .bind(uid)
+        .execute(&self.pool)
+        .await?;
+        if result.rows_affected() == 0 {
+            return Err(SqlError::MissingField(format!("skill uid not found: {uid}")));
+        }
+        Ok(())
+    }
+
+    async fn list_skill_cards_by_space(
+        &self,
+        space: &str,
+    ) -> Result<Vec<SkillCardRecord>, SqlError> {
+        let records = sqlx::query_as::<_, SkillCardRecord>(
+            "SELECT s.* FROM opsml_skill_registry s
+             INNER JOIN (
+                 SELECT name, MAX(major) AS max_major, MAX(minor) AS max_minor, MAX(patch) AS max_patch
+                 FROM opsml_skill_registry WHERE space = ? GROUP BY name
+             ) latest ON s.name = latest.name
+                 AND s.major = latest.max_major
+                 AND s.minor = latest.max_minor
+                 AND s.patch = latest.max_patch
+             WHERE s.space = ? ORDER BY s.name"
+        )
+        .bind(space)
+        .bind(space)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(records)
+    }
+
+    async fn get_featured_skills(&self, limit: i64) -> Result<Vec<SkillCardRecord>, SqlError> {
+        let records = sqlx::query_as::<_, SkillCardRecord>(
+            "SELECT * FROM opsml_skill_registry ORDER BY download_count DESC LIMIT ?"
+        )
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(records)
+    }
+
+    async fn get_all_skill_tags(&self) -> Result<Vec<String>, SqlError> {
+        let tags: Vec<String> = sqlx::query_scalar(
+            "SELECT DISTINCT j.value
+             FROM opsml_skill_registry, json_each(tags) AS j
+             WHERE tags IS NOT NULL AND json_valid(tags)"
+        )
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(tags)
+    }
+
+    async fn get_marketplace_stats(&self) -> Result<MarketplaceStats, SqlError> {
+        let row: (i64, i64, i64) = sqlx::query_as(
+            "SELECT COUNT(*), COUNT(DISTINCT space), COALESCE(SUM(download_count), 0) FROM opsml_skill_registry"
+        )
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(MarketplaceStats {
+            total_skills: row.0,
+            total_spaces: row.1,
+            total_downloads: row.2,
+        })
     }
 }

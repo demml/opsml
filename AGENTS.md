@@ -312,6 +312,7 @@ Python tests use the `mock_db` fixture (`opsml.mock.RegistryTestHelper`) which s
 - `POST` — JSON body for creation/mutation. `PUT` for updates. `DELETE` with query params for deletion.
 - Pagination uses a cursor pattern: `QueryPageRequest` → `QueryPageResponse { items, has_next, next_cursor, has_previous, previous_cursor, page_info }`.
 - Permissions are checked at the handler level, not in middleware: `perms.has_write_permission(&space)` before any mutation.
+- **Every handler must accept `Extension(perms): Extension<UserPermissions>`**, even read-only or aggregate routes that don't currently enforce space-level checks. This ensures full RBAC can be layered on without touching handler signatures later. Routes that don't yet enforce permissions should name the parameter `_perms` to suppress the unused warning, but must not omit the extension entirely.
 - New contract types belong in `opsml-types/src/contracts/`. Keep request and response types co-located.
 
 ---
@@ -435,6 +436,15 @@ OpsML aims to implement a thin Python wrapper around a Rust core. This means:
 - The Rust code should be the source of truth for all business logic, data structures, and error handling. Python should not have divergent logic.
 - PyO3 bindings should be as thin as possible and only use Python types and runtime when absolutely necessary (e.g. for model interfaces). Avoid complex logic in the PyO3 layer. This allows us to test core logic in Rust unit tests without needing the Python layer.
 - Follow idiomatic patterns in both languages, but prioritize Rust conventions for core logic.
+
+### Performance
+
+OpsML is optimized for minimal allocation and maximum throughput. Treat clone as a code smell in hot paths:
+- **Avoid `.clone()` unless the borrow checker requires it.** Prefer references, `Arc`, and ownership transfer.
+- Do not add `#[derive(Clone)]` speculatively. Only derive it when a concrete callsite needs it — if code compiles without `Clone`, it is not needed.
+- Pre-allocate buffers with known capacity (`String::with_capacity`, `Vec::with_capacity`) instead of repeated `push`/`format!` into uninitialized containers.
+- Prefer `write!` into a pre-allocated `String` over `format!` in loops.
+- Prefer `fetch_one` over `fetch_optional + ok_or_else` for DB lookups that must return a row — fewer allocations, and `sqlx::Error::RowNotFound` propagates naturally.
 
 ## Tool Versions
 
