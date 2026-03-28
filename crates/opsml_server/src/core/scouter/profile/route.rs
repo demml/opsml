@@ -170,7 +170,7 @@ pub async fn update_drift_profile(
             )
         })?;
 
-    let encryption_key = artifact_key.get_decrypt_key().map_err(|e| {
+    let encryption_key = artifact_key.get_crypt_key().map_err(|e| {
         error!("Failed to get encryption key: {e}");
         internal_server_error(e, "Failed to get encryption key", None)
     })?;

@@ -4650,7 +4650,6 @@ dependencies = [
  "aes-gcm",
  "base64 0.22.1",
  "hkdf",
- "hmac",
  "opsml-utils",
  "pbkdf2",
  "rand 0.9.2",
@@ -6839,9 +6838,8 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
 name = "scouter-client"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c922f3efd8696654ab425368307c3bf5c4fe2e38a8a60c2a1e0bc8fa137bf5c4"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "arrow",
  "arrow-json",
@@ -6868,7 +6866,7 @@ dependencies = [
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "thiserror 2.0.18",
  "tokio",
  "tokio-util",
@@ -6877,9 +6875,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-dispatch"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d89981691cc71186f0c78269feb5fccea55ee371c121d9d787ac1ed9b18e47a"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "futures",
  "pyo3",
@@ -6893,14 +6890,13 @@ dependencies = [
 
 [[package]]
 name = "scouter-drift"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6690874b1899020931b931f929cc3fda7d70b20272a598f5698486b253c71c5b"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "chrono",
  "futures",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "numpy",
@@ -6920,12 +6916,11 @@ dependencies = [
 
 [[package]]
 name = "scouter-evaluate"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a99a6686c9ecb18179c1ab841259e8299979a08776f20f5240c4b4002b7878b"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "chrono",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "owo-colors",
@@ -6948,9 +6943,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-events"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f6f0ca43a4150ba53b9aab9791f3276e1b2fbe780f590784dc149ee61d803a0"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "arrow",
  "async-trait",
@@ -6986,36 +6980,33 @@ dependencies = [
 
 [[package]]
 name = "scouter-http"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "834dd831446617ca56c3f848ebfc014b2b88bde1ccdf30a8f93ba54b1a050731"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "pyo3",
  "reqwest 0.12.28",
  "scouter-settings",
  "scouter-types",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "thiserror 2.0.18",
  "tracing",
 ]
 
 [[package]]
 name = "scouter-macro"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2608150e8366cb99663bd4c3fd7f903436d57c62bbdfe4523564f677cfe4bb73"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "thiserror 2.0.18",
 ]
 
 [[package]]
 name = "scouter-observability"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa0f9e8b4fd1b5dbc2efe83525bb89ee4064c91c88b9d5242636944c11a86188"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -7029,13 +7020,12 @@ dependencies = [
 
 [[package]]
 name = "scouter-profile"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d64b8b08f09a9c7d5fd7b13cd98b6f89adba05e1f15d74c31741e71a0ae87a35"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -7052,9 +7042,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-semver"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67295efd43dbff6a67e4ba7eef62f2bfc56459334d4a10bd605cbfd5d9dd9a5c"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "pyo3",
  "semver",
@@ -7064,9 +7053,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-settings"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e3c9a198c5e10ab83df68e5a9f8a5bda7c06ec8a91c88399d84f48547346dce"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "base64 0.22.1",
  "chrono",
@@ -7079,9 +7067,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-state"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2db82d6ee7f3e879041bdac8d64baf05331d516100c3ccf6d3a4d8ec376d709d"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -7090,9 +7077,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-tonic"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f46bc5340d49b3f16dd72716d07985b69de04cc47604c9e6e7362d8a32f97c41"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "prost",
  "prost-types",
@@ -7110,9 +7096,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-tracing"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1127e34ebaa2b49fa332aef302f62abe622f66b6e81b2cb61f93fa28d41ca53"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -7137,9 +7122,8 @@ dependencies = [
 
 [[package]]
 name = "scouter-types"
-version = "0.24.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de982ac7027aa71d6808798abda0a6cb4d7ed4a9b4859b82918617539499db90"
+version = "0.25.0"
+source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "arrow",
  "base64 0.22.1",

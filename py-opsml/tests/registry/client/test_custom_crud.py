@@ -34,9 +34,9 @@ def test_crud_artifactcard(
         loaded_card = reg.load_card(card.uid, interface=CustomModel)
 
         loaded_card.load()
-
+        assert isinstance(loaded_card.interface, CustomModel)
         assert loaded_card.interface.model is not None
-        assert loaded_card.interface.preprocessor is not None
+        assert loaded_card.interface.preprocessor is not None  # ignore
         assert loaded_card.interface.task_type == TaskType.AnomalyDetection
 
 
