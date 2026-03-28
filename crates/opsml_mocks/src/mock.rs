@@ -314,6 +314,12 @@ impl OpsmlTestServer {
                                 e
                             ))
                         })?;
+                        reset_storage_client().map_err(|e| {
+                            TestServerError::CustomError(format!(
+                                "Failed to reset storage client: {}",
+                                e
+                            ))
+                        })?;
                         return Ok(());
                     }
                 } else {
