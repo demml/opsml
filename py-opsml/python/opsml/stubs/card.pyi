@@ -59,6 +59,7 @@ class RegistryType:
     Audit: "RegistryType"
     Prompt: "RegistryType"
     Service: "RegistryType"
+    Skill: "RegistryType"
 
 class RegistryMode:
     Client: "RegistryMode"

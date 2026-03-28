@@ -151,11 +151,8 @@ impl Default for OpsmlConfig {
         // set scouter settings
         let scouter_settings = ScouterSettings {
             server_uri: env::var("SCOUTER_SERVER_URI").unwrap_or("".to_string()),
-            bootstrap_token: env::var(
-                "SCOUTER_BOOTSTRAP_TOKEN
-            ",
-            )
-            .unwrap_or(generate_default_secret()),
+            bootstrap_token: env::var("SCOUTER_BOOTSTRAP_TOKEN")
+                .unwrap_or(generate_default_secret()),
         };
 
         // set auth settings

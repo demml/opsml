@@ -184,7 +184,12 @@ pub async fn run_skill_scan(
         })?;
 
     let Some(result_value) = invoke_result.result else {
-        return Ok(());
+        return Err((
+            axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+            axum::Json(OpsmlServerError {
+                error: "Skill scan returned no result — registration rejected".to_string(),
+            }),
+        ));
     };
 
     let scan = SkillScanResult::from_response_value(result_value).map_err(|e| {

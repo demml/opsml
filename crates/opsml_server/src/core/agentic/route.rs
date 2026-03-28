@@ -21,13 +21,13 @@ use opsml_types::{
 };
 use std::sync::Arc;
 use tempfile::tempdir;
-use tracing::{error, instrument};
+use tracing::{error, instrument, warn};
 
 fn bytes_to_hex(bytes: &[u8]) -> String {
     use std::fmt::Write as _;
     let mut s = String::with_capacity(bytes.len() * 2);
     for b in bytes {
-        write!(s, "{b:02x}").unwrap();
+        write!(s, "{b:02x}").expect("write to String is infallible");
     }
     s
 }
@@ -54,14 +54,13 @@ pub async fn get_skill_latest(
 
     let markdown = load_skill_markdown(&state, &record.uid).await?;
 
-    state
+    if let Err(e) = state
         .sql_client
         .increment_skill_download_count(&record.uid)
         .await
-        .map_err(|e| {
-            error!("Failed to increment download count for {}: {e}", record.uid);
-            internal_server_error(e, "Failed to update download count", None)
-        })?;
+    {
+        warn!("Failed to increment download count for {}: {e}", record.uid);
+    }
 
     let mut response = Response::builder()
         .status(StatusCode::OK)
@@ -104,14 +103,13 @@ pub async fn get_skill_pinned(
 
     let markdown = load_skill_markdown(&state, &record.uid).await?;
 
-    state
+    if let Err(e) = state
         .sql_client
         .increment_skill_download_count(&record.uid)
         .await
-        .map_err(|e| {
-            error!("Failed to increment download count for {}: {e}", record.uid);
-            internal_server_error(e, "Failed to update download count", None)
-        })?;
+    {
+        warn!("Failed to increment download count for {}: {e}", record.uid);
+    }
 
     let mut response = Response::builder()
         .status(StatusCode::OK)

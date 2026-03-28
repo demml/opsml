@@ -46,7 +46,7 @@ pub async fn invoke_agent(
 pub async fn get_agent_job(
     State(state): State<Arc<AppState>>,
     Extension(_perms): Extension<UserPermissions>,
-    Path((id, job_id)): Path<(String, String)>,
+    Path((_id, job_id)): Path<(String, String)>,
 ) -> Result<Json<InvokeResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let job = state.agent_store.get_job(&job_id).await.ok_or_else(|| {
         (
@@ -62,7 +62,7 @@ pub async fn get_agent_job(
         status: job.status,
         result: job.result,
         metadata: opsml_types::contracts::InvokeMetadata {
-            agent_id: id,
+            agent_id: job.agent_id.clone(),
             invocation: "async".to_string(),
             duration_ms: job.duration_ms,
         },

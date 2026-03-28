@@ -10,10 +10,4 @@ pub enum AgentError {
 
     #[error("Agent run error: {0}")]
     Run(String),
-
-    #[error("Agent job not found: {0}")]
-    JobNotFound(String),
-
-    #[error("Failed to parse agent response: {0}")]
-    ResponseParse(String),
 }

@@ -161,6 +161,8 @@ impl AgentStore {
         })
     }
 
+    // TODO: populate self.jobs in invoke() when async dispatch is implemented.
+    // Currently the jobs map is always empty; get_job always returns None.
     pub async fn get_job(&self, job_id: &str) -> Option<JobState> {
         let entry = self.jobs.get(job_id)?;
         let state = entry.read().await;
