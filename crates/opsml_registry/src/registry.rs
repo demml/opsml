@@ -467,7 +467,10 @@ impl CardRegistry {
         let py = card.py();
 
         match registry_type {
-            RegistryType::Experiment | RegistryType::Prompt | RegistryType::Service => {
+            RegistryType::Experiment
+            | RegistryType::Prompt
+            | RegistryType::Service
+            | RegistryType::Skill => {
                 card.call_method1("save", (tmp_path.to_path_buf(),))
                     .inspect_err(|e| {
                         error!("Failed to save card: {e}");
@@ -586,7 +589,10 @@ impl CardRegistry {
         let tmp_path = tmp_dir.keep();
 
         match registry_type {
-            RegistryType::Experiment | RegistryType::Service | RegistryType::Prompt => {
+            RegistryType::Experiment
+            | RegistryType::Service
+            | RegistryType::Prompt
+            | RegistryType::Skill => {
                 card.call_method1("save", (tmp_path.to_path_buf(),))
                     .inspect_err(|e| {
                         error!("Failed to save card: {e}");
