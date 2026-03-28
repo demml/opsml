@@ -379,7 +379,7 @@ impl DataCard {
 
     fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
         if let Some(ref key) = self.artifact_key {
-            Ok(key.get_decrypt_key()?)
+            Ok(key.get_crypt_key()?)
         } else {
             Err(CardError::DecryptionKeyNotFoundError)
         }

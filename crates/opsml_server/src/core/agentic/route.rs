@@ -265,7 +265,7 @@ async fn load_skill_markdown(
             internal_server_error(e, "Failed to download skill artifact", None)
         })?;
 
-    let decryption_key = key.get_decrypt_key().map_err(|e| {
+    let decryption_key = key.get_crypt_key().map_err(|e| {
         error!("Failed to get decryption key for {uid}: {e}");
         internal_server_error(e, "Failed to get decryption key", None)
     })?;

@@ -6932,7 +6932,7 @@ dependencies = [
  "scouter-types",
  "serde",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "thiserror 2.0.18",
  "tokio",
  "tokio-util",
@@ -6962,7 +6962,7 @@ dependencies = [
  "chrono",
  "futures",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "numpy",
@@ -6986,7 +6986,7 @@ version = "0.25.0"
 source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
  "chrono",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "num-traits",
  "owo-colors",
@@ -7054,7 +7054,7 @@ dependencies = [
  "scouter-settings",
  "scouter-types",
  "serde_json",
- "serde_qs 0.15.0",
+ "serde_qs 0.8.5",
  "thiserror 2.0.18",
  "tracing",
 ]
@@ -7072,7 +7072,7 @@ name = "scouter-observability"
 version = "0.25.0"
 source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3d7d1ed482a582da9f4d"
 dependencies = [
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",
@@ -7091,7 +7091,7 @@ source = "git+https://github.com/demml/scouter?branch=main#7189e26ff60db206a53b3
 dependencies = [
  "chrono",
  "indicatif",
- "itertools 0.14.0",
+ "itertools 0.13.0",
  "ndarray",
  "ndarray-stats",
  "noisy_float",

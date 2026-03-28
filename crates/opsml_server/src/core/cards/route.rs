@@ -664,8 +664,8 @@ pub async fn load_card(
     let table = CardTable::from_registry_type(&params.registry_type);
 
     debug!(
-        "Loading card with params: space={:?}, name={:?}, version={:?}, registry_type={:?}, table={:?}",
-        params.space, params.name, params.version, params.registry_type, table
+        "Loading card with params: space={:?}, name={:?}, version={:?}, uid={:?}, registry_type={:?}, table={:?}",
+        params.space, params.name, params.version, params.uid, params.registry_type, table
     );
 
     let key = state
@@ -726,7 +726,7 @@ pub async fn get_card(
             internal_server_error(e, "Failed to get card", None)
         })?;
 
-    let decryption_key = key.get_decrypt_key().map_err(|e| {
+    let decryption_key = key.get_crypt_key().map_err(|e| {
         error!("Failed to get decryption key: {e}");
         internal_server_error(e, "Failed to get decryption key", None)
     })?;

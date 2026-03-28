@@ -5,6 +5,9 @@ use opsml_settings::config::DatabaseSettings;
 use opsml_sql::{enums::client::SqlClientEnum, traits::CardLogicTrait};
 
 #[cfg(feature = "server")]
+use opsml_storage::reset_storage_client;
+
+#[cfg(feature = "server")]
 use opsml_types::{SqlType, cards::CardTable, contracts::*};
 
 use pyo3::prelude::*;
@@ -126,5 +129,7 @@ impl RegistryTestHelper {
             std::env::remove_var("OPSML_TRACKING_URI");
             std::env::remove_var("OPSML_STORAGE_URI");
         }
+
+        let _ = reset_storage_client();
     }
 }

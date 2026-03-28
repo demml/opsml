@@ -632,7 +632,7 @@ impl TestHelper {
         let png = &joined_path.join("file.png");
         std::fs::write(png, "PNG").unwrap();
 
-        let key_bytes = self.key.get_decrypt_key().unwrap();
+        let key_bytes = self.key.get_crypt_key().unwrap();
         let _ = encrypt_file(path, &key_bytes);
         let _ = encrypt_file(png, &key_bytes);
 
