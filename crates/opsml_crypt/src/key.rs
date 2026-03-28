@@ -1,16 +1,14 @@
+use crate::error::CryptError;
 use aes_gcm::{
     Aes256Gcm,
     Key, // Or `Aes128Gcm`
     Nonce,
     aead::{Aead, AeadCore, KeyInit, OsRng},
 };
-
-use crate::error::CryptError;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use hkdf::Hkdf;
-use hmac::Hmac;
-use pbkdf2::pbkdf2;
+use pbkdf2::pbkdf2_hmac;
 use rand::distr::Alphanumeric;
 use rand::{Rng, TryRngCore, rngs::OsRng as RandOsRng};
 use sha2::Digest;
@@ -36,13 +34,12 @@ pub fn derive_master_key(
     rounds: Option<u32>,
 ) -> Result<[u8; 32], CryptError> {
     let mut master_key = [0u8; 32];
-    pbkdf2::<Hmac<Sha256>>(
+    pbkdf2_hmac::<Sha256>(
         password,
         salt,
         rounds.unwrap_or(PBKDF2_ITERATIONS),
         &mut master_key,
-    )
-    .map_err(|e| CryptError::DeriveKeyError(e.to_string()))?;
+    );
 
     Ok(master_key)
 }

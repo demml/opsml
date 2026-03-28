@@ -1,3 +1,4 @@
+use crate::core::agentic::agent_route::{get_agent_job, invoke_agent};
 use crate::core::agentic::schema::{ArtifactMeta, MapResponse};
 use crate::core::error::{OpsmlServerError, internal_server_error};
 use crate::core::state::AppState;
@@ -8,7 +9,7 @@ use axum::{
     extract::{Path, State},
     http::{StatusCode, header},
     response::Response,
-    routing::get,
+    routing::{get, post},
 };
 use opsml_auth::permission::UserPermissions;
 use opsml_crypt::decrypt_directory;
@@ -300,6 +301,14 @@ async fn load_skill_markdown(
 
 pub async fn get_agentic_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let router = Router::new()
+        .route(
+            &format!("{prefix}/v1/agent/{{id}}/invoke"),
+            post(invoke_agent),
+        )
+        .route(
+            &format!("{prefix}/v1/agent/{{id}}/jobs/{{job_id}}"),
+            get(get_agent_job),
+        )
         .route(
             &format!("{prefix}/v1/skill/{{space}}/{{name}}"),
             get(get_skill_latest),

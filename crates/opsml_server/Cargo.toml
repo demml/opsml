@@ -9,6 +9,7 @@ license = "MIT"
 [dependencies]
 anyhow = { workspace = true }
 axum = { workspace = true }
+opsml-agent = { workspace = true }
 axum-extra = { workspace = true }
 opsml-auth = { workspace = true }
 opsml-mcp = { workspace = true, features = ["server"] }

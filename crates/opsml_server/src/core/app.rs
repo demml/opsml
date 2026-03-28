@@ -5,13 +5,14 @@ use crate::core::state::AppState;
 use anyhow::Ok;
 use anyhow::Result;
 use axum::Router;
+use opsml_agent::AgentStore;
 use opsml_auth::auth::AuthManager;
 use opsml_events::EventBus;
 use opsml_mcp::handler::McpHandler;
 use std::sync::Arc;
 use tracing::{info, warn};
 
-pub async fn create_app() -> Result<Router> {
+pub async fn create_app_with_state() -> Result<(Router, Arc<AppState>)> {
     // setup components (config, logging, storage client)
     let (config, storage_client, sql_client, scouter_client) = setup_components().await?;
     let storage_settings = config.storage_settings()?;
@@ -23,6 +24,9 @@ pub async fn create_app() -> Result<Router> {
         &config.auth_settings.scouter_secret,
     )
     .await?;
+
+    // Build agent store
+    let agent_store = Arc::new(AgentStore::new(&config.agent_settings).await?);
 
     // Create shared state for the application (storage client, auth manager, config)
     let sql_client = Arc::new(sql_client);
@@ -37,6 +41,7 @@ pub async fn create_app() -> Result<Router> {
         mcp_handler: McpHandler {
             sql: Some(sql_client),
         },
+        agent_store,
     });
 
     // Start background Scouter health watcher — updates enabled flag every 30 s
@@ -56,9 +61,14 @@ pub async fn create_app() -> Result<Router> {
     info!("✅ Application state created");
 
     // create the router
-    let app = create_router(app_state).await?;
+    let app = create_router(app_state.clone()).await?;
 
     info!("✅ Router created");
 
+    Ok((app, app_state))
+}
+
+pub async fn create_app() -> Result<Router> {
+    let (app, _) = create_app_with_state().await?;
     Ok(app)
 }

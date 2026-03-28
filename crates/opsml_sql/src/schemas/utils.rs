@@ -133,6 +133,7 @@ pub fn convert_skillcard(record: SkillCardRecord) -> CardRecord {
         username: record.username,
         download_count: record.download_count,
         input_schema: record.input_schema.map(|j| j.0),
+        body: None,
     };
 
     CardRecord::Skill(card)

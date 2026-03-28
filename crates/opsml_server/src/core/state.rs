@@ -1,5 +1,6 @@
 use crate::core::error::ServerError;
 use crate::core::scouter::client::ScouterApiClient;
+use opsml_agent::AgentStore;
 use opsml_auth::auth::AuthManager;
 use opsml_auth::permission::UserPermissions;
 use opsml_events::EventBus;
@@ -20,6 +21,7 @@ pub struct AppState {
     pub scouter_client: ScouterApiClient,
     pub event_bus: EventBus,
     pub mcp_handler: McpHandler,
+    pub agent_store: Arc<AgentStore>,
 }
 
 impl AppState {
