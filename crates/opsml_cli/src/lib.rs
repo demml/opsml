@@ -1,6 +1,7 @@
 pub mod actions;
 pub mod cli;
 pub mod error;
+mod hooks;
 
 use crate::actions::configure::configure_cli;
 use crate::actions::skill::{init_skill, list_skills, pull_skill, push_skill};
