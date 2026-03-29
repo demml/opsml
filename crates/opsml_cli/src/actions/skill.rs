@@ -219,7 +219,7 @@ pub fn list_skills(args: &SkillListArgs) -> Result<(), CliError> {
         });
     }
 
-    CardList { cards }.as_table();
+    CardList { cards }.as_skill_table();
 
     Ok(())
 }

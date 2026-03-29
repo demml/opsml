@@ -17,7 +17,7 @@ use pyo3::{IntoPyObjectExt, prelude::*};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use tabled::settings::{Alignment, Color, Style, format::Format, object::Rows};
+use tabled::settings::{Alignment, Color, Style, Width, format::Format, object::{Columns, Rows}};
 use tabled::{Table, Tabled};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -1137,6 +1137,16 @@ struct CardTableEntry {
     uid: String,
 }
 
+#[derive(Tabled)]
+struct SkillCardTableEntry {
+    created_at: String,
+    name: String,
+    space: String,
+    version: String,
+    description: String,
+    uid: String,
+}
+
 #[pyclass]
 struct CardListIter {
     inner: std::vec::IntoIter<CardRecord>,
@@ -1215,6 +1225,44 @@ impl CardList {
         );
 
         println!("{}", &table);
+    }
+
+    pub fn as_skill_table(&self) {
+        println!("{}", self.render_skill_table());
+    }
+
+    fn render_skill_table(&self) -> String {
+        let entries: Vec<SkillCardTableEntry> = self
+            .cards
+            .iter()
+            .filter_map(|card| {
+                if let CardRecord::Skill(r) = card {
+                    Some(SkillCardTableEntry {
+                        created_at: r.created_at.to_string(),
+                        name: r.name.clone(),
+                        space: r.space.clone(),
+                        version: r.version.clone(),
+                        description: r.description.clone().unwrap_or_else(|| "—".into()),
+                        uid: Colorize::purple(&r.uid),
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        let mut table = Table::new(entries);
+        table.with(Style::sharp());
+        table.modify(Columns::one(4), Width::wrap(40));
+        table.modify(
+            Rows::new(0..1),
+            (
+                Format::content(Colorize::green),
+                Alignment::center(),
+                Color::BOLD,
+            ),
+        );
+        table.to_string()
     }
 }
 
@@ -1310,4 +1358,74 @@ pub struct CardArgs {
     pub name: String,
     pub version: String,
     pub uid: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn skill_card(description: Option<&str>) -> SkillCardClientRecord {
+        SkillCardClientRecord {
+            name: "test-skill".into(),
+            space: "test-space".into(),
+            version: "1.0.0".into(),
+            description: description.map(|s| s.to_string()),
+            ..SkillCardClientRecord::default()
+        }
+    }
+
+    #[test]
+    fn test_as_skill_table_with_description() {
+        let long_desc = "A helpful skill for summarizing long documents into concise bullet points for busy readers.";
+        let list = CardList {
+            cards: vec![CardRecord::Skill(skill_card(Some(long_desc)))],
+        };
+        let rendered = list.render_skill_table();
+        // description header column is present
+        assert!(rendered.contains("description"));
+        // wrapping occurred: a 90-char description must span more than one content line
+        // (the full string cannot appear on a single line since wrap width is 40)
+        assert!(!rendered.contains(long_desc), "description was not wrapped");
+        // but the content is present across lines
+        assert!(rendered.contains("A helpful skill"));
+    }
+
+    #[test]
+    fn test_as_skill_table_no_description_shows_dash() {
+        let list = CardList {
+            cards: vec![CardRecord::Skill(skill_card(None))],
+        };
+        let rendered = list.render_skill_table();
+        assert!(rendered.contains('—'));
+    }
+
+    #[test]
+    fn test_as_skill_table_multiple_entries() {
+        let list = CardList {
+            cards: vec![
+                CardRecord::Skill(skill_card(Some("First skill description"))),
+                CardRecord::Skill(skill_card(None)),
+                CardRecord::Skill(skill_card(Some("Third skill"))),
+            ],
+        };
+        let rendered = list.render_skill_table();
+        assert!(rendered.contains("First skill description"));
+        assert!(rendered.contains('—'));
+        assert!(rendered.contains("Third skill"));
+    }
+
+    #[test]
+    fn test_as_skill_table_skips_non_skill_cards() {
+        use crate::contracts::DataCardClientRecord;
+        let list = CardList {
+            cards: vec![
+                CardRecord::Data(DataCardClientRecord::default()),
+                CardRecord::Skill(skill_card(Some("only this one renders"))),
+            ],
+        };
+        let rendered = list.render_skill_table();
+        assert!(rendered.contains("only this one renders"));
+        // only 1 data row (the skill), not 2
+        assert_eq!(rendered.lines().filter(|l| l.contains("test-skill")).count(), 1);
+    }
 }

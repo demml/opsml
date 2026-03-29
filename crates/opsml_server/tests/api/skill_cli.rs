@@ -365,3 +365,44 @@ async fn test_skill_list_with_limit() {
         helper.cleanup();
     });
 }
+
+/// Verify that description is returned by the list API — the data that feeds as_skill_table().
+#[tokio::test]
+async fn test_skill_list_shows_description() {
+    retry_flaky_test!({
+        let helper = TestHelper::new(None).await;
+
+        let long_desc = "A skill for summarizing long documents into concise bullet points for busy ML engineers working in distributed systems.";
+
+        let resp = create_skill(
+            &helper,
+            "desc-list-skill",
+            "desc-space",
+            vec![],
+            vec![],
+            Some(long_desc.into()),
+            None,
+        )
+        .await;
+        assert!(resp.registered);
+
+        let cards = list_skills(
+            &helper,
+            &CardQueryArgs {
+                uid: Some(resp.key.uid),
+                registry_type: RegistryType::Skill,
+                ..Default::default()
+            },
+        )
+        .await;
+
+        assert_eq!(cards.len(), 1);
+        let card = match &cards[0] {
+            CardRecord::Skill(c) => c,
+            _ => panic!("Expected Skill card"),
+        };
+        assert_eq!(card.description.as_deref(), Some(long_desc));
+
+        helper.cleanup();
+    });
+}
