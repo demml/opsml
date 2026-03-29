@@ -257,6 +257,7 @@ pub fn init_skill(args: &SkillInitArgs) -> Result<(), CliError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use opsml_semver::VersionType;
 
     #[test]
     fn test_pull_target_path_resolution() {
