@@ -61,6 +61,9 @@ pub enum CliError {
     UiError(#[from] UiError),
 
     #[error(transparent)]
+    ManifestError(#[from] ManifestError),
+
+    #[error(transparent)]
     ProfileError(#[from] ProfileError),
 
     #[error(transparent)]
@@ -187,4 +190,45 @@ pub enum UiError {
 
     #[error("Package JSON not found")]
     PackageJsonNotFound,
+}
+
+#[derive(Error, Debug)]
+pub enum ManifestError {
+    // Skill manifest
+    #[error("Failed to read skill manifest")]
+    ReadSkillManifest(#[source] std::io::Error),
+
+    #[error("Failed to parse skill manifest")]
+    ParseSkillManifest(#[source] serde_json::Error),
+
+    #[error("Failed to create skill manifest directory")]
+    CreateSkillManifestDir(#[source] std::io::Error),
+
+    #[error("Failed to serialize skill manifest")]
+    SerializeSkillManifest(#[source] serde_json::Error),
+
+    #[error("Failed to write skill manifest")]
+    WriteSkillManifest(#[source] std::io::Error),
+
+    #[error("Failed to rename skill manifest")]
+    RenameSkillManifest(#[source] std::io::Error),
+
+    // Cache manifest
+    #[error("Failed to read cache manifest")]
+    ReadCacheManifest(#[source] std::io::Error),
+
+    #[error("Failed to parse cache manifest")]
+    ParseCacheManifest(#[source] serde_json::Error),
+
+    #[error("Failed to create cache manifest directory")]
+    CreateCacheManifestDir(#[source] std::io::Error),
+
+    #[error("Failed to serialize cache manifest")]
+    SerializeCacheManifest(#[source] serde_json::Error),
+
+    #[error("Failed to write cache manifest")]
+    WriteCacheManifest(#[source] std::io::Error),
+
+    #[error("Failed to rename cache manifest")]
+    RenameCacheManifest(#[source] std::io::Error),
 }

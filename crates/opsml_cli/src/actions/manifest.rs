@@ -1,4 +1,4 @@
-use crate::error::CliError;
+use crate::error::{CliError, ManifestError};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -42,32 +42,32 @@ impl SkillManifest {
             .join("skill-manifest.json")
     }
 
-    pub fn load() -> Result<Self, CliError> {
+    pub fn load() -> Result<Self, ManifestError> {
         let path = Self::path();
         if !path.exists() {
             return Ok(Self::default());
         }
         let contents = fs::read_to_string(&path)
-            .map_err(|e| CliError::Error(format!("Failed to read skill manifest: {e}")))?;
+            .map_err(ManifestError::ReadSkillManifest)?;
         serde_json::from_str(&contents)
-            .map_err(|e| CliError::Error(format!("Failed to parse skill manifest: {e}")))
+            .map_err(ManifestError::ParseSkillManifest)
     }
 
-    pub fn save(&self) -> Result<(), CliError> {
+    pub fn save(&self) -> Result<(), ManifestError> {
         let path = Self::path();
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)
-                .map_err(|e| CliError::Error(format!("Failed to create manifest dir: {e}")))?;
+                .map_err(ManifestError::CreateSkillManifestDir)?;
         }
 
         // Atomic write: write to tmp, then rename
         let tmp_path = path.with_extension("json.tmp");
         let contents = serde_json::to_string_pretty(self)
-            .map_err(|e| CliError::Error(format!("Failed to serialize skill manifest: {e}")))?;
+            .map_err(ManifestError::SerializeSkillManifest)?;
         fs::write(&tmp_path, contents)
-            .map_err(|e| CliError::Error(format!("Failed to write skill manifest: {e}")))?;
+            .map_err(ManifestError::WriteSkillManifest)?;
         fs::rename(&tmp_path, &path)
-            .map_err(|e| CliError::Error(format!("Failed to rename skill manifest: {e}")))?;
+            .map_err(ManifestError::RenameSkillManifest)?;
 
         Ok(())
     }

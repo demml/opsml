@@ -1,4 +1,4 @@
-use crate::error::CliError;
+use crate::error::ManifestError;
 use chrono::{DateTime, Duration, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -47,31 +47,31 @@ impl CacheManifest {
             .join("cache")
     }
 
-    pub fn load() -> Result<Self, CliError> {
+    pub fn load() -> Result<Self, ManifestError> {
         let path = Self::path();
         if !path.exists() {
             return Ok(Self::default());
         }
         let contents = fs::read_to_string(&path)
-            .map_err(|e| CliError::Error(format!("Failed to read cache manifest: {e}")))?;
+            .map_err(ManifestError::ReadCacheManifest)?;
         serde_json::from_str(&contents)
-            .map_err(|e| CliError::Error(format!("Failed to parse cache manifest: {e}")))
+            .map_err(ManifestError::ParseCacheManifest)
     }
 
-    pub fn save(&self) -> Result<(), CliError> {
+    pub fn save(&self) -> Result<(), ManifestError> {
         let path = Self::path();
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)
-                .map_err(|e| CliError::Error(format!("Failed to create cache dir: {e}")))?;
+                .map_err(ManifestError::CreateCacheManifestDir)?;
         }
 
         let tmp_path = path.with_extension("json.tmp");
         let contents = serde_json::to_string_pretty(self)
-            .map_err(|e| CliError::Error(format!("Failed to serialize cache manifest: {e}")))?;
+            .map_err(ManifestError::SerializeCacheManifest)?;
         fs::write(&tmp_path, contents)
-            .map_err(|e| CliError::Error(format!("Failed to write cache manifest: {e}")))?;
+            .map_err(ManifestError::WriteCacheManifest)?;
         fs::rename(&tmp_path, &path)
-            .map_err(|e| CliError::Error(format!("Failed to rename cache manifest: {e}")))?;
+            .map_err(ManifestError::RenameCacheManifest)?;
 
         Ok(())
     }
