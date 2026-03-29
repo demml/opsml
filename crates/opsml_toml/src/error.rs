@@ -35,4 +35,16 @@ pub enum PyProjectTomlError {
 
     #[error("Drift configuration is only valid for model cards")]
     InvalidConfiguration,
+
+    #[error("Failed to read `.opsml-skills.yaml`: {0}")]
+    FailedToReadSkillsYaml(#[source] std::io::Error),
+
+    #[error("Failed to parse `.opsml-skills.yaml`: {0}")]
+    FailedToParseSkillsYaml(#[source] serde_yaml::Error),
+
+    #[error("Failed to write `.opsml-skills.yaml`: {0}")]
+    FailedToWriteSkillsYaml(#[source] std::io::Error),
+
+    #[error("`.opsml-skills.yaml` already exists")]
+    SkillsYamlAlreadyExists,
 }

@@ -11,6 +11,7 @@ doctest = false
 opsml-types = { workspace = true }
 opsml-version = { workspace = true }
 serde = { workspace = true }
+serde_yaml = { workspace = true }
 thiserror = { workspace = true }
 toml_edit = { workspace = true }
 
