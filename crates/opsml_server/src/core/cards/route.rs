@@ -462,18 +462,38 @@ pub async fn create_card(
             &existing.space, &existing.name, &existing.version
         );
 
-        // return existing card metadata but with a flag indicating it was deduplicated, so the client can fetch the existing artifact if needed
-        return Ok(Json(CreateCardResponse {
+        let mut response = Json(CreateCardResponse {
             registered: true,
             deduplicated: true,
-            space: existing.space,
-            name: existing.name,
-            version: existing.version,
+            space: existing.space.clone(),
+            name: existing.name.clone(),
+            version: existing.version.clone(),
             app_env: existing.app_env,
             created_at: existing.created_at,
             key,
         })
-        .into_response());
+        .into_response();
+
+        let audit_context = AuditContext {
+            resource_id: existing.uid,
+            resource_type: ResourceType::Database,
+            metadata: card_request.get_metadata(),
+            registry_type: Some(card_request.registry_type.clone()),
+            operation: Operation::Read,
+            access_location: None,
+        };
+        let space_name = SpaceNameEvent {
+            space: existing.space,
+            name: existing.name,
+            registry_type: card_request.registry_type.clone(),
+        };
+        {
+            let extensions = response.extensions_mut();
+            extensions.insert(audit_context);
+            extensions.insert(space_name);
+        }
+
+        return Ok(response);
     }
 
     // Resolve version and insert (with retry on unique violation for skills)
@@ -520,6 +540,66 @@ pub async fn create_card(
                     attempt + 1,
                     max_retries
                 );
+
+                // For SkillCards: the collision may be a concurrent push of the same content.
+                // Re-check the content hash — if a matching row now exists, return it as a
+                // dedup hit rather than bumping the version and inserting a duplicate.
+                if let CardRecord::Skill(ref skill_record) = card_request.card
+                    && let Some(existing) = state
+                        .sql_client
+                        .compare_hash(
+                            &table,
+                            &skill_record.content_hash,
+                            Some(&skill_record.space),
+                            Some(&skill_record.name),
+                        )
+                        .await
+                        .map_err(|e| {
+                            internal_server_error(e, "Content hash re-check failed", None)
+                        })?
+                {
+                    let key = state
+                        .sql_client
+                        .get_artifact_key(&existing.uid, &card_request.registry_type.to_string())
+                        .await
+                        .map_err(|e| {
+                            internal_server_error(e, "Failed to get artifact key", None)
+                        })?;
+
+                    let mut response = Json(CreateCardResponse {
+                        registered: true,
+                        deduplicated: true,
+                        space: existing.space.clone(),
+                        name: existing.name.clone(),
+                        version: existing.version.clone(),
+                        app_env: existing.app_env,
+                        created_at: existing.created_at,
+                        key,
+                    })
+                    .into_response();
+
+                    let audit_context = AuditContext {
+                        resource_id: existing.uid,
+                        resource_type: ResourceType::Database,
+                        metadata: card_request.get_metadata(),
+                        registry_type: Some(card_request.registry_type.clone()),
+                        operation: Operation::Read,
+                        access_location: None,
+                    };
+                    let space_name = SpaceNameEvent {
+                        space: existing.space,
+                        name: existing.name,
+                        registry_type: card_request.registry_type.clone(),
+                    };
+                    {
+                        let extensions = response.extensions_mut();
+                        extensions.insert(audit_context);
+                        extensions.insert(space_name);
+                    }
+
+                    return Ok(response);
+                }
+
                 continue;
             }
             Err(e) => {
@@ -932,6 +1012,7 @@ pub async fn create_readme(
 #[instrument(skip_all)]
 pub async fn compare_content_hash(
     State(state): State<Arc<AppState>>,
+    Extension(_perms): Extension<UserPermissions>,
     Json(params): Json<CompareHashRequest>,
 ) -> Result<Json<CompareHashResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
