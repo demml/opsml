@@ -4,7 +4,9 @@ pub mod error;
 
 use crate::actions::skill::{init_skill, list_skills, pull_skill, push_skill};
 pub use crate::actions::{download_card, download_service, list_cards};
-use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
+use crate::cli::{
+    Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands, SkillCommands,
+};
 pub use actions::{
     generate_key,
     lock::install_service,
@@ -16,7 +18,6 @@ pub use actions::{
 use anyhow::Context;
 use clap::Parser;
 pub use cli::arg::{DownloadCard, ScouterArgs};
-use cli::commands::SkillCommands;
 use cli::commands::{ScouterCommands, UiCommands};
 use opsml_colors::Colorize;
 use opsml_types::RegistryType;
@@ -143,6 +144,10 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
         }
 
         Some(Commands::Skill { command }) => match command {
+            SkillCommands::Status => {
+                actions::manifest::print_skill_status().context("Failed to show skill status")?;
+                Ok(())
+            }
             SkillCommands::Push(args) => push_skill(args).context("Failed to push skill"),
             SkillCommands::Pull(args) => pull_skill(args).context("Failed to pull skill"),
             SkillCommands::List(args) => list_skills(args).context("Failed to list skills"),

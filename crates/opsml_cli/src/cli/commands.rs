@@ -137,10 +137,10 @@ pub enum Commands {
     /// any service artifacts in a subsequent step.
     Register(RegisterArgs),
 
-    /// Manage agent skills (push, pull, list, init)
+    /// Manage OpsML skills
     ///
     /// # Example
-    /// opsml skill push ./SKILL.md --space my-space
+    /// opsml skill status
     Skill {
         #[command(subcommand)]
         command: SkillCommands,
@@ -224,6 +224,11 @@ pub enum UiCommands {
 #[derive(Subcommand)]
 #[command(version = None)]
 pub enum SkillCommands {
+    /// Show installed skill versions and status
+    ///
+    /// # Example
+    /// opsml skill status
+    Status,
     /// Push a skill markdown file to the registry
     ///
     /// # Example
@@ -250,9 +255,9 @@ pub enum SkillCommands {
 }
 
 pub const LOGO_TEXT: &str = "
- ██████  ██████  ███████ ███    ███ ██             ██████ ██      ██ 
-██    ██ ██   ██ ██      ████  ████ ██            ██      ██      ██ 
-██    ██ ██████  ███████ ██ ████ ██ ██      █████ ██      ██      ██ 
-██    ██ ██           ██ ██  ██  ██ ██            ██      ██      ██ 
- ██████  ██      ███████ ██      ██ ███████        ██████ ███████ ██ 
+ ██████  ██████  ███████ ███    ███ ██             ██████ ██      ██
+██    ██ ██   ██ ██      ████  ████ ██            ██      ██      ██
+██    ██ ██████  ███████ ██ ████ ██ ██      █████ ██      ██      ██
+██    ██ ██           ██ ██  ██  ██ ██            ██      ██      ██
+ ██████  ██      ███████ ██      ██ ███████        ██████ ███████ ██
 ";

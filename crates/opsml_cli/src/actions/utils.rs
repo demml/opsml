@@ -77,7 +77,7 @@ pub fn process_prompt_card_from_path(
         .map_err(|e| CliError::Error(format!("Failed to load PromptCard: {}", e)))?;
 
     let prompt_hash = prompt_card.calculate_content_hash()?;
-    if let Some(existing_card) = registry.compare_card_hash(prompt_hash.as_slice())? {
+    if let Some(existing_card) = registry.compare_card_hash(prompt_hash.as_slice(), None, None)? {
         warn!(
             "PromptCard content hash matches registry, skipping registration for: {}/{}",
             prompt_card.space, prompt_card.name
@@ -214,7 +214,7 @@ fn card_exists_in_registry(
 ) -> Result<Option<CardArgs>, CliError> {
     let content_hash = service.calculate_content_hash()?;
     Ok(registry
-        .compare_card_hash(content_hash.as_slice())
+        .compare_card_hash(content_hash.as_slice(), None, None)
         .inspect_err(|e| {
             error!("Error comparing card hash with registry: {}", e);
         })?)

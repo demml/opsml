@@ -1458,6 +1458,73 @@ async fn test_opsml_server_card_skillcard_crud() {
 }
 
 #[tokio::test]
+async fn test_opsml_server_card_skillcard_dedup() {
+    retry_flaky_test!({
+        let helper = TestHelper::new(None).await;
+
+        let content_hash: Vec<u8> = vec![0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe];
+
+        let make_request = || CreateCardRequest {
+            card: CardRecord::Skill(SkillCardClientRecord {
+                name: "dedup-skill".to_string(),
+                space: "repo1".to_string(),
+                version: "1.0.0".to_string(),
+                content_hash: content_hash.clone(),
+                ..SkillCardClientRecord::default()
+            }),
+            registry_type: RegistryType::Skill,
+            version_request: CardVersionRequest {
+                name: "dedup-skill".to_string(),
+                space: "repo1".to_string(),
+                version: Some("1.0.0".to_string()),
+                version_type: VersionType::Minor,
+                pre_tag: None,
+                build_tag: None,
+            },
+        };
+
+        // First push — should create a new card, not deduplicated
+        let body = serde_json::to_string(&make_request()).unwrap();
+        let request = Request::builder()
+            .uri("/opsml/api/card/create")
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body))
+            .unwrap();
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let first: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+        assert!(first.registered);
+        assert!(!first.deduplicated);
+
+        // Second push with identical content hash — must be deduplicated
+        let body = serde_json::to_string(&make_request()).unwrap();
+        let request = Request::builder()
+            .uri("/opsml/api/card/create")
+            .method("POST")
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(body))
+            .unwrap();
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        let second: CreateCardResponse = serde_json::from_slice(&body).unwrap();
+        assert!(second.registered);
+        assert!(
+            second.deduplicated,
+            "second push with same content hash must be deduplicated"
+        );
+        assert_eq!(
+            second.version, first.version,
+            "deduplicated response must return the original version"
+        );
+
+        helper.cleanup();
+    });
+}
+
+#[tokio::test]
 async fn test_opsml_server_card_get_card() {
     retry_flaky_test!({
         let helper = TestHelper::new(None).await;
@@ -2181,6 +2248,8 @@ async fn test_opsml_server_card_service_card_agents() {
         let hash_request = CompareHashRequest {
             registry_type: RegistryType::Agent,
             content_hash: service_card.content_hash.clone(),
+            space: None,
+            name: None,
         };
 
         let body = serde_json::to_string(&hash_request).unwrap();

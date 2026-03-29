@@ -22,6 +22,8 @@ pub trait CardLogicTrait {
         &self,
         table: &CardTable,
         content_hash: &[u8],
+        space: Option<&str>,
+        name: Option<&str>,
     ) -> Result<Option<CardArgs>, SqlError>;
     async fn check_uid_exists(&self, uid: &str, table: &CardTable) -> Result<bool, SqlError>;
     async fn get_versions(

@@ -128,16 +128,31 @@ impl CardLogicTrait for CardLogicMySqlClient {
         &self,
         table: &CardTable,
         content_hash: &[u8],
+        space: Option<&str>,
+        name: Option<&str>,
     ) -> Result<Option<CardArgs>, SqlError> {
-        let query = format!(
-            "SELECT space, name, version, uid FROM {} WHERE content_hash = ? ORDER BY created_at DESC LIMIT 1",
+        let mut query = format!(
+            "SELECT space, name, version, uid, app_env, created_at FROM {} WHERE content_hash = ?",
             table
         );
 
-        let exists: Option<CardArgs> = sqlx::query_as(&query)
-            .bind(content_hash)
-            .fetch_optional(&self.pool)
-            .await?;
+        if space.is_some() {
+            query.push_str(" AND space = ?");
+        }
+        if name.is_some() {
+            query.push_str(" AND name = ?");
+        }
+        query.push_str(" ORDER BY created_at DESC LIMIT 1");
+
+        let mut q = sqlx::query_as(&query).bind(content_hash);
+        if let Some(s) = space {
+            q = q.bind(s);
+        }
+        if let Some(n) = name {
+            q = q.bind(n);
+        }
+
+        let exists: Option<CardArgs> = q.fetch_optional(&self.pool).await?;
 
         Ok(exists)
     }

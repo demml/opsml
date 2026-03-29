@@ -34,7 +34,7 @@ use serde::de::DeserializeOwned;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tempfile::tempdir;
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, error, info, instrument, warn};
 
 pub fn parse_qs_query<T: DeserializeOwned>(
     uri: &OriginalUri,
@@ -433,45 +433,219 @@ pub async fn create_card(
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
-    // (0) ------- Run skill scan gate for SkillCards
+    // Run skill scan gate for SkillCards
     if let CardRecord::Skill(ref skill_record) = card_request.card {
         run_skill_scan(&state, skill_record).await?;
     }
 
-    // (1) ------- Get the next version
-    let version = get_next_version(
-        state.sql_client.clone(),
-        &table,
-        card_request.version_request.clone(),
-    )
-    .await
-    .map_err(|e| {
-        error!("Failed to get next version: {e}");
-        internal_server_error(e, "Failed to get next version", None)
-    })?;
+    // Content hash dedup for SkillCards
+    if let CardRecord::Skill(ref skill_record) = card_request.card
+        && let Some(existing) = state
+            .sql_client
+            .compare_hash(
+                &table,
+                &skill_record.content_hash,
+                Some(&skill_record.space),
+                Some(&skill_record.name),
+            )
+            .await
+            .map_err(|e| internal_server_error(e, "Content hash check failed", None))?
+    {
+        let key = state
+            .sql_client
+            .get_artifact_key(&existing.uid, &card_request.registry_type.to_string())
+            .await
+            .map_err(|e| internal_server_error(e, "Failed to get artifact key", None))?;
 
-    info!(
-        "Creating card: {}/{}/{} - registry: {:?}",
-        &card_request.card.space(),
-        &card_request.card.name(),
-        &version,
-        &card_request.registry_type
-    );
+        info!(
+            "Skill content unchanged, returning existing {}/{}/{}",
+            &existing.space, &existing.name, &existing.version
+        );
 
-    // (2) ------- Insert the card into the database
-    let (uid, space, registry_type, card_uri, app_env, created_at) = insert_card_into_db(
-        state.sql_client.clone(),
-        card_request.card.clone(),
-        version.clone(),
-        &table,
-    )
-    .await
-    .map_err(|e| {
-        error!("Failed to insert card into db: {e}");
-        internal_server_error(e, "Failed to insert card into db", None)
-    })?;
+        let mut response = Json(CreateCardResponse {
+            registered: true,
+            deduplicated: true,
+            space: existing.space.clone(),
+            name: existing.name.clone(),
+            version: existing.version.clone(),
+            app_env: existing.app_env,
+            created_at: existing.created_at,
+            key,
+        })
+        .into_response();
 
-    // (3) ------- Create the artifact key for card artifact encryption
+        let audit_context = AuditContext {
+            resource_id: existing.uid,
+            resource_type: ResourceType::Database,
+            metadata: card_request.get_metadata(),
+            registry_type: Some(card_request.registry_type.clone()),
+            operation: Operation::Read,
+            access_location: None,
+        };
+        let space_name = SpaceNameEvent {
+            space: existing.space,
+            name: existing.name,
+            registry_type: card_request.registry_type.clone(),
+        };
+        {
+            let extensions = response.extensions_mut();
+            extensions.insert(audit_context);
+            extensions.insert(space_name);
+        }
+
+        return Ok(response);
+    }
+
+    // Resolve version and insert (with retry on unique violation for skills)
+    let is_skill = matches!(card_request.card, CardRecord::Skill(_));
+    let max_retries: u32 = if is_skill { 3 } else { 1 };
+    let mut attempt = 0u32;
+
+    let (version, (uid, space, registry_type, card_uri, app_env, created_at)) = loop {
+        let version = get_next_version(
+            state.sql_client.clone(),
+            &table,
+            card_request.version_request.clone(),
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get next version: {e}");
+            internal_server_error(e, "Failed to get next version", None)
+        })?;
+
+        info!(
+            "Creating card: {}/{}/{} - registry: {:?} (attempt {})",
+            &card_request.card.space(),
+            &card_request.card.name(),
+            &version,
+            &card_request.registry_type,
+            attempt + 1
+        );
+
+        match insert_card_into_db(
+            state.sql_client.clone(),
+            card_request.card.clone(),
+            version.clone(),
+            &table,
+        )
+        .await
+        {
+            Ok(result) => break (version, result),
+            Err(e) if e.is_unique_violation() && attempt + 1 < max_retries => {
+                attempt += 1;
+                warn!(
+                    "Version collision for {}/{}, retrying (attempt {}/{})",
+                    &card_request.card.space(),
+                    &card_request.card.name(),
+                    attempt + 1,
+                    max_retries
+                );
+
+                // For SkillCards: the collision may be a concurrent push of the same content.
+                // Re-check the content hash — if a matching row now exists, return it as a
+                // dedup hit rather than bumping the version and inserting a duplicate.
+                if let CardRecord::Skill(ref skill_record) = card_request.card
+                    && let Some(existing) = state
+                        .sql_client
+                        .compare_hash(
+                            &table,
+                            &skill_record.content_hash,
+                            Some(&skill_record.space),
+                            Some(&skill_record.name),
+                        )
+                        .await
+                        .map_err(|e| {
+                            internal_server_error(e, "Content hash re-check failed", None)
+                        })?
+                {
+                    // The concurrent inserter may not have called create_artifact_key yet.
+                    // Retry the key lookup in a tight inner loop before giving up — a `continue`
+                    // here would re-enter `get_next_version` and produce a NEW version for the
+                    // same content hash, defeating dedup entirely.
+                    let mut key_opt = None;
+                    for _ in 0..3u8 {
+                        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+                        match state
+                            .sql_client
+                            .get_artifact_key(
+                                &existing.uid,
+                                &card_request.registry_type.to_string(),
+                            )
+                            .await
+                        {
+                            Ok(k) => {
+                                key_opt = Some(k);
+                                break;
+                            }
+                            Err(e) if e.is_row_not_found() => continue,
+                            Err(e) => {
+                                return Err(internal_server_error(
+                                    e,
+                                    "Failed to get artifact key",
+                                    None,
+                                ));
+                            }
+                        }
+                    }
+                    let key = match key_opt {
+                        Some(k) => k,
+                        None => {
+                            return Err(internal_server_error(
+                                "artifact key not available after 3 retries",
+                                "Concurrent skill push did not complete; please retry",
+                                Some(StatusCode::SERVICE_UNAVAILABLE),
+                            ));
+                        }
+                    };
+
+                    let mut response = Json(CreateCardResponse {
+                        registered: true,
+                        deduplicated: true,
+                        space: existing.space.clone(),
+                        name: existing.name.clone(),
+                        version: existing.version.clone(),
+                        app_env: existing.app_env,
+                        created_at: existing.created_at,
+                        key,
+                    })
+                    .into_response();
+
+                    let audit_context = AuditContext {
+                        resource_id: existing.uid,
+                        resource_type: ResourceType::Database,
+                        metadata: card_request.get_metadata(),
+                        registry_type: Some(card_request.registry_type.clone()),
+                        operation: Operation::Read,
+                        access_location: None,
+                    };
+                    let space_name = SpaceNameEvent {
+                        space: existing.space,
+                        name: existing.name,
+                        registry_type: card_request.registry_type.clone(),
+                    };
+                    {
+                        let extensions = response.extensions_mut();
+                        extensions.insert(audit_context);
+                        extensions.insert(space_name);
+                    }
+
+                    return Ok(response);
+                }
+
+                continue;
+            }
+            Err(e) => {
+                error!("Failed to insert card into db: {e}");
+                return Err(internal_server_error(
+                    e,
+                    "Failed to insert card into db",
+                    None,
+                ));
+            }
+        }
+    };
+
+    // Create the artifact key for card artifact encryption
     let key = create_artifact_key(
         &state.sql_client,
         &state.storage_settings.encryption_key,
@@ -490,6 +664,7 @@ pub async fn create_card(
 
     let mut response = Json(CreateCardResponse {
         registered: true,
+        deduplicated: false,
         space: card_request.card.space().to_string(),
         name: card_request.card.name().to_string(),
         version: version.to_string(),
@@ -499,7 +674,7 @@ pub async fn create_card(
     })
     .into_response();
 
-    // (4) ------- Create audit and space stats events
+    // Create audit and space stats events
     let audit_context = AuditContext {
         resource_id: uid.clone(),
         resource_type: ResourceType::Database,
@@ -509,7 +684,7 @@ pub async fn create_card(
         access_location: None,
     };
 
-    // (5) ------- Create space name registry event
+    // Create space name registry event
     let space_name = SpaceNameEvent {
         space: card_request.card.space().to_string(),
         name: card_request.card.name().to_string(),
@@ -869,13 +1044,19 @@ pub async fn create_readme(
 #[instrument(skip_all)]
 pub async fn compare_content_hash(
     State(state): State<Arc<AppState>>,
+    Extension(_perms): Extension<UserPermissions>,
     Json(params): Json<CompareHashRequest>,
 ) -> Result<Json<CompareHashResponse>, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&params.registry_type);
 
     let card = state
         .sql_client
-        .compare_hash(&table, &params.content_hash)
+        .compare_hash(
+            &table,
+            &params.content_hash,
+            params.space.as_deref(),
+            params.name.as_deref(),
+        )
         .await
         .map_err(|e| {
             error!("Failed to compare content hash: {e}");

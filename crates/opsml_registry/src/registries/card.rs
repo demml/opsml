@@ -268,12 +268,19 @@ impl OpsmlCardRegistry {
     pub fn compare_card_hash(
         &self,
         content_hash: &[u8],
+        space: Option<&str>,
+        name: Option<&str>,
     ) -> Result<Option<CardArgs>, RegistryError> {
         match self {
-            Self::Client(client_registry) => client_registry.compare_card_hash(content_hash),
+            Self::Client(client_registry) => {
+                client_registry.compare_card_hash(content_hash, space, name)
+            }
             #[cfg(feature = "server")]
-            Self::Server(server_registry) => app_state()
-                .block_on(async { server_registry.compare_card_hash(content_hash).await }),
+            Self::Server(server_registry) => app_state().block_on(async {
+                server_registry
+                    .compare_card_hash(content_hash, space, name)
+                    .await
+            }),
         }
     }
 }

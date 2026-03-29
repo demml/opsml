@@ -273,3 +273,13 @@ pub enum ServerError {
     #[error(transparent)]
     JoinError(#[from] tokio::task::JoinError),
 }
+
+impl ServerError {
+    /// Returns true if this error is a unique constraint violation from the database.
+    pub fn is_unique_violation(&self) -> bool {
+        match self {
+            ServerError::SqlError(sql_err) => sql_err.is_unique_violation(),
+            _ => false,
+        }
+    }
+}

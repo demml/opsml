@@ -61,6 +61,9 @@ pub enum CliError {
     UiError(#[from] UiError),
 
     #[error(transparent)]
+    ManifestError(#[from] ManifestError),
+
+    #[error(transparent)]
     ProfileError(#[from] ProfileError),
 
     #[error(transparent)]
@@ -190,4 +193,54 @@ pub enum UiError {
 
     #[error("Package JSON not found")]
     PackageJsonNotFound,
+}
+
+#[derive(Error, Debug)]
+pub enum ManifestError {
+    #[error("Home directory not found — cannot locate manifest")]
+    HomeDirNotFound,
+
+    // Skill manifest
+    #[error("Failed to read skill manifest: {0}")]
+    ReadSkillManifest(#[source] std::io::Error),
+
+    #[error("Failed to parse skill manifest: {0}")]
+    ParseSkillManifest(#[source] serde_json::Error),
+
+    #[error("Failed to create skill manifest directory: {0}")]
+    CreateSkillManifestDir(#[source] std::io::Error),
+
+    #[error("Failed to serialize skill manifest: {0}")]
+    SerializeSkillManifest(#[source] serde_json::Error),
+
+    #[error("Failed to write skill manifest: {0}")]
+    WriteSkillManifest(#[source] std::io::Error),
+
+    #[error("Failed to rename skill manifest: {0}")]
+    RenameSkillManifest(#[source] std::io::Error),
+
+    #[error("Failed to set skill manifest permissions: {0}")]
+    SetSkillManifestPermissions(#[source] std::io::Error),
+
+    // Cache manifest
+    #[error("Failed to read cache manifest: {0}")]
+    ReadCacheManifest(#[source] std::io::Error),
+
+    #[error("Failed to parse cache manifest: {0}")]
+    ParseCacheManifest(#[source] serde_json::Error),
+
+    #[error("Failed to create cache manifest directory: {0}")]
+    CreateCacheManifestDir(#[source] std::io::Error),
+
+    #[error("Failed to serialize cache manifest: {0}")]
+    SerializeCacheManifest(#[source] serde_json::Error),
+
+    #[error("Failed to write cache manifest: {0}")]
+    WriteCacheManifest(#[source] std::io::Error),
+
+    #[error("Failed to rename cache manifest: {0}")]
+    RenameCacheManifest(#[source] std::io::Error),
+
+    #[error("Failed to set cache manifest permissions: {0}")]
+    SetCacheManifestPermissions(#[source] std::io::Error),
 }

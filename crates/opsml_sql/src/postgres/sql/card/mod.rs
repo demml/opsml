@@ -617,14 +617,32 @@ impl CardLogicTrait for CardLogicPostgresClient {
         &self,
         table: &CardTable,
         content_hash: &[u8],
+        space: Option<&str>,
+        name: Option<&str>,
     ) -> Result<Option<CardArgs>, SqlError> {
-        let query = format!(
-            "SELECT space, name, version, uid FROM {table} WHERE content_hash = $1 ORDER BY created_at DESC LIMIT 1"
+        let mut param_idx = 2u32;
+        let mut query = format!(
+            "SELECT space, name, version, uid, app_env, created_at FROM {table} WHERE content_hash = $1"
         );
-        let card_args: Option<CardArgs> = sqlx::query_as(&query)
-            .bind(content_hash)
-            .fetch_optional(&self.pool)
-            .await?;
+
+        if space.is_some() {
+            query.push_str(&format!(" AND space = ${param_idx}"));
+            param_idx += 1;
+        }
+        if name.is_some() {
+            query.push_str(&format!(" AND name = ${param_idx}"));
+        }
+        query.push_str(" ORDER BY created_at DESC LIMIT 1");
+
+        let mut q = sqlx::query_as(&query).bind(content_hash);
+        if let Some(s) = space {
+            q = q.bind(s);
+        }
+        if let Some(n) = name {
+            q = q.bind(n);
+        }
+
+        let card_args: Option<CardArgs> = q.fetch_optional(&self.pool).await?;
 
         Ok(card_args)
     }
