@@ -558,13 +558,29 @@ pub async fn create_card(
                             internal_server_error(e, "Content hash re-check failed", None)
                         })?
                 {
-                    let key = state
+                    // The concurrent inserter may not have called create_artifact_key yet.
+                    // If the key isn't there, fall through and let the loop retry.
+                    let key = match state
                         .sql_client
                         .get_artifact_key(&existing.uid, &card_request.registry_type.to_string())
                         .await
-                        .map_err(|e| {
-                            internal_server_error(e, "Failed to get artifact key", None)
-                        })?;
+                    {
+                        Ok(k) => k,
+                        Err(e) if e.is_row_not_found() => {
+                            warn!(
+                                "Artifact key not yet available for {}, retrying",
+                                &existing.uid
+                            );
+                            continue;
+                        }
+                        Err(e) => {
+                            return Err(internal_server_error(
+                                e,
+                                "Failed to get artifact key",
+                                None,
+                            ));
+                        }
+                    };
 
                     let mut response = Json(CreateCardResponse {
                         registered: true,

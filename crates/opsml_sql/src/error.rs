@@ -43,6 +43,11 @@ pub enum SqlError {
 }
 
 impl SqlError {
+    /// Returns true if this error is a row-not-found from sqlx.
+    pub fn is_row_not_found(&self) -> bool {
+        matches!(self, SqlError::SqlxError(sqlx::Error::RowNotFound))
+    }
+
     /// Returns true if this error is a unique constraint violation.
     pub fn is_unique_violation(&self) -> bool {
         let sqlx_err = match self {

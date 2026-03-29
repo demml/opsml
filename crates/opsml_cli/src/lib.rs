@@ -18,7 +18,6 @@ pub use actions::{
 use anyhow::Context;
 use clap::Parser;
 pub use cli::arg::{DownloadCard, ScouterArgs};
-use cli::commands::SkillCommands;
 use cli::commands::{ScouterCommands, UiCommands};
 use opsml_colors::Colorize;
 use opsml_types::RegistryType;
