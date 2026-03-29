@@ -1694,7 +1694,6 @@ class CardRegistry:
             data_registry.list_cards()
         ```
         """
-        ...
 
     @property
     def registry_type(self) -> RegistryType:
