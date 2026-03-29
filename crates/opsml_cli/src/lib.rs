@@ -2,7 +2,9 @@ pub mod actions;
 pub mod cli;
 pub mod error;
 
+use crate::actions::configure::configure_cli;
 use crate::actions::skill::{init_skill, list_skills, pull_skill, push_skill};
+use crate::actions::sync::sync_skills;
 pub use crate::actions::{download_card, download_service, list_cards};
 use crate::cli::{
     Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands, SkillCommands,
@@ -152,7 +154,12 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             SkillCommands::Pull(args) => pull_skill(args).context("Failed to pull skill"),
             SkillCommands::List(args) => list_skills(args).context("Failed to list skills"),
             SkillCommands::Init(args) => init_skill(args).context("Failed to init skill"),
+            SkillCommands::Sync(args) => sync_skills(args).context("Failed to sync skills"),
         },
+
+        Some(Commands::Configure(args)) => {
+            configure_cli(args).context("Failed to configure CLI integration")
+        }
 
         None => {
             println!("No command provided");

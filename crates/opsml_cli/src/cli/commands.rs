@@ -1,6 +1,6 @@
 use crate::cli::arg::{
-    DownloadCard, KeyArgs, ListCards, LockArgs, RegisterArgs, ScouterArgs, SkillInitArgs,
-    SkillListArgs, SkillPullArgs, SkillPushArgs, UiArgs,
+    ConfigureArgs, DownloadCard, KeyArgs, ListCards, LockArgs, RegisterArgs, ScouterArgs,
+    SkillInitArgs, SkillListArgs, SkillPullArgs, SkillPushArgs, SyncArgs, UiArgs,
 };
 use clap::Parser;
 use clap::Subcommand;
@@ -145,6 +145,13 @@ pub enum Commands {
         #[command(subcommand)]
         command: SkillCommands,
     },
+
+    /// Configure OpsML skill integration for an AI CLI tool
+    ///
+    /// # Example
+    /// opsml configure --target claude-code
+    /// opsml configure --target all --lazy
+    Configure(ConfigureArgs),
 }
 
 #[derive(Subcommand)]
@@ -252,6 +259,13 @@ pub enum SkillCommands {
     /// # Example
     /// opsml skill init --name my-skill
     Init(SkillInitArgs),
+
+    /// Sync all skills in .opsml-skills.yaml to local CLI directories
+    ///
+    /// # Example
+    /// opsml skill sync --force
+    /// opsml skill sync --quiet
+    Sync(SyncArgs),
 }
 
 pub const LOGO_TEXT: &str = "

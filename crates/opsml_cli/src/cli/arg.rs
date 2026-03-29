@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use crate::error::CliError;
-use clap::Args;
+use clap::{Args, ValueEnum};
 use opsml_semver::VersionType;
 use opsml_service::service::DEFAULT_SERVICE_FILENAME;
 use opsml_types::{RegistryType, contracts::CardQueryArgs};
@@ -403,4 +403,69 @@ pub struct SkillInitArgs {
     /// Output path (defaults to ./SKILL.md)
     #[arg(long = "output")]
     pub output: Option<PathBuf>,
+}
+
+#[derive(Args, Clone)]
+pub struct SyncArgs {
+    /// Force re-download even if cache entry is still fresh
+    #[arg(long = "force", default_value = "false")]
+    pub force: bool,
+
+    /// Suppress all output (for hook usage)
+    #[arg(long = "quiet", default_value = "false")]
+    pub quiet: bool,
+
+    /// Comma-separated target CLIs. Defaults to all four.
+    #[arg(long = "target", use_value_delimiter = true, value_delimiter = ',')]
+    pub targets: Option<Vec<PullTarget>>,
+
+    /// Path to .opsml-skills.yaml (defaults to ./.opsml-skills.yaml)
+    #[arg(long = "path")]
+    pub path: Option<PathBuf>,
+}
+
+#[derive(Clone, ValueEnum)]
+pub enum ConfigureTarget {
+    #[value(name = "claude-code")]
+    ClaudeCode,
+    #[value(name = "codex")]
+    Codex,
+    #[value(name = "gemini-cli")]
+    GeminiCli,
+    #[value(name = "github-copilot")]
+    GithubCopilot,
+    #[value(name = "all")]
+    All,
+}
+
+impl ConfigureTarget {
+    pub fn to_pull_targets(&self) -> Vec<PullTarget> {
+        match self {
+            Self::ClaudeCode => vec![PullTarget::ClaudeCode],
+            Self::Codex => vec![PullTarget::Codex],
+            Self::GeminiCli => vec![PullTarget::GeminiCli],
+            Self::GithubCopilot => vec![PullTarget::GithubCopilot],
+            Self::All => vec![
+                PullTarget::ClaudeCode,
+                PullTarget::Codex,
+                PullTarget::GeminiCli,
+                PullTarget::GithubCopilot,
+            ],
+        }
+    }
+}
+
+#[derive(Args, Clone)]
+pub struct ConfigureArgs {
+    /// Target CLI(s) to configure
+    #[arg(long = "target", default_value = "all")]
+    pub target: ConfigureTarget,
+
+    /// Lazy mode: write startup hook instead of pulling skills immediately
+    #[arg(long = "lazy", default_value = "false")]
+    pub lazy: bool,
+
+    /// Base directory for writing files (defaults to current directory)
+    #[arg(long = "path")]
+    pub path: Option<PathBuf>,
 }

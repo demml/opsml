@@ -150,7 +150,7 @@ pub fn pull_skill(args: &SkillPullArgs) -> Result<(), CliError> {
 }
 
 /// Recursively find Card.json in the download directory.
-fn find_card_json(dir: &std::path::Path, depth: usize) -> Result<PathBuf, CliError> {
+pub(crate) fn find_card_json(dir: &std::path::Path, depth: usize) -> Result<PathBuf, CliError> {
     if depth > 20 {
         return Err(CliError::Error(format!(
             "Artifact directory too deeply nested (>20 levels) at {:?}",
