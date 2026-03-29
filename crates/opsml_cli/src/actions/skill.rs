@@ -5,7 +5,6 @@ use opsml_colors::Colorize;
 use opsml_registry::download::download_card_from_registry;
 use opsml_registry::registries::card::OpsmlCardRegistry;
 use opsml_registry::registry::CardRegistry;
-use opsml_semver::VersionType;
 use opsml_types::RegistryType;
 use opsml_types::contracts::{CardList, CardQueryArgs, CardRecord};
 use opsml_utils::clean_string;
