@@ -2,6 +2,7 @@ pub mod cache;
 pub mod download;
 pub mod generate;
 pub mod manifest;
+pub mod skill;
 pub mod ui;
 
 pub mod list;

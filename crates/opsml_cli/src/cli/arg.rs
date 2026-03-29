@@ -2,11 +2,20 @@ use std::path::PathBuf;
 
 use crate::error::CliError;
 use clap::Args;
+use opsml_semver::VersionType;
 use opsml_service::service::DEFAULT_SERVICE_FILENAME;
 use opsml_types::{RegistryType, contracts::CardQueryArgs};
 use opsml_utils::clean_string;
 use pyo3::{pyclass, pymethods};
 use scouter_client::DriftType;
+
+fn parse_version_type(s: &str) -> Result<VersionType, String> {
+    s.parse::<VersionType>().map_err(|_| {
+        format!(
+            "Invalid version type '{s}'. Valid options: major, minor, patch, pre, build, pre_build"
+        )
+    })
+}
 
 fn default_spec_path() -> String {
     let path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
@@ -280,4 +289,118 @@ pub struct StopUiArgs {
     /// This is only intended for development purposes.
     #[arg(long = "dev-mode", default_value = "false")]
     pub dev_mode: bool,
+}
+
+// -- Skill CLI types --
+
+#[derive(Clone, Debug, clap::ValueEnum)]
+pub enum PullTarget {
+    ClaudeCode,
+    Codex,
+    GeminiCli,
+    GithubCopilot,
+}
+
+impl PullTarget {
+    pub fn skill_path(&self, name: &str) -> PathBuf {
+        match self {
+            Self::ClaudeCode => PathBuf::from(format!(".claude/skills/{name}/SKILL.md")),
+            Self::Codex => PathBuf::from(format!(".agents/skills/{name}/SKILL.md")),
+            Self::GeminiCli => PathBuf::from(format!(".gemini/skills/{name}/SKILL.md")),
+            Self::GithubCopilot => PathBuf::from(format!(".github/copilot/skills/{name}/SKILL.md")),
+        }
+    }
+
+    pub fn global_skill_path(&self, name: &str) -> Result<PathBuf, CliError> {
+        let home = dirs::home_dir()
+            .ok_or_else(|| CliError::Error("Cannot determine home directory".into()))?;
+        Ok(match self {
+            Self::ClaudeCode => home.join(format!(".claude/skills/{name}/SKILL.md")),
+            Self::Codex => home.join(format!(".agents/skills/{name}/SKILL.md")),
+            Self::GeminiCli => home.join(format!(".gemini/skills/{name}/SKILL.md")),
+            Self::GithubCopilot => home.join(format!(".github/copilot/skills/{name}/SKILL.md")),
+        })
+    }
+}
+
+#[derive(Args, Clone)]
+pub struct SkillPushArgs {
+    /// Path to the skill markdown file
+    pub path: PathBuf,
+
+    /// Override the space for registration
+    #[arg(long = "space")]
+    pub space: Option<String>,
+
+    /// Tags to apply to the skill (comma-separated)
+    #[arg(long = "tags", use_value_delimiter = true, value_delimiter = ',')]
+    pub tags: Option<Vec<String>>,
+
+    /// Compatible CLI tools (comma-separated, e.g. claude-code,codex)
+    #[arg(long = "tools", use_value_delimiter = true, value_delimiter = ',')]
+    pub tools: Option<Vec<String>>,
+
+    /// Version bump type (major, minor, patch, pre, build, pre_build)
+    #[arg(long = "version-type", default_value = "minor", value_parser = parse_version_type)]
+    pub version_type: VersionType,
+}
+
+#[derive(Args, Clone)]
+pub struct SkillPullArgs {
+    /// Skill identifier (space/name or just name with --space)
+    pub name: String,
+
+    /// Skill version
+    #[arg(long = "version")]
+    pub version: Option<String>,
+
+    /// Space (alternative to space/name format)
+    #[arg(long = "space")]
+    pub space: Option<String>,
+
+    /// Target CLI for auto-placement
+    #[arg(long = "target")]
+    pub target: Option<PullTarget>,
+
+    /// Custom output path (overrides --target)
+    #[arg(long = "output")]
+    pub output: Option<PathBuf>,
+
+    /// Write to user home directory instead of current directory
+    #[arg(long = "global", default_value = "false")]
+    pub global: bool,
+}
+
+#[derive(Args, Clone)]
+pub struct SkillListArgs {
+    /// Filter by space
+    #[arg(long = "space")]
+    pub space: Option<String>,
+
+    /// Filter by name
+    #[arg(long = "name")]
+    pub name: Option<String>,
+
+    /// Filter by tags (comma-separated)
+    #[arg(long = "tags", use_value_delimiter = true, value_delimiter = ',')]
+    pub tags: Option<Vec<String>>,
+
+    /// Filter by compatible tool
+    #[arg(long = "tool")]
+    pub tool: Option<String>,
+
+    /// Maximum number of results
+    #[arg(long = "limit")]
+    pub limit: Option<i32>,
+}
+
+#[derive(Args, Clone)]
+pub struct SkillInitArgs {
+    /// Skill name for the template
+    #[arg(long = "name")]
+    pub name: Option<String>,
+
+    /// Output path (defaults to ./SKILL.md)
+    #[arg(long = "output")]
+    pub output: Option<PathBuf>,
 }

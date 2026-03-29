@@ -95,7 +95,9 @@ impl XGBoostOnnxConverter {
     where
         T: OnnxExtension,
     {
-        let onnxmltools = py.import("onnxmltools").map_err(OnnxError::ImportError)?;
+        let onnxmltools = py
+            .import("onnxmltools")
+            .map_err(|e| OnnxError::ImportError(e.to_string()))?;
 
         let type_helper = py
             .import("skl2onnx")
@@ -135,7 +137,7 @@ impl XGBoostOnnxConverter {
 
         let model_proto = onnxmltools
             .call_method("convert_xgboost", (model,), Some(&kwargs))
-            .map_err(OnnxError::PyOnnxConversionError)?;
+            .map_err(|e| OnnxError::PyOnnxConversionError(e.to_string()))?;
 
         debug!("Step 3: Extracting ONNX schema");
         let onnx_session = self.get_onnx_session(&model_proto, sample_data.get_feature_names(py)?);

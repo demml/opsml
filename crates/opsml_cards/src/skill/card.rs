@@ -1,5 +1,7 @@
 use crate::BaseArgs;
+use crate::error::CardError;
 use crate::skill::error::SkillError;
+use crate::traits::{OpsmlCard, ProfileExt};
 use chrono::{DateTime, Utc};
 use opsml_types::contracts::CardRecord;
 use opsml_types::contracts::SkillCardClientRecord;
@@ -12,6 +14,7 @@ use opsml_utils::get_utc_datetime;
 use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
 use pythonize;
+use scouter_client::ProfileRequest;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -190,7 +193,7 @@ impl SkillCard {
         Ok(())
     }
 
-    pub fn get_registry_card(&self) -> Result<CardRecord, SkillError> {
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = SkillCardClientRecord {
             uid: self.uid.clone(),
             created_at: self.created_at,
@@ -291,6 +294,70 @@ impl SkillCard {
             is_card: true,
             opsml_version: opsml_version::version(),
         })
+    }
+}
+
+impl OpsmlCard for SkillCard {
+    fn get_registry_card(&self) -> Result<CardRecord, CardError> {
+        self.get_registry_card()
+    }
+
+    fn get_version(&self) -> String {
+        self.version.clone()
+    }
+
+    fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    fn set_space(&mut self, space: String) {
+        self.space = space;
+    }
+
+    fn set_version(&mut self, version: String) {
+        self.version = version;
+    }
+
+    fn set_uid(&mut self, uid: String) {
+        self.uid = uid;
+    }
+
+    fn set_created_at(&mut self, created_at: DateTime<Utc>) {
+        self.created_at = created_at;
+    }
+
+    fn set_app_env(&mut self, app_env: String) {
+        self.app_env = app_env;
+    }
+
+    fn is_card(&self) -> bool {
+        self.is_card
+    }
+
+    fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
+        Ok(self.save_card(path)?)
+    }
+
+    fn registry_type(&self) -> &RegistryType {
+        &self.registry_type
+    }
+
+    fn update_drift_config_args(&mut self) -> Result<(), CardError> {
+        Ok(())
+    }
+
+    fn set_profile_uid(&mut self, _profile_uid: String) -> Result<(), CardError> {
+        Ok(())
+    }
+}
+
+impl ProfileExt for SkillCard {
+    fn get_profile_request(&self) -> Result<ProfileRequest, CardError> {
+        Err(CardError::DriftProfileNotFoundError)
+    }
+
+    fn has_profile(&self) -> bool {
+        false
     }
 }
 
@@ -632,5 +699,42 @@ mod tests {
         let md = card.to_markdown().unwrap();
         let restored = AgentSkillStandard::from_markdown(&md).unwrap();
         assert_eq!(restored.body.as_deref().unwrap_or(""), "");
+    }
+
+    #[test]
+    fn test_deserialize_from_path_yaml() {
+        let skill = make_skill();
+        let card = SkillCard::new_rs(
+            skill,
+            Some("test-space"),
+            Some("my-skill"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+
+        let tmp = tempfile::tempdir().unwrap();
+        let yaml_path = tmp.path().join("Card.yaml");
+        let yaml = serde_yaml::to_string(&card).unwrap();
+        std::fs::write(&yaml_path, yaml).unwrap();
+
+        let loaded: SkillCard = deserialize_from_path(yaml_path).unwrap();
+        assert_eq!(loaded.name, "my-skill");
+        assert_eq!(loaded.space, "test-space");
+    }
+
+    #[test]
+    fn test_deserialize_from_path_unsupported_extension() {
+        let tmp = tempfile::tempdir().unwrap();
+        let txt_path = tmp.path().join("Card.txt");
+        std::fs::write(&txt_path, "{}").unwrap();
+
+        let result: Result<SkillCard, SkillError> = deserialize_from_path(txt_path);
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("Unsupported file extension"));
     }
 }

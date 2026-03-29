@@ -1,5 +1,6 @@
 use crate::cli::arg::{
-    DownloadCard, KeyArgs, ListCards, LockArgs, RegisterArgs, ScouterArgs, UiArgs,
+    DownloadCard, KeyArgs, ListCards, LockArgs, RegisterArgs, ScouterArgs, SkillInitArgs,
+    SkillListArgs, SkillPullArgs, SkillPushArgs, UiArgs,
 };
 use clap::Parser;
 use clap::Subcommand;
@@ -228,12 +229,35 @@ pub enum SkillCommands {
     /// # Example
     /// opsml skill status
     Status,
+    /// Push a skill markdown file to the registry
+    ///
+    /// # Example
+    /// opsml skill push ./SKILL.md --space my-space --tags ml,tools
+    Push(SkillPushArgs),
+
+    /// Pull a skill from the registry
+    ///
+    /// # Example
+    /// opsml skill pull my-space/my-skill --target claude-code
+    Pull(SkillPullArgs),
+
+    /// List skills in the registry
+    ///
+    /// # Example
+    /// opsml skill list --space my-space --tool claude-code
+    List(SkillListArgs),
+
+    /// Scaffold a new skill markdown file
+    ///
+    /// # Example
+    /// opsml skill init --name my-skill
+    Init(SkillInitArgs),
 }
 
 pub const LOGO_TEXT: &str = "
- ██████  ██████  ███████ ███    ███ ██             ██████ ██      ██ 
-██    ██ ██   ██ ██      ████  ████ ██            ██      ██      ██ 
-██    ██ ██████  ███████ ██ ████ ██ ██      █████ ██      ██      ██ 
-██    ██ ██           ██ ██  ██  ██ ██            ██      ██      ██ 
- ██████  ██      ███████ ██      ██ ███████        ██████ ███████ ██ 
+ ██████  ██████  ███████ ███    ███ ██             ██████ ██      ██
+██    ██ ██   ██ ██      ████  ████ ██            ██      ██      ██
+██    ██ ██████  ███████ ██ ████ ██ ██      █████ ██      ██      ██
+██    ██ ██           ██ ██  ██  ██ ██            ██      ██      ██
+ ██████  ██      ███████ ██      ██ ███████        ██████ ███████ ██
 ";

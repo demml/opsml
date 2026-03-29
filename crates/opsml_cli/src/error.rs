@@ -69,6 +69,9 @@ pub enum CliError {
     #[error(transparent)]
     CardError(#[from] CardError),
 
+    #[error(transparent)]
+    SkillError(#[from] opsml_cards::skill::error::SkillError),
+
     #[error("{0}")]
     Error(String),
 

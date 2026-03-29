@@ -62,13 +62,13 @@ impl HuggingFaceOnnxConverter {
 
         let ort_type = kwargs
             .get_item("ort_type")
-            .map_err(OnnxError::MissingOrtType)?
+            .map_err(|e| OnnxError::MissingOrtType(e.to_string()))?
             .unwrap()
             .to_string();
 
         let quantize = kwargs
             .get_item("quantize")
-            .map_err(OnnxError::QuantizeArgError)?
+            .map_err(|e| OnnxError::QuantizeArgError(e.to_string()))?
             .unwrap()
             .extract::<bool>()
             .unwrap();
@@ -123,12 +123,12 @@ impl HuggingFaceOnnxConverter {
         let ort_model = opt_rt
             .getattr(&kwargs.0)?
             .call_method("from_pretrained", (&self.model_path,), Some(&kwargs.1))
-            .map_err(OnnxError::LoadModelError)?;
+            .map_err(|e| OnnxError::LoadModelError(e.to_string()))?;
 
         // saves to model.onnx
         ort_model
             .call_method("save_pretrained", (&self.onnx_path,), Some(&kwargs.1))
-            .map_err(OnnxError::PyOnnxConversionError)?;
+            .map_err(|e| OnnxError::PyOnnxConversionError(e.to_string()))?;
 
         debug!("Step 2: Extracting ONNX schema");
         let mut onnx_session = self.get_onnx_session(py)?;

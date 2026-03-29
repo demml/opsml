@@ -29,14 +29,14 @@ impl TensorFlowOnnxConverter {
     ) -> Result<OnnxSession, OnnxError> {
         let tf_onnx = py
             .import("tf2onnx")
-            .map_err(OnnxError::ImportError)?
+            .map_err(|e| OnnxError::ImportError(e.to_string()))?
             .getattr("convert")?;
 
         debug!("Step 1: Converting tensorflow model to ONNX");
 
         let onnx_tuple = tf_onnx
             .call_method("from_keras", (model,), kwargs)
-            .map_err(OnnxError::PyOnnxConversionError)?;
+            .map_err(|e| OnnxError::PyOnnxConversionError(e.to_string()))?;
 
         let model_proto = onnx_tuple.get_item(0)?;
 
