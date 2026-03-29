@@ -17,6 +17,7 @@ repository = "https://github.com/demml/opsml"
 
 
 [workspace.dependencies]
+opsml-agent = { path = "crates/opsml_agent" }
 opsml-app = { path = "crates/opsml_app" }
 opsml-auth = { path = "crates/opsml_auth" }
 opsml-cards = { path = "crates/opsml_cards" }
@@ -63,6 +64,7 @@ clap = { version = "4.*", features = ["derive", "string", "wrap_help"] }
 cron = "0.*"
 chrono = { version = "0.*", features = ["serde"] }
 colored_json = "5.*"
+dashmap = "6.*"
 const_format = "0.*"
 dirs = "6.*"
 dynfmt = { version = "0.*", features = ["curly"] }

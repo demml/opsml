@@ -4,7 +4,7 @@ use crate::core::cards::schema::PageInfo;
 use crate::core::cards::schema::{
     CreateReadeMe, QueryPageResponse, ReadeMe, RegistryStatsResponse, VersionPageResponse,
 };
-use crate::core::cards::utils::{cleanup_artifacts, insert_card_into_db};
+use crate::core::cards::utils::{cleanup_artifacts, insert_card_into_db, run_skill_scan};
 use crate::core::error::{OpsmlServerError, internal_server_error};
 use crate::core::files::utils::{
     create_and_store_encrypted_file, create_artifact_key, download_artifact, get_artifact_key,
@@ -431,6 +431,11 @@ pub async fn create_card(
 
     if !perms.has_write_permission(card_request.card.space()) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
+    // (0) ------- Run skill scan gate for SkillCards
+    if let CardRecord::Skill(ref skill_record) = card_request.card {
+        run_skill_scan(&state, skill_record).await?;
     }
 
     // (1) ------- Get the next version

@@ -15,7 +15,8 @@ use opsml_auth::sso::providers::types::IdTokenClaims;
 use opsml_auth::sso::providers::types::*;
 use opsml_crypt::encrypt_file;
 use opsml_semver::VersionType;
-use opsml_server::core::app::create_app;
+use opsml_server::core::app::create_app_with_state;
+use opsml_server::core::state::AppState;
 use opsml_settings::config::DatabaseSettings;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_types::contracts::agent::{
@@ -27,6 +28,7 @@ use scouter_client::{
     BinnedMetrics, BinnedPsiFeatureMetrics, EvalRecordPaginationResponse, EvalTaskResult,
     GenAIEvalTaskResponse, GenAIEvalWorkflowPaginationResponse, SpcDriftFeatures,
 };
+use std::sync::Arc;
 use std::time::SystemTime;
 use std::time::UNIX_EPOCH;
 use std::{env, net::SocketAddr, vec};
@@ -506,6 +508,7 @@ pub struct TestHelper {
     pub key: ArtifactKey,
     pub server: ScouterServer,
     pub sso_server: Option<MockSsoServer>,
+    pub app_state: Arc<AppState>,
 }
 
 impl TestHelper {
@@ -526,7 +529,7 @@ impl TestHelper {
         cleanup();
 
         // Create and configure the application
-        let app = create_app().await.unwrap();
+        let (app, app_state) = create_app_with_state().await.unwrap();
         let app = app.layer(MockConnectInfo(SocketAddr::from(([0, 0, 0, 0], 1337))));
 
         // Set up the database
@@ -551,6 +554,7 @@ impl TestHelper {
             },
             server: scouter_server,
             sso_server: mock_sso_server,
+            app_state,
         }
     }
 

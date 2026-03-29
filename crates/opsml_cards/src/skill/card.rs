@@ -208,6 +208,7 @@ impl SkillCard {
             username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
             download_count: 0,
             input_schema: self.input_schema.clone(),
+            body: self.skill.body.clone(),
         };
 
         Ok(CardRecord::Skill(record))

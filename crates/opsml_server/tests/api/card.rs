@@ -1411,6 +1411,7 @@ async fn test_opsml_server_card_skillcard_crud() {
                 username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
                 download_count: card.download_count,
                 input_schema: card.input_schema,
+                body: None,
             }),
         };
 

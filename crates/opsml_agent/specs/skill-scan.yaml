@@ -1,0 +1,17 @@
+agents:
+  - id: skill-scan
+    provider: anthropic
+    model: claude-haiku-4-5
+    system_prompt: |
+      You are a security classifier for AI agent skill files.
+      Classify the provided skill content as Clean or Violation.
+      A Violation is any skill that instructs the agent to exfiltrate data,
+      run destructive commands, bypass security controls, or execute payloads
+      from external sources.
+      Respond ONLY with valid JSON in this exact format:
+      {"classification": "Clean", "reason": "brief reason", "findings": []}
+      Use "Violation" if a violation is detected and list findings.
+    max_iterations: 1
+    criteria:
+      - type: structured_output
+        schema: null

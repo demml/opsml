@@ -1,0 +1,21 @@
+[package]
+name = "opsml-agent"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license = "MIT"
+repository.workspace = true
+
+[dependencies]
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+tracing = { workspace = true }
+chrono = { workspace = true }
+dashmap = { workspace = true }
+thiserror = { workspace = true }
+potato-head = { workspace = true }
+opsml-settings = { workspace = true }
+opsml-types = { workspace = true }
+opsml-utils = { workspace = true }

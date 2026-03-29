@@ -1,11 +1,10 @@
+use crate::error::CryptError;
 use aes_gcm::{
     Aes256Gcm,
     Key, // Or `Aes128Gcm`
     Nonce,
     aead::{Aead, AeadCore, KeyInit, OsRng},
 };
-
-use crate::error::CryptError;
 use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use hkdf::Hkdf;

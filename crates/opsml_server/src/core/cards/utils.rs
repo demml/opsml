@@ -1,10 +1,12 @@
 use crate::core::cards::schema::InsertCardResponse;
-use crate::core::error::ServerError;
+use crate::core::error::{OpsmlServerError, ServerError, internal_server_error};
+use crate::core::state::AppState;
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::schemas::*;
 use opsml_sql::traits::*;
 use opsml_storage::StorageClientEnum;
 use opsml_types::cards::CardTable;
+use opsml_types::contracts::{SkillCardClientRecord, SkillScanResult};
 use opsml_types::{RegistryType, contracts::*};
 use semver::Version;
 use std::sync::Arc;
@@ -155,6 +157,59 @@ pub async fn insert_card_into_db(
         card.app_env(),
         card.created_at(),
     ))
+}
+
+/// Run the skill-scan agent gate. Returns Ok(()) if scan is disabled, body is missing,
+/// or the skill is classified Clean. Returns a 422 error response if a Violation is detected.
+#[instrument(skip_all)]
+pub async fn run_skill_scan(
+    state: &Arc<AppState>,
+    skill_record: &SkillCardClientRecord,
+) -> Result<(), (axum::http::StatusCode, axum::Json<OpsmlServerError>)> {
+    if !state.config.agent_settings.skill_scan_enabled {
+        return Ok(());
+    }
+
+    let Some(body) = &skill_record.body else {
+        return Ok(());
+    };
+
+    let invoke_result = state
+        .agent_store
+        .invoke("skill-scan", body)
+        .await
+        .map_err(|e| {
+            error!("Skill scan invocation failed: {e}");
+            internal_server_error(e, "Skill scan failed", None)
+        })?;
+
+    let Some(result_value) = invoke_result.result else {
+        return Err((
+            axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+            axum::Json(OpsmlServerError {
+                error: "Skill scan returned no result — registration rejected".to_string(),
+            }),
+        ));
+    };
+
+    let scan = SkillScanResult::from_response_value(result_value).map_err(|e| {
+        error!("Failed to parse skill scan result: {e}");
+        internal_server_error(e, "Failed to parse scan result", None)
+    })?;
+
+    if !scan.passed() {
+        return Err((
+            axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+            axum::Json(OpsmlServerError {
+                error: format!(
+                    "Skill scan violation: {} — {:?}",
+                    scan.reason, scan.findings
+                ),
+            }),
+        ));
+    }
+
+    Ok(())
 }
 
 #[instrument(skip_all)]

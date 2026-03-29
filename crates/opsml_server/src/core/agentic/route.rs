@@ -1,3 +1,4 @@
+use crate::core::agentic::agent_route::{get_agent_job, invoke_agent};
 use crate::core::agentic::schema::{ArtifactMeta, MapResponse};
 use crate::core::error::{OpsmlServerError, internal_server_error};
 use crate::core::state::AppState;
@@ -8,7 +9,7 @@ use axum::{
     extract::{Path, State},
     http::{StatusCode, header},
     response::Response,
-    routing::get,
+    routing::{get, post},
 };
 use opsml_auth::permission::UserPermissions;
 use opsml_crypt::decrypt_directory;
@@ -20,13 +21,13 @@ use opsml_types::{
 };
 use std::sync::Arc;
 use tempfile::tempdir;
-use tracing::{error, instrument};
+use tracing::{error, instrument, warn};
 
 fn bytes_to_hex(bytes: &[u8]) -> String {
     use std::fmt::Write as _;
     let mut s = String::with_capacity(bytes.len() * 2);
     for b in bytes {
-        write!(s, "{b:02x}").unwrap();
+        write!(s, "{b:02x}").expect("write to String is infallible");
     }
     s
 }
@@ -53,14 +54,13 @@ pub async fn get_skill_latest(
 
     let markdown = load_skill_markdown(&state, &record.uid).await?;
 
-    state
+    if let Err(e) = state
         .sql_client
         .increment_skill_download_count(&record.uid)
         .await
-        .map_err(|e| {
-            error!("Failed to increment download count for {}: {e}", record.uid);
-            internal_server_error(e, "Failed to update download count", None)
-        })?;
+    {
+        warn!("Failed to increment download count for {}: {e}", record.uid);
+    }
 
     let mut response = Response::builder()
         .status(StatusCode::OK)
@@ -103,14 +103,13 @@ pub async fn get_skill_pinned(
 
     let markdown = load_skill_markdown(&state, &record.uid).await?;
 
-    state
+    if let Err(e) = state
         .sql_client
         .increment_skill_download_count(&record.uid)
         .await
-        .map_err(|e| {
-            error!("Failed to increment download count for {}: {e}", record.uid);
-            internal_server_error(e, "Failed to update download count", None)
-        })?;
+    {
+        warn!("Failed to increment download count for {}: {e}", record.uid);
+    }
 
     let mut response = Response::builder()
         .status(StatusCode::OK)
@@ -300,6 +299,14 @@ async fn load_skill_markdown(
 
 pub async fn get_agentic_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let router = Router::new()
+        .route(
+            &format!("{prefix}/v1/agent/{{id}}/invoke"),
+            post(invoke_agent),
+        )
+        .route(
+            &format!("{prefix}/v1/agent/{{id}}/jobs/{{job_id}}"),
+            get(get_agent_job),
+        )
         .route(
             &format!("{prefix}/v1/skill/{{space}}/{{name}}"),
             get(get_skill_latest),

@@ -78,6 +78,24 @@ pub struct AuthSettings {
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
+pub struct AgentSettings {
+    pub agents_dir: Option<String>,
+    pub skill_scan_enabled: bool,
+}
+
+impl AgentSettings {
+    pub fn new() -> Self {
+        Self {
+            agents_dir: std::env::var("OPSML_AGENTS_DIR").ok(),
+            skill_scan_enabled: std::env::var("OPSML_SKILL_SCAN_ENABLED")
+                .unwrap_or_else(|_| "false".to_string())
+                .parse()
+                .unwrap_or(false),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, Serialize)]
 pub struct ScouterSettings {
     pub server_uri: String,
 
@@ -109,6 +127,7 @@ pub struct OpsmlConfig {
     pub logging_config: LoggingConfig,
     pub mode: OpsmlMode,
     pub base_path: PathBuf,
+    pub agent_settings: AgentSettings,
 }
 
 impl Default for OpsmlConfig {
@@ -132,11 +151,8 @@ impl Default for OpsmlConfig {
         // set scouter settings
         let scouter_settings = ScouterSettings {
             server_uri: env::var("SCOUTER_SERVER_URI").unwrap_or("".to_string()),
-            bootstrap_token: env::var(
-                "SCOUTER_BOOTSTRAP_TOKEN
-            ",
-            )
-            .unwrap_or(generate_default_secret()),
+            bootstrap_token: env::var("SCOUTER_BOOTSTRAP_TOKEN")
+                .unwrap_or(generate_default_secret()),
         };
 
         // set auth settings
@@ -231,6 +247,7 @@ impl Default for OpsmlConfig {
             mode,
             logging_config,
             base_path,
+            agent_settings: AgentSettings::new(),
         }
     }
 }

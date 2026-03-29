@@ -749,6 +749,9 @@ pub struct SkillCardClientRecord {
     pub username: String,
     pub download_count: i64,
     pub input_schema: Option<serde_json::Value>,
+    /// Skill markdown body — consumed by security scan at registration time, not persisted to DB.
+    #[serde(default)]
+    pub body: Option<String>,
 }
 
 impl Default for SkillCardClientRecord {
@@ -770,6 +773,7 @@ impl Default for SkillCardClientRecord {
             username: "guest".to_string(),
             download_count: 0,
             input_schema: None,
+            body: None,
         }
     }
 }
