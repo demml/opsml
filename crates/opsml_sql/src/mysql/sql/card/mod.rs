@@ -877,7 +877,6 @@ impl SkillLogicTrait for CardLogicMySqlClient {
             MySqlQueryHelper::get_list_skill_cards_by_space_query(),
         )
         .bind(space)
-        .bind(space)
         .fetch_all(&self.pool)
         .await?;
         Ok(records)
