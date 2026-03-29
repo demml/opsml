@@ -173,8 +173,8 @@ impl AgentStore {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::store::JobStatus;
     use opsml_settings::config::AgentSettings;
-    use opsml_types::contracts::JobStatus;
 
     #[tokio::test]
     async fn test_builtin_skill_scan_loaded() {

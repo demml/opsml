@@ -30,7 +30,7 @@ use tracing::{debug, error, instrument};
 fn download_card_artifacts(key: &ArtifactKey, lpath: &Path) -> Result<(), RegistryError> {
     // get registry
     let decryption_key = key
-        .get_decrypt_key()
+        .get_crypt_key()
         .inspect_err(|e| error!("Failed to get decrypt key: {:?}", e))?;
     let rpath = key.storage_path();
 
@@ -313,7 +313,7 @@ async fn async_download_card_artifacts(
     lpath: &Path,
 ) -> Result<(), RegistryError> {
     // get registry
-    let decryption_key = key.get_decrypt_key()?;
+    let decryption_key = key.get_crypt_key()?;
     let rpath = key.storage_path();
 
     if !lpath.exists() {

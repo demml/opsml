@@ -28,7 +28,7 @@ fn create_card_metadata(key: ArtifactKey) {
     let lpath = PathBuf::from(path).join("card.json");
     std::fs::write(&lpath, json).unwrap();
 
-    let encryption_key = key.get_decrypt_key().unwrap();
+    let encryption_key = key.get_crypt_key().unwrap();
 
     encrypt_file(&lpath, &encryption_key).unwrap();
 }

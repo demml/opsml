@@ -51,7 +51,16 @@ pub fn parse_skill_markdown(
         SkillError::AgentConfigError(e)
     })?;
     let name = skill.name.clone();
-    SkillCard::new_rs(skill, None, Some(&name), None, None, None, None, None)
+    SkillCard::new_rs(
+        skill,
+        Some("opsml"),
+        Some(&name),
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
 }
 
 #[pyclass]

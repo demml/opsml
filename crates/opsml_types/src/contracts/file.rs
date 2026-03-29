@@ -187,7 +187,7 @@ pub struct ArtifactKey {
 }
 
 impl ArtifactKey {
-    pub fn get_decrypt_key(&self) -> Result<Vec<u8>, TypeError> {
+    pub fn get_crypt_key(&self) -> Result<Vec<u8>, TypeError> {
         // convert uid to byte key (used for card encryption)
         let uid_key = uid_to_byte_key(&self.uid)?;
 

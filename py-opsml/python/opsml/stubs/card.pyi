@@ -4,13 +4,13 @@ import datetime
 from pathlib import Path
 from typing import (
     Any,
+    ClassVar,
     Dict,
-    Generic,
     List,
+    Literal,
     Optional,
     Sequence,
     TypeAlias,
-    TypeVar,
     Union,
     overload,
 )
@@ -49,17 +49,33 @@ from .types import VersionType
 
 CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]
 ServiceCardInterfaceType: TypeAlias = Dict[str, Union["DataInterface", "ModelInterface"]]
-LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
+LoadInterfaceType: TypeAlias = Union[
+    "DataInterface",
+    "ModelInterface",
+    type["DataInterface"],
+    type["ModelInterface"],
+    ServiceCardInterfaceType,
+]
+
 #### end of imports ####
 
+AnyCard: TypeAlias = Union["DataCard", "ModelCard", "PromptCard", "ExperimentCard", "ServiceCard", "SkillCard"]
+
+class _DataRegistryType: ...
+class _ModelRegistryType: ...
+class _ExperimentRegistryType: ...
+class _PromptRegistryType: ...
+class _ServiceRegistryType: ...
+class _SkillRegistryType: ...
+
 class RegistryType:
-    Data: "RegistryType"
-    Model: "RegistryType"
-    Experiment: "RegistryType"
-    Audit: "RegistryType"
-    Prompt: "RegistryType"
-    Service: "RegistryType"
-    Skill: "RegistryType"
+    Data: ClassVar[_DataRegistryType]
+    Model: ClassVar[_ModelRegistryType]
+    Experiment: ClassVar[_ExperimentRegistryType]
+    Audit: ClassVar["RegistryType"]
+    Prompt: ClassVar[_PromptRegistryType]
+    Service: ClassVar[_ServiceRegistryType]
+    Skill: ClassVar[_SkillRegistryType]
 
 class RegistryMode:
     Client: "RegistryMode"
@@ -1299,7 +1315,7 @@ class Card:
         name: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
-        card: Optional["CardT"] = None,
+        card: Optional[AnyCard] = None,
         drift: Optional[DriftConfig] = None,
     ) -> None:
         """Initialize the service card. Card accepts either a combination of
@@ -1506,7 +1522,7 @@ class ServiceCard:
         """Return the created at timestamp"""
 
     @property
-    def cards(self) -> List["CardT"]:
+    def cards(self) -> List[AnyCard]:
         """Return the cards in the service card"""
 
     @property
@@ -1637,18 +1653,27 @@ class ServiceCard:
         If the service card does not contain an agent, returns an error
         """
 
-# Define a TypeVar that can only be one of our card types
-CardT = TypeVar(
-    "CardT",
-    DataCard,
-    ModelCard,
-    PromptCard,
-    ExperimentCard,
-    ServiceCard,
-)
-
-class CardRegistry(Generic[CardT]):
-    def __init__(self, registry_type: Union[RegistryType, str]) -> None:
+class CardRegistry:
+    @overload
+    def __new__(cls, registry_type: Union[_ModelRegistryType, Literal["model", "Model"]]) -> "ModelCardRegistry": ...
+    @overload
+    def __new__(cls, registry_type: Union[_DataRegistryType, Literal["data", "Data"]]) -> "DataCardRegistry": ...
+    @overload
+    def __new__(
+        cls, registry_type: Union[_ExperimentRegistryType, Literal["experiment", "Experiment"]]
+    ) -> "ExperimentCardRegistry": ...
+    @overload
+    def __new__(
+        cls, registry_type: Union[_PromptRegistryType, Literal["prompt", "Prompt"]]
+    ) -> "PromptCardRegistry": ...
+    @overload
+    def __new__(
+        cls, registry_type: Union[_ServiceRegistryType, Literal["service", "Service"]]
+    ) -> "ServiceCardRegistry": ...
+    @overload
+    def __new__(cls, registry_type: Union[_SkillRegistryType, Literal["skill", "Skill"]]) -> "SkillCardRegistry": ...
+    @overload
+    def __new__(cls, registry_type: Union[RegistryType, str]) -> "CardRegistry":
         """Interface for connecting to any of the Card registries
 
         Args:
@@ -1722,11 +1747,11 @@ class CardRegistry(Generic[CardT]):
 
     def register_card(
         self,
-        card: CardT,
+        card: AnyCard,
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
-        save_kwargs: Optional[ModelSaveKwargs | DataSaveKwargs | PromptSaveKwargs] = None,
+        save_kwargs: Optional[Union[ModelSaveKwargs, DataSaveKwargs, PromptSaveKwargs]] = None,
     ) -> None:
         """Register a Card
 
@@ -1753,7 +1778,7 @@ class CardRegistry(Generic[CardT]):
         name: Optional[str] = None,
         version: Optional[str] = None,
         interface: Optional[LoadInterfaceType] = None,
-    ) -> CardT:
+    ) -> AnyCard:
         """Load a Card from the registry
 
         Args:
@@ -1783,7 +1808,7 @@ class CardRegistry(Generic[CardT]):
 
     def update_card(
         self,
-        card: CardT,
+        card: AnyCard,
     ) -> None:
         """Update a Card in the registry.
         Note: This will only update the registry record for a given card. It
@@ -1797,7 +1822,7 @@ class CardRegistry(Generic[CardT]):
 
     def delete_card(
         self,
-        card: CardT,
+        card: AnyCard,
     ) -> None:
         """Delete a Card from the registry. This will also remove
         the underlying artifacts associated with the card.
@@ -1839,7 +1864,7 @@ class ModelCardRegistry(CardRegistry):
         space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
-        interface: Optional[ModelInterface] = None,  # type: ignore
+        interface: Optional[Union[ModelInterface, type[ModelInterface]]] = None,  # type: ignore
     ) -> ModelCard:
         """Load a Card from the registry
 
@@ -1859,7 +1884,7 @@ class ModelCardRegistry(CardRegistry):
             ModelCard
         """
 
-    def update_card(
+    def update_card(  # type: ignore
         self,
         card: ModelCard,
     ) -> None:
@@ -1872,7 +1897,7 @@ class ModelCardRegistry(CardRegistry):
                 Card to update
         """
 
-    def delete_card(
+    def delete_card(  # type: ignore
         self,
         card: ModelCard,
     ) -> None:
@@ -1936,7 +1961,7 @@ class DataCardRegistry(CardRegistry):
             DataCard
         """
 
-    def update_card(
+    def update_card(  # type: ignore
         self,
         card: DataCard,
     ) -> None:
@@ -1949,7 +1974,7 @@ class DataCardRegistry(CardRegistry):
                 Card to update
         """
 
-    def delete_card(
+    def delete_card(  # type: ignore
         self,
         card: DataCard,
     ) -> None:
@@ -2006,7 +2031,7 @@ class ExperimentCardRegistry(CardRegistry):
             ExperimentCard
         """
 
-    def update_card(
+    def update_card(  # type: ignore
         self,
         card: ExperimentCard,
     ) -> None:
@@ -2019,7 +2044,7 @@ class ExperimentCardRegistry(CardRegistry):
                 Card to update.
         """
 
-    def delete_card(
+    def delete_card(  # type: ignore
         self,
         card: ExperimentCard,
     ) -> None:
@@ -2079,7 +2104,7 @@ class PromptCardRegistry(CardRegistry):
             PromptCard
         """
 
-    def update_card(
+    def update_card(  # type: ignore
         self,
         card: PromptCard,
     ) -> None:
@@ -2092,7 +2117,7 @@ class PromptCardRegistry(CardRegistry):
                 Card to update
         """
 
-    def delete_card(
+    def delete_card(  # type: ignore
         self,
         card: PromptCard,
     ) -> None:
@@ -2149,7 +2174,7 @@ class ServiceCardRegistry(CardRegistry):
             ServiceCard
         """
 
-    def update_card(
+    def update_card(  # type: ignore
         self,
         card: ServiceCard,
     ) -> None:
@@ -2162,7 +2187,7 @@ class ServiceCardRegistry(CardRegistry):
                 Card to update
         """
 
-    def delete_card(
+    def delete_card(  # type: ignore
         self,
         card: ServiceCard,
     ) -> None:
@@ -2171,6 +2196,73 @@ class ServiceCardRegistry(CardRegistry):
 
         Args:
             card (ServiceCard):
+                Card to delete
+        """
+
+class SkillCardRegistry(CardRegistry):
+    def register_card(  # type: ignore
+        self,
+        card: "SkillCard",
+        version_type: VersionType = VersionType.Minor,
+        pre_tag: Optional[str] = None,
+        build_tag: Optional[str] = None,
+    ) -> None:
+        """Register a SkillCard
+
+        Args:
+            card (SkillCard):
+                SkillCard to register.
+            version_type (VersionType):
+                How to increment the version SemVer.
+            pre_tag (str):
+                Optional pre tag to associate with the version.
+            build_tag (str):
+                Optional build_tag to associate with the version.
+        """
+
+    def load_card(  # type: ignore
+        self,
+        uid: Optional[str] = None,
+        space: Optional[str] = None,
+        name: Optional[str] = None,
+        version: Optional[str] = None,
+    ) -> "SkillCard":
+        """Load a SkillCard from the registry
+
+        Args:
+            uid (str, optional):
+                Unique identifier for Card. If present, the uid takes precedence over space/name/version.
+            space (str, optional):
+                Space associated with the card.
+            name (str, optional):
+                Name of the card.
+            version (str, optional):
+                Version number of existing card. If not specified, the most recent version will be used.
+
+        Returns:
+            SkillCard
+        """
+
+    def update_card(  # type: ignore
+        self,
+        card: "SkillCard",
+    ) -> None:
+        """Update a SkillCard in the registry.
+
+        Args:
+            card (SkillCard):
+                Card to update
+        """
+
+    def delete_card(  # type: ignore
+        self,
+        card: "SkillCard",
+    ) -> None:
+        """Delete a SkillCard from the registry. This will also remove
+        the underlying artifacts associated with the card.
+
+        Args:
+            card (SkillCard):
                 Card to delete
         """
 
@@ -2188,6 +2280,8 @@ class CardRegistries:
     def prompt(self) -> PromptCardRegistry: ...
     @property
     def service(self) -> ServiceCardRegistry: ...
+    @property
+    def skill(self) -> SkillCardRegistry: ...
 
 def download_service(
     write_dir: Path,
@@ -2632,4 +2726,8 @@ __all__ = [
     "get_experiment_parameters",
     "download_artifact",
     "ProtocolBinding",
+    "AgentSkillStandard",
+    "DependencyKind",
+    "SkillCard",
+    "SkillDependency",
 ]

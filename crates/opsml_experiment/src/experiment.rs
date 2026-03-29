@@ -128,7 +128,7 @@ fn extract_code(
         }
     };
 
-    let encryption_key = artifact_key.get_decrypt_key()?;
+    let encryption_key = artifact_key.get_crypt_key()?;
 
     // Create a temporary directory to copy the code to
     let temp_dir = TempDir::new()?;
@@ -668,7 +668,7 @@ impl Experiment {
             rpath,
             &self.experiment_helper,
             self.uid.clone(),
-            self.artifact_key.get_decrypt_key()?,
+            self.artifact_key.get_crypt_key()?,
             ArtifactType::Generic,
         )?;
 
@@ -718,7 +718,7 @@ impl Experiment {
             storage_path,
             &self.experiment_helper,
             self.uid.clone(),
-            self.artifact_key.get_decrypt_key()?,
+            self.artifact_key.get_crypt_key()?,
             ArtifactType::Figure,
         )?;
 
@@ -768,7 +768,7 @@ impl Experiment {
             storage_path,
             &self.experiment_helper,
             self.uid.clone(),
-            self.artifact_key.get_decrypt_key()?,
+            self.artifact_key.get_crypt_key()?,
             ArtifactType::Figure,
         )?;
 
@@ -777,7 +777,7 @@ impl Experiment {
     }
 
     fn log_artifacts(&self, path: PathBuf) -> Result<(), ExperimentError> {
-        let encryption_key = self.artifact_key.get_decrypt_key()?;
+        let encryption_key = self.artifact_key.get_crypt_key()?;
 
         for entry in WalkDir::new(&path) {
             let entry = entry?;
@@ -1078,7 +1078,7 @@ pub fn download_artifact(
             error!("Failed to download artifacts: {e}");
         })?;
 
-    let decrypt_key = key.get_decrypt_key().inspect_err(|e| {
+    let decrypt_key = key.get_crypt_key().inspect_err(|e| {
         error!("Failed to get decryption key: {e}");
     })?;
     decrypt_directory(&lpath, &decrypt_key)?;

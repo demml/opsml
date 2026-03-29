@@ -76,7 +76,7 @@ pub async fn create_and_store_encrypted_file(
     rpath: &str,
     key: &ArtifactKey,
 ) -> Result<UploadResponse, ServerError> {
-    let encryption_key = key.get_decrypt_key().inspect_err(|e| {
+    let encryption_key = key.get_crypt_key().inspect_err(|e| {
         error!("Failed to get decryption key: {e}");
     })?;
 
@@ -168,7 +168,7 @@ pub async fn download_artifact(
         })?;
 
     // Get decryption key and decrypt
-    let decryption_key = key.get_decrypt_key().inspect_err(|e| {
+    let decryption_key = key.get_crypt_key().inspect_err(|e| {
         error!("Failed to get decryption key: {e}");
     })?;
 
@@ -215,7 +215,7 @@ pub async fn download_artifacts(
         })?;
 
     // Get decryption key and decrypt
-    let decryption_key = key.get_decrypt_key().inspect_err(|e| {
+    let decryption_key = key.get_crypt_key().inspect_err(|e| {
         error!("Failed to get decryption key: {e}");
     })?;
 

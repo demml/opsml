@@ -291,7 +291,7 @@ impl ExperimentCard {
             .artifact_key
             .as_ref()
             .unwrap()
-            .get_decrypt_key()
+            .get_crypt_key()
             .inspect_err(|e| {
                 error!("Failed to get decryption key: {e}");
             })?;
