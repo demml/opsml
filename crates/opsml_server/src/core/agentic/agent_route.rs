@@ -29,7 +29,10 @@ pub async fn invoke_agent(
         ));
     }
 
-    let input = body.input.to_string();
+    let input = match body.input.as_str() {
+        Some(s) => s.to_string(),
+        None => body.input.to_string(),
+    };
 
     let response = state.agent_store.invoke(&id, &input).await.map_err(|e| {
         error!("Agent invoke failed for {id}: {e}");
