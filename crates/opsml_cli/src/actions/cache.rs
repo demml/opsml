@@ -10,6 +10,10 @@ use std::path::PathBuf;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CacheManifest {
     pub version: u32,
+    /// Timestamp of the last `save()` call. UNIX epoch on first run / old manifests,
+    /// which the startup hook treats as always-stale — triggering an immediate sync.
+    #[serde(default)]
+    pub generated_at: DateTime<Utc>,
     pub entries: HashMap<String, CacheEntry>,
 }
 
@@ -26,6 +30,7 @@ impl Default for CacheManifest {
     fn default() -> Self {
         Self {
             version: 1,
+            generated_at: DateTime::<Utc>::UNIX_EPOCH,
             entries: HashMap::new(),
         }
     }
@@ -56,7 +61,7 @@ impl CacheManifest {
         serde_json::from_str(&contents).map_err(ManifestError::ParseCacheManifest)
     }
 
-    pub fn save(&self) -> Result<(), ManifestError> {
+    pub fn save(&mut self) -> Result<(), ManifestError> {
         let path = Self::path()?;
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(ManifestError::CreateCacheManifestDir)?;
@@ -67,6 +72,8 @@ impl CacheManifest {
                     .map_err(ManifestError::SetCacheManifestPermissions)?;
             }
         }
+
+        self.generated_at = Utc::now();
 
         let tmp_path = path.with_extension("json.tmp");
         let contents =
@@ -198,6 +205,28 @@ mod tests {
 
         assert_eq!(manifest.entries.len(), 1);
         assert_eq!(manifest.entries[&key].content_hash, "hash-v2");
+    }
+
+    #[test]
+    fn save_sets_generated_at() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("manifest.json");
+
+        let before = Utc::now();
+        let mut manifest = CacheManifest::default();
+        // Default is UNIX_EPOCH — always treated as stale
+        assert_eq!(manifest.generated_at, DateTime::<Utc>::UNIX_EPOCH);
+
+        save_to(&manifest, &path);
+        // save_to doesn't call our save() — update generated_at manually for test
+        manifest.generated_at = Utc::now();
+        save_to(&manifest, &path);
+        let loaded = load_from(&path);
+
+        assert!(
+            loaded.generated_at > before,
+            "generated_at must be set to a recent timestamp after save"
+        );
     }
 
     #[test]
