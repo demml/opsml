@@ -1,5 +1,7 @@
 use crate::BaseArgs;
+use crate::error::CardError;
 use crate::skill::error::SkillError;
+use crate::traits::{OpsmlCard, ProfileExt};
 use chrono::{DateTime, Utc};
 use opsml_types::contracts::CardRecord;
 use opsml_types::contracts::SkillCardClientRecord;
@@ -12,6 +14,7 @@ use opsml_utils::get_utc_datetime;
 use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
 use pythonize;
+use scouter_client::ProfileRequest;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -282,6 +285,70 @@ impl SkillCard {
             is_card: true,
             opsml_version: opsml_version::version(),
         })
+    }
+}
+
+impl OpsmlCard for SkillCard {
+    fn get_registry_card(&self) -> Result<CardRecord, CardError> {
+        Ok(self.get_registry_card()?)
+    }
+
+    fn get_version(&self) -> String {
+        self.version.clone()
+    }
+
+    fn set_name(&mut self, name: String) {
+        self.name = name;
+    }
+
+    fn set_space(&mut self, space: String) {
+        self.space = space;
+    }
+
+    fn set_version(&mut self, version: String) {
+        self.version = version;
+    }
+
+    fn set_uid(&mut self, uid: String) {
+        self.uid = uid;
+    }
+
+    fn set_created_at(&mut self, created_at: DateTime<Utc>) {
+        self.created_at = created_at;
+    }
+
+    fn set_app_env(&mut self, app_env: String) {
+        self.app_env = app_env;
+    }
+
+    fn is_card(&self) -> bool {
+        self.is_card
+    }
+
+    fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
+        Ok(self.save_card(path)?)
+    }
+
+    fn registry_type(&self) -> &RegistryType {
+        &self.registry_type
+    }
+
+    fn update_drift_config_args(&mut self) -> Result<(), CardError> {
+        Ok(())
+    }
+
+    fn set_profile_uid(&mut self, _profile_uid: String) -> Result<(), CardError> {
+        Ok(())
+    }
+}
+
+impl ProfileExt for SkillCard {
+    fn get_profile_request(&self) -> Result<ProfileRequest, CardError> {
+        Err(CardError::DriftProfileNotFoundError)
+    }
+
+    fn has_profile(&self) -> bool {
+        false
     }
 }
 

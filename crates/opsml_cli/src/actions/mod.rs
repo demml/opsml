@@ -1,5 +1,6 @@
 pub mod download;
 pub mod generate;
+pub mod skill;
 pub mod ui;
 
 pub mod list;

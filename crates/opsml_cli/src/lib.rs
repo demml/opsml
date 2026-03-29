@@ -3,7 +3,9 @@ pub mod cli;
 pub mod error;
 
 pub use crate::actions::{download_card, download_service, list_cards};
+use crate::actions::skill::{init_skill, list_skills, pull_skill, push_skill};
 use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
+use cli::commands::SkillCommands;
 pub use actions::{
     generate_key,
     lock::install_service,
@@ -139,6 +141,21 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             register_service(args.path.clone()).context("Failed to register service")?;
             Ok(())
         }
+
+        Some(Commands::Skill { command }) => match command {
+            SkillCommands::Push(args) => {
+                push_skill(args).context("Failed to push skill")
+            }
+            SkillCommands::Pull(args) => {
+                pull_skill(args).context("Failed to pull skill")
+            }
+            SkillCommands::List(args) => {
+                list_skills(args).context("Failed to list skills")
+            }
+            SkillCommands::Init(args) => {
+                init_skill(args).context("Failed to init skill")
+            }
+        },
 
         None => {
             println!("No command provided");
