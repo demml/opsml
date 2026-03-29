@@ -326,18 +326,23 @@ impl CardRegistry {
         )
         .inspect_err(|e| error!("Failed to register card: {:?}", e))?;
 
-        // Update card attributes
-        if let Err(e) = Self::update_card_and_save(
-            params.registry,
-            params.card,
-            &create_response,
-            params.save_kwargs,
-            params.registry_type,
-        ) {
-            Self::rollback_card(params.registry, &create_response)?;
+        // Always update card metadata from the server response (uid/version/created_at/app_env)
+        Self::update_card_with_server_response(&create_response, params.card)
+            .inspect_err(|e| error!("Failed to update card with server response {e}"))?;
 
-            // raise error
-            return Err(e);
+        // Skip artifact upload when the server returned a dedup hit — the existing artifacts
+        // are already stored and the rollback path would otherwise clobber them.
+        if !create_response.deduplicated {
+            if let Err(e) = Self::update_card_and_save(
+                params.registry,
+                params.card,
+                &create_response,
+                params.save_kwargs,
+                params.registry_type,
+            ) {
+                Self::rollback_card(params.registry, &create_response)?;
+                return Err(e);
+            }
         }
 
         set_attribute_by_registry_type(py, params.registry_type, &create_response.key.uid)?;
@@ -758,12 +763,16 @@ impl CardRegistry {
         debug!("Registering card");
         let create_response = self._register_card_rs(card, version_type)?;
 
-        // Update card attributes
-        if let Err(e) = self.update_card_and_save_rs(card, &create_response) {
-            Self::rollback_card(&self.registry, &create_response)?;
+        // Always update card metadata from the server response (uid/version/created_at/app_env)
+        Self::update_card_with_server_response_rs(&create_response, card)?;
 
-            // raise error
-            return Err(e);
+        // Skip artifact upload when the server returned a dedup hit — the existing artifacts
+        // are already stored and the rollback path would otherwise clobber them.
+        if !create_response.deduplicated {
+            if let Err(e) = self.update_card_and_save_rs(card, &create_response) {
+                Self::rollback_card(&self.registry, &create_response)?;
+                return Err(e);
+            }
         }
 
         debug!("Successfully registered card");
