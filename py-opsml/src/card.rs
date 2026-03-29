@@ -1,7 +1,9 @@
 use opsml_cards::{
     DataCard, DataCardMetadata, ExperimentCard, ModelCard, ModelCardMetadata, PromptCard,
-    ServiceCard, UidMetadata,
+    ServiceCard, SkillCard, UidMetadata,
 };
+use opsml_types::contracts::agent::AgentSkillStandard;
+use opsml_types::contracts::skill::{DependencyKind, SkillDependency};
 
 use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_types::contracts::{Card, CardList, CardRecord};
@@ -64,6 +66,12 @@ pub fn add_card_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PassWordAuthFlow>()?;
     m.add_class::<OpenIdConnectSecurityScheme>()?;
     m.add_class::<ProtocolBinding>()?;
+
+    // SkillCard
+    m.add_class::<SkillCard>()?;
+    m.add_class::<AgentSkillStandard>()?;
+    m.add_class::<SkillDependency>()?;
+    m.add_class::<DependencyKind>()?;
 
     Ok(())
 }

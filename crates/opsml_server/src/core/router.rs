@@ -1,3 +1,4 @@
+use crate::core::agentic::route::get_agentic_router;
 use crate::core::auth::middleware::auth_api_middleware;
 use crate::core::auth::route::get_auth_router;
 use crate::core::cards::route::get_card_router;
@@ -49,6 +50,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     let scouter_routes = get_scouter_router(ROUTE_PREFIX).await?;
     let genai_routes = get_genai_router(ROUTE_PREFIX).await?;
     let mcp_routes = get_mcp_router(ROUTE_PREFIX).await?;
+    let agentic_routes = get_agentic_router(ROUTE_PREFIX).await?;
 
     // All routes except auth, healthcheck, and settings are protected by auth + event middleware.
     let merged_routes = Router::new()
@@ -60,6 +62,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
         .merge(scouter_routes)
         .merge(genai_routes)
         .merge(mcp_routes)
+        .merge(agentic_routes)
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),
             event_middleware,

@@ -56,6 +56,16 @@ const UPDATE_AGENTCARD_SQL: &str = include_str!("sql/card/update_agent_card.sql"
 const UPDATE_SKILL_CARD_SQL: &str = include_str!("sql/card/update_skill_card.sql");
 const GET_DASHBOARD_STATS_SQL: &str = include_str!("sql/card/get_dashboard_stats.sql");
 
+// skill queries
+const GET_SKILL_CARD_BY_NAME_SQL: &str = include_str!("sql/skill/get_skill_card_by_name.sql");
+const GET_SKILL_CARD_BY_VERSION_SQL: &str = include_str!("sql/skill/get_skill_card_by_version.sql");
+const INCREMENT_SKILL_DOWNLOAD_COUNT_SQL: &str =
+    include_str!("sql/skill/increment_skill_download_count.sql");
+const LIST_SKILL_CARDS_BY_SPACE_SQL: &str = include_str!("sql/skill/list_skill_cards_by_space.sql");
+const GET_FEATURED_SKILLS_SQL: &str = include_str!("sql/skill/get_featured_skills.sql");
+const GET_ALL_SKILL_TAGS_SQL: &str = include_str!("sql/skill/get_all_skill_tags.sql");
+const GET_MARKETPLACE_STATS_SQL: &str = include_str!("sql/skill/get_marketplace_stats.sql");
+
 // evaluation
 const INSERT_EVALUATION_SQL: &str = include_str!("sql/evaluation/insert_evaluation.sql");
 const GET_EVALUATION_RECORD_SQL: &str = include_str!("sql/evaluation/get_evaluation.sql");
@@ -519,6 +529,34 @@ impl SqliteQueryHelper {
 
     pub fn get_skillcard_update_query() -> &'static str {
         UPDATE_SKILL_CARD_SQL
+    }
+
+    pub fn get_skill_card_by_name_query() -> &'static str {
+        GET_SKILL_CARD_BY_NAME_SQL
+    }
+
+    pub fn get_skill_card_by_version_query() -> &'static str {
+        GET_SKILL_CARD_BY_VERSION_SQL
+    }
+
+    pub fn get_increment_skill_download_count_query() -> &'static str {
+        INCREMENT_SKILL_DOWNLOAD_COUNT_SQL
+    }
+
+    pub fn get_list_skill_cards_by_space_query() -> &'static str {
+        LIST_SKILL_CARDS_BY_SPACE_SQL
+    }
+
+    pub fn get_featured_skills_query() -> &'static str {
+        GET_FEATURED_SKILLS_SQL
+    }
+
+    pub fn get_all_skill_tags_query() -> &'static str {
+        GET_ALL_SKILL_TAGS_SQL
+    }
+
+    pub fn get_marketplace_stats_query() -> &'static str {
+        GET_MARKETPLACE_STATS_SQL
     }
 
     pub fn get_promptcard_update_query() -> &'static str {

@@ -1,0 +1,3 @@
+UPDATE opsml_skill_registry
+SET download_count = download_count + 1
+WHERE uid = ?

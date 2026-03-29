@@ -92,6 +92,14 @@ impl SkillDependency {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "server", derive(sqlx::FromRow))]
+pub struct MarketplaceStats {
+    pub total_skills: i64,
+    pub total_spaces: i64,
+    pub total_downloads: i64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

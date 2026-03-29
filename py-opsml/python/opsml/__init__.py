@@ -6,6 +6,7 @@ from ._opsml import _get_log_level  # type: ignore
 from ._opsml import _log_json  # type: ignore
 from ._opsml import get_opsml_version  # type: ignore
 from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; # model
+    AgentSkillStandard,
     AppState,
     ArrowData,
     Card,
@@ -14,6 +15,7 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     CatBoostModel,
     DataCard,
     DataInterface,
+    DependencyKind,
     Experiment,
     ExperimentCard,
     HuggingFaceModel,
@@ -37,6 +39,8 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     ReloadConfig,
     RustyLogger,
     ServiceCard,
+    SkillCard,
+    SkillDependency,
     SklearnModel,
     SqlData,
     TaskType,
@@ -80,6 +84,10 @@ __all__ = [
     "ModelCard",
     "PromptCard",
     "ServiceCard",
+    "SkillCard",
+    "AgentSkillStandard",
+    "SkillDependency",
+    "DependencyKind",
     "RegistryType",
     "ExperimentCard",
     ## Data

@@ -1,3 +1,4 @@
+pub mod agentic;
 pub mod app;
 pub mod audit;
 pub mod auth;

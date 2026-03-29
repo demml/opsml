@@ -2,7 +2,7 @@ use crate::CardRegistries;
 use crate::error::RegistryError;
 use crate::registries::card::OpsmlCardRegistry;
 use opsml_cards::{
-    DataCard, ExperimentCard, ModelCard, PromptCard, ServiceCard, traits::OpsmlCard,
+    DataCard, ExperimentCard, ModelCard, PromptCard, ServiceCard, SkillCard, traits::OpsmlCard,
 };
 use opsml_crypt::{decrypt_directory, encrypt_directory};
 use opsml_interfaces::DriftArgs;
@@ -83,6 +83,7 @@ pub enum CardEnum {
     ExperimentCard(Box<ExperimentCard>),
     PromptCard(Box<PromptCard>),
     ServiceCard(Box<ServiceCard>),
+    SkillCard(Box<SkillCard>),
 }
 
 impl CardEnum {
@@ -97,6 +98,7 @@ impl CardEnum {
             CardEnum::ExperimentCard(card) => card.into_bound_py_any(py),
             CardEnum::PromptCard(card) => card.into_bound_py_any(py),
             CardEnum::ServiceCard(card) => card.into_bound_py_any(py),
+            CardEnum::SkillCard(card) => card.into_bound_py_any(py),
         };
 
         Ok(card?)
@@ -214,6 +216,15 @@ pub fn card_from_string<'py>(
             CardEnum::ServiceCard(Box::new(card))
         }
 
+        RegistryType::Skill => {
+            let card = SkillCard::model_validate_json(card_json).map_err(|e| {
+                error!("Failed to validate SkillCard: {e}");
+                RegistryError::Error(e.to_string())
+            })?;
+
+            CardEnum::SkillCard(Box::new(card))
+        }
+
         _ => {
             return Err(RegistryError::RegistryTypeNotSupported(
                 key.registry_type.clone(),
@@ -244,7 +255,7 @@ pub fn download_card<'py>(
     key: ArtifactKey,
     interface: Option<&Bound<'py, PyAny>>,
 ) -> Result<Bound<'py, PyAny>, RegistryError> {
-    let decryption_key = key.get_decrypt_key().inspect_err(|e| {
+    let decryption_key = key.get_crypt_key().inspect_err(|e| {
         error!("Failed to get decryption key: {e}");
     })?;
 
@@ -316,7 +327,7 @@ pub fn download_card<'py>(
 pub fn upload_card_artifacts(path: PathBuf, key: &ArtifactKey) -> Result<(), RegistryError> {
     // create temp path for saving
     // TODO: why is this named decrypt key?
-    let encryption_key = key.get_decrypt_key()?;
+    let encryption_key = key.get_crypt_key()?;
 
     encrypt_directory(&path, &encryption_key)?;
     debug!("Encrypted card artifacts");

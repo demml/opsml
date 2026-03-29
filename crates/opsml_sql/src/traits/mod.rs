@@ -1,12 +1,13 @@
 use crate::error::SqlError;
 use crate::schemas::schema::{
     ArtifactSqlRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord,
-    ParameterRecord, QueryStats, ServerCard, User, VersionSummary,
+    ParameterRecord, QueryStats, ServerCard, SkillCardRecord, User, VersionSummary,
 };
 use crate::schemas::{EvaluationSqlRecord, ServiceCardRecord};
 use async_trait::async_trait;
 use opsml_types::cards::CardTable;
 use opsml_types::contracts::CardQueryArgs;
+use opsml_types::contracts::skill::MarketplaceStats;
 use opsml_types::{
     RegistryType,
     contracts::{
@@ -169,4 +170,33 @@ pub trait EvaluationLogicTrait {
     async fn insert_evaluation_record(&self, event: EvaluationSqlRecord) -> Result<(), SqlError>;
 
     async fn get_evaluation_record(&self, uid: &str) -> Result<EvaluationSqlRecord, SqlError>;
+}
+
+#[async_trait]
+pub trait SkillLogicTrait {
+    async fn get_skill_card_by_name(
+        &self,
+        space: &str,
+        name: &str,
+    ) -> Result<SkillCardRecord, SqlError>;
+
+    async fn get_skill_card_by_version(
+        &self,
+        space: &str,
+        name: &str,
+        version: &str,
+    ) -> Result<SkillCardRecord, SqlError>;
+
+    async fn increment_skill_download_count(&self, uid: &str) -> Result<(), SqlError>;
+
+    async fn list_skill_cards_by_space(
+        &self,
+        space: &str,
+    ) -> Result<Vec<SkillCardRecord>, SqlError>;
+
+    async fn get_featured_skills(&self, limit: i64) -> Result<Vec<SkillCardRecord>, SqlError>;
+
+    async fn get_all_skill_tags(&self) -> Result<Vec<String>, SqlError>;
+
+    async fn get_marketplace_stats(&self) -> Result<MarketplaceStats, SqlError>;
 }
