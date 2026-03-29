@@ -332,17 +332,17 @@ impl CardRegistry {
 
         // Skip artifact upload when the server returned a dedup hit — the existing artifacts
         // are already stored and the rollback path would otherwise clobber them.
-        if !create_response.deduplicated {
-            if let Err(e) = Self::update_card_and_save(
+        if !create_response.deduplicated
+            && let Err(e) = Self::update_card_and_save(
                 params.registry,
                 params.card,
                 &create_response,
                 params.save_kwargs,
                 params.registry_type,
-            ) {
-                Self::rollback_card(params.registry, &create_response)?;
-                return Err(e);
-            }
+            )
+        {
+            Self::rollback_card(params.registry, &create_response)?;
+            return Err(e);
         }
 
         set_attribute_by_registry_type(py, params.registry_type, &create_response.key.uid)?;
@@ -768,11 +768,11 @@ impl CardRegistry {
 
         // Skip artifact upload when the server returned a dedup hit — the existing artifacts
         // are already stored and the rollback path would otherwise clobber them.
-        if !create_response.deduplicated {
-            if let Err(e) = self.update_card_and_save_rs(card, &create_response) {
-                Self::rollback_card(&self.registry, &create_response)?;
-                return Err(e);
-            }
+        if !create_response.deduplicated
+            && let Err(e) = self.update_card_and_save_rs(card, &create_response)
+        {
+            Self::rollback_card(&self.registry, &create_response)?;
+            return Err(e);
         }
 
         debug!("Successfully registered card");

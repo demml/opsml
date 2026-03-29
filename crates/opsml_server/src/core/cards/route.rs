@@ -559,25 +559,41 @@ pub async fn create_card(
                         })?
                 {
                     // The concurrent inserter may not have called create_artifact_key yet.
-                    // If the key isn't there, fall through and let the loop retry.
-                    let key = match state
-                        .sql_client
-                        .get_artifact_key(&existing.uid, &card_request.registry_type.to_string())
-                        .await
-                    {
-                        Ok(k) => k,
-                        Err(e) if e.is_row_not_found() => {
-                            warn!(
-                                "Artifact key not yet available for {}, retrying",
-                                &existing.uid
-                            );
-                            continue;
+                    // Retry the key lookup in a tight inner loop before giving up — a `continue`
+                    // here would re-enter `get_next_version` and produce a NEW version for the
+                    // same content hash, defeating dedup entirely.
+                    let mut key_opt = None;
+                    for _ in 0..3u8 {
+                        tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+                        match state
+                            .sql_client
+                            .get_artifact_key(
+                                &existing.uid,
+                                &card_request.registry_type.to_string(),
+                            )
+                            .await
+                        {
+                            Ok(k) => {
+                                key_opt = Some(k);
+                                break;
+                            }
+                            Err(e) if e.is_row_not_found() => continue,
+                            Err(e) => {
+                                return Err(internal_server_error(
+                                    e,
+                                    "Failed to get artifact key",
+                                    None,
+                                ));
+                            }
                         }
-                        Err(e) => {
+                    }
+                    let key = match key_opt {
+                        Some(k) => k,
+                        None => {
                             return Err(internal_server_error(
-                                e,
-                                "Failed to get artifact key",
-                                None,
+                                "artifact key not available after 3 retries",
+                                "Concurrent skill push did not complete; please retry",
+                                Some(StatusCode::SERVICE_UNAVAILABLE),
                             ));
                         }
                     };
