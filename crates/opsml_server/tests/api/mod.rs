@@ -4,6 +4,7 @@ pub mod files;
 pub mod login;
 pub mod mcp;
 pub mod scouter;
+pub mod skill_cli;
 pub mod skill_scan;
 pub mod user;
 pub mod v1;

@@ -45,7 +45,7 @@ impl LightningOnnxConverter {
 
         model
             .call_method("to_onnx", (&tmp_path, onnx_data), kwargs)
-            .map_err(OnnxError::PyOnnxConversionError)?;
+            .map_err(|e| OnnxError::PyOnnxConversionError(e.to_string()))?;
 
         debug!("Step 2: Extracting ONNX schema");
         let onnx_session = self.get_onnx_session(py, &tmp_path);

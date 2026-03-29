@@ -96,9 +96,9 @@ impl OnnxSession {
         // get model bytes for loading into rust ort
         let model_bytes = model_proto
             .call_method0("SerializeToString")
-            .map_err(OnnxError::PySerializeError)?
+            .map_err(|e| OnnxError::PySerializeError(e.to_string()))?
             .extract::<Vec<u8>>()
-            .map_err(OnnxError::PyModelBytesExtractError)?;
+            .map_err(|e| OnnxError::PyModelBytesExtractError(e.to_string()))?;
 
         #[cfg(not(all(target_arch = "x86_64", target_os = "macos")))]
         let (input_schema, output_schema) = {
@@ -180,7 +180,7 @@ impl OnnxSession {
         // call run
         let result = sess
             .call_method(py, "run", (output_names, input_feed), run_options)
-            .map_err(OnnxError::SessionRunError)?;
+            .map_err(|e| OnnxError::SessionRunError(e.to_string()))?;
 
         Ok(result)
     }
@@ -243,11 +243,13 @@ impl OnnxSession {
         bytes: &[u8],
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<Py<PyAny>, OnnxError> {
-        let rt = py.import("onnxruntime").map_err(OnnxError::ImportError)?;
+        let rt = py
+            .import("onnxruntime")
+            .map_err(|e| OnnxError::ImportError(e.to_string()))?;
 
         let providers = rt
             .call_method0("get_available_providers")
-            .map_err(OnnxError::ProviderError)?;
+            .map_err(|e| OnnxError::ProviderError(e.to_string()))?;
 
         let args = (bytes,);
         if let Some(kwargs) = kwargs {
@@ -259,7 +261,7 @@ impl OnnxSession {
 
         let session = rt
             .call_method("InferenceSession", args, kwargs)
-            .map_err(OnnxError::InferenceSessionError)?
+            .map_err(|e| OnnxError::InferenceSessionError(e.to_string()))?
             .unbind();
 
         debug!("Loaded ONNX model");

@@ -56,3 +56,9 @@ impl From<SkillError> for PyErr {
         PyRuntimeError::new_err(msg)
     }
 }
+
+impl From<SkillError> for crate::error::CardError {
+    fn from(err: SkillError) -> Self {
+        crate::error::CardError::Error(err.to_string())
+    }
+}

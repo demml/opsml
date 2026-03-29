@@ -2,6 +2,7 @@ pub mod actions;
 pub mod cli;
 pub mod error;
 
+use crate::actions::skill::{init_skill, list_skills, pull_skill, push_skill};
 pub use crate::actions::{download_card, download_service, list_cards};
 use crate::cli::{Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands};
 pub use actions::{
@@ -15,6 +16,7 @@ pub use actions::{
 use anyhow::Context;
 use clap::Parser;
 pub use cli::arg::{DownloadCard, ScouterArgs};
+use cli::commands::SkillCommands;
 use cli::commands::{ScouterCommands, UiCommands};
 use opsml_colors::Colorize;
 use opsml_types::RegistryType;
@@ -139,6 +141,13 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             register_service(args.path.clone()).context("Failed to register service")?;
             Ok(())
         }
+
+        Some(Commands::Skill { command }) => match command {
+            SkillCommands::Push(args) => push_skill(args).context("Failed to push skill"),
+            SkillCommands::Pull(args) => pull_skill(args).context("Failed to pull skill"),
+            SkillCommands::List(args) => list_skills(args).context("Failed to list skills"),
+            SkillCommands::Init(args) => init_skill(args).context("Failed to init skill"),
+        },
 
         None => {
             println!("No command provided");
