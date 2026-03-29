@@ -6,8 +6,8 @@ use opsml_registry::download::download_card_from_registry;
 use opsml_registry::registries::card::OpsmlCardRegistry;
 use opsml_registry::registry::CardRegistry;
 use opsml_semver::VersionType;
-use opsml_types::contracts::{CardList, CardQueryArgs, CardRecord};
 use opsml_types::RegistryType;
+use opsml_types::contracts::{CardList, CardQueryArgs, CardRecord};
 use opsml_utils::clean_string;
 use std::path::PathBuf;
 use std::str::FromStr;
@@ -59,9 +59,8 @@ fn resolve_pull_path(
 
 #[instrument(skip_all)]
 pub fn push_skill(args: &SkillPushArgs) -> Result<(), CliError> {
-    let content = std::fs::read_to_string(&args.path).map_err(|e| {
-        CliError::Error(format!("Failed to read skill file {:?}: {e}", args.path))
-    })?;
+    let content = std::fs::read_to_string(&args.path)
+        .map_err(|e| CliError::Error(format!("Failed to read skill file {:?}: {e}", args.path)))?;
 
     let mut card = parse_skill_markdown(&content, Some(&args.path))?;
 
@@ -178,22 +177,11 @@ fn find_card_json(dir: &std::path::Path) -> Result<PathBuf, CliError> {
 
 #[instrument(skip_all)]
 pub fn list_skills(args: &SkillListArgs) -> Result<(), CliError> {
-    println!(
-        "\nListing cards from {} registry",
-        Colorize::green("skill")
-    );
+    println!("\nListing cards from {} registry", Colorize::green("skill"));
 
-    let space = args
-        .space
-        .clone()
-        .map(|s| clean_string(&s))
-        .transpose()?;
+    let space = args.space.clone().map(|s| clean_string(&s)).transpose()?;
 
-    let name = args
-        .name
-        .clone()
-        .map(|n| clean_string(&n))
-        .transpose()?;
+    let name = args.name.clone().map(|n| clean_string(&n)).transpose()?;
 
     let query_args = CardQueryArgs {
         space,
@@ -251,11 +239,7 @@ pub fn init_skill(args: &SkillInitArgs) -> Result<(), CliError> {
 
     std::fs::write(&output, template)?;
 
-    println!(
-        "{} {}",
-        Colorize::green("Created"),
-        output.display(),
-    );
+    println!("{} {}", Colorize::green("Created"), output.display(),);
 
     Ok(())
 }
@@ -286,7 +270,9 @@ mod tests {
 
     #[test]
     fn test_pull_target_global_path() {
-        let path = PullTarget::ClaudeCode.global_skill_path("my-skill").unwrap();
+        let path = PullTarget::ClaudeCode
+            .global_skill_path("my-skill")
+            .unwrap();
         assert!(path.is_absolute());
         assert!(path.ends_with(".claude/skills/my-skill/SKILL.md"));
     }
@@ -330,8 +316,8 @@ mod tests {
 
     #[test]
     fn test_resolve_pull_path_target_repo() {
-        let path = resolve_pull_path("my-skill", None, Some(&PullTarget::GithubCopilot), false)
-            .unwrap();
+        let path =
+            resolve_pull_path("my-skill", None, Some(&PullTarget::GithubCopilot), false).unwrap();
         assert_eq!(
             path,
             PathBuf::from(".github/copilot/skills/my-skill/SKILL.md")

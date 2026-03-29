@@ -298,9 +298,7 @@ impl PullTarget {
             Self::ClaudeCode => PathBuf::from(format!(".claude/skills/{name}/SKILL.md")),
             Self::Codex => PathBuf::from(format!(".agents/skills/{name}/SKILL.md")),
             Self::GeminiCli => PathBuf::from(format!(".gemini/skills/{name}/SKILL.md")),
-            Self::GithubCopilot => {
-                PathBuf::from(format!(".github/copilot/skills/{name}/SKILL.md"))
-            }
+            Self::GithubCopilot => PathBuf::from(format!(".github/copilot/skills/{name}/SKILL.md")),
         }
     }
 
@@ -311,9 +309,7 @@ impl PullTarget {
             Self::ClaudeCode => home.join(format!(".claude/skills/{name}/SKILL.md")),
             Self::Codex => home.join(format!(".agents/skills/{name}/SKILL.md")),
             Self::GeminiCli => home.join(format!(".gemini/skills/{name}/SKILL.md")),
-            Self::GithubCopilot => {
-                home.join(format!(".github/copilot/skills/{name}/SKILL.md"))
-            }
+            Self::GithubCopilot => home.join(format!(".github/copilot/skills/{name}/SKILL.md")),
         })
     }
 }

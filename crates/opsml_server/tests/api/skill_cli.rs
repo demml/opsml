@@ -115,7 +115,10 @@ async fn test_skill_push_and_list() {
         assert_eq!(card.space, "cli-test");
         assert_eq!(card.tags, vec!["rust", "testing"]);
         assert_eq!(card.compatible_tools, vec!["claude-code"]);
-        assert_eq!(card.description.as_deref(), Some("A skill for testing list"));
+        assert_eq!(
+            card.description.as_deref(),
+            Some("A skill for testing list")
+        );
 
         helper.cleanup();
     });

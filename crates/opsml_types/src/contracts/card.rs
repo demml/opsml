@@ -17,7 +17,11 @@ use pyo3::{IntoPyObjectExt, prelude::*};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
-use tabled::settings::{Alignment, Color, Style, Width, format::Format, object::{Columns, Rows}};
+use tabled::settings::{
+    Alignment, Color, Style, Width,
+    format::Format,
+    object::{Columns, Rows},
+};
 use tabled::{Table, Tabled};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -1426,6 +1430,12 @@ mod tests {
         let rendered = list.render_skill_table();
         assert!(rendered.contains("only this one renders"));
         // only 1 data row (the skill), not 2
-        assert_eq!(rendered.lines().filter(|l| l.contains("test-skill")).count(), 1);
+        assert_eq!(
+            rendered
+                .lines()
+                .filter(|l| l.contains("test-skill"))
+                .count(),
+            1
+        );
     }
 }
