@@ -193,7 +193,7 @@ impl SkillCard {
         Ok(())
     }
 
-    pub fn get_registry_card(&self) -> Result<CardRecord, SkillError> {
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = SkillCardClientRecord {
             uid: self.uid.clone(),
             created_at: self.created_at,
@@ -299,7 +299,7 @@ impl SkillCard {
 
 impl OpsmlCard for SkillCard {
     fn get_registry_card(&self) -> Result<CardRecord, CardError> {
-        Ok(self.get_registry_card()?)
+        self.get_registry_card()
     }
 
     fn get_version(&self) -> String {
@@ -699,5 +699,42 @@ mod tests {
         let md = card.to_markdown().unwrap();
         let restored = AgentSkillStandard::from_markdown(&md).unwrap();
         assert_eq!(restored.body.as_deref().unwrap_or(""), "");
+    }
+
+    #[test]
+    fn test_deserialize_from_path_yaml() {
+        let skill = make_skill();
+        let card = SkillCard::new_rs(
+            skill,
+            Some("test-space"),
+            Some("my-skill"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+
+        let tmp = tempfile::tempdir().unwrap();
+        let yaml_path = tmp.path().join("Card.yaml");
+        let yaml = serde_yaml::to_string(&card).unwrap();
+        std::fs::write(&yaml_path, yaml).unwrap();
+
+        let loaded: SkillCard = deserialize_from_path(yaml_path).unwrap();
+        assert_eq!(loaded.name, "my-skill");
+        assert_eq!(loaded.space, "test-space");
+    }
+
+    #[test]
+    fn test_deserialize_from_path_unsupported_extension() {
+        let tmp = tempfile::tempdir().unwrap();
+        let txt_path = tmp.path().join("Card.txt");
+        std::fs::write(&txt_path, "{}").unwrap();
+
+        let result: Result<SkillCard, SkillError> = deserialize_from_path(txt_path);
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("Unsupported file extension"));
     }
 }

@@ -206,10 +206,10 @@ pub enum OnnxError {
     SessionCommitError(ort::Error),
 
     #[error("Failed to serialize py error: {0}")]
-    PySerializeError(pyo3::PyErr),
+    PySerializeError(String),
 
     #[error("Failed to extract model bytes: {0}")]
-    PyModelBytesExtractError(pyo3::PyErr),
+    PyModelBytesExtractError(String),
 
     #[error("Session must be an instance of InferenceSession")]
     MustBeInferenceSession,
@@ -218,25 +218,25 @@ pub enum OnnxError {
     SessionNotFound,
 
     #[error("Session error: {0}")]
-    SessionRunError(pyo3::PyErr),
+    SessionRunError(String),
 
     #[error("InferenceSession error: {0}")]
-    InferenceSessionError(pyo3::PyErr),
+    InferenceSessionError(String),
 
     #[error("Import error: {0}")]
-    ImportError(pyo3::PyErr),
+    ImportError(String),
 
     #[error("Provider error: {0}")]
-    ProviderError(pyo3::PyErr),
+    ProviderError(String),
 
     #[error("Cannot save ONNX model without sample data")]
     MissingSampleData,
 
     #[error("Failed to convert model to ONNX: {0}")]
-    PyOnnxConversionError(pyo3::PyErr),
+    PyOnnxConversionError(String),
 
     #[error("Failed to extract model bytes: {0}")]
-    PyOnnxExtractError(pyo3::PyErr),
+    PyOnnxExtractError(String),
 
     #[error(transparent)]
     IoError(#[from] std::io::Error),
@@ -251,13 +251,13 @@ pub enum OnnxError {
     MissingOnnxKwargs,
 
     #[error("No ort type found. Ort type is required for HuggingFace models: {0}")]
-    MissingOrtType(pyo3::PyErr),
+    MissingOrtType(String),
 
     #[error("Failed to get quantize args: {0}")]
-    QuantizeArgError(pyo3::PyErr),
+    QuantizeArgError(String),
 
     #[error("{0}")]
-    LoadModelError(pyo3::PyErr),
+    LoadModelError(String),
 
     #[error("Model type not supported for onnx conversion")]
     ModelTypeError,

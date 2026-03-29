@@ -246,8 +246,8 @@ async fn test_skill_list_seeded_by_space() {
         )
         .await;
 
-        // repo2 has Skill5, Skill6, Skill7 (and possibly more depending on fixture)
-        assert!(repo2_cards.len() >= 3);
+        // repo2 has Skill5, Skill6, Skill7, Skill10
+        assert_eq!(repo2_cards.len(), 4);
         for card in &repo2_cards {
             match card {
                 CardRecord::Skill(c) => assert_eq!(c.space, "repo2"),

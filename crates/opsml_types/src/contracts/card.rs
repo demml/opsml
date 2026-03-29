@@ -1255,9 +1255,11 @@ impl CardList {
             })
             .collect();
 
+        // Column index for 'description' in SkillCardTableEntry (0=created_at, 1=name, 2=space, 3=version, 4=description, 5=uid)
+        const SKILL_DESCRIPTION_COLUMN: usize = 4;
         let mut table = Table::new(entries);
         table.with(Style::sharp());
-        table.modify(Columns::one(4), Width::wrap(40));
+        table.modify(Columns::one(SKILL_DESCRIPTION_COLUMN), Width::wrap(40));
         table.modify(
             Rows::new(0..1),
             (

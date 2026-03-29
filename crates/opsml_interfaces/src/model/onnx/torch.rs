@@ -38,7 +38,7 @@ impl TorchOnnxConverter {
     {
         let torch_onnx = py
             .import("torch")
-            .map_err(OnnxError::ImportError)?
+            .map_err(|e| OnnxError::ImportError(e.to_string()))?
             .getattr("onnx")?;
 
         debug!("Step 1: Converting torch model to ONNX");
@@ -51,7 +51,7 @@ impl TorchOnnxConverter {
 
         torch_onnx
             .call_method("export", (model, onnx_data, &tmp_path), kwargs)
-            .map_err(OnnxError::PyOnnxConversionError)?;
+            .map_err(|e| OnnxError::PyOnnxConversionError(e.to_string()))?;
 
         debug!("Step 3: Extracting ONNX schema");
         let onnx_session = self.get_onnx_session(py, &tmp_path);

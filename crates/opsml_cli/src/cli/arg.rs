@@ -2,11 +2,20 @@ use std::path::PathBuf;
 
 use crate::error::CliError;
 use clap::Args;
+use opsml_semver::VersionType;
 use opsml_service::service::DEFAULT_SERVICE_FILENAME;
 use opsml_types::{RegistryType, contracts::CardQueryArgs};
 use opsml_utils::clean_string;
 use pyo3::{pyclass, pymethods};
 use scouter_client::DriftType;
+
+fn parse_version_type(s: &str) -> Result<VersionType, String> {
+    s.parse::<VersionType>().map_err(|_| {
+        format!(
+            "Invalid version type '{s}'. Valid options: major, minor, patch, pre, build, pre_build"
+        )
+    })
+}
 
 fn default_spec_path() -> String {
     let path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
@@ -331,9 +340,9 @@ pub struct SkillPushArgs {
     #[arg(long = "tools", use_value_delimiter = true, value_delimiter = ',')]
     pub tools: Option<Vec<String>>,
 
-    /// Version bump type (major, minor, patch, pre, build, prebuild)
-    #[arg(long = "version-type", default_value = "minor")]
-    pub version_type: String,
+    /// Version bump type (major, minor, patch, pre, build, pre_build)
+    #[arg(long = "version-type", default_value = "minor", value_parser = parse_version_type)]
+    pub version_type: VersionType,
 }
 
 #[derive(Args, Clone)]

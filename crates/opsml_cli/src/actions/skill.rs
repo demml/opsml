@@ -10,7 +10,6 @@ use opsml_types::RegistryType;
 use opsml_types::contracts::{CardList, CardQueryArgs, CardRecord};
 use opsml_utils::clean_string;
 use std::path::PathBuf;
-use std::str::FromStr;
 use tracing::instrument;
 
 /// Parse a skill identifier into (space, name).
@@ -64,6 +63,11 @@ pub fn push_skill(args: &SkillPushArgs) -> Result<(), CliError> {
 
     let mut card = parse_skill_markdown(&content, Some(&args.path))?;
 
+    let root = args.path.parent().unwrap_or(std::path::Path::new("."));
+    card.skill
+        .validate(root)
+        .map_err(|e| CliError::Error(e.to_string()))?;
+
     if let Some(space) = &args.space {
         card.space = clean_string(space)?;
     }
@@ -76,11 +80,8 @@ pub fn push_skill(args: &SkillPushArgs) -> Result<(), CliError> {
         card.compatible_tools.extend(tools.iter().cloned());
     }
 
-    let version_type = VersionType::from_str(&args.version_type)
-        .map_err(|_| CliError::Error(format!("Invalid version type: {}", args.version_type)))?;
-
     let registry = CardRegistry::rust_new(&RegistryType::Skill)?;
-    registry.register_card_rs(&mut card, version_type)?;
+    registry.register_card_rs(&mut card, args.version_type.clone())?;
 
     println!(
         "{} {}/{} v{}",
@@ -109,25 +110,20 @@ pub fn pull_skill(args: &SkillPullArgs) -> Result<(), CliError> {
         ..Default::default()
     };
 
-    let tmp_path = std::env::temp_dir().join(format!(
-        "opsml_skill_pull_{}",
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_nanos()
-    ));
-    std::fs::create_dir_all(&tmp_path)?;
+    let tmp_dir = tempfile::Builder::new()
+        .prefix("opsml_skill_pull_")
+        .tempdir()
+        .map_err(|e| CliError::Error(format!("Failed to create temp dir: {e}")))?;
+    let tmp_path = tmp_dir.path().to_path_buf();
 
     download_card_from_registry(&query_args, tmp_path.clone())?;
 
     // find the Card.json in the downloaded artifacts
-    let card_json = find_card_json(&tmp_path)?;
+    let card_json = find_card_json(&tmp_path, 0)?;
     let card = opsml_cards::SkillCard::from_path(card_json)?;
 
     let markdown = card.to_markdown()?;
-
-    // clean up temp dir
-    let _ = std::fs::remove_dir_all(&tmp_path);
+    // tmp_dir drops here, cleaning up automatically
 
     let output_path = resolve_pull_path(
         &name_clean,
@@ -155,13 +151,22 @@ pub fn pull_skill(args: &SkillPullArgs) -> Result<(), CliError> {
 }
 
 /// Recursively find Card.json in the download directory.
-fn find_card_json(dir: &std::path::Path) -> Result<PathBuf, CliError> {
+fn find_card_json(dir: &std::path::Path, depth: usize) -> Result<PathBuf, CliError> {
+    if depth > 20 {
+        return Err(CliError::Error(format!(
+            "Artifact directory too deeply nested (>20 levels) at {:?}",
+            dir
+        )));
+    }
     if dir.is_dir() {
         for entry in std::fs::read_dir(dir)? {
             let entry = entry?;
             let path = entry.path();
+            if path.is_symlink() {
+                continue;
+            }
             if path.is_dir() {
-                if let Ok(found) = find_card_json(&path) {
+                if let Ok(found) = find_card_json(&path, depth + 1) {
                     return Ok(found);
                 }
             } else if path.file_name() == Some(std::ffi::OsStr::new("Card.json")) {
@@ -214,7 +219,13 @@ pub fn list_skills(args: &SkillListArgs) -> Result<(), CliError> {
 
 #[instrument(skip_all)]
 pub fn init_skill(args: &SkillInitArgs) -> Result<(), CliError> {
-    let name = args.name.as_deref().unwrap_or("my-skill");
+    let raw_name = args.name.as_deref().unwrap_or("my-skill");
+    let name = clean_string(raw_name)?;
+    let name = if name.is_empty() {
+        "my-skill".to_string()
+    } else {
+        name
+    };
     let output = args
         .output
         .clone()
@@ -228,7 +239,7 @@ pub fn init_skill(args: &SkillInitArgs) -> Result<(), CliError> {
     }
 
     let template = format!(
-        "---\nname: {name}\ndescription: \"TODO: Describe what this skill does\"\nlicense: MIT\n---\n# {name}\n\nTODO: Write your skill instructions here.\n"
+        "---\nname: \"{name}\"\ndescription: \"TODO: Describe what this skill does\"\nlicense: MIT\n---\n# {name}\n\nTODO: Write your skill instructions here.\n"
     );
 
     if let Some(parent) = output.parent()
@@ -343,7 +354,7 @@ mod tests {
         init_skill(&args).unwrap();
 
         let content = std::fs::read_to_string(&output).unwrap();
-        assert!(content.contains("name: test-skill"));
+        assert!(content.contains("name: \"test-skill\""));
         assert!(content.contains("description: \"TODO:"));
         assert!(content.contains("# test-skill"));
     }
@@ -360,5 +371,78 @@ mod tests {
         };
 
         assert!(init_skill(&args).is_err());
+    }
+
+    #[test]
+    fn test_init_creates_nested_path() {
+        let tmp = tempfile::tempdir().unwrap();
+        let output = tmp.path().join("nested/deep/SKILL.md");
+
+        let args = SkillInitArgs {
+            name: Some("deep-skill".to_string()),
+            output: Some(output.clone()),
+        };
+
+        init_skill(&args).unwrap();
+
+        assert!(output.exists());
+        let content = std::fs::read_to_string(&output).unwrap();
+        assert!(content.contains("name: \"deep-skill\""));
+    }
+
+    #[test]
+    fn test_find_card_json_at_root() {
+        let tmp = tempfile::tempdir().unwrap();
+        std::fs::write(tmp.path().join("Card.json"), "{}").unwrap();
+        let found = find_card_json(tmp.path(), 0).unwrap();
+        assert_eq!(found.file_name().unwrap(), "Card.json");
+    }
+
+    #[test]
+    fn test_find_card_json_nested() {
+        let tmp = tempfile::tempdir().unwrap();
+        let nested = tmp.path().join("a").join("b");
+        std::fs::create_dir_all(&nested).unwrap();
+        std::fs::write(nested.join("Card.json"), "{}").unwrap();
+        let found = find_card_json(tmp.path(), 0).unwrap();
+        assert_eq!(found.file_name().unwrap(), "Card.json");
+    }
+
+    #[test]
+    fn test_find_card_json_not_found() {
+        let tmp = tempfile::tempdir().unwrap();
+        std::fs::write(tmp.path().join("other.json"), "{}").unwrap();
+        assert!(find_card_json(tmp.path(), 0).is_err());
+    }
+
+    #[test]
+    fn test_push_skill_invalid_version_type() {
+        let tmp = tempfile::tempdir().unwrap();
+        let skill_path = tmp.path().join("SKILL.md");
+        std::fs::write(
+            &skill_path,
+            "---\nname: test-skill\ndescription: \"A test skill\"\n---\n# test-skill\n",
+        )
+        .unwrap();
+
+        let args = SkillPushArgs {
+            path: skill_path,
+            space: None,
+            tags: None,
+            tools: None,
+            version_type: VersionType::Minor, // valid type, this test checks parse-time safety
+        };
+
+        // With typed VersionType, invalid values are rejected by clap at parse time.
+        // Verify that a valid VersionType is accepted without registry errors (registry will fail
+        // with a config error since no registry is configured in unit tests, but not a version error).
+        let result = push_skill(&args);
+        // Should fail with a registry/config error, not a version type error
+        assert!(result.is_err());
+        let err_msg = result.unwrap_err().to_string();
+        assert!(
+            !err_msg.contains("Invalid version type"),
+            "Error should not be about version type: {err_msg}"
+        );
     }
 }
