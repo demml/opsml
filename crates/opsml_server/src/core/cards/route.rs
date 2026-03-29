@@ -433,12 +433,12 @@ pub async fn create_card(
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
-    // (0) ------- Run skill scan gate for SkillCards
+    // Run skill scan gate for SkillCards
     if let CardRecord::Skill(ref skill_record) = card_request.card {
         run_skill_scan(&state, skill_record).await?;
     }
 
-    // (0.5) ------- Content hash dedup for SkillCards
+    // Content hash dedup for SkillCards
     if let CardRecord::Skill(ref skill_record) = card_request.card
         && let Some(existing) = state
             .sql_client
@@ -462,6 +462,7 @@ pub async fn create_card(
             &existing.space, &existing.name, &existing.version
         );
 
+        // return existing card metadata but with a flag indicating it was deduplicated, so the client can fetch the existing artifact if needed
         return Ok(Json(CreateCardResponse {
             registered: true,
             deduplicated: true,
@@ -475,7 +476,7 @@ pub async fn create_card(
         .into_response());
     }
 
-    // (1+2) ------- Resolve version and insert (with retry on unique violation for skills)
+    // Resolve version and insert (with retry on unique violation for skills)
     let is_skill = matches!(card_request.card, CardRecord::Skill(_));
     let max_retries: u32 = if is_skill { 3 } else { 1 };
     let mut attempt = 0u32;
@@ -532,7 +533,7 @@ pub async fn create_card(
         }
     };
 
-    // (3) ------- Create the artifact key for card artifact encryption
+    // Create the artifact key for card artifact encryption
     let key = create_artifact_key(
         &state.sql_client,
         &state.storage_settings.encryption_key,
@@ -561,7 +562,7 @@ pub async fn create_card(
     })
     .into_response();
 
-    // (4) ------- Create audit and space stats events
+    // Create audit and space stats events
     let audit_context = AuditContext {
         resource_id: uid.clone(),
         resource_type: ResourceType::Database,
@@ -571,7 +572,7 @@ pub async fn create_card(
         access_location: None,
     };
 
-    // (5) ------- Create space name registry event
+    // Create space name registry event
     let space_name = SpaceNameEvent {
         space: card_request.card.space().to_string(),
         name: card_request.card.name().to_string(),
