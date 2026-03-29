@@ -244,6 +244,7 @@ impl ServerCardRegistry {
 
         let response = CreateCardResponse {
             registered: true,
+            deduplicated: false,
             version: card.version(),
             space: card.space(),
             name: card.name(),
@@ -644,10 +645,12 @@ impl ServerCardRegistry {
     pub(crate) async fn compare_card_hash(
         &self,
         content_hash: &[u8],
+        space: Option<&str>,
+        name: Option<&str>,
     ) -> Result<Option<CardArgs>, RegistryError> {
         Ok(self
             .sql_client
-            .compare_hash(&self.table_name, content_hash)
+            .compare_hash(&self.table_name, content_hash, space, name)
             .await
             .inspect_err(|e| {
                 error!("Error comparing card hash: {}", e);

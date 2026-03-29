@@ -261,10 +261,17 @@ pub trait CardRegistry: Registry {
     }
 
     #[instrument(skip_all)]
-    fn compare_card_hash(&self, content_hash: &[u8]) -> Result<Option<CardArgs>, RegistryError> {
+    fn compare_card_hash(
+        &self,
+        content_hash: &[u8],
+        space: Option<&str>,
+        name: Option<&str>,
+    ) -> Result<Option<CardArgs>, RegistryError> {
         let hash_request = CompareHashRequest {
             registry_type: self.registry_type().clone(),
             content_hash: content_hash.to_vec(),
+            space: space.map(String::from),
+            name: name.map(String::from),
         };
 
         let body = serde_json::to_value(&hash_request)?;

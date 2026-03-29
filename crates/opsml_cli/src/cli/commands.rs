@@ -135,6 +135,15 @@ pub enum Commands {
     /// This is useful for when you want to register a service without the need to download
     /// any service artifacts in a subsequent step.
     Register(RegisterArgs),
+
+    /// Manage OpsML skills
+    ///
+    /// # Example
+    /// opsml skill status
+    Skill {
+        #[command(subcommand)]
+        command: SkillCommands,
+    },
 }
 
 #[derive(Subcommand)]
@@ -209,6 +218,16 @@ pub enum UiCommands {
     /// # Example
     /// opsml stop ui
     Stop,
+}
+
+#[derive(Subcommand)]
+#[command(version = None)]
+pub enum SkillCommands {
+    /// Show installed skill versions and status
+    ///
+    /// # Example
+    /// opsml skill status
+    Status,
 }
 
 pub const LOGO_TEXT: &str = "

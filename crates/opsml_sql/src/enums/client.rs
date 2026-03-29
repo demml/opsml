@@ -48,11 +48,28 @@ impl CardLogicTrait for SqlClientEnum {
         &self,
         table: &CardTable,
         content_hash: &[u8],
+        space: Option<&str>,
+        name: Option<&str>,
     ) -> Result<Option<CardArgs>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => client.card.compare_hash(table, content_hash).await,
-            SqlClientEnum::Sqlite(client) => client.card.compare_hash(table, content_hash).await,
-            SqlClientEnum::MySql(client) => client.card.compare_hash(table, content_hash).await,
+            SqlClientEnum::Postgres(client) => {
+                client
+                    .card
+                    .compare_hash(table, content_hash, space, name)
+                    .await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client
+                    .card
+                    .compare_hash(table, content_hash, space, name)
+                    .await
+            }
+            SqlClientEnum::MySql(client) => {
+                client
+                    .card
+                    .compare_hash(table, content_hash, space, name)
+                    .await
+            }
         }
     }
 

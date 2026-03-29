@@ -932,8 +932,10 @@ impl CardRegistry {
     pub fn compare_card_hash(
         &self,
         content_hash: &[u8],
+        space: Option<&str>,
+        name: Option<&str>,
     ) -> Result<Option<CardArgs>, RegistryError> {
-        self.registry.compare_card_hash(content_hash)
+        self.registry.compare_card_hash(content_hash, space, name)
     }
 }
 

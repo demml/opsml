@@ -2181,6 +2181,8 @@ async fn test_opsml_server_card_service_card_agents() {
         let hash_request = CompareHashRequest {
             registry_type: RegistryType::Agent,
             content_hash: service_card.content_hash.clone(),
+            space: None,
+            name: None,
         };
 
         let body = serde_json::to_string(&hash_request).unwrap();

@@ -41,3 +41,28 @@ pub enum SqlError {
     #[error("Missing required field: {0}")]
     MissingField(String),
 }
+
+impl SqlError {
+    /// Returns true if this error is a unique constraint violation.
+    pub fn is_unique_violation(&self) -> bool {
+        let sqlx_err = match self {
+            SqlError::SqlxError(e) => e,
+            _ => return false,
+        };
+
+        if let sqlx::Error::Database(db_err) = sqlx_err {
+            // Postgres: 23505, MySQL: 1062
+            if let Some(code) = db_err.code()
+                && (code == "23505" || code == "1062")
+            {
+                return true;
+            }
+            // SQLite returns the constraint name in the message
+            if db_err.message().contains("UNIQUE constraint failed") {
+                return true;
+            }
+        }
+
+        false
+    }
+}

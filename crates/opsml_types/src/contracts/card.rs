@@ -353,6 +353,10 @@ impl VersionCursor {
 pub struct CompareHashRequest {
     pub registry_type: RegistryType,
     pub content_hash: Vec<u8>,
+    #[serde(default)]
+    pub space: Option<String>,
+    #[serde(default)]
+    pub name: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -1247,6 +1251,8 @@ impl AuditableRequest for CreateCardRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateCardResponse {
     pub registered: bool,
+    #[serde(default)]
+    pub deduplicated: bool,
     pub version: String,
     pub space: String,
     pub name: String,
@@ -1310,4 +1316,6 @@ pub struct CardArgs {
     pub name: String,
     pub version: String,
     pub uid: String,
+    pub app_env: String,
+    pub created_at: DateTime<Utc>,
 }

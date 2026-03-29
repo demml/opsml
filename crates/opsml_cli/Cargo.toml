@@ -20,6 +20,7 @@ opsml-utils = { workspace = true }
 opsml-version = { workspace = true }
 scouter-client = { workspace = true }
 
+chrono = { workspace = true }
 anyhow = { workspace = true }
 base64 = { workspace = true }
 clap = { workspace = true }

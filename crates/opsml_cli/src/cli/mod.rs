@@ -3,4 +3,5 @@ pub mod commands;
 
 pub use commands::{
     Cli, Commands, GenerateCommands, GetCommands, InstallCommands, LOGO_TEXT, ListCommands,
+    SkillCommands,
 };

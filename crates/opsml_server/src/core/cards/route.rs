@@ -34,7 +34,7 @@ use serde::de::DeserializeOwned;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tempfile::tempdir;
-use tracing::{debug, error, info, instrument};
+use tracing::{debug, error, info, instrument, warn};
 
 pub fn parse_qs_query<T: DeserializeOwned>(
     uri: &OriginalUri,
@@ -438,38 +438,99 @@ pub async fn create_card(
         run_skill_scan(&state, skill_record).await?;
     }
 
-    // (1) ------- Get the next version
-    let version = get_next_version(
-        state.sql_client.clone(),
-        &table,
-        card_request.version_request.clone(),
-    )
-    .await
-    .map_err(|e| {
-        error!("Failed to get next version: {e}");
-        internal_server_error(e, "Failed to get next version", None)
-    })?;
+    // (0.5) ------- Content hash dedup for SkillCards
+    if let CardRecord::Skill(ref skill_record) = card_request.card
+        && let Some(existing) = state
+            .sql_client
+            .compare_hash(
+                &table,
+                &skill_record.content_hash,
+                Some(&skill_record.space),
+                Some(&skill_record.name),
+            )
+            .await
+            .map_err(|e| internal_server_error(e, "Content hash check failed", None))?
+    {
+        let key = state
+            .sql_client
+            .get_artifact_key(&existing.uid, &card_request.registry_type.to_string())
+            .await
+            .map_err(|e| internal_server_error(e, "Failed to get artifact key", None))?;
 
-    info!(
-        "Creating card: {}/{}/{} - registry: {:?}",
-        &card_request.card.space(),
-        &card_request.card.name(),
-        &version,
-        &card_request.registry_type
-    );
+        info!(
+            "Skill content unchanged, returning existing {}/{}/{}",
+            &existing.space, &existing.name, &existing.version
+        );
 
-    // (2) ------- Insert the card into the database
-    let (uid, space, registry_type, card_uri, app_env, created_at) = insert_card_into_db(
-        state.sql_client.clone(),
-        card_request.card.clone(),
-        version.clone(),
-        &table,
-    )
-    .await
-    .map_err(|e| {
-        error!("Failed to insert card into db: {e}");
-        internal_server_error(e, "Failed to insert card into db", None)
-    })?;
+        return Ok(Json(CreateCardResponse {
+            registered: true,
+            deduplicated: true,
+            space: existing.space,
+            name: existing.name,
+            version: existing.version,
+            app_env: existing.app_env,
+            created_at: existing.created_at,
+            key,
+        })
+        .into_response());
+    }
+
+    // (1+2) ------- Resolve version and insert (with retry on unique violation for skills)
+    let is_skill = matches!(card_request.card, CardRecord::Skill(_));
+    let max_retries: u32 = if is_skill { 3 } else { 1 };
+    let mut attempt = 0u32;
+
+    let (version, (uid, space, registry_type, card_uri, app_env, created_at)) = loop {
+        let version = get_next_version(
+            state.sql_client.clone(),
+            &table,
+            card_request.version_request.clone(),
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get next version: {e}");
+            internal_server_error(e, "Failed to get next version", None)
+        })?;
+
+        info!(
+            "Creating card: {}/{}/{} - registry: {:?} (attempt {})",
+            &card_request.card.space(),
+            &card_request.card.name(),
+            &version,
+            &card_request.registry_type,
+            attempt + 1
+        );
+
+        match insert_card_into_db(
+            state.sql_client.clone(),
+            card_request.card.clone(),
+            version.clone(),
+            &table,
+        )
+        .await
+        {
+            Ok(result) => break (version, result),
+            Err(e) if e.is_unique_violation() && attempt + 1 < max_retries => {
+                attempt += 1;
+                warn!(
+                    "Version collision for {}/{}, retrying (attempt {}/{})",
+                    &card_request.card.space(),
+                    &card_request.card.name(),
+                    attempt + 1,
+                    max_retries
+                );
+                continue;
+            }
+            Err(e) => {
+                error!("Failed to insert card into db: {e}");
+                return Err(internal_server_error(
+                    e,
+                    "Failed to insert card into db",
+                    None,
+                ));
+            }
+        }
+    };
 
     // (3) ------- Create the artifact key for card artifact encryption
     let key = create_artifact_key(
@@ -490,6 +551,7 @@ pub async fn create_card(
 
     let mut response = Json(CreateCardResponse {
         registered: true,
+        deduplicated: false,
         space: card_request.card.space().to_string(),
         name: card_request.card.name().to_string(),
         version: version.to_string(),
@@ -875,7 +937,12 @@ pub async fn compare_content_hash(
 
     let card = state
         .sql_client
-        .compare_hash(&table, &params.content_hash)
+        .compare_hash(
+            &table,
+            &params.content_hash,
+            params.space.as_deref(),
+            params.name.as_deref(),
+        )
         .await
         .map_err(|e| {
             error!("Failed to compare content hash: {e}");
