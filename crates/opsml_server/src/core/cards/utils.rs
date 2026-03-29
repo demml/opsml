@@ -171,7 +171,13 @@ pub async fn run_skill_scan(
     }
 
     let Some(body) = &skill_record.body else {
-        return Ok(());
+        return Err((
+            axum::http::StatusCode::UNPROCESSABLE_ENTITY,
+            axum::Json(OpsmlServerError {
+                error: "Skill scan is enabled but no body was provided — registration rejected"
+                    .to_string(),
+            }),
+        ));
     };
 
     let invoke_result = state
