@@ -30,8 +30,8 @@ pub struct OpsmlSkillsYaml {
 impl OpsmlSkillsYaml {
     /// Load from a YAML file.
     pub fn load(path: &Path) -> Result<Self, PyProjectTomlError> {
-        let content = std::fs::read_to_string(path)
-            .map_err(PyProjectTomlError::FailedToReadSkillsYaml)?;
+        let content =
+            std::fs::read_to_string(path).map_err(PyProjectTomlError::FailedToReadSkillsYaml)?;
         serde_yaml::from_str(&content).map_err(PyProjectTomlError::FailedToParseSkillsYaml)
     }
 
@@ -43,8 +43,7 @@ impl OpsmlSkillsYaml {
         if let Some(parent) = path.parent()
             && !parent.as_os_str().is_empty()
         {
-            std::fs::create_dir_all(parent)
-                .map_err(PyProjectTomlError::FailedToWriteSkillsYaml)?;
+            std::fs::create_dir_all(parent).map_err(PyProjectTomlError::FailedToWriteSkillsYaml)?;
         }
         let template = concat!(
             "registry: http://localhost:3000\n",

@@ -8,8 +8,8 @@ use crate::actions::skill::{init_skill, list_skills, pull_skill, push_skill};
 use crate::actions::sync::sync_skills;
 pub use crate::actions::{download_card, download_service, list_cards};
 use crate::cli::{
-    Cli, Commands, GenerateCommands, GetCommands, InstallCommands, ListCommands, SkillCommands,
-    LOGO_TEXT,
+    Cli, Commands, GenerateCommands, GetCommands, InstallCommands, LOGO_TEXT, ListCommands,
+    SkillCommands,
 };
 pub use actions::{
     generate_key,
@@ -27,7 +27,6 @@ use opsml_colors::Colorize;
 use opsml_types::RegistryType;
 
 pub use actions::lock::lock_service;
-
 
 pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
     let cli = Cli::parse_from(args.into_iter().skip(1));

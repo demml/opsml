@@ -175,12 +175,7 @@ fn register_github_copilot_hook(base: &Path, cmd: &str) -> Result<(), CliError> 
 }
 
 /// Idempotent append of `cmd` to `{base}/{dir}/{filename}`.
-fn append_hook_to_sh(
-    base: &Path,
-    dir: &str,
-    filename: &str,
-    cmd: &str,
-) -> Result<(), CliError> {
+fn append_hook_to_sh(base: &Path, dir: &str, filename: &str, cmd: &str) -> Result<(), CliError> {
     let dir_path = base.join(dir);
     std::fs::create_dir_all(&dir_path)?;
     let path = dir_path.join(filename);
@@ -267,7 +262,10 @@ mod tests {
         };
         let _ = configure_cli(&args);
         let content = std::fs::read_to_string(&yaml_path).unwrap();
-        assert!(content.contains("custom.example.com"), "existing yaml must not be overwritten");
+        assert!(
+            content.contains("custom.example.com"),
+            "existing yaml must not be overwritten"
+        );
     }
 
     #[test]
@@ -292,7 +290,10 @@ mod tests {
         register_claude_hook(dir.path(), "bash .opsml-cache/hooks/startup.sh").unwrap();
         let content = std::fs::read_to_string(settings_dir.join("settings.json")).unwrap();
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
-        assert!(v["some_other_key"].as_bool().unwrap(), "existing keys must be preserved");
+        assert!(
+            v["some_other_key"].as_bool().unwrap(),
+            "existing keys must be preserved"
+        );
         assert!(v["hooks"]["UserPromptSubmit"].is_array());
     }
 
@@ -310,8 +311,7 @@ mod tests {
     fn test_register_gemini_hook_creates_settings_json() {
         let dir = tempdir().unwrap();
         register_gemini_hook(dir.path(), "bash .opsml-cache/hooks/startup.sh").unwrap();
-        let content =
-            std::fs::read_to_string(dir.path().join(".gemini/settings.json")).unwrap();
+        let content = std::fs::read_to_string(dir.path().join(".gemini/settings.json")).unwrap();
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
         assert!(v["startup_hook"].as_str().is_some());
     }
@@ -329,8 +329,7 @@ mod tests {
         let cmd = "opsml skill sync --quiet";
         register_claude_hook(dir.path(), cmd).unwrap();
         register_claude_hook(dir.path(), cmd).unwrap();
-        let content =
-            std::fs::read_to_string(dir.path().join(".claude/settings.json")).unwrap();
+        let content = std::fs::read_to_string(dir.path().join(".claude/settings.json")).unwrap();
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
         assert_eq!(
             v["hooks"]["UserPromptSubmit"].as_array().unwrap().len(),
@@ -345,8 +344,7 @@ mod tests {
         let cmd = "bash .opsml-cache/hooks/startup.sh";
         register_gemini_hook(dir.path(), cmd).unwrap();
         register_gemini_hook(dir.path(), cmd).unwrap();
-        let content =
-            std::fs::read_to_string(dir.path().join(".gemini/settings.json")).unwrap();
+        let content = std::fs::read_to_string(dir.path().join(".gemini/settings.json")).unwrap();
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
         assert_eq!(v["startup_hook"].as_str(), Some(cmd));
     }
@@ -365,8 +363,7 @@ mod tests {
             path: Some(dir.path().to_path_buf()),
         };
         let _ = configure_cli(&args);
-        let content =
-            std::fs::read_to_string(dir.path().join(".opsml-skills.yaml")).unwrap();
+        let content = std::fs::read_to_string(dir.path().join(".opsml-skills.yaml")).unwrap();
         assert!(
             content.contains("localhost:3000"),
             "yaml must not be overwritten"

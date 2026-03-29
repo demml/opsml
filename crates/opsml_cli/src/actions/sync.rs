@@ -7,8 +7,8 @@ use chrono::{Duration, Utc};
 use opsml_colors::Colorize;
 use opsml_registry::download::download_card_from_registry;
 use opsml_toml::OpsmlSkillsYaml;
-use opsml_types::contracts::CardQueryArgs;
 use opsml_types::RegistryType;
+use opsml_types::contracts::CardQueryArgs;
 use std::path::{Path, PathBuf};
 use tracing::instrument;
 
@@ -87,14 +87,14 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
         let hash_bytes = card
             .calculate_content_hash()
             .map_err(|e| CliError::Error(format!("Failed to compute content hash: {e}")))?;
-        let hash: String = hash_bytes.iter().fold(
-            String::with_capacity(hash_bytes.len() * 2),
-            |mut s, b| {
-                use std::fmt::Write;
-                let _ = write!(s, "{b:02x}");
-                s
-            },
-        );
+        let hash: String =
+            hash_bytes
+                .iter()
+                .fold(String::with_capacity(hash_bytes.len() * 2), |mut s, b| {
+                    use std::fmt::Write;
+                    let _ = write!(s, "{b:02x}");
+                    s
+                });
 
         validate_artifact_name(&card.name)?;
         validate_artifact_name(&skill_ref.space)?;
@@ -174,7 +174,11 @@ fn is_insecure_registry(url: &str) -> bool {
     if !url.starts_with("http://") {
         return false;
     }
-    let host = url.trim_start_matches("http://").split('/').next().unwrap_or("");
+    let host = url
+        .trim_start_matches("http://")
+        .split('/')
+        .next()
+        .unwrap_or("");
     host != "localhost"
         && !host.starts_with("localhost:")
         && host != "127.0.0.1"
@@ -219,7 +223,8 @@ mod tests {
             CacheEntry {
                 uid: "uid-1".into(),
                 content_hash: "hash-abc".into(),
-                fetched_at: Utc::now() - Duration::seconds(10) + Duration::seconds(ttl_secs_remaining),
+                fetched_at: Utc::now() - Duration::seconds(10)
+                    + Duration::seconds(ttl_secs_remaining),
                 artifact_path: PathBuf::new(),
                 size_bytes: 0,
             },
@@ -231,7 +236,10 @@ mod tests {
     fn test_ttl_hit_increments_skipped() {
         let cache = make_fresh_cache("s", "n", 3590);
         let ttl = Duration::minutes(60);
-        assert!(is_cache_fresh(&cache, "s/n", ttl), "fresh entry must be fresh");
+        assert!(
+            is_cache_fresh(&cache, "s/n", ttl),
+            "fresh entry must be fresh"
+        );
     }
 
     #[test]
@@ -239,7 +247,10 @@ mod tests {
         // Entry is 120 seconds old, TTL is 60 seconds.
         let cache = make_fresh_cache("s", "n", -110);
         let ttl = Duration::minutes(1);
-        assert!(!is_cache_fresh(&cache, "s/n", ttl), "stale entry must not be fresh");
+        assert!(
+            !is_cache_fresh(&cache, "s/n", ttl),
+            "stale entry must not be fresh"
+        );
     }
 
     #[test]
