@@ -19,11 +19,18 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
         .as_deref()
         .unwrap_or(Path::new(".opsml-skills.yaml"));
 
-    let yaml = OpsmlSkillsYaml::load(yaml_path)
-        .map_err(|e| CliError::Error(format!("Failed to load .opsml-skills.yaml: {e}")))?;
+    let yaml = OpsmlSkillsYaml::load(yaml_path)?;
 
-    let mut cache = CacheManifest::load().unwrap_or_default();
-    let mut manifest = SkillManifest::load().unwrap_or_default();
+    warn_if_insecure_registry(&yaml.registry);
+
+    let mut cache = CacheManifest::load().unwrap_or_else(|e| {
+        eprintln!("warn: cache manifest unreadable ({e}), starting fresh");
+        CacheManifest::default()
+    });
+    let mut manifest = SkillManifest::load().unwrap_or_else(|e| {
+        eprintln!("warn: skill manifest unreadable ({e}), starting fresh");
+        SkillManifest::default()
+    });
 
     let all_targets = [
         PullTarget::ClaudeCode,
@@ -32,7 +39,7 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
         PullTarget::GithubCopilot,
     ];
     let targets: &[PullTarget] = args.targets.as_deref().unwrap_or(&all_targets);
-    let ttl = Duration::minutes(yaml.ttl_minutes as i64);
+    let ttl = Duration::minutes(yaml.ttl_minutes.min(i64::MAX as u64) as i64);
 
     let (mut pulled, mut skipped) = (0usize, 0usize);
 
@@ -40,21 +47,17 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
         // Version-agnostic key so "latest" always overwrites the previous pull.
         let cache_key = format!("{}/{}", skill_ref.space, skill_ref.name);
 
-        if !args.force {
-            if let Some(entry) = cache.entries.get(&cache_key) {
-                if Utc::now() - entry.fetched_at < ttl {
-                    if !args.quiet {
-                        println!(
-                            "{} {}/{} (cached)",
-                            Colorize::purple("Skip"),
-                            skill_ref.space,
-                            skill_ref.name
-                        );
-                    }
-                    skipped += 1;
-                    continue;
-                }
+        if !args.force && is_cache_fresh(&cache, &cache_key, ttl) {
+            if !args.quiet {
+                println!(
+                    "{} {}/{} (cached)",
+                    Colorize::purple("Skip"),
+                    skill_ref.space,
+                    skill_ref.name
+                );
             }
+            skipped += 1;
+            continue;
         }
 
         let version = skill_ref
@@ -93,6 +96,9 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
             },
         );
 
+        validate_artifact_name(&card.name)?;
+        validate_artifact_name(&skill_ref.space)?;
+
         for target in targets {
             let out = target.skill_path(&card.name);
             if let Some(parent) = out.parent() {
@@ -125,6 +131,20 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
             targets: target_names,
         });
 
+        // Save incrementally so a later failure doesn't lose already-pulled skills
+        if let Err(e) = cache.save() {
+            eprintln!(
+                "warn: failed to persist cache for {}/{}: {e}",
+                skill_ref.space, card.name
+            );
+        }
+        if let Err(e) = manifest.save() {
+            eprintln!(
+                "warn: failed to persist manifest for {}/{}: {e}",
+                skill_ref.space, card.name
+            );
+        }
+
         if !args.quiet {
             println!(
                 "{} {}/{} v{}",
@@ -137,13 +157,53 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
         pulled += 1;
     }
 
-    cache.save()?;
-    manifest.save()?;
-
     if !args.quiet {
         println!("\n{pulled} synced, {skipped} skipped");
     }
     Ok(())
+}
+
+fn is_cache_fresh(cache: &CacheManifest, key: &str, ttl: Duration) -> bool {
+    cache
+        .entries
+        .get(key)
+        .is_some_and(|e| Utc::now() - e.fetched_at < ttl)
+}
+
+fn is_insecure_registry(url: &str) -> bool {
+    if !url.starts_with("http://") {
+        return false;
+    }
+    let host = url.trim_start_matches("http://").split('/').next().unwrap_or("");
+    host != "localhost"
+        && !host.starts_with("localhost:")
+        && host != "127.0.0.1"
+        && !host.starts_with("127.0.0.1:")
+}
+
+fn validate_artifact_name(name: &str) -> Result<(), CliError> {
+    if name.is_empty()
+        || name.contains('/')
+        || name.contains('\\')
+        || name.contains("..")
+        || name.starts_with('.')
+    {
+        return Err(CliError::Error(format!(
+            "Unsafe artifact name from registry: {name:?} — contains path separators or reserved sequences"
+        )));
+    }
+    Ok(())
+}
+
+fn warn_if_insecure_registry(url: &str) {
+    if is_insecure_registry(url) {
+        eprintln!(
+            "warning: registry '{}' uses plain HTTP. \
+             Skills are fetched without TLS encryption. \
+             Use https:// for production registries.",
+            url
+        );
+    }
 }
 
 #[cfg(test)]
@@ -168,99 +228,121 @@ mod tests {
     }
 
     #[test]
-    fn ttl_hit_increments_skipped() {
-        // Build a yaml in-memory string, save to tempdir, and point SyncArgs at it.
-        let dir = tempfile::tempdir().unwrap();
-        let yaml_path = dir.path().join(".opsml-skills.yaml");
-        std::fs::write(
-            &yaml_path,
-            "registry: http://localhost:3000\nttl_minutes: 60\nskills:\n  - space: s\n    name: n\n",
-        )
-        .unwrap();
-
-        let yaml = OpsmlSkillsYaml::load(&yaml_path).unwrap();
-
-        // Cache entry is 10 seconds old — well within 60-minute TTL.
+    fn test_ttl_hit_increments_skipped() {
         let cache = make_fresh_cache("s", "n", 3590);
-
-        let ttl = Duration::minutes(yaml.ttl_minutes as i64);
-        let mut skipped = 0usize;
-
-        for skill_ref in &yaml.skills {
-            let cache_key = format!("{}/{}", skill_ref.space, skill_ref.name);
-            if let Some(entry) = cache.entries.get(&cache_key) {
-                if Utc::now() - entry.fetched_at < ttl {
-                    skipped += 1;
-                    continue;
-                }
-            }
-            // would normally download — not reached in this test
-        }
-
-        assert_eq!(skipped, 1, "fresh cache entry must be skipped");
+        let ttl = Duration::minutes(60);
+        assert!(is_cache_fresh(&cache, "s/n", ttl), "fresh entry must be fresh");
     }
 
     #[test]
-    fn ttl_miss_does_not_skip() {
-        let dir = tempfile::tempdir().unwrap();
-        let yaml_path = dir.path().join(".opsml-skills.yaml");
-        std::fs::write(
-            &yaml_path,
-            "registry: http://localhost:3000\nttl_minutes: 1\nskills:\n  - space: s\n    name: n\n",
-        )
-        .unwrap();
-
-        let yaml = OpsmlSkillsYaml::load(&yaml_path).unwrap();
-
-        // Cache entry is 120 seconds old — past the 1-minute TTL.
-        let cache = make_fresh_cache("s", "n", -110); // fetched_at = now - 120s
-
-        let ttl = Duration::minutes(yaml.ttl_minutes as i64);
-        let mut would_download = 0usize;
-
-        for skill_ref in &yaml.skills {
-            let cache_key = format!("{}/{}", skill_ref.space, skill_ref.name);
-            let is_fresh = cache
-                .entries
-                .get(&cache_key)
-                .is_some_and(|e| Utc::now() - e.fetched_at < ttl);
-            if !is_fresh {
-                would_download += 1;
-            }
-        }
-
-        assert_eq!(would_download, 1, "stale cache entry must trigger download");
+    fn test_ttl_miss_does_not_skip() {
+        // Entry is 120 seconds old, TTL is 60 seconds.
+        let cache = make_fresh_cache("s", "n", -110);
+        let ttl = Duration::minutes(1);
+        assert!(!is_cache_fresh(&cache, "s/n", ttl), "stale entry must not be fresh");
     }
 
     #[test]
-    fn force_bypasses_fresh_cache() {
-        let dir = tempfile::tempdir().unwrap();
-        let yaml_path = dir.path().join(".opsml-skills.yaml");
-        std::fs::write(
-            &yaml_path,
-            "registry: http://localhost:3000\nttl_minutes: 60\nskills:\n  - space: s\n    name: n\n",
-        )
-        .unwrap();
-
-        let yaml = OpsmlSkillsYaml::load(&yaml_path).unwrap();
+    fn test_force_bypasses_fresh_cache() {
         let cache = make_fresh_cache("s", "n", 3590);
+        let ttl = Duration::minutes(60);
+        // Cache is fresh, but force=true means the skip condition `!force && is_fresh` is false.
+        assert!(is_cache_fresh(&cache, "s/n", ttl), "entry is fresh");
+        // With force the caller ignores freshness — the skip gate is `!args.force && fresh`.
         let force = true;
+        let skip = !force && is_cache_fresh(&cache, "s/n", ttl);
+        assert!(!skip, "force must prevent the skip");
+    }
 
-        let ttl = Duration::minutes(yaml.ttl_minutes as i64);
-        let mut would_download = 0usize;
+    #[test]
+    fn test_cache_fresh_missing_key_returns_false() {
+        let cache = CacheManifest::default();
+        assert!(!is_cache_fresh(&cache, "s/n", Duration::minutes(60)));
+    }
 
-        for skill_ref in &yaml.skills {
-            let cache_key = format!("{}/{}", skill_ref.space, skill_ref.name);
-            let skip = !force
-                && cache
-                    .entries
-                    .get(&cache_key)
-                    .is_some_and(|e| Utc::now() - e.fetched_at < ttl);
-            if !skip {
-                would_download += 1;
-            }
-        }
+    // --- validate_artifact_name ---
 
-        assert_eq!(would_download, 1, "--force must bypass TTL check");
+    #[test]
+    fn test_validate_artifact_name_accepts_valid() {
+        assert!(validate_artifact_name("my-skill").is_ok());
+        assert!(validate_artifact_name("skill_v2").is_ok());
+        assert!(validate_artifact_name("a").is_ok());
+    }
+
+    #[test]
+    fn test_validate_artifact_name_rejects_empty() {
+        assert!(validate_artifact_name("").is_err());
+    }
+
+    #[test]
+    fn test_validate_artifact_name_rejects_forward_slash() {
+        assert!(validate_artifact_name("space/name").is_err());
+    }
+
+    #[test]
+    fn test_validate_artifact_name_rejects_backslash() {
+        assert!(validate_artifact_name("space\\name").is_err());
+    }
+
+    #[test]
+    fn test_validate_artifact_name_rejects_dotdot() {
+        assert!(validate_artifact_name("../secret").is_err());
+        assert!(validate_artifact_name("a..b").is_err());
+    }
+
+    #[test]
+    fn test_validate_artifact_name_rejects_leading_dot() {
+        assert!(validate_artifact_name(".hidden").is_err());
+    }
+
+    // --- is_insecure_registry ---
+
+    #[test]
+    fn test_insecure_registry_https_is_safe() {
+        assert!(!is_insecure_registry("https://registry.example.com"));
+    }
+
+    #[test]
+    fn test_insecure_registry_localhost_is_safe() {
+        assert!(!is_insecure_registry("http://localhost:3000"));
+        assert!(!is_insecure_registry("http://localhost"));
+        assert!(!is_insecure_registry("http://127.0.0.1"));
+        assert!(!is_insecure_registry("http://127.0.0.1:8080"));
+    }
+
+    #[test]
+    fn test_insecure_registry_remote_http_is_insecure() {
+        assert!(is_insecure_registry("http://registry.example.com"));
+        assert!(is_insecure_registry("http://10.0.0.1:3000"));
+    }
+
+    #[test]
+    fn test_insecure_registry_empty_is_safe() {
+        assert!(!is_insecure_registry(""));
+    }
+
+    #[test]
+    fn test_sync_skills_empty_yaml_runs_without_network() {
+        let dir = tempfile::tempdir().unwrap();
+        let yaml_path = dir.path().join(".opsml-skills.yaml");
+        std::fs::write(
+            &yaml_path,
+            "registry: http://localhost:3000\nttl_minutes: 60\nskills: []\n",
+        )
+        .unwrap();
+
+        let result = sync_skills(&crate::cli::arg::SyncArgs {
+            force: false,
+            quiet: true,
+            targets: None,
+            path: Some(yaml_path),
+        });
+
+        // Empty skills list: loop body never executes.
+        // Acceptable outcomes: Ok (no saves needed) or ManifestError (cannot write ~/.opsml in test env).
+        assert!(
+            result.is_ok() || matches!(result, Err(crate::error::CliError::ManifestError(_))),
+            "unexpected error: {result:?}"
+        );
     }
 }

@@ -40,11 +40,11 @@ impl OpsmlSkillsYaml {
         if path.exists() {
             return Err(PyProjectTomlError::SkillsYamlAlreadyExists);
         }
-        if let Some(parent) = path.parent() {
-            if !parent.as_os_str().is_empty() {
-                std::fs::create_dir_all(parent)
-                    .map_err(PyProjectTomlError::FailedToWriteSkillsYaml)?;
-            }
+        if let Some(parent) = path.parent()
+            && !parent.as_os_str().is_empty()
+        {
+            std::fs::create_dir_all(parent)
+                .map_err(PyProjectTomlError::FailedToWriteSkillsYaml)?;
         }
         let template = concat!(
             "registry: http://localhost:3000\n",
@@ -64,7 +64,7 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    fn roundtrip_load() {
+    fn test_roundtrip_load() {
         let dir = tempdir().unwrap();
         let path = dir.path().join(".opsml-skills.yaml");
         OpsmlSkillsYaml::scaffold(&path).unwrap();
@@ -80,7 +80,7 @@ mod tests {
     }
 
     #[test]
-    fn defaults_applied() {
+    fn test_defaults_applied() {
         let content = "registry: http://example.com\n";
         let yaml: OpsmlSkillsYaml = serde_yaml::from_str(content).unwrap();
         assert_eq!(yaml.ttl_minutes, 60);
@@ -90,7 +90,7 @@ mod tests {
     }
 
     #[test]
-    fn scaffold_refuses_overwrite() {
+    fn test_scaffold_refuses_overwrite() {
         let dir = tempdir().unwrap();
         let path = dir.path().join(".opsml-skills.yaml");
         OpsmlSkillsYaml::scaffold(&path).unwrap();
@@ -98,14 +98,24 @@ mod tests {
     }
 
     #[test]
-    fn artifact_ref_version_none() {
+    fn test_artifact_ref_version_none() {
         let content = "registry: http://example.com\nskills:\n  - space: s\n    name: n\n";
         let yaml: OpsmlSkillsYaml = serde_yaml::from_str(content).unwrap();
         assert_eq!(yaml.skills[0].version, None);
     }
 
     #[test]
-    fn multiple_artifact_types() {
+    fn test_scaffold_creates_nested_parent_dirs() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("subdir/nested/.opsml-skills.yaml");
+        OpsmlSkillsYaml::scaffold(&path).unwrap();
+        assert!(path.exists());
+        let loaded = OpsmlSkillsYaml::load(&path).unwrap();
+        assert_eq!(loaded.ttl_minutes, 60);
+    }
+
+    #[test]
+    fn test_multiple_artifact_types() {
         let content = concat!(
             "registry: http://example.com\n",
             "ttl_minutes: 30\n",

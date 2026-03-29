@@ -293,7 +293,7 @@ pub struct StopUiArgs {
 
 // -- Skill CLI types --
 
-#[derive(Clone, Debug, clap::ValueEnum)]
+#[derive(Clone, Debug, PartialEq, clap::ValueEnum)]
 pub enum PullTarget {
     ClaudeCode,
     Codex,
@@ -468,4 +468,19 @@ pub struct ConfigureArgs {
     /// Base directory for writing files (defaults to current directory)
     #[arg(long = "path")]
     pub path: Option<PathBuf>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_configure_target_all_returns_all_four_pull_targets() {
+        let targets = ConfigureTarget::All.to_pull_targets();
+        assert_eq!(targets.len(), 4);
+        assert!(targets.contains(&PullTarget::ClaudeCode));
+        assert!(targets.contains(&PullTarget::Codex));
+        assert!(targets.contains(&PullTarget::GeminiCli));
+        assert!(targets.contains(&PullTarget::GithubCopilot));
+    }
 }
