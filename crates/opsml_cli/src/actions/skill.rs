@@ -251,7 +251,9 @@ pub fn list_skills(args: &SkillListArgs) -> Result<(), CliError> {
 
 #[instrument(skip_all)]
 pub fn remove_skill(args: &SkillRemoveArgs) -> Result<(), CliError> {
-    let (space, name) = parse_skill_identifier(&args.name, args.space.as_deref())?;
+    let (space_raw, name_raw) = parse_skill_identifier(&args.name, args.space.as_deref())?;
+    let space = clean_string(&space_raw)?;
+    let name = clean_string(&name_raw)?;
 
     // 1. Remove from yaml
     let yaml_path = if args.local {
