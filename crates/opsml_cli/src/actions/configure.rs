@@ -35,11 +35,7 @@ fn configure_eager(args: &ConfigureArgs) -> Result<(), CliError> {
     })
 }
 
-fn configure_lazy(
-    args: &ConfigureArgs,
-    opsml_dir: &Path,
-    home: &Path,
-) -> Result<(), CliError> {
+fn configure_lazy(args: &ConfigureArgs, opsml_dir: &Path, home: &Path) -> Result<(), CliError> {
     let hooks_dir = opsml_dir.join("hooks");
     std::fs::create_dir_all(&hooks_dir)?;
     let hook_path = hooks_dir.join("startup.sh");
@@ -49,8 +45,8 @@ fn configure_lazy(
         .to_string_lossy()
         .into_owned();
 
-    let hook_content = crate::hooks::STARTUP_SH
-        .replace("__OPSML_BIN__", &shell_single_quote(&opsml_bin));
+    let hook_content =
+        crate::hooks::STARTUP_SH.replace("__OPSML_BIN__", &shell_single_quote(&opsml_bin));
 
     std::fs::write(&hook_path, hook_content)?;
 
@@ -321,7 +317,7 @@ mod tests {
             target: ConfigureTarget::ClaudeCode,
             lazy: true,
         };
-        configure_lazy(&args, &opsml_dir, &yaml_path, dir.path()).unwrap();
+        configure_lazy(&args, &opsml_dir, dir.path()).unwrap();
 
         // startup.sh must exist and must not contain the raw placeholder
         let sh = std::fs::read_to_string(opsml_dir.join("hooks/startup.sh")).unwrap();
