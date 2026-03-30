@@ -70,9 +70,9 @@ pub fn push_skill(args: &SkillPushArgs) -> Result<(), CliError> {
         .validate(root)
         .map_err(|e| CliError::Error(e.to_string()))?;
 
-    if let Some(space) = &args.space {
-        card.space = clean_string(space)?;
-    }
+    // Normalize space and name regardless of source (markdown or CLI override)
+    card.space = clean_string(args.space.as_deref().unwrap_or(&card.space))?;
+    card.name = clean_string(&card.name)?;
 
     if let Some(tags) = &args.tags {
         card.tags.extend(tags.iter().cloned());

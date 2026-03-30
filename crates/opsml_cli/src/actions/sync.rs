@@ -195,15 +195,15 @@ fn sync_one_layer(
                     s
                 });
 
-        validate_artifact_name(&card.name)?;
+        validate_artifact_name(&name)?;
         validate_artifact_name(&space)?;
 
         let mut first_out: Option<PathBuf> = None;
         for target in targets {
             let out = if is_global {
-                target.global_skill_path(&card.name)?
+                target.global_skill_path(&name)?
             } else {
-                project_root.join(target.skill_path(&card.name))
+                project_root.join(target.skill_path(&name))
             };
             if let Some(parent) = out.parent() {
                 std::fs::create_dir_all(parent)?;
@@ -229,7 +229,7 @@ fn sync_one_layer(
 
         manifest.upsert(SkillEntry {
             space: space.clone(),
-            name: card.name.clone(),
+            name: name.clone(),
             version: card.version.clone(),
             content_hash: hash,
             uid: card.uid.clone(),
