@@ -9,6 +9,7 @@ use opsml_registry::download::download_card_from_registry;
 use opsml_toml::OpsmlSkillsYaml;
 use opsml_types::RegistryType;
 use opsml_types::contracts::CardQueryArgs;
+use opsml_utils::clean_string;
 use std::fmt::Write as FmtWrite;
 use std::path::{Path, PathBuf};
 use tracing::instrument;
@@ -106,36 +107,30 @@ fn sync_one_layer(
     const MAX_TTL_MINUTES: i64 = i64::MAX / 60;
     let ttl_mins = i64::try_from(yaml.ttl_minutes)
         .unwrap_or(MAX_TTL_MINUTES)
-        .min(MAX_TTL_MINUTES)
-        .max(1);
+        .clamp(1, MAX_TTL_MINUTES);
     let ttl = Duration::minutes(ttl_mins);
     let project_root = yaml_path.parent().unwrap_or(Path::new("."));
 
     let (mut pulled, mut skipped, mut not_found) = (0usize, 0usize, 0usize);
 
     for skill_ref in &yaml.skills {
+        // Normalize space/name so cache keys, manifest keys, and file paths match
+        // what remove_skill produces (which also calls clean_string).
+        let space = clean_string(&skill_ref.space)?;
+        let name = clean_string(&skill_ref.name)?;
+
         let cache_key = if is_global {
-            format!("global/{}/{}", skill_ref.space, skill_ref.name)
+            format!("global/{}/{}", space, name)
         } else {
             let abs = std::fs::canonicalize(project_root)
                 .or_else(|_| std::fs::canonicalize("."))
                 .unwrap_or_else(|_| project_root.to_path_buf());
-            format!(
-                "project:{}/{}/{}",
-                abs.display(),
-                skill_ref.space,
-                skill_ref.name
-            )
+            format!("project:{}/{}/{}", abs.display(), space, name)
         };
 
         if !args.force && is_cache_fresh(cache, &cache_key, ttl) {
             if !args.quiet {
-                println!(
-                    "  {} {}/{} (cached)",
-                    Colorize::purple("Skip"),
-                    skill_ref.space,
-                    skill_ref.name
-                );
+                println!("  {} {}/{} (cached)", Colorize::purple("Skip"), space, name);
             }
             skipped += 1;
             continue;
@@ -147,8 +142,8 @@ fn sync_one_layer(
             .filter(|v| !v.is_empty() && *v != "latest");
 
         let query_args = CardQueryArgs {
-            space: Some(skill_ref.space.clone()),
-            name: Some(skill_ref.name.clone()),
+            space: Some(space.clone()),
+            name: Some(name.clone()),
             version: version.map(String::from),
             registry_type: RegistryType::Skill,
             limit: Some(1),
@@ -168,8 +163,8 @@ fn sync_one_layer(
                     eprintln!(
                         "  {} {}/{} (not found on {}): {e}",
                         Colorize::alert("Warn"),
-                        skill_ref.space,
-                        skill_ref.name,
+                        space,
+                        name,
                         registry_url
                     );
                 }
@@ -181,10 +176,10 @@ fn sync_one_layer(
         let card_json = find_card_json(tmp_dir.path(), 0)?;
         let card = opsml_cards::SkillCard::from_path(card_json)?;
 
-        if card.name != skill_ref.name {
+        if card.name != name {
             return Err(CliError::Error(format!(
                 "Registry returned card {:?} but {:?} was requested — refusing to write",
-                card.name, skill_ref.name
+                card.name, name
             )));
         }
 
@@ -233,7 +228,7 @@ fn sync_one_layer(
         );
 
         manifest.upsert(SkillEntry {
-            space: skill_ref.space.clone(),
+            space: space.clone(),
             name: card.name.clone(),
             version: card.version.clone(),
             content_hash: hash,
@@ -247,7 +242,7 @@ fn sync_one_layer(
         if let Err(e) = cache.save() {
             eprintln!(
                 "warn: failed to persist cache for {}/{}: {e}",
-                skill_ref.space, card.name
+                space, card.name
             );
         }
         if let Err(e) = manifest.save() {

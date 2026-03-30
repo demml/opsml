@@ -166,20 +166,25 @@ fn append_hook_to_sh(base: &Path, dir: &str, filename: &str, cmd: &str) -> Resul
     } else {
         String::new()
     };
-    if !existing.contains(cmd) {
+    let wrote = if !existing.contains(cmd) {
         let mut content = existing;
         if !content.is_empty() && !content.ends_with('\n') {
             content.push('\n');
         }
         let _ = writeln!(content, "{cmd}");
         std::fs::write(&path, &content)?;
-    }
+        true
+    } else {
+        false
+    };
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
         std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o755))?;
     }
-    println!("{} {}", Colorize::green("Updated"), path.display());
+    if wrote {
+        println!("{} {}", Colorize::green("Updated"), path.display());
+    }
     Ok(())
 }
 
