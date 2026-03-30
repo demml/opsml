@@ -1,4 +1,6 @@
-use crate::cli::arg::{PullTarget, SkillInitArgs, SkillListArgs, SkillPullArgs, SkillPushArgs};
+use crate::cli::arg::{
+    PullTarget, SkillInitArgs, SkillListArgs, SkillPullArgs, SkillPushArgs, SkillRemoveArgs,
+};
 use crate::error::CliError;
 use opsml_cards::skill::card::parse_skill_markdown;
 use opsml_colors::Colorize;
@@ -35,21 +37,22 @@ fn parse_skill_identifier(
 }
 
 /// Determine the output path for a pulled skill.
+/// Defaults to global (home directory) unless `--local` is specified.
 fn resolve_pull_path(
     name: &str,
     output: Option<&PathBuf>,
     target: Option<&PullTarget>,
-    global: bool,
+    local: bool,
 ) -> Result<PathBuf, CliError> {
     if let Some(output) = output {
         return Ok(output.clone());
     }
 
     if let Some(target) = target {
-        if global {
-            return target.global_skill_path(name);
+        if local {
+            return Ok(target.skill_path(name));
         }
-        return Ok(target.skill_path(name));
+        return target.global_skill_path(name);
     }
 
     Ok(PathBuf::from(format!("{name}/SKILL.md")))
@@ -67,9 +70,9 @@ pub fn push_skill(args: &SkillPushArgs) -> Result<(), CliError> {
         .validate(root)
         .map_err(|e| CliError::Error(e.to_string()))?;
 
-    if let Some(space) = &args.space {
-        card.space = clean_string(space)?;
-    }
+    // Normalize space and name regardless of source (markdown or CLI override)
+    card.space = clean_string(args.space.as_deref().unwrap_or(&card.space))?;
+    card.name = clean_string(&card.name)?;
 
     if let Some(tags) = &args.tags {
         card.tags.extend(tags.iter().cloned());
@@ -128,14 +131,44 @@ pub fn pull_skill(args: &SkillPullArgs) -> Result<(), CliError> {
         &name_clean,
         args.output.as_ref(),
         args.target.as_ref(),
-        args.global,
+        args.local,
     )?;
 
     if let Some(parent) = output_path.parent() {
         std::fs::create_dir_all(parent)?;
     }
 
-    std::fs::write(&output_path, markdown)?;
+    std::fs::write(&output_path, &markdown)?;
+
+    // Auto-track: append to the appropriate skills.yaml unless --no-track
+    if !args.no_track {
+        let yaml_path = if args.local {
+            PathBuf::from(".opsml-skills.yaml")
+        } else {
+            dirs::home_dir()
+                .ok_or_else(|| CliError::Error("Cannot determine home directory".into()))?
+                .join(".opsml")
+                .join("skills.yaml")
+        };
+
+        let ref_entry = opsml_toml::ArtifactRef {
+            space: space_clean.clone(),
+            name: name_clean.clone(),
+            version: args.version.clone(),
+        };
+
+        let registry_url = std::env::var("OPSML_TRACKING_URI").unwrap_or_default();
+        if let Err(e) =
+            opsml_toml::OpsmlSkillsYaml::append_skill(&yaml_path, &ref_entry, &registry_url)
+        {
+            eprintln!(
+                "warn: failed to track {}/{} in {}: {e}",
+                space_clean,
+                name_clean,
+                yaml_path.display()
+            );
+        }
+    }
 
     println!(
         "{} {}/{} v{} -> {}",
@@ -150,7 +183,7 @@ pub fn pull_skill(args: &SkillPullArgs) -> Result<(), CliError> {
 }
 
 /// Recursively find Card.json in the download directory.
-fn find_card_json(dir: &std::path::Path, depth: usize) -> Result<PathBuf, CliError> {
+pub(crate) fn find_card_json(dir: &std::path::Path, depth: usize) -> Result<PathBuf, CliError> {
     if depth > 20 {
         return Err(CliError::Error(format!(
             "Artifact directory too deeply nested (>20 levels) at {:?}",
@@ -212,6 +245,81 @@ pub fn list_skills(args: &SkillListArgs) -> Result<(), CliError> {
     }
 
     CardList { cards }.as_skill_table();
+
+    Ok(())
+}
+
+#[instrument(skip_all)]
+pub fn remove_skill(args: &SkillRemoveArgs) -> Result<(), CliError> {
+    let (space_raw, name_raw) = parse_skill_identifier(&args.name, args.space.as_deref())?;
+    let space = clean_string(&space_raw)?;
+    let name = clean_string(&name_raw)?;
+
+    // 1. Remove from yaml
+    let yaml_path = if args.local {
+        PathBuf::from(".opsml-skills.yaml")
+    } else {
+        dirs::home_dir()
+            .ok_or_else(|| CliError::Error("Cannot determine home directory".into()))?
+            .join(".opsml")
+            .join("skills.yaml")
+    };
+
+    if yaml_path.exists() {
+        opsml_toml::OpsmlSkillsYaml::remove_skill(&yaml_path, &space, &name)?;
+    }
+
+    // 2. Delete skill files from all target directories
+    let all_targets = [
+        PullTarget::ClaudeCode,
+        PullTarget::Codex,
+        PullTarget::GeminiCli,
+        PullTarget::GithubCopilot,
+    ];
+    for target in &all_targets {
+        let path = if args.local {
+            target.skill_path(&name)
+        } else {
+            match target.global_skill_path(&name) {
+                Ok(p) => p,
+                Err(_) => continue,
+            }
+        };
+        if path.exists() {
+            std::fs::remove_file(&path)?;
+            if let Some(parent) = path.parent() {
+                let _ = std::fs::remove_dir(parent); // ignore if not empty
+            }
+        }
+    }
+
+    // 3. Remove from manifest
+    let mut manifest = crate::actions::manifest::SkillManifest::load().unwrap_or_default();
+    let manifest_key = crate::actions::manifest::SkillManifest::key(&space, &name);
+    manifest.remove(&manifest_key);
+    if let Err(e) = manifest.save() {
+        eprintln!("warn: failed to update manifest: {e}");
+    }
+
+    // 4. Remove from cache
+    let mut cache = crate::actions::cache::CacheManifest::load().unwrap_or_default();
+    let cache_key = if args.local {
+        let abs = std::fs::canonicalize(".").unwrap_or_else(|_| PathBuf::from("."));
+        format!("project:{}/{}/{}", abs.display(), space, name)
+    } else {
+        format!("global/{}/{}", space, name)
+    };
+    cache.entries.remove(&cache_key);
+    if let Err(e) = cache.save() {
+        eprintln!("warn: failed to update cache: {e}");
+    }
+
+    println!(
+        "{} {}/{}",
+        Colorize::green("Removed"),
+        Colorize::purple(&space),
+        name,
+    );
 
     Ok(())
 }
@@ -319,16 +427,25 @@ mod tests {
             "my-skill",
             Some(&PathBuf::from("custom/path.md")),
             Some(&PullTarget::ClaudeCode),
-            true,
+            false,
         )
         .unwrap();
         assert_eq!(path, PathBuf::from("custom/path.md"));
     }
 
     #[test]
-    fn test_resolve_pull_path_target_repo() {
+    fn test_resolve_pull_path_global_by_default() {
         let path =
-            resolve_pull_path("my-skill", None, Some(&PullTarget::GithubCopilot), false).unwrap();
+            resolve_pull_path("my-skill", None, Some(&PullTarget::ClaudeCode), false).unwrap();
+        // Should be an absolute home-based path
+        assert!(path.is_absolute());
+        assert!(path.ends_with(".claude/skills/my-skill/SKILL.md"));
+    }
+
+    #[test]
+    fn test_resolve_pull_path_local_flag() {
+        let path =
+            resolve_pull_path("my-skill", None, Some(&PullTarget::GithubCopilot), true).unwrap();
         assert_eq!(
             path,
             PathBuf::from(".github/copilot/skills/my-skill/SKILL.md")
@@ -336,7 +453,7 @@ mod tests {
     }
 
     #[test]
-    fn test_resolve_pull_path_default() {
+    fn test_resolve_pull_path_no_target() {
         let path = resolve_pull_path("my-skill", None, None, false).unwrap();
         assert_eq!(path, PathBuf::from("my-skill/SKILL.md"));
     }
@@ -443,6 +560,34 @@ mod tests {
         assert!(
             !err_msg.contains("Invalid version type"),
             "Error should not be about version type: {err_msg}"
+        );
+    }
+
+    // --- remove_skill cache key ---
+
+    #[test]
+    fn test_remove_skill_cache_key_project_not_empty_path() {
+        // Verify that the fixed canonicalize fallback never produces an empty-path key.
+        let abs = std::fs::canonicalize(".").unwrap_or_else(|_| PathBuf::from("."));
+        let key = format!("project:{}/space/name", abs.display());
+        assert!(key.starts_with("project:"));
+        assert!(
+            !key.starts_with("project:///"),
+            "empty PathBuf fallback produces malformed key"
+        );
+    }
+
+    // --- find_card_json depth guard ---
+
+    #[test]
+    fn test_find_card_json_depth_limit() {
+        let dir = tempfile::tempdir().unwrap();
+        let result = find_card_json(dir.path(), 21);
+        assert!(result.is_err());
+        let msg = result.unwrap_err().to_string();
+        assert!(
+            msg.contains("too deeply nested") || msg.contains("deeply nested"),
+            "{msg}"
         );
     }
 }

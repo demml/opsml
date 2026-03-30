@@ -10,6 +10,10 @@ use std::path::PathBuf;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CacheManifest {
     pub version: u32,
+    /// Timestamp of the last `save()` call. UNIX epoch on first run / old manifests,
+    /// which the startup hook treats as always-stale — triggering an immediate sync.
+    #[serde(default)]
+    pub generated_at: DateTime<Utc>,
     pub entries: HashMap<String, CacheEntry>,
 }
 
@@ -26,6 +30,7 @@ impl Default for CacheManifest {
     fn default() -> Self {
         Self {
             version: 1,
+            generated_at: DateTime::<Utc>::UNIX_EPOCH,
             entries: HashMap::new(),
         }
     }
@@ -56,8 +61,15 @@ impl CacheManifest {
         serde_json::from_str(&contents).map_err(ManifestError::ParseCacheManifest)
     }
 
-    pub fn save(&self) -> Result<(), ManifestError> {
+    /// Save the manifest to its canonical path.
+    /// Takes `&mut self` because `save_to_path` updates `generated_at` in-place and
+    /// rolls it back if the write fails — mutation is required for correct rollback semantics.
+    pub fn save(&mut self) -> Result<(), ManifestError> {
         let path = Self::path()?;
+        self.save_to_path(&path)
+    }
+
+    pub(crate) fn save_to_path(&mut self, path: &std::path::Path) -> Result<(), ManifestError> {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent).map_err(ManifestError::CreateCacheManifestDir)?;
             #[cfg(unix)]
@@ -68,18 +80,35 @@ impl CacheManifest {
             }
         }
 
+        let now = Utc::now();
+        let prev = self.generated_at;
+        self.generated_at = now;
+
+        let result = self.write_atomic(path);
+        if result.is_err() {
+            self.generated_at = prev;
+        }
+        result
+    }
+
+    fn write_atomic(&self, path: &std::path::Path) -> Result<(), ManifestError> {
         let tmp_path = path.with_extension("json.tmp");
         let contents =
             serde_json::to_string_pretty(self).map_err(ManifestError::SerializeCacheManifest)?;
-        fs::write(&tmp_path, contents).map_err(ManifestError::WriteCacheManifest)?;
-        fs::rename(&tmp_path, &path).map_err(ManifestError::RenameCacheManifest)?;
+        if let Err(e) = fs::write(&tmp_path, contents) {
+            let _ = fs::remove_file(&tmp_path);
+            return Err(ManifestError::WriteCacheManifest(e));
+        }
+        if let Err(e) = fs::rename(&tmp_path, path) {
+            let _ = fs::remove_file(&tmp_path);
+            return Err(ManifestError::RenameCacheManifest(e));
+        }
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
-            fs::set_permissions(&path, fs::Permissions::from_mode(0o600))
+            fs::set_permissions(path, fs::Permissions::from_mode(0o600))
                 .map_err(ManifestError::SetCacheManifestPermissions)?;
         }
-
         Ok(())
     }
 
@@ -133,7 +162,7 @@ mod tests {
     }
 
     #[test]
-    fn roundtrip_save_load() {
+    fn test_roundtrip_save_load() {
         let dir = tempdir().unwrap();
         let path = dir.path().join("manifest.json");
 
@@ -151,7 +180,7 @@ mod tests {
     }
 
     #[test]
-    fn is_fresh_hash_match() {
+    fn test_is_fresh_hash_match() {
         let mut manifest = CacheManifest::default();
         let key = CacheManifest::key("platform", "test-gen", "1.0.0");
         manifest.upsert(key.clone(), make_entry("hash-abc", 0));
@@ -161,13 +190,13 @@ mod tests {
     }
 
     #[test]
-    fn is_fresh_missing_key_returns_false() {
+    fn test_is_fresh_missing_key_returns_false() {
         let manifest = CacheManifest::default();
         assert!(!manifest.is_fresh("platform/missing/1.0.0", "hash-abc"));
     }
 
     #[test]
-    fn prune_removes_old_entries_keeps_recent() {
+    fn test_prune_removes_old_entries_keeps_recent() {
         let mut manifest = CacheManifest::default();
         let old_key = CacheManifest::key("platform", "old-skill", "1.0.0");
         let new_key = CacheManifest::key("platform", "new-skill", "1.0.0");
@@ -190,7 +219,7 @@ mod tests {
     }
 
     #[test]
-    fn upsert_overwrites_same_key() {
+    fn test_upsert_overwrites_same_key() {
         let mut manifest = CacheManifest::default();
         let key = CacheManifest::key("platform", "test-gen", "1.0.0");
         manifest.upsert(key.clone(), make_entry("hash-v1", 0));
@@ -201,7 +230,29 @@ mod tests {
     }
 
     #[test]
-    fn atomic_write_no_tmp_file_after_save() {
+    fn test_save_sets_generated_at() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("manifest.json");
+
+        let before = Utc::now();
+        let mut manifest = CacheManifest::default();
+        // Default is UNIX_EPOCH — always treated as stale
+        assert_eq!(manifest.generated_at, DateTime::<Utc>::UNIX_EPOCH);
+
+        save_to(&manifest, &path);
+        // save_to doesn't call our save() — update generated_at manually for test
+        manifest.generated_at = Utc::now();
+        save_to(&manifest, &path);
+        let loaded = load_from(&path);
+
+        assert!(
+            loaded.generated_at > before,
+            "generated_at must be set to a recent timestamp after save"
+        );
+    }
+
+    #[test]
+    fn test_atomic_write_no_tmp_file_after_save() {
         let dir = tempdir().unwrap();
         let path = dir.path().join("manifest.json");
 
@@ -214,5 +265,77 @@ mod tests {
             ".json.tmp must not exist after successful save"
         );
         assert!(path.exists());
+    }
+
+    #[test]
+    fn test_save_via_real_method_sets_generated_at() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("manifest.json");
+
+        let mut manifest = CacheManifest::default();
+        assert_eq!(manifest.generated_at, DateTime::<Utc>::UNIX_EPOCH);
+
+        let before = Utc::now();
+        manifest.save_to_path(&path).unwrap();
+
+        assert!(
+            manifest.generated_at >= before,
+            "save_to_path must set generated_at on self"
+        );
+
+        let loaded = load_from(&path);
+        assert!(
+            loaded.generated_at >= before,
+            "persisted generated_at must be recent"
+        );
+        assert!(
+            !path.with_extension("json.tmp").exists(),
+            ".tmp must not exist after successful save"
+        );
+    }
+
+    #[test]
+    fn test_backward_compat_missing_generated_at() {
+        let json = r#"{"version":1,"entries":{}}"#;
+        let manifest: CacheManifest = serde_json::from_str(json).unwrap();
+        assert_eq!(
+            manifest.generated_at,
+            DateTime::<Utc>::UNIX_EPOCH,
+            "missing generated_at must default to UNIX_EPOCH so startup hook treats it as stale"
+        );
+    }
+
+    #[test]
+    fn test_save_to_path_rolls_back_generated_at_on_failure() {
+        let dir = tempdir().unwrap();
+        // Path inside a non-existent sub-directory — create_dir_all will fail because we
+        // make the parent read-only first (unix only; on non-unix this test is a no-op).
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let locked = dir.path().join("locked");
+            fs::create_dir_all(&locked).unwrap();
+            fs::set_permissions(&locked, fs::Permissions::from_mode(0o400)).unwrap();
+            let bad_path = locked.join("sub/manifest.json");
+            let mut manifest = CacheManifest::default();
+            let result = manifest.save_to_path(&bad_path);
+            assert!(result.is_err());
+            assert_eq!(
+                manifest.generated_at,
+                DateTime::<Utc>::UNIX_EPOCH,
+                "generated_at must be rolled back on write failure"
+            );
+        }
+    }
+
+    #[test]
+    fn test_write_atomic_cleans_up_tmp_on_rename_failure() {
+        // We cannot easily force fs::rename to fail cross-device in a unit test,
+        // but we can verify no .tmp survives a successful write-rename cycle.
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("manifest.json");
+        let mut manifest = CacheManifest::default();
+        manifest.save_to_path(&path).unwrap();
+        assert!(!path.with_extension("json.tmp").exists());
     }
 }
