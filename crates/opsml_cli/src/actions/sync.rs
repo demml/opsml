@@ -12,16 +12,24 @@ use opsml_types::contracts::CardQueryArgs;
 use std::path::{Path, PathBuf};
 use tracing::instrument;
 
+/// Resolve the effective registry URL: `OPSML_TRACKING_URI` env var takes
+/// precedence over the `registry` field in the YAML.
+fn resolve_registry(yaml_registry: &str) -> String {
+    std::env::var("OPSML_TRACKING_URI").unwrap_or_else(|_| yaml_registry.to_string())
+}
+
 #[instrument(skip_all)]
 pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
-    let yaml_path = args
-        .path
-        .as_deref()
-        .unwrap_or(Path::new(".opsml-skills.yaml"));
+    let home = dirs::home_dir()
+        .ok_or_else(|| CliError::Error("Cannot determine home directory".into()))?;
 
-    let yaml = OpsmlSkillsYaml::load(yaml_path)?;
-
-    warn_if_insecure_registry(&yaml.registry);
+    let all_targets = [
+        PullTarget::ClaudeCode,
+        PullTarget::Codex,
+        PullTarget::GeminiCli,
+        PullTarget::GithubCopilot,
+    ];
+    let targets: &[PullTarget] = args.targets.as_deref().unwrap_or(&all_targets);
 
     let mut cache = CacheManifest::load().unwrap_or_else(|e| {
         eprintln!("warn: cache manifest unreadable ({e}), starting fresh");
@@ -32,25 +40,80 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
         SkillManifest::default()
     });
 
-    let all_targets = [
-        PullTarget::ClaudeCode,
-        PullTarget::Codex,
-        PullTarget::GeminiCli,
-        PullTarget::GithubCopilot,
-    ];
-    let targets: &[PullTarget] = args.targets.as_deref().unwrap_or(&all_targets);
-    let ttl = Duration::minutes(yaml.ttl_minutes.min(i64::MAX as u64) as i64);
+    // If --path is given, sync only that scope (backward compat / explicit override)
+    if let Some(path) = &args.path {
+        let yaml_path = if path.is_dir() {
+            path.join(".opsml-skills.yaml")
+        } else {
+            path.clone()
+        };
+        let is_global = yaml_path.starts_with(home.join(".opsml"));
+        return sync_one_layer(
+            &yaml_path, targets, is_global, args, &mut cache, &mut manifest,
+        );
+    }
 
-    let (mut pulled, mut skipped) = (0usize, 0usize);
+    // Default: sync both layers
+    // Layer 1: global (~/.opsml/skills.yaml)
+    let global_yaml = home.join(".opsml").join("skills.yaml");
+    if global_yaml.exists() {
+        if !args.quiet {
+            println!("{}", Colorize::purple("Global skills"));
+        }
+        sync_one_layer(
+            &global_yaml, targets, true, args, &mut cache, &mut manifest,
+        )?;
+    }
+
+    // Layer 2: project (.opsml-skills.yaml in CWD)
+    let project_yaml = PathBuf::from(".opsml-skills.yaml");
+    if project_yaml.exists() {
+        if !args.quiet {
+            println!("\n{}", Colorize::purple("Project skills"));
+        }
+        sync_one_layer(
+            &project_yaml, targets, false, args, &mut cache, &mut manifest,
+        )?;
+    }
+
+    Ok(())
+}
+
+fn sync_one_layer(
+    yaml_path: &Path,
+    targets: &[PullTarget],
+    is_global: bool,
+    args: &SyncArgs,
+    cache: &mut CacheManifest,
+    manifest: &mut SkillManifest,
+) -> Result<(), CliError> {
+    let yaml = OpsmlSkillsYaml::load(yaml_path)?;
+    let registry_url = resolve_registry(&yaml.registry);
+    warn_if_insecure_registry(&registry_url);
+
+    let ttl = Duration::minutes(yaml.ttl_minutes.min(i64::MAX as u64) as i64);
+    let project_root = yaml_path.parent().unwrap_or(Path::new("."));
+
+    let (mut pulled, mut skipped, mut not_found) = (0usize, 0usize, 0usize);
 
     for skill_ref in &yaml.skills {
-        // Version-agnostic key so "latest" always overwrites the previous pull.
-        let cache_key = format!("{}/{}", skill_ref.space, skill_ref.name);
+        let cache_key = if is_global {
+            format!("global/{}/{}", skill_ref.space, skill_ref.name)
+        } else {
+            let abs =
+                std::fs::canonicalize(project_root).unwrap_or_else(|_| project_root.to_path_buf());
+            format!(
+                "project:{}/{}/{}",
+                abs.display(),
+                skill_ref.space,
+                skill_ref.name
+            )
+        };
 
-        if !args.force && is_cache_fresh(&cache, &cache_key, ttl) {
+        if !args.force && is_cache_fresh(cache, &cache_key, ttl) {
             if !args.quiet {
                 println!(
-                    "{} {}/{} (cached)",
+                    "  {} {}/{} (cached)",
                     Colorize::purple("Skip"),
                     skill_ref.space,
                     skill_ref.name
@@ -79,7 +142,23 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
             .tempdir()
             .map_err(|e| CliError::Error(format!("Failed to create temp dir: {e}")))?;
 
-        download_card_from_registry(&query_args, tmp_dir.path().to_path_buf())?;
+        match download_card_from_registry(&query_args, tmp_dir.path().to_path_buf()) {
+            Ok(()) => {}
+            Err(e) => {
+                // Treat download failures as "not found" — warn and skip
+                if !args.quiet {
+                    eprintln!(
+                        "  {} {}/{} (not found on {}): {e}",
+                        Colorize::alert("Warn"),
+                        skill_ref.space,
+                        skill_ref.name,
+                        registry_url
+                    );
+                }
+                not_found += 1;
+                continue;
+            }
+        }
 
         let card_json = find_card_json(tmp_dir.path(), 0)?;
         let card = opsml_cards::SkillCard::from_path(card_json)?;
@@ -100,7 +179,11 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
         validate_artifact_name(&skill_ref.space)?;
 
         for target in targets {
-            let out = target.skill_path(&card.name);
+            let out = if is_global {
+                target.global_skill_path(&card.name)?
+            } else {
+                project_root.join(target.skill_path(&card.name))
+            };
             if let Some(parent) = out.parent() {
                 std::fs::create_dir_all(parent)?;
             }
@@ -127,7 +210,7 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
             content_hash: hash,
             uid: card.uid.clone(),
             installed_at: Utc::now(),
-            server_url: yaml.registry.clone(),
+            server_url: registry_url.clone(),
             targets: target_names,
         });
 
@@ -147,7 +230,7 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
 
         if !args.quiet {
             println!(
-                "{} {}/{} v{}",
+                "  {} {}/{} v{}",
                 Colorize::green("Synced"),
                 Colorize::purple(&card.space),
                 card.name,
@@ -158,7 +241,11 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
     }
 
     if !args.quiet {
-        println!("\n{pulled} synced, {skipped} skipped");
+        let mut parts = vec![format!("{pulled} synced"), format!("{skipped} cached")];
+        if not_found > 0 {
+            parts.push(format!("{not_found} not found"));
+        }
+        println!("  {}", parts.join(", "));
     }
     Ok(())
 }

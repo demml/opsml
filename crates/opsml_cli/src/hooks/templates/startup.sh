@@ -28,5 +28,6 @@ if command -v jq >/dev/null 2>&1; then
 fi
 
 # Run in background — must not block the session start
-"$OPSML_BIN" skill sync --quiet --path "$SKILLS_YAML" &
+# sync handles both global and project layers automatically
+"$OPSML_BIN" skill sync --quiet &
 exit 0

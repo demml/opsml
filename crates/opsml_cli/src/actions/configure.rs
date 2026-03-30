@@ -7,42 +7,44 @@ use std::fmt::Write as FmtWrite;
 use std::path::{Path, PathBuf};
 
 pub fn configure_cli(args: &ConfigureArgs) -> Result<(), CliError> {
-    let base = args.path.as_deref().unwrap_or(Path::new("."));
+    let home = dirs::home_dir()
+        .ok_or_else(|| CliError::Error("Cannot determine home directory".into()))?;
+    let opsml_dir = home.join(".opsml");
+    std::fs::create_dir_all(&opsml_dir)?;
 
-    // Scaffold .opsml-skills.yaml if missing
-    let yaml_path = base.join(".opsml-skills.yaml");
+    // Scaffold ~/.opsml/skills.yaml if missing
+    let yaml_path = opsml_dir.join("skills.yaml");
     if !yaml_path.exists() {
         OpsmlSkillsYaml::scaffold(&yaml_path)?;
         println!("{} {}", Colorize::green("Created"), yaml_path.display());
     }
 
-    // Idempotent .gitignore update
-    append_gitignore(base, ".opsml-cache/")?;
-
     if args.lazy {
-        configure_lazy(args, base)
+        configure_lazy(args, &opsml_dir, &yaml_path, &home)
     } else {
-        configure_eager(args, base)
+        configure_eager(args)
     }
 }
 
-fn configure_eager(args: &ConfigureArgs, base: &Path) -> Result<(), CliError> {
+fn configure_eager(args: &ConfigureArgs) -> Result<(), CliError> {
     sync_skills(&SyncArgs {
         force: false,
         quiet: false,
         targets: Some(args.target.to_pull_targets()),
-        path: Some(base.join(".opsml-skills.yaml")),
+        path: None, // both layers
     })
 }
 
-fn configure_lazy(args: &ConfigureArgs, base: &Path) -> Result<(), CliError> {
-    let hooks_dir = base.join(".opsml-cache").join("hooks");
+fn configure_lazy(
+    args: &ConfigureArgs,
+    opsml_dir: &Path,
+    yaml_path: &Path,
+    home: &Path,
+) -> Result<(), CliError> {
+    let hooks_dir = opsml_dir.join("hooks");
     std::fs::create_dir_all(&hooks_dir)?;
     let hook_path = hooks_dir.join("startup.sh");
 
-    // Resolve absolute paths at generation time so the hook is CWD-independent
-    let yaml_abs = std::fs::canonicalize(base.join(".opsml-skills.yaml"))
-        .unwrap_or_else(|_| base.join(".opsml-skills.yaml"));
     let opsml_bin = std::env::current_exe()
         .unwrap_or_else(|_| PathBuf::from("opsml"))
         .to_string_lossy()
@@ -50,7 +52,7 @@ fn configure_lazy(args: &ConfigureArgs, base: &Path) -> Result<(), CliError> {
 
     let hook_content = crate::hooks::STARTUP_SH
         .replace("__OPSML_BIN__", &opsml_bin)
-        .replace("__OPSML_SKILLS_YAML__", &yaml_abs.to_string_lossy());
+        .replace("__OPSML_SKILLS_YAML__", &yaml_path.to_string_lossy());
 
     std::fs::write(&hook_path, hook_content)?;
 
@@ -62,34 +64,11 @@ fn configure_lazy(args: &ConfigureArgs, base: &Path) -> Result<(), CliError> {
 
     println!("{} {}", Colorize::green("Created"), hook_path.display());
 
-    let hook_cmd = format!(
-        "\"{}\" skill sync --quiet --path \"{}\"",
-        opsml_bin,
-        yaml_abs.display()
-    );
+    // sync with no --path → both layers
+    let hook_cmd = format!("\"{}\" skill sync --quiet", opsml_bin);
     for target in &args.target.to_pull_targets() {
-        register_hook(target, base, &hook_cmd)?;
+        register_hook(target, home, &hook_cmd)?;
     }
-    Ok(())
-}
-
-/// Idempotent: appends `entry` to .gitignore only if not already present.
-fn append_gitignore(base: &Path, entry: &str) -> Result<(), CliError> {
-    let path = base.join(".gitignore");
-    let existing = if path.exists() {
-        std::fs::read_to_string(&path)?
-    } else {
-        String::new()
-    };
-    if existing.lines().any(|l| l.trim() == entry) {
-        return Ok(());
-    }
-    let mut content = existing;
-    if !content.is_empty() && !content.ends_with('\n') {
-        content.push('\n');
-    }
-    let _ = writeln!(content, "{entry}");
-    std::fs::write(&path, content)?;
     Ok(())
 }
 
@@ -207,60 +186,28 @@ mod tests {
     use tempfile::tempdir;
 
     #[test]
-    fn test_append_gitignore_creates_file() {
-        let dir = tempdir().unwrap();
-        append_gitignore(dir.path(), ".opsml-cache/").unwrap();
-        let content = std::fs::read_to_string(dir.path().join(".gitignore")).unwrap();
-        assert!(content.contains(".opsml-cache/"));
-    }
+    fn test_configure_cli_creates_yaml_in_home() {
+        let home = tempdir().unwrap();
+        let opsml_dir = home.path().join(".opsml");
+        std::fs::create_dir_all(&opsml_dir).unwrap();
+        let yaml_path = opsml_dir.join("skills.yaml");
 
-    #[test]
-    fn test_append_gitignore_is_idempotent() {
-        let dir = tempdir().unwrap();
-        append_gitignore(dir.path(), ".opsml-cache/").unwrap();
-        append_gitignore(dir.path(), ".opsml-cache/").unwrap();
-        let content = std::fs::read_to_string(dir.path().join(".gitignore")).unwrap();
-        assert_eq!(content.matches(".opsml-cache/").count(), 1);
-    }
-
-    #[test]
-    fn test_append_gitignore_preserves_existing_content() {
-        let dir = tempdir().unwrap();
-        std::fs::write(dir.path().join(".gitignore"), "target/\n").unwrap();
-        append_gitignore(dir.path(), ".opsml-cache/").unwrap();
-        let content = std::fs::read_to_string(dir.path().join(".gitignore")).unwrap();
-        assert!(content.contains("target/"));
-        assert!(content.contains(".opsml-cache/"));
-    }
-
-    #[test]
-    fn test_configure_cli_creates_yaml() {
-        let dir = tempdir().unwrap();
-        let args = ConfigureArgs {
-            target: crate::cli::arg::ConfigureTarget::ClaudeCode,
-            lazy: true, // use lazy to avoid hitting registry
-            path: Some(dir.path().to_path_buf()),
-        };
-        // will fail at hook writing since we don't have full lazy impl deps here
-        // but yaml creation should succeed first
-        let _ = configure_cli(&args);
-        assert!(
-            dir.path().join(".opsml-skills.yaml").exists(),
-            ".opsml-skills.yaml must be created"
-        );
+        // Test that scaffold creates the file
+        OpsmlSkillsYaml::scaffold(&yaml_path).unwrap();
+        assert!(yaml_path.exists());
     }
 
     #[test]
     fn test_configure_cli_does_not_overwrite_existing_yaml() {
-        let dir = tempdir().unwrap();
-        let yaml_path = dir.path().join(".opsml-skills.yaml");
+        let home = tempdir().unwrap();
+        let opsml_dir = home.path().join(".opsml");
+        std::fs::create_dir_all(&opsml_dir).unwrap();
+        let yaml_path = opsml_dir.join("skills.yaml");
         std::fs::write(&yaml_path, "registry: http://custom.example.com\n").unwrap();
-        let args = ConfigureArgs {
-            target: crate::cli::arg::ConfigureTarget::ClaudeCode,
-            lazy: true,
-            path: Some(dir.path().to_path_buf()),
-        };
-        let _ = configure_cli(&args);
+
+        // scaffold should fail since file exists
+        assert!(OpsmlSkillsYaml::scaffold(&yaml_path).is_err());
+
         let content = std::fs::read_to_string(&yaml_path).unwrap();
         assert!(
             content.contains("custom.example.com"),
@@ -271,7 +218,7 @@ mod tests {
     #[test]
     fn test_register_claude_hook_creates_settings_json() {
         let dir = tempdir().unwrap();
-        register_claude_hook(dir.path(), "bash .opsml-cache/hooks/startup.sh").unwrap();
+        register_claude_hook(dir.path(), "opsml skill sync --quiet").unwrap();
         let content = std::fs::read_to_string(dir.path().join(".claude/settings.json")).unwrap();
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
         assert!(v["hooks"]["UserPromptSubmit"].is_array());
@@ -287,7 +234,7 @@ mod tests {
             r#"{"some_other_key": true}"#,
         )
         .unwrap();
-        register_claude_hook(dir.path(), "bash .opsml-cache/hooks/startup.sh").unwrap();
+        register_claude_hook(dir.path(), "opsml skill sync --quiet").unwrap();
         let content = std::fs::read_to_string(settings_dir.join("settings.json")).unwrap();
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
         assert!(
@@ -300,7 +247,7 @@ mod tests {
     #[test]
     fn test_register_codex_hook_is_idempotent() {
         let dir = tempdir().unwrap();
-        let cmd = "bash .opsml-cache/hooks/startup.sh";
+        let cmd = "opsml skill sync --quiet";
         register_codex_hook(dir.path(), cmd).unwrap();
         register_codex_hook(dir.path(), cmd).unwrap();
         let content = std::fs::read_to_string(dir.path().join(".codex/startup.sh")).unwrap();
@@ -310,7 +257,7 @@ mod tests {
     #[test]
     fn test_register_gemini_hook_creates_settings_json() {
         let dir = tempdir().unwrap();
-        register_gemini_hook(dir.path(), "bash .opsml-cache/hooks/startup.sh").unwrap();
+        register_gemini_hook(dir.path(), "opsml skill sync --quiet").unwrap();
         let content = std::fs::read_to_string(dir.path().join(".gemini/settings.json")).unwrap();
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
         assert!(v["startup_hook"].as_str().is_some());
@@ -319,7 +266,7 @@ mod tests {
     #[test]
     fn test_register_github_copilot_hook_creates_startup_sh() {
         let dir = tempdir().unwrap();
-        register_github_copilot_hook(dir.path(), "bash .opsml-cache/hooks/startup.sh").unwrap();
+        register_github_copilot_hook(dir.path(), "opsml skill sync --quiet").unwrap();
         assert!(dir.path().join(".github/copilot/startup.sh").exists());
     }
 
@@ -341,34 +288,11 @@ mod tests {
     #[test]
     fn test_register_gemini_hook_is_idempotent() {
         let dir = tempdir().unwrap();
-        let cmd = "bash .opsml-cache/hooks/startup.sh";
+        let cmd = "opsml skill sync --quiet";
         register_gemini_hook(dir.path(), cmd).unwrap();
         register_gemini_hook(dir.path(), cmd).unwrap();
         let content = std::fs::read_to_string(dir.path().join(".gemini/settings.json")).unwrap();
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
         assert_eq!(v["startup_hook"].as_str(), Some(cmd));
-    }
-
-    #[test]
-    fn test_configure_eager_with_empty_skills() {
-        let dir = tempdir().unwrap();
-        std::fs::write(
-            dir.path().join(".opsml-skills.yaml"),
-            "registry: http://localhost:3000\nttl_minutes: 60\nskills: []\n",
-        )
-        .unwrap();
-        let args = ConfigureArgs {
-            target: crate::cli::arg::ConfigureTarget::ClaudeCode,
-            lazy: false,
-            path: Some(dir.path().to_path_buf()),
-        };
-        let _ = configure_cli(&args);
-        let content = std::fs::read_to_string(dir.path().join(".opsml-skills.yaml")).unwrap();
-        assert!(
-            content.contains("localhost:3000"),
-            "yaml must not be overwritten"
-        );
-        let gitignore = std::fs::read_to_string(dir.path().join(".gitignore")).unwrap();
-        assert!(gitignore.contains(".opsml-cache/"));
     }
 }

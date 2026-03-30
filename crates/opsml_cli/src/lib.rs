@@ -4,7 +4,7 @@ pub mod error;
 mod hooks;
 
 use crate::actions::configure::configure_cli;
-use crate::actions::skill::{init_skill, list_skills, pull_skill, push_skill};
+use crate::actions::skill::{init_skill, list_skills, pull_skill, push_skill, remove_skill};
 use crate::actions::sync::sync_skills;
 pub use crate::actions::{download_card, download_service, list_cards};
 use crate::cli::{
@@ -149,6 +149,9 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             SkillCommands::List(args) => list_skills(args).context("Failed to list skills"),
             SkillCommands::Init(args) => init_skill(args).context("Failed to init skill"),
             SkillCommands::Sync(args) => sync_skills(args).context("Failed to sync skills"),
+            SkillCommands::Remove(args) => {
+                remove_skill(args).context("Failed to remove skill")
+            }
         },
 
         Some(Commands::Configure(args)) => {

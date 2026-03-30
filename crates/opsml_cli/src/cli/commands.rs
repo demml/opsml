@@ -1,6 +1,6 @@
 use crate::cli::arg::{
     ConfigureArgs, DownloadCard, KeyArgs, ListCards, LockArgs, RegisterArgs, ScouterArgs,
-    SkillInitArgs, SkillListArgs, SkillPullArgs, SkillPushArgs, SyncArgs, UiArgs,
+    SkillInitArgs, SkillListArgs, SkillPullArgs, SkillPushArgs, SkillRemoveArgs, SyncArgs, UiArgs,
 };
 use clap::Parser;
 use clap::Subcommand;
@@ -266,6 +266,13 @@ pub enum SkillCommands {
     /// opsml skill sync --force
     /// opsml skill sync --quiet
     Sync(SyncArgs),
+
+    /// Remove a skill from the local environment and skills.yaml
+    ///
+    /// # Example
+    /// opsml skill remove my-space/my-skill
+    /// opsml skill remove my-skill --space my-space --local
+    Remove(SkillRemoveArgs),
 }
 
 pub const LOGO_TEXT: &str = "

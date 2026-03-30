@@ -366,9 +366,13 @@ pub struct SkillPullArgs {
     #[arg(long = "output")]
     pub output: Option<PathBuf>,
 
-    /// Write to user home directory instead of current directory
-    #[arg(long = "global", default_value = "false")]
-    pub global: bool,
+    /// Write to current directory instead of home directory
+    #[arg(long = "local", default_value = "false")]
+    pub local: bool,
+
+    /// Pull without adding to skills.yaml
+    #[arg(long = "no-track", default_value = "false")]
+    pub no_track: bool,
 }
 
 #[derive(Args, Clone)]
@@ -403,6 +407,20 @@ pub struct SkillInitArgs {
     /// Output path (defaults to ./SKILL.md)
     #[arg(long = "output")]
     pub output: Option<PathBuf>,
+}
+
+#[derive(Args, Clone)]
+pub struct SkillRemoveArgs {
+    /// Skill identifier (space/name or just name with --space)
+    pub name: String,
+
+    /// Space (alternative to space/name format)
+    #[arg(long = "space")]
+    pub space: Option<String>,
+
+    /// Remove from project scope instead of global
+    #[arg(long = "local", default_value = "false")]
+    pub local: bool,
 }
 
 #[derive(Args, Clone)]
@@ -464,10 +482,6 @@ pub struct ConfigureArgs {
     /// Lazy mode: write startup hook instead of pulling skills immediately
     #[arg(long = "lazy", default_value = "false")]
     pub lazy: bool,
-
-    /// Base directory for writing files (defaults to current directory)
-    #[arg(long = "path")]
-    pub path: Option<PathBuf>,
 }
 
 #[cfg(test)]
