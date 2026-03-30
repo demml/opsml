@@ -787,6 +787,44 @@ impl Default for SkillCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct SubAgentCardClientRecord {
+    pub uid: String,
+    pub created_at: DateTime<Utc>,
+    pub app_env: String,
+    pub space: String,
+    pub name: String,
+    pub version: String,
+    pub tags: Vec<String>,
+    pub opsml_version: String,
+    pub username: String,
+    pub compatible_clis: Vec<String>,
+    pub content_hash: Option<Vec<u8>>,
+    pub download_count: i64,
+    pub description: Option<String>,
+}
+
+impl Default for SubAgentCardClientRecord {
+    fn default() -> Self {
+        Self {
+            uid: "".to_string(),
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
+            space: "".to_string(),
+            name: "".to_string(),
+            version: "".to_string(),
+            tags: Vec::new(),
+            opsml_version: opsml_version::version(),
+            username: "guest".to_string(),
+            compatible_clis: Vec::new(),
+            content_hash: None,
+            download_count: 0,
+            description: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 #[pyclass]
 pub enum CardRecord {
@@ -797,6 +835,7 @@ pub enum CardRecord {
     Prompt(PromptCardClientRecord),
     Service(Box<ServiceCardClientRecord>),
     Skill(SkillCardClientRecord),
+    SubAgent(SubAgentCardClientRecord),
 }
 
 #[pymethods]
@@ -815,6 +854,7 @@ impl CardRecord {
             Self::Prompt(card) => &card.uid,
             Self::Service(card) => &card.uid,
             Self::Skill(card) => &card.uid,
+            Self::SubAgent(card) => &card.uid,
         }
     }
 
@@ -828,6 +868,7 @@ impl CardRecord {
             Self::Prompt(card) => card.created_at,
             Self::Service(card) => card.created_at,
             Self::Skill(card) => card.created_at,
+            Self::SubAgent(card) => card.created_at,
         }
     }
 
@@ -841,6 +882,7 @@ impl CardRecord {
             Self::Prompt(card) => card.app_env.as_ref(),
             Self::Service(card) => card.app_env.as_ref(),
             Self::Skill(card) => card.app_env.as_ref(),
+            Self::SubAgent(card) => card.app_env.as_ref(),
         }
     }
 
@@ -854,6 +896,7 @@ impl CardRecord {
             Self::Prompt(card) => card.name.as_ref(),
             Self::Service(card) => card.name.as_ref(),
             Self::Skill(card) => card.name.as_ref(),
+            Self::SubAgent(card) => card.name.as_ref(),
         }
     }
 
@@ -867,6 +910,7 @@ impl CardRecord {
             Self::Prompt(card) => card.space.as_ref(),
             Self::Service(card) => card.space.as_ref(),
             Self::Skill(card) => card.space.as_ref(),
+            Self::SubAgent(card) => card.space.as_ref(),
         }
     }
 
@@ -880,6 +924,7 @@ impl CardRecord {
             Self::Prompt(card) => card.version.as_ref(),
             Self::Service(card) => card.version.as_ref(),
             Self::Skill(card) => card.version.as_ref(),
+            Self::SubAgent(card) => card.version.as_ref(),
         }
     }
 
@@ -894,6 +939,7 @@ impl CardRecord {
             Self::Prompt(card) => &card.tags,
             Self::Service(_card) => &EMPTY_TAGS,
             Self::Skill(card) => &card.tags,
+            Self::SubAgent(card) => &card.tags,
         }
     }
 
@@ -907,6 +953,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -922,6 +969,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -935,6 +983,7 @@ impl CardRecord {
             Self::Prompt(card) => Some(vec![&card.uid]),
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -953,6 +1002,7 @@ impl CardRecord {
             Self::Prompt(card) => Some(vec![&card.experimentcard_uid.as_deref().unwrap()]),
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -966,6 +1016,7 @@ impl CardRecord {
             Self::Prompt(card) => card.auditcard_uid.as_deref(),
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -979,6 +1030,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -992,6 +1044,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -1005,6 +1058,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -1018,6 +1072,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 }
@@ -1032,6 +1087,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(card) => Some(card.cards.clone()),
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -1104,6 +1160,16 @@ impl CardRecord {
                 );
                 Ok(Path::new(&uri).to_path_buf())
             }
+            Self::SubAgent(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::SubAgent,
+                    card.space,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
         }
     }
 
@@ -1116,6 +1182,7 @@ impl CardRecord {
             Self::Prompt(_) => RegistryType::Prompt,
             Self::Service(card) => RegistryType::from(&card.service_type),
             Self::Skill(_) => RegistryType::Skill,
+            Self::SubAgent(_) => RegistryType::SubAgent,
         }
     }
 }
