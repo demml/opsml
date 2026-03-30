@@ -103,7 +103,11 @@ fn sync_one_layer(
     if yaml.ttl_minutes == 0 {
         eprintln!("warn: ttl_minutes is 0 — treating as 1 minute (always re-fetch)");
     }
-    let ttl_mins = i64::try_from(yaml.ttl_minutes).unwrap_or(i64::MAX).max(1);
+    const MAX_TTL_MINUTES: i64 = i64::MAX / 60;
+    let ttl_mins = i64::try_from(yaml.ttl_minutes)
+        .unwrap_or(MAX_TTL_MINUTES)
+        .min(MAX_TTL_MINUTES)
+        .max(1);
     let ttl = Duration::minutes(ttl_mins);
     let project_root = yaml_path.parent().unwrap_or(Path::new("."));
 
@@ -113,8 +117,9 @@ fn sync_one_layer(
         let cache_key = if is_global {
             format!("global/{}/{}", skill_ref.space, skill_ref.name)
         } else {
-            let abs =
-                std::fs::canonicalize(project_root).unwrap_or_else(|_| project_root.to_path_buf());
+            let abs = std::fs::canonicalize(project_root)
+                .or_else(|_| std::fs::canonicalize("."))
+                .unwrap_or_else(|_| project_root.to_path_buf());
             format!(
                 "project:{}/{}/{}",
                 abs.display(),
