@@ -19,7 +19,9 @@ if command -v jq >/dev/null 2>&1; then
         if date --version >/dev/null 2>&1; then
             FETCHED=$(date -d "$GENERATED_AT" +%s 2>/dev/null || echo 0)
         else
-            FETCHED=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "${GENERATED_AT%%.*}Z" +%s 2>/dev/null || echo 0)
+            local_ts="${GENERATED_AT%Z}"
+            local_ts="${local_ts%%.*}"
+            FETCHED=$(date -j -f "%Y-%m-%dT%H:%M:%SZ" "${local_ts}Z" +%s 2>/dev/null || echo 0)
         fi
         NOW=$(date +%s)
         AGE=$(( NOW - FETCHED ))

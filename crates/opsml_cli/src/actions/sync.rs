@@ -196,7 +196,7 @@ fn sync_one_layer(
                 });
 
         validate_artifact_name(&card.name)?;
-        validate_artifact_name(&skill_ref.space)?;
+        validate_artifact_name(&space)?;
 
         let mut first_out: Option<PathBuf> = None;
         for target in targets {
@@ -262,6 +262,12 @@ fn sync_one_layer(
             );
         }
         pulled += 1;
+    }
+
+    // Always update generated_at so the startup hook knows sync ran recently,
+    // even if every skill was a cache hit and no individual saves occurred.
+    if let Err(e) = cache.save() {
+        eprintln!("warn: failed to update cache generated_at: {e}");
     }
 
     if !args.quiet {
