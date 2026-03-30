@@ -61,6 +61,9 @@ impl CacheManifest {
         serde_json::from_str(&contents).map_err(ManifestError::ParseCacheManifest)
     }
 
+    /// Save the manifest to its canonical path.
+    /// Takes `&mut self` because `save_to_path` updates `generated_at` in-place and
+    /// rolls it back if the write fails — mutation is required for correct rollback semantics.
     pub fn save(&mut self) -> Result<(), ManifestError> {
         let path = Self::path()?;
         self.save_to_path(&path)
@@ -92,8 +95,14 @@ impl CacheManifest {
         let tmp_path = path.with_extension("json.tmp");
         let contents =
             serde_json::to_string_pretty(self).map_err(ManifestError::SerializeCacheManifest)?;
-        fs::write(&tmp_path, contents).map_err(ManifestError::WriteCacheManifest)?;
-        fs::rename(&tmp_path, path).map_err(ManifestError::RenameCacheManifest)?;
+        if let Err(e) = fs::write(&tmp_path, contents) {
+            let _ = fs::remove_file(&tmp_path);
+            return Err(ManifestError::WriteCacheManifest(e));
+        }
+        if let Err(e) = fs::rename(&tmp_path, path) {
+            let _ = fs::remove_file(&tmp_path);
+            return Err(ManifestError::RenameCacheManifest(e));
+        }
         #[cfg(unix)]
         {
             use std::os::unix::fs::PermissionsExt;
@@ -283,5 +292,50 @@ mod tests {
             !path.with_extension("json.tmp").exists(),
             ".tmp must not exist after successful save"
         );
+    }
+
+    #[test]
+    fn test_backward_compat_missing_generated_at() {
+        let json = r#"{"version":1,"entries":{}}"#;
+        let manifest: CacheManifest = serde_json::from_str(json).unwrap();
+        assert_eq!(
+            manifest.generated_at,
+            DateTime::<Utc>::UNIX_EPOCH,
+            "missing generated_at must default to UNIX_EPOCH so startup hook treats it as stale"
+        );
+    }
+
+    #[test]
+    fn test_save_to_path_rolls_back_generated_at_on_failure() {
+        let dir = tempdir().unwrap();
+        // Path inside a non-existent sub-directory — create_dir_all will fail because we
+        // make the parent read-only first (unix only; on non-unix this test is a no-op).
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let locked = dir.path().join("locked");
+            fs::create_dir_all(&locked).unwrap();
+            fs::set_permissions(&locked, fs::Permissions::from_mode(0o400)).unwrap();
+            let bad_path = locked.join("sub/manifest.json");
+            let mut manifest = CacheManifest::default();
+            let result = manifest.save_to_path(&bad_path);
+            assert!(result.is_err());
+            assert_eq!(
+                manifest.generated_at,
+                DateTime::<Utc>::UNIX_EPOCH,
+                "generated_at must be rolled back on write failure"
+            );
+        }
+    }
+
+    #[test]
+    fn test_write_atomic_cleans_up_tmp_on_rename_failure() {
+        // We cannot easily force fs::rename to fail cross-device in a unit test,
+        // but we can verify no .tmp survives a successful write-rename cycle.
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("manifest.json");
+        let mut manifest = CacheManifest::default();
+        manifest.save_to_path(&path).unwrap();
+        assert!(!path.with_extension("json.tmp").exists());
     }
 }

@@ -46,7 +46,7 @@ impl OpsmlSkillsYaml {
             std::fs::create_dir_all(parent).map_err(PyProjectTomlError::FailedToWriteSkillsYaml)?;
         }
         let template = concat!(
-            "registry: http://localhost:8000\n",
+            "registry: https://your-opsml-registry.example.com\n",
             "ttl_minutes: 60\n",
             "skills:\n",
             "  - space: my-space\n",
@@ -57,14 +57,21 @@ impl OpsmlSkillsYaml {
     }
 
     /// Append a skill entry if not already present. Creates the file if missing.
-    pub fn append_skill(path: &Path, skill: &ArtifactRef) -> Result<(), PyProjectTomlError> {
+    /// `registry` is used only when creating a new file; pass the resolved registry URL.
+    /// Returns `Err(RegistryRequired)` if `registry` is empty and the file does not exist.
+    pub fn append_skill(
+        path: &Path,
+        skill: &ArtifactRef,
+        registry: &str,
+    ) -> Result<(), PyProjectTomlError> {
         let mut yaml = if path.exists() {
             Self::load(path)?
         } else {
-            let registry = std::env::var("OPSML_TRACKING_URI")
-                .unwrap_or_else(|_| "http://localhost:8000".to_string());
+            if registry.is_empty() {
+                return Err(PyProjectTomlError::RegistryRequired);
+            }
             OpsmlSkillsYaml {
-                registry,
+                registry: registry.to_string(),
                 ttl_minutes: 60,
                 skills: Vec::new(),
                 tools: Vec::new(),
@@ -82,13 +89,13 @@ impl OpsmlSkillsYaml {
 
         yaml.skills.push(skill.clone());
 
-        let content =
-            serde_yaml::to_string(&yaml).map_err(PyProjectTomlError::FailedToParseSkillsYaml)?;
+        let content = serde_yaml::to_string(&yaml)
+            .map_err(PyProjectTomlError::FailedToSerializeSkillsYaml)?;
         if let Some(parent) = path.parent() {
             std::fs::create_dir_all(parent)
                 .map_err(PyProjectTomlError::FailedToWriteSkillsYaml)?;
         }
-        std::fs::write(path, content).map_err(PyProjectTomlError::FailedToWriteSkillsYaml)
+        write_atomic_yaml(path, &content)
     }
 
     /// Remove a skill entry by space + name. No-op if not found.
@@ -103,10 +110,25 @@ impl OpsmlSkillsYaml {
         let mut yaml = Self::load(path)?;
         yaml.skills
             .retain(|s| !(s.space == space && s.name == name));
-        let content =
-            serde_yaml::to_string(&yaml).map_err(PyProjectTomlError::FailedToParseSkillsYaml)?;
-        std::fs::write(path, content).map_err(PyProjectTomlError::FailedToWriteSkillsYaml)
+        let content = serde_yaml::to_string(&yaml)
+            .map_err(PyProjectTomlError::FailedToSerializeSkillsYaml)?;
+        write_atomic_yaml(path, &content)
     }
+}
+
+/// Write `content` to `path` atomically via a `.tmp` side-car and rename.
+/// The `.tmp` file is cleaned up on any error.
+fn write_atomic_yaml(path: &Path, content: &str) -> Result<(), PyProjectTomlError> {
+    let tmp = path.with_extension("yaml.tmp");
+    if let Err(e) = std::fs::write(&tmp, content) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(PyProjectTomlError::FailedToWriteSkillsYaml(e));
+    }
+    if let Err(e) = std::fs::rename(&tmp, path) {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(PyProjectTomlError::FailedToWriteSkillsYaml(e));
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -120,7 +142,7 @@ mod tests {
         let path = dir.path().join(".opsml-skills.yaml");
         OpsmlSkillsYaml::scaffold(&path).unwrap();
         let yaml = OpsmlSkillsYaml::load(&path).unwrap();
-        assert_eq!(yaml.registry, "http://localhost:8000");
+        assert_eq!(yaml.registry, "https://your-opsml-registry.example.com");
         assert_eq!(yaml.ttl_minutes, 60);
         assert_eq!(yaml.skills.len(), 1);
         assert_eq!(yaml.skills[0].space, "my-space");
@@ -174,11 +196,12 @@ mod tests {
             name: "my-skill".into(),
             version: Some("1.0.0".into()),
         };
-        OpsmlSkillsYaml::append_skill(&path, &skill).unwrap();
+        OpsmlSkillsYaml::append_skill(&path, &skill, "https://registry.example.com").unwrap();
         assert!(path.exists());
         let yaml = OpsmlSkillsYaml::load(&path).unwrap();
         assert_eq!(yaml.skills.len(), 1);
         assert_eq!(yaml.skills[0].name, "my-skill");
+        assert_eq!(yaml.registry, "https://registry.example.com");
     }
 
     #[test]
@@ -190,8 +213,8 @@ mod tests {
             name: "my-skill".into(),
             version: None,
         };
-        OpsmlSkillsYaml::append_skill(&path, &skill).unwrap();
-        OpsmlSkillsYaml::append_skill(&path, &skill).unwrap();
+        OpsmlSkillsYaml::append_skill(&path, &skill, "https://registry.example.com").unwrap();
+        OpsmlSkillsYaml::append_skill(&path, &skill, "https://registry.example.com").unwrap();
         let yaml = OpsmlSkillsYaml::load(&path).unwrap();
         assert_eq!(yaml.skills.len(), 1);
     }
@@ -205,7 +228,7 @@ mod tests {
             name: "my-skill".into(),
             version: None,
         };
-        OpsmlSkillsYaml::append_skill(&path, &skill).unwrap();
+        OpsmlSkillsYaml::append_skill(&path, &skill, "https://registry.example.com").unwrap();
         OpsmlSkillsYaml::remove_skill(&path, "team", "my-skill").unwrap();
         let yaml = OpsmlSkillsYaml::load(&path).unwrap();
         assert!(yaml.skills.is_empty());
@@ -217,6 +240,20 @@ mod tests {
         let path = dir.path().join("skills.yaml");
         // File doesn't exist — no-op
         assert!(OpsmlSkillsYaml::remove_skill(&path, "team", "nope").is_ok());
+    }
+
+    #[test]
+    fn test_append_skill_requires_registry_when_file_missing() {
+        let dir = tempdir().unwrap();
+        let path = dir.path().join("skills.yaml");
+        let skill = ArtifactRef {
+            space: "team".into(),
+            name: "my-skill".into(),
+            version: None,
+        };
+        let result = OpsmlSkillsYaml::append_skill(&path, &skill, "");
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("OPSML_TRACKING_URI"));
     }
 
     #[test]

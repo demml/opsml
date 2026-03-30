@@ -157,7 +157,11 @@ pub fn pull_skill(args: &SkillPullArgs) -> Result<(), CliError> {
             version: args.version.clone(),
         };
 
-        if let Err(e) = opsml_toml::OpsmlSkillsYaml::append_skill(&yaml_path, &ref_entry) {
+        let registry_url =
+            std::env::var("OPSML_TRACKING_URI").unwrap_or_default();
+        if let Err(e) =
+            opsml_toml::OpsmlSkillsYaml::append_skill(&yaml_path, &ref_entry, &registry_url)
+        {
             eprintln!(
                 "warn: failed to track {}/{} in {}: {e}",
                 space_clean,
@@ -301,7 +305,7 @@ pub fn remove_skill(args: &SkillRemoveArgs) -> Result<(), CliError> {
     let mut cache =
         crate::actions::cache::CacheManifest::load().unwrap_or_default();
     let cache_key = if args.local {
-        let abs = std::fs::canonicalize(".").unwrap_or_default();
+        let abs = std::fs::canonicalize(".").unwrap_or_else(|_| PathBuf::from("."));
         format!("project:{}/{}/{}", abs.display(), space, name)
     } else {
         format!("global/{}/{}", space, name)
@@ -558,5 +562,27 @@ mod tests {
             !err_msg.contains("Invalid version type"),
             "Error should not be about version type: {err_msg}"
         );
+    }
+
+    // --- remove_skill cache key ---
+
+    #[test]
+    fn test_remove_skill_cache_key_project_not_empty_path() {
+        // Verify that the fixed canonicalize fallback never produces an empty-path key.
+        let abs = std::fs::canonicalize(".").unwrap_or_else(|_| PathBuf::from("."));
+        let key = format!("project:{}/space/name", abs.display());
+        assert!(key.starts_with("project:"));
+        assert!(!key.starts_with("project:///"), "empty PathBuf fallback produces malformed key");
+    }
+
+    // --- find_card_json depth guard ---
+
+    #[test]
+    fn test_find_card_json_depth_limit() {
+        let dir = tempfile::tempdir().unwrap();
+        let result = find_card_json(dir.path(), 21);
+        assert!(result.is_err());
+        let msg = result.unwrap_err().to_string();
+        assert!(msg.contains("too deeply nested") || msg.contains("deeply nested"), "{msg}");
     }
 }

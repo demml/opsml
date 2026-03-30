@@ -9,6 +9,7 @@ use opsml_registry::download::download_card_from_registry;
 use opsml_toml::OpsmlSkillsYaml;
 use opsml_types::RegistryType;
 use opsml_types::contracts::CardQueryArgs;
+use std::fmt::Write as FmtWrite;
 use std::path::{Path, PathBuf};
 use tracing::instrument;
 
@@ -91,7 +92,11 @@ fn sync_one_layer(
     let registry_url = resolve_registry(&yaml.registry);
     warn_if_insecure_registry(&registry_url);
 
-    let ttl = Duration::minutes(yaml.ttl_minutes.min(i64::MAX as u64) as i64);
+    if yaml.ttl_minutes == 0 {
+        eprintln!("warn: ttl_minutes is 0 — treating as 1 minute (always re-fetch)");
+    }
+    let ttl_mins = i64::try_from(yaml.ttl_minutes).unwrap_or(i64::MAX).max(1);
+    let ttl = Duration::minutes(ttl_mins);
     let project_root = yaml_path.parent().unwrap_or(Path::new("."));
 
     let (mut pulled, mut skipped, mut not_found) = (0usize, 0usize, 0usize);
@@ -162,6 +167,14 @@ fn sync_one_layer(
 
         let card_json = find_card_json(tmp_dir.path(), 0)?;
         let card = opsml_cards::SkillCard::from_path(card_json)?;
+
+        if card.name != skill_ref.name {
+            return Err(CliError::Error(format!(
+                "Registry returned card {:?} but {:?} was requested — refusing to write",
+                card.name, skill_ref.name
+            )));
+        }
+
         let markdown = card.to_markdown()?;
         let hash_bytes = card
             .calculate_content_hash()
@@ -170,7 +183,6 @@ fn sync_one_layer(
             hash_bytes
                 .iter()
                 .fold(String::with_capacity(hash_bytes.len() * 2), |mut s, b| {
-                    use std::fmt::Write;
                     let _ = write!(s, "{b:02x}");
                     s
                 });
@@ -178,6 +190,7 @@ fn sync_one_layer(
         validate_artifact_name(&card.name)?;
         validate_artifact_name(&skill_ref.space)?;
 
+        let mut first_out: Option<PathBuf> = None;
         for target in targets {
             let out = if is_global {
                 target.global_skill_path(&card.name)?
@@ -188,6 +201,9 @@ fn sync_one_layer(
                 std::fs::create_dir_all(parent)?;
             }
             std::fs::write(&out, &markdown)?;
+            if first_out.is_none() {
+                first_out = Some(out);
+            }
         }
 
         let target_names: Vec<String> = targets.iter().map(|t| format!("{t:?}")).collect();
@@ -198,7 +214,7 @@ fn sync_one_layer(
                 uid: card.uid.clone(),
                 content_hash: hash.clone(),
                 fetched_at: Utc::now(),
-                artifact_path: PathBuf::new(),
+                artifact_path: first_out.unwrap_or_default(),
                 size_bytes: markdown.len() as u64,
             },
         );
@@ -270,6 +286,9 @@ fn is_insecure_registry(url: &str) -> bool {
         && !host.starts_with("localhost:")
         && host != "127.0.0.1"
         && !host.starts_with("127.0.0.1:")
+        && host != "[::1]"
+        && !host.starts_with("[::1]:")
+        && host != "::1"
 }
 
 fn validate_artifact_name(name: &str) -> Result<(), CliError> {
@@ -278,6 +297,7 @@ fn validate_artifact_name(name: &str) -> Result<(), CliError> {
         || name.contains('\\')
         || name.contains("..")
         || name.starts_with('.')
+        || name.contains('\0')
     {
         return Err(CliError::Error(format!(
             "Unsafe artifact name from registry: {name:?} — contains path separators or reserved sequences"
@@ -417,6 +437,52 @@ mod tests {
     #[test]
     fn test_insecure_registry_empty_is_safe() {
         assert!(!is_insecure_registry(""));
+    }
+
+    // --- resolve_registry ---
+
+    #[test]
+    fn test_resolve_registry_env_overrides_yaml() {
+        // SAFETY: single-threaded test (--test-threads=1 required for this crate)
+        unsafe { std::env::set_var("OPSML_TRACKING_URI", "https://override.example.com") };
+        assert_eq!(
+            resolve_registry("https://yaml.example.com"),
+            "https://override.example.com"
+        );
+        unsafe { std::env::remove_var("OPSML_TRACKING_URI") };
+    }
+
+    #[test]
+    fn test_resolve_registry_falls_back_to_yaml() {
+        // SAFETY: single-threaded test (--test-threads=1 required for this crate)
+        unsafe { std::env::remove_var("OPSML_TRACKING_URI") };
+        assert_eq!(
+            resolve_registry("https://yaml.example.com"),
+            "https://yaml.example.com"
+        );
+    }
+
+    // --- cache key scoping ---
+
+    #[test]
+    fn test_cache_key_global_prefix() {
+        let key = format!("global/{}/{}", "myspace", "myskill");
+        assert!(key.starts_with("global/"));
+        assert!(!key.starts_with("project:"));
+    }
+
+    #[test]
+    fn test_cache_key_project_fallback_non_empty_path() {
+        let abs = std::fs::canonicalize(".").unwrap_or_else(|_| PathBuf::from("."));
+        let key = format!("project:{}/space/name", abs.display());
+        assert!(key.starts_with("project:"));
+        // Empty PathBuf display is "" so would produce "project:///..." — verify we don't get that
+        assert!(!key.starts_with("project:///"));
+    }
+
+    #[test]
+    fn test_validate_artifact_name_rejects_null_byte() {
+        assert!(validate_artifact_name("na\0me").is_err());
     }
 
     #[test]

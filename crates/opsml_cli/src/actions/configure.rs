@@ -3,7 +3,7 @@ use crate::cli::arg::{ConfigureArgs, PullTarget, SyncArgs};
 use crate::error::CliError;
 use opsml_colors::Colorize;
 use opsml_toml::OpsmlSkillsYaml;
-use std::fmt::Write as FmtWrite;
+use std::fmt::Write;
 use std::path::{Path, PathBuf};
 
 pub fn configure_cli(args: &ConfigureArgs) -> Result<(), CliError> {
@@ -140,6 +140,9 @@ fn register_gemini_hook(base: &Path, cmd: &str) -> Result<(), CliError> {
     } else {
         serde_json::json!({})
     };
+    if settings["startup_hook"].as_str() == Some(cmd) {
+        return Ok(());
+    }
     settings["startup_hook"] = serde_json::Value::String(cmd.to_string());
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -183,6 +186,7 @@ fn append_hook_to_sh(base: &Path, dir: &str, filename: &str, cmd: &str) -> Resul
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::cli::arg::ConfigureTarget;
     use tempfile::tempdir;
 
     #[test]
@@ -294,5 +298,58 @@ mod tests {
         let content = std::fs::read_to_string(dir.path().join(".gemini/settings.json")).unwrap();
         let v: serde_json::Value = serde_json::from_str(&content).unwrap();
         assert_eq!(v["startup_hook"].as_str(), Some(cmd));
+    }
+
+    #[test]
+    fn test_configure_lazy_writes_startup_sh_and_hook_without_path_flag() {
+        let dir = tempdir().unwrap();
+        let opsml_dir = dir.path().join(".opsml");
+        let yaml_path = opsml_dir.join("skills.yaml");
+        OpsmlSkillsYaml::scaffold(&yaml_path).unwrap();
+
+        let args = ConfigureArgs {
+            target: ConfigureTarget::ClaudeCode,
+            lazy: true,
+        };
+        configure_lazy(&args, &opsml_dir, &yaml_path, dir.path()).unwrap();
+
+        // startup.sh must exist and must not contain the raw placeholder
+        let sh = std::fs::read_to_string(opsml_dir.join("hooks/startup.sh")).unwrap();
+        assert!(!sh.contains("__OPSML_BIN__"), "placeholder must be replaced");
+        assert!(!sh.contains("__OPSML_SKILLS_YAML__"), "placeholder must be replaced");
+
+        // The registered hook command must contain "skill sync --quiet" and must NOT contain "--path"
+        let settings =
+            std::fs::read_to_string(dir.path().join(".claude/settings.json")).unwrap();
+        assert!(settings.contains("skill sync --quiet"), "hook must run sync");
+        assert!(!settings.contains("--path"), "hook must not hardcode --path");
+    }
+
+    #[test]
+    fn test_append_hook_to_sh_adds_newline_when_file_lacks_trailing_newline() {
+        let dir = tempdir().unwrap();
+        let file = dir.path().join("startup.sh");
+        std::fs::write(&file, "existing_cmd").unwrap();
+        append_hook_to_sh(dir.path(), ".", "startup.sh", "new_cmd").unwrap();
+        let content = std::fs::read_to_string(&file).unwrap();
+        assert_eq!(
+            content, "existing_cmd\nnew_cmd\n",
+            "must insert newline separator when file lacks trailing newline"
+        );
+    }
+
+    #[test]
+    fn test_register_claude_hook_returns_error_on_corrupt_json() {
+        let dir = tempdir().unwrap();
+        let settings_dir = dir.path().join(".claude");
+        std::fs::create_dir_all(&settings_dir).unwrap();
+        std::fs::write(settings_dir.join("settings.json"), "not json").unwrap();
+        let result = register_claude_hook(dir.path(), "cmd");
+        assert!(result.is_err());
+        let msg = result.unwrap_err().to_string();
+        assert!(
+            msg.contains("Fix or delete it"),
+            "error must include remediation hint: {msg}"
+        );
     }
 }
