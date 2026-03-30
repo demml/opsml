@@ -7,6 +7,7 @@ use opsml_types::contracts::{
     ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
     ExperimentCardClientRecord, McpServer, ModelCardClientRecord, PromptCardClientRecord,
     ServiceCardClientRecord, ServiceConfig, SkillCardClientRecord, SkillDependency,
+    SubAgentCardClientRecord,
 };
 use opsml_types::contracts::{ArtifactType, DeploymentConfig, ServiceMetadata, ServiceType};
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
@@ -1330,6 +1331,95 @@ impl Default for SkillCardRecord {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct SubAgentCardRecord {
+    pub uid: String,
+    pub created_at: DateTime<Utc>,
+    pub app_env: String,
+    pub name: String,
+    pub space: String,
+    pub major: i32,
+    pub minor: i32,
+    pub patch: i32,
+    pub pre_tag: Option<String>,
+    pub build_tag: Option<String>,
+    pub version: String,
+    pub tags: Json<Vec<String>>,
+    pub compatible_clis: Json<Vec<String>>,
+    pub description: Option<String>,
+    pub content_hash: Option<Vec<u8>>,
+    pub opsml_version: String,
+    pub username: String,
+    pub download_count: i64,
+}
+
+impl SubAgentCardRecord {
+    pub fn from_client_card(client_card: SubAgentCardClientRecord) -> Result<Self, SqlError> {
+        let version = Version::parse(&client_card.version).map_err(VersionError::InvalidVersion)?;
+        Ok(SubAgentCardRecord {
+            uid: client_card.uid,
+            created_at: client_card.created_at,
+            app_env: client_card.app_env,
+            name: client_card.name,
+            space: client_card.space,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            version: client_card.version,
+            tags: Json(client_card.tags),
+            compatible_clis: Json(client_card.compatible_clis),
+            description: client_card.description,
+            content_hash: client_card.content_hash,
+            opsml_version: client_card.opsml_version,
+            username: client_card.username,
+            download_count: 0,
+        })
+    }
+
+    pub fn uri(&self) -> String {
+        format!(
+            "{}/{}/{}/v{}",
+            CardTable::SubAgent,
+            self.space,
+            self.name,
+            self.version
+        )
+    }
+}
+
+impl Default for SubAgentCardRecord {
+    fn default() -> Self {
+        SubAgentCardRecord {
+            uid: create_uuid7(),
+            created_at: get_utc_datetime(),
+            app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
+            name: CommonKwargs::Undefined.to_string(),
+            space: CommonKwargs::Undefined.to_string(),
+            major: 1,
+            minor: 0,
+            patch: 0,
+            pre_tag: None,
+            build_tag: None,
+            version: Version::new(1, 0, 0).to_string(),
+            tags: Json(Vec::new()),
+            compatible_clis: Json(Vec::new()),
+            description: None,
+            content_hash: None,
+            opsml_version: opsml_version::version(),
+            username: CommonKwargs::Undefined.to_string(),
+            download_count: 0,
+        }
+    }
+}
+
 // create enum that takes vec of cards
 // TODO: There should also be a client side enum that matches this (don't want to install opsml_sql on client)
 #[derive(Debug, Serialize, Deserialize)]
@@ -1341,6 +1431,7 @@ pub enum CardResults {
     Prompt(Vec<PromptCardRecord>),
     Service(Vec<ServiceCardRecord>),
     Skill(Vec<SkillCardRecord>),
+    SubAgent(Vec<SubAgentCardRecord>),
 }
 
 impl CardResults {
@@ -1353,6 +1444,7 @@ impl CardResults {
             CardResults::Prompt(cards) => cards.len(),
             CardResults::Service(cards) => cards.len(),
             CardResults::Skill(cards) => cards.len(),
+            CardResults::SubAgent(cards) => cards.len(),
         }
     }
     pub fn is_empty(&self) -> bool {
@@ -1364,6 +1456,7 @@ impl CardResults {
             CardResults::Prompt(cards) => cards.is_empty(),
             CardResults::Service(cards) => cards.is_empty(),
             CardResults::Skill(cards) => cards.is_empty(),
+            CardResults::SubAgent(cards) => cards.is_empty(),
         }
     }
     pub fn to_json(&self) -> Vec<String> {
@@ -1396,6 +1489,10 @@ impl CardResults {
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
+            CardResults::SubAgent(cards) => cards
+                .iter()
+                .map(|card| serde_json::to_string_pretty(card).unwrap())
+                .collect(),
         }
     }
 }
@@ -1410,6 +1507,7 @@ pub enum ServerCard {
     Service(Box<ServiceCardRecord>),
     // Not boxed — SkillCardRecord is small enough that boxing adds overhead without benefit
     Skill(SkillCardRecord),
+    SubAgent(SubAgentCardRecord),
 }
 
 impl ServerCard {
@@ -1422,6 +1520,7 @@ impl ServerCard {
             ServerCard::Prompt(card) => card.uid.as_str(),
             ServerCard::Service(card) => card.uid.as_str(),
             ServerCard::Skill(card) => card.uid.as_str(),
+            ServerCard::SubAgent(card) => card.uid.as_str(),
         }
     }
 
@@ -1437,6 +1536,7 @@ impl ServerCard {
                 RegistryType::from(&service_type).to_string()
             }
             ServerCard::Skill(_) => RegistryType::Skill.to_string(),
+            ServerCard::SubAgent(_) => RegistryType::SubAgent.to_string(),
         }
     }
 
@@ -1449,6 +1549,7 @@ impl ServerCard {
             ServerCard::Prompt(card) => card.version.clone(),
             ServerCard::Service(card) => card.version.clone(),
             ServerCard::Skill(card) => card.version.clone(),
+            ServerCard::SubAgent(card) => card.version.clone(),
         }
     }
 
@@ -1461,6 +1562,7 @@ impl ServerCard {
             ServerCard::Prompt(card) => card.space.clone(),
             ServerCard::Service(card) => card.space.clone(),
             ServerCard::Skill(card) => card.space.clone(),
+            ServerCard::SubAgent(card) => card.space.clone(),
         }
     }
 
@@ -1473,6 +1575,7 @@ impl ServerCard {
             ServerCard::Prompt(card) => card.name.clone(),
             ServerCard::Service(card) => card.name.clone(),
             ServerCard::Skill(card) => card.name.clone(),
+            ServerCard::SubAgent(card) => card.name.clone(),
         }
     }
 
@@ -1485,6 +1588,7 @@ impl ServerCard {
             ServerCard::Prompt(card) => card.uri(),
             ServerCard::Service(card) => card.uri(),
             ServerCard::Skill(card) => card.uri(),
+            ServerCard::SubAgent(card) => card.uri(),
         }
     }
 
@@ -1497,6 +1601,7 @@ impl ServerCard {
             ServerCard::Prompt(card) => card.app_env.clone(),
             ServerCard::Service(card) => card.app_env.clone(),
             ServerCard::Skill(card) => card.app_env.clone(),
+            ServerCard::SubAgent(card) => card.app_env.clone(),
         }
     }
 
@@ -1509,6 +1614,7 @@ impl ServerCard {
             ServerCard::Prompt(card) => card.created_at,
             ServerCard::Service(card) => card.created_at,
             ServerCard::Skill(card) => card.created_at,
+            ServerCard::SubAgent(card) => card.created_at,
         }
     }
 
@@ -1537,6 +1643,9 @@ impl ServerCard {
             CardRecord::Skill(card) => {
                 Ok(ServerCard::Skill(SkillCardRecord::from_client_card(card)?))
             }
+            CardRecord::SubAgent(card) => Ok(ServerCard::SubAgent(
+                SubAgentCardRecord::from_client_card(card)?,
+            )),
         }
     }
 }

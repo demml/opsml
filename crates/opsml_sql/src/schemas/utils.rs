@@ -1,12 +1,12 @@
 use crate::schemas::schema::{
     AuditCardRecord, DataCardRecord, ExperimentCardRecord, ModelCardRecord, PromptCardRecord,
-    SkillCardRecord,
+    SkillCardRecord, SubAgentCardRecord,
 };
 
 use opsml_types::contracts::{
     AuditCardClientRecord, CardRecord, DataCardClientRecord, ExperimentCardClientRecord,
     ModelCardClientRecord, PromptCardClientRecord, ServiceCardClientRecord, ServiceType,
-    SkillCardClientRecord,
+    SkillCardClientRecord, SubAgentCardClientRecord,
 };
 
 use super::ServiceCardRecord;
@@ -137,6 +137,26 @@ pub fn convert_skillcard(record: SkillCardRecord) -> CardRecord {
     };
 
     CardRecord::Skill(card)
+}
+
+pub fn convert_subagent_card(record: SubAgentCardRecord) -> CardRecord {
+    let card = SubAgentCardClientRecord {
+        uid: record.uid,
+        created_at: record.created_at,
+        app_env: record.app_env,
+        name: record.name,
+        space: record.space,
+        version: record.version,
+        tags: record.tags.0,
+        compatible_clis: record.compatible_clis.0,
+        description: record.description,
+        content_hash: record.content_hash,
+        opsml_version: record.opsml_version,
+        username: record.username,
+        download_count: record.download_count,
+    };
+
+    CardRecord::SubAgent(card)
 }
 
 pub fn convert_servicecard(record: ServiceCardRecord) -> CardRecord {

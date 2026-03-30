@@ -1,0 +1,7 @@
+SELECT * FROM (
+    SELECT DISTINCT ON (name) *
+    FROM opsml_subagent_registry
+    WHERE space = $1
+    ORDER BY name, major DESC, minor DESC, patch DESC
+) latest
+ORDER BY name
