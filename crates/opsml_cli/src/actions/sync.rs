@@ -50,7 +50,12 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
         };
         let is_global = yaml_path.starts_with(home.join(".opsml"));
         return sync_one_layer(
-            &yaml_path, targets, is_global, args, &mut cache, &mut manifest,
+            &yaml_path,
+            targets,
+            is_global,
+            args,
+            &mut cache,
+            &mut manifest,
         );
     }
 
@@ -61,9 +66,7 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
         if !args.quiet {
             println!("{}", Colorize::purple("Global skills"));
         }
-        sync_one_layer(
-            &global_yaml, targets, true, args, &mut cache, &mut manifest,
-        )?;
+        sync_one_layer(&global_yaml, targets, true, args, &mut cache, &mut manifest)?;
     }
 
     // Layer 2: project (.opsml-skills.yaml in CWD)
@@ -73,7 +76,12 @@ pub fn sync_skills(args: &SyncArgs) -> Result<(), CliError> {
             println!("\n{}", Colorize::purple("Project skills"));
         }
         sync_one_layer(
-            &project_yaml, targets, false, args, &mut cache, &mut manifest,
+            &project_yaml,
+            targets,
+            false,
+            args,
+            &mut cache,
+            &mut manifest,
         )?;
     }
 

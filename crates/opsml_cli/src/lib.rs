@@ -149,9 +149,7 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             SkillCommands::List(args) => list_skills(args).context("Failed to list skills"),
             SkillCommands::Init(args) => init_skill(args).context("Failed to init skill"),
             SkillCommands::Sync(args) => sync_skills(args).context("Failed to sync skills"),
-            SkillCommands::Remove(args) => {
-                remove_skill(args).context("Failed to remove skill")
-            }
+            SkillCommands::Remove(args) => remove_skill(args).context("Failed to remove skill"),
         },
 
         Some(Commands::Configure(args)) => {

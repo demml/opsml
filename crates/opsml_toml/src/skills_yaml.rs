@@ -92,18 +92,13 @@ impl OpsmlSkillsYaml {
         let content = serde_yaml::to_string(&yaml)
             .map_err(PyProjectTomlError::FailedToSerializeSkillsYaml)?;
         if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)
-                .map_err(PyProjectTomlError::FailedToWriteSkillsYaml)?;
+            std::fs::create_dir_all(parent).map_err(PyProjectTomlError::FailedToWriteSkillsYaml)?;
         }
         write_atomic_yaml(path, &content)
     }
 
     /// Remove a skill entry by space + name. No-op if not found.
-    pub fn remove_skill(
-        path: &Path,
-        space: &str,
-        name: &str,
-    ) -> Result<(), PyProjectTomlError> {
+    pub fn remove_skill(path: &Path, space: &str, name: &str) -> Result<(), PyProjectTomlError> {
         if !path.exists() {
             return Ok(());
         }
@@ -253,7 +248,12 @@ mod tests {
         };
         let result = OpsmlSkillsYaml::append_skill(&path, &skill, "");
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("OPSML_TRACKING_URI"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("OPSML_TRACKING_URI")
+        );
     }
 
     #[test]

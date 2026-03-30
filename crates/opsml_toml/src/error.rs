@@ -51,6 +51,8 @@ pub enum PyProjectTomlError {
     #[error("Failed to serialize `.opsml-skills.yaml`: {0}")]
     FailedToSerializeSkillsYaml(#[source] serde_yaml::Error),
 
-    #[error("Registry URL is required when creating a new skills.yaml — set OPSML_TRACKING_URI or run `opsml configure` first")]
+    #[error(
+        "Registry URL is required when creating a new skills.yaml — set OPSML_TRACKING_URI or run `opsml configure` first"
+    )]
     RegistryRequired,
 }

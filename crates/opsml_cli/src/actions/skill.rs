@@ -157,8 +157,7 @@ pub fn pull_skill(args: &SkillPullArgs) -> Result<(), CliError> {
             version: args.version.clone(),
         };
 
-        let registry_url =
-            std::env::var("OPSML_TRACKING_URI").unwrap_or_default();
+        let registry_url = std::env::var("OPSML_TRACKING_URI").unwrap_or_default();
         if let Err(e) =
             opsml_toml::OpsmlSkillsYaml::append_skill(&yaml_path, &ref_entry, &registry_url)
         {
@@ -293,8 +292,7 @@ pub fn remove_skill(args: &SkillRemoveArgs) -> Result<(), CliError> {
     }
 
     // 3. Remove from manifest
-    let mut manifest =
-        crate::actions::manifest::SkillManifest::load().unwrap_or_default();
+    let mut manifest = crate::actions::manifest::SkillManifest::load().unwrap_or_default();
     let manifest_key = crate::actions::manifest::SkillManifest::key(&space, &name);
     manifest.remove(&manifest_key);
     if let Err(e) = manifest.save() {
@@ -302,8 +300,7 @@ pub fn remove_skill(args: &SkillRemoveArgs) -> Result<(), CliError> {
     }
 
     // 4. Remove from cache
-    let mut cache =
-        crate::actions::cache::CacheManifest::load().unwrap_or_default();
+    let mut cache = crate::actions::cache::CacheManifest::load().unwrap_or_default();
     let cache_key = if args.local {
         let abs = std::fs::canonicalize(".").unwrap_or_else(|_| PathBuf::from("."));
         format!("project:{}/{}/{}", abs.display(), space, name)
@@ -572,7 +569,10 @@ mod tests {
         let abs = std::fs::canonicalize(".").unwrap_or_else(|_| PathBuf::from("."));
         let key = format!("project:{}/space/name", abs.display());
         assert!(key.starts_with("project:"));
-        assert!(!key.starts_with("project:///"), "empty PathBuf fallback produces malformed key");
+        assert!(
+            !key.starts_with("project:///"),
+            "empty PathBuf fallback produces malformed key"
+        );
     }
 
     // --- find_card_json depth guard ---
@@ -583,6 +583,9 @@ mod tests {
         let result = find_card_json(dir.path(), 21);
         assert!(result.is_err());
         let msg = result.unwrap_err().to_string();
-        assert!(msg.contains("too deeply nested") || msg.contains("deeply nested"), "{msg}");
+        assert!(
+            msg.contains("too deeply nested") || msg.contains("deeply nested"),
+            "{msg}"
+        );
     }
 }

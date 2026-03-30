@@ -315,14 +315,25 @@ mod tests {
 
         // startup.sh must exist and must not contain the raw placeholder
         let sh = std::fs::read_to_string(opsml_dir.join("hooks/startup.sh")).unwrap();
-        assert!(!sh.contains("__OPSML_BIN__"), "placeholder must be replaced");
-        assert!(!sh.contains("__OPSML_SKILLS_YAML__"), "placeholder must be replaced");
+        assert!(
+            !sh.contains("__OPSML_BIN__"),
+            "placeholder must be replaced"
+        );
+        assert!(
+            !sh.contains("__OPSML_SKILLS_YAML__"),
+            "placeholder must be replaced"
+        );
 
         // The registered hook command must contain "skill sync --quiet" and must NOT contain "--path"
-        let settings =
-            std::fs::read_to_string(dir.path().join(".claude/settings.json")).unwrap();
-        assert!(settings.contains("skill sync --quiet"), "hook must run sync");
-        assert!(!settings.contains("--path"), "hook must not hardcode --path");
+        let settings = std::fs::read_to_string(dir.path().join(".claude/settings.json")).unwrap();
+        assert!(
+            settings.contains("skill sync --quiet"),
+            "hook must run sync"
+        );
+        assert!(
+            !settings.contains("--path"),
+            "hook must not hardcode --path"
+        );
     }
 
     #[test]
