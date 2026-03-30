@@ -1,0 +1,34 @@
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum SubAgentError {
+    #[error("{0}")]
+    Error(String),
+
+    #[error(transparent)]
+    SerdeError(#[from] serde_json::Error),
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+
+    #[error(transparent)]
+    SerdeYamlError(#[from] serde_yaml::Error),
+
+    #[error("TOML serialization error: {0}")]
+    TomlError(String),
+
+    #[error(transparent)]
+    UtilError(#[from] opsml_utils::error::UtilError),
+}
+
+impl From<toml::ser::Error> for SubAgentError {
+    fn from(err: toml::ser::Error) -> Self {
+        SubAgentError::TomlError(err.to_string())
+    }
+}
+
+impl From<SubAgentError> for crate::error::CardError {
+    fn from(err: SubAgentError) -> Self {
+        crate::error::CardError::Error(err.to_string())
+    }
+}
