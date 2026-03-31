@@ -1354,6 +1354,50 @@ pub struct SubAgentCardRecord {
 }
 
 impl SubAgentCardRecord {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        name: String,
+        space: String,
+        version: Version,
+        tags: Vec<String>,
+        compatible_clis: Vec<String>,
+        description: Option<String>,
+        opsml_version: String,
+        username: String,
+        content_hash: Option<Vec<u8>>,
+    ) -> Self {
+        let created_at = get_utc_datetime();
+        let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
+        let uid = create_uuid7();
+
+        SubAgentCardRecord {
+            uid,
+            created_at,
+            app_env,
+            name,
+            space,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            version: version.to_string(),
+            tags: Json(tags),
+            compatible_clis: Json(compatible_clis),
+            description,
+            content_hash,
+            opsml_version,
+            username,
+            download_count: 0,
+        }
+    }
+
     pub fn from_client_card(client_card: SubAgentCardClientRecord) -> Result<Self, SqlError> {
         let version = Version::parse(&client_card.version).map_err(VersionError::InvalidVersion)?;
         Ok(SubAgentCardRecord {

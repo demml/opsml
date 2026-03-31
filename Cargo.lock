@@ -4884,6 +4884,7 @@ dependencies = [
  "mockito",
  "opsml-agent",
  "opsml-auth",
+ "opsml-cards",
  "opsml-client",
  "opsml-colors",
  "opsml-crypt",

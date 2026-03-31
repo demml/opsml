@@ -1031,11 +1031,10 @@ impl SubAgentLogicTrait for CardLogicSqliteClient {
     }
 
     async fn increment_subagent_download_count(&self, uid: &str) -> Result<(), SqlError> {
-        let result =
-            sqlx::query(SqliteQueryHelper::get_increment_subagent_download_count_query())
-                .bind(uid)
-                .execute(&self.pool)
-                .await?;
+        let result = sqlx::query(SqliteQueryHelper::get_increment_subagent_download_count_query())
+            .bind(uid)
+            .execute(&self.pool)
+            .await?;
         if result.rows_affected() == 0 {
             return Err(SqlError::MissingField(format!(
                 "subagent uid not found: {uid}"

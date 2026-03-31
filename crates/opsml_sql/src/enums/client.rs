@@ -4,8 +4,8 @@ use crate::postgres::client::PostgresClient;
 use crate::schemas::VersionSummary;
 use crate::schemas::schema::{
     ArtifactSqlRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord,
-    ParameterRecord, QueryStats, ServerCard, ServiceCardRecord, SkillCardRecord, SubAgentCardRecord,
-    User,
+    ParameterRecord, QueryStats, ServerCard, ServiceCardRecord, SkillCardRecord,
+    SubAgentCardRecord, User,
 };
 use crate::sqlite::client::SqliteClient;
 use crate::traits::{
@@ -831,12 +831,8 @@ impl SubAgentLogicTrait for SqlClientEnum {
             SqlClientEnum::Postgres(client) => {
                 client.card.get_featured_subagents(space, limit).await
             }
-            SqlClientEnum::Sqlite(client) => {
-                client.card.get_featured_subagents(space, limit).await
-            }
-            SqlClientEnum::MySql(client) => {
-                client.card.get_featured_subagents(space, limit).await
-            }
+            SqlClientEnum::Sqlite(client) => client.card.get_featured_subagents(space, limit).await,
+            SqlClientEnum::MySql(client) => client.card.get_featured_subagents(space, limit).await,
         }
     }
 
@@ -859,9 +855,7 @@ impl SubAgentLogicTrait for SqlClientEnum {
             SqlClientEnum::Sqlite(client) => {
                 client.card.get_subagent_marketplace_stats(space).await
             }
-            SqlClientEnum::MySql(client) => {
-                client.card.get_subagent_marketplace_stats(space).await
-            }
+            SqlClientEnum::MySql(client) => client.card.get_subagent_marketplace_stats(space).await,
         }
     }
 }

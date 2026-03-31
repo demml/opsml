@@ -32,11 +32,11 @@ pub struct ClaudeCodeTarget;
 
 impl SubAgentCliTarget for ClaudeCodeTarget {
     fn serialize(&self, spec: &SubAgentSpec) -> Result<String, SubAgentError> {
-        let permission_mode = spec
-            .permission_mode
-            .as_ref()
-            .map(|m| serde_json::to_value(m).ok().and_then(|v| v.as_str().map(str::to_string)))
-            .flatten();
+        let permission_mode = spec.permission_mode.as_ref().and_then(|m| {
+            serde_json::to_value(m)
+                .ok()
+                .and_then(|v| v.as_str().map(str::to_string))
+        });
 
         let fm = ClaudeCodeFrontmatter {
             name: spec.name.clone(),
@@ -89,11 +89,7 @@ pub struct GeminiCliTarget;
 
 impl SubAgentCliTarget for GeminiCliTarget {
     fn serialize(&self, spec: &SubAgentSpec) -> Result<String, SubAgentError> {
-        let compatible_clis = spec
-            .compatible_clis
-            .iter()
-            .map(|c| c.to_string())
-            .collect();
+        let compatible_clis = spec.compatible_clis.iter().map(|c| c.to_string()).collect();
 
         let fm = GeminiFrontmatter {
             name: spec.name.clone(),
@@ -150,10 +146,7 @@ impl SubAgentCliTarget for CodexTarget {
             model: spec.model.clone(),
             tools: spec.tools.clone(),
             mcp_servers: vec![],
-            developer_instructions: spec
-                .system_prompt
-                .clone()
-                .unwrap_or_default(),
+            developer_instructions: spec.system_prompt.clone().unwrap_or_default(),
         };
 
         Ok(toml::to_string_pretty(&config)?)

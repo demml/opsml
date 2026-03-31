@@ -402,6 +402,11 @@ pub async fn list_cards(
         CardResults::Skill(data) => {
             Json(data.into_iter().map(convert_skillcard).collect::<Vec<_>>())
         }
+        CardResults::SubAgent(data) => Json(
+            data.into_iter()
+                .map(convert_subagent_card)
+                .collect::<Vec<_>>(),
+        ),
     };
 
     // Create response and add audit context

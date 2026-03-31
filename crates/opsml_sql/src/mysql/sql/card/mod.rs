@@ -1022,11 +1022,10 @@ impl SubAgentLogicTrait for CardLogicMySqlClient {
     }
 
     async fn increment_subagent_download_count(&self, uid: &str) -> Result<(), SqlError> {
-        let result =
-            sqlx::query(MySqlQueryHelper::get_increment_subagent_download_count_query())
-                .bind(uid)
-                .execute(&self.pool)
-                .await?;
+        let result = sqlx::query(MySqlQueryHelper::get_increment_subagent_download_count_query())
+            .bind(uid)
+            .execute(&self.pool)
+            .await?;
         if result.rows_affected() == 0 {
             return Err(SqlError::MissingField(format!(
                 "subagent uid not found: {uid}"
@@ -1064,11 +1063,10 @@ impl SubAgentLogicTrait for CardLogicMySqlClient {
     }
 
     async fn get_all_subagent_tags(&self, space: &str) -> Result<Vec<String>, SqlError> {
-        let tags: Vec<String> =
-            sqlx::query_scalar(MySqlQueryHelper::get_all_subagent_tags_query())
-                .bind(space)
-                .fetch_all(&self.pool)
-                .await?;
+        let tags: Vec<String> = sqlx::query_scalar(MySqlQueryHelper::get_all_subagent_tags_query())
+            .bind(space)
+            .fetch_all(&self.pool)
+            .await?;
         Ok(tags)
     }
 

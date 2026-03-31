@@ -289,8 +289,7 @@ mod tests {
     fn test_subagent_card_json_roundtrip() {
         let spec = make_spec();
         let card =
-            SubAgentCard::new_rs(spec, Some("test-space"), Some("test-agent"), None, None)
-                .unwrap();
+            SubAgentCard::new_rs(spec, Some("test-space"), Some("test-agent"), None, None).unwrap();
 
         let json = serde_json::to_string(&card).unwrap();
         let restored = SubAgentCard::model_validate_json(json).unwrap();
@@ -304,8 +303,7 @@ mod tests {
     fn test_subagent_card_get_registry_card() {
         let spec = make_spec();
         let card =
-            SubAgentCard::new_rs(spec, Some("test-space"), Some("test-agent"), None, None)
-                .unwrap();
+            SubAgentCard::new_rs(spec, Some("test-space"), Some("test-agent"), None, None).unwrap();
 
         let record = card.get_registry_card().unwrap();
         match record {
@@ -322,8 +320,7 @@ mod tests {
     #[test]
     fn test_content_hash_stability() {
         let spec = make_spec();
-        let card1 =
-            SubAgentCard::new_rs(spec.clone(), Some("s"), Some("a"), None, None).unwrap();
+        let card1 = SubAgentCard::new_rs(spec.clone(), Some("s"), Some("a"), None, None).unwrap();
         let card2 = SubAgentCard::new_rs(spec, Some("s"), Some("a"), None, None).unwrap();
 
         assert_eq!(
@@ -336,8 +333,7 @@ mod tests {
     fn test_markdown_roundtrip() {
         let spec = make_spec();
         let card =
-            SubAgentCard::new_rs(spec, Some("test-space"), Some("test-agent"), None, None)
-                .unwrap();
+            SubAgentCard::new_rs(spec, Some("test-space"), Some("test-agent"), None, None).unwrap();
 
         let md = card.to_markdown().unwrap();
         assert!(md.contains("test-agent"));
@@ -412,12 +408,9 @@ mod tests {
     fn test_install_creates_file() {
         let spec = make_spec();
         let card =
-            SubAgentCard::new_rs(spec, Some("test-space"), Some("test-agent"), None, None)
-                .unwrap();
+            SubAgentCard::new_rs(spec, Some("test-space"), Some("test-agent"), None, None).unwrap();
 
         let tmp = tempfile::tempdir().unwrap();
-        let target = ClaudeCodeTarget;
-
         // Override directory by using a custom target
         struct TestTarget(PathBuf);
         impl SubAgentCliTarget for TestTarget {

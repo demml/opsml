@@ -4,4 +4,6 @@ pub mod target;
 
 pub use card::{SubAgentCard, parse_subagent_markdown};
 pub use error::SubAgentError;
-pub use target::{ClaudeCodeTarget, CodexTarget, CopilotTarget, GeminiCliTarget, SubAgentCliTarget};
+pub use target::{
+    ClaudeCodeTarget, CodexTarget, CopilotTarget, GeminiCliTarget, SubAgentCliTarget,
+};
