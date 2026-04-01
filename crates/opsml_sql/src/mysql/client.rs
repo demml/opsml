@@ -197,10 +197,11 @@ mod tests {
             DELETE
             FROM opsml_space;
 
-            DELETE
-            FROM opsml_evaluation_registry;
+            DELETE FROM opsml_evaluation_registry;
 
             DELETE FROM opsml_skill_registry;
+
+            DELETE FROM opsml_sub_agent_registry;
             "#,
         )
         .fetch_all(pool)

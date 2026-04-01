@@ -456,3 +456,7 @@ OpsML is optimized for minimal allocation and maximum throughput. Treat clone as
 | PyO3 | 0.27.x with `abi3-py310` |
 | Build bridge | maturin |
 | DB in tests | SQLite (local/CI); Postgres + MySQL via docker-compose |
+
+
+## Gotchas
+- Never run `opsml_server` tests all at once. If there is a failure, this can lead to stale state. Ensure staled state is cleared or run tests in isolation to avoid this issue.
