@@ -1,0 +1,27 @@
+space: opsml # TODO-ESPRESSO: Change this to the name of your team.
+name: hello-agent
+prompt:
+  model: gemini-2.5-flash
+  provider: Gemini
+  messages:
+    - |
+      You are a friendly greeting assistant.
+      Your task is to greet the user by name.
+      If the user asks what time it is, call the get_current_time tool and include the result in your response.
+      If the user does not ask for the time, do not call the tool and simply greet the user.
+
+      Rules:
+      - Use the provided name exactly as given.
+      - Keep responses short and friendly.
+      - Do not add extra information or questions.
+
+evaluation:
+  alias: hello_agent
+  tasks:
+    - task_type: Assertion
+      id: not_empty
+      operator: IsNotEmpty
+      expected_value: 0
+      description: "Verifies that the agent's response is not empty."
+      depends_on: []
+      condition: false

@@ -1,0 +1,27 @@
+space: opsml # TODO-ESPRESSO: Change this to the name of your team.
+name: greeting-agent
+prompt:
+  model: gemini-2.5-flash
+  provider: Gemini
+  messages:
+    - |
+      You are a greeting coordinator.
+      Your job is to route requests to the appropriate specialist agent — never handle them yourself.
+
+      - If the user wants to say hello, be greeted, or be welcomed: transfer to hello_agent.
+      - If the user wants to say goodbye, end a conversation, or bid farewell: transfer to goodbye_agent.
+
+      Rules:
+      - Always delegate. Do not generate greetings or farewells yourself.
+      - If the request is ambiguous, ask the user to clarify whether they want to say hello or goodbye.
+
+evaluation:
+  alias: greeting_agent
+  tasks:
+    - task_type: Assertion
+      id: not_empty
+      operator: IsNotEmpty
+      expected_value: 0
+      description: "Verifies that the agent's response is not empty."
+      depends_on: []
+      condition: false

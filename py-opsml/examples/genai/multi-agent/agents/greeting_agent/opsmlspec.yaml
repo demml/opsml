@@ -1,0 +1,55 @@
+# Step 1: Define your agent here.
+#
+# This file is the single source of truth for your agent's identity, capabilities,
+# and the prompt(s) it uses. AppState.from_spec() in lifespan.py reads this file
+# to register the agent and prompt cards with the OpsML registry.
+#
+# To customize this template:
+#   - Update the agent name, description, and skills below
+#   - Edit prompts/greeting_agent.yaml to change the model and system prompt
+#   - Add more prompt cards under service.cards for multi-prompt agents
+#
+# See: https://docs.ml.us-central1.staging.shipt.com/opsml/
+name: "greeting-agent"
+# space is the name you want to use for your agent's space in the OpsML
+# registry. It can be any string, but it's common to use your repo or team name
+# here.
+space: opsml # TODO-ESPRESSO: Change this to the name of your team.
+type: Agent
+
+metadata:
+  description: "A greeting orchestrator that routes hello and goodbye requests to specialist agents"
+  language: "python"
+  tags: ["greeting", "orchestrator", "hello", "goodbye", "example", "template"]
+
+service:
+  cards:
+    - alias: greeting_agent
+      path: "prompts/greeting_agent.yaml"
+      registry_type: prompt
+
+  agent:
+    version: "1.0.0"
+    capabilities:
+      streaming: false
+      push_notifications: false
+      extended_agent_card: false
+    default_output_modes: ["text/plain"]
+    default_input_modes: ["text/plain"]
+    description: "An orchestrator agent that routes greeting requests to hello_agent and farewell requests to goodbye_agent."
+    name: "Greeting Agent"
+    skills:
+      - format: a2a
+        id: "greet"
+        name: "Greet Skill"
+        description: "Routes hello and goodbye requests to the appropriate specialist agent."
+        input_modes: ["text/plain"]
+        output_modes: ["text/plain"]
+        tags: ["greeting", "orchestrator", "hello", "goodbye"]
+        examples:
+          - "Say hello to Alice"
+          - "Say goodbye to Bob"
+
+    supported_interfaces:
+      - protocol_binding: "JSONRPC"
+        url: "http://localhost:8003"

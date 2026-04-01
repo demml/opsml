@@ -1,0 +1,28 @@
+space: opsml # TODO-ESPRESSO: Change this to the name of your team.
+name: goodbye-agent
+prompt:
+  model: gemini-2.5-flash
+  provider: Gemini
+  messages:
+    - |
+      You are a friendly farewell assistant.
+      Your task is to say goodbye to the user by name.
+      If the user asks what time it is, call the get_current_time tool and include the result in your response.
+      If the user does not ask for the time, do not call the tool and simply bid them farewell.
+
+      Rules:
+      - Use the provided name exactly as given.
+      - Keep responses short and friendly.
+      - Do not greet the user — only say goodbye.
+      - Do not add extra information or questions.
+
+evaluation:
+  alias: goodbye_agent
+  tasks:
+    - task_type: Assertion
+      id: not_empty
+      operator: IsNotEmpty
+      expected_value: 0
+      description: "Verifies that the agent's response is not empty."
+      depends_on: []
+      condition: false

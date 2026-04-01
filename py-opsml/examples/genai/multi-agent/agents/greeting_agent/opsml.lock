@@ -1,0 +1,9 @@
+version = "0.30.0"
+
+[[artifact]]
+space = "opsml"
+name = "greeting-agent"
+version = "0.1.0"
+uid = "019d3ff1-9f0b-7c42-9540-18608f4cf0eb"
+write_dir = "opsml_service"
+registry_type = "agent"

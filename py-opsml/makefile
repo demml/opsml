@@ -123,3 +123,12 @@ publish.docs:
 
 upgrade.deps:
 	uv sync --upgrade --all-extras
+
+run.hello:
+	uv run uvicorn hello_agent.a2a_server:create_app --app-dir examples/genai/multi-agent/agents --factory --host 0.0.0.0 --port 8001
+
+run.goodbye:
+	uv run uvicorn goodbye_agent.a2a_server:create_app --app-dir examples/genai/multi-agent/agents --factory --host 0.0.0.0 --port 8002
+
+run.greeting:
+	uv run uvicorn greeting_agent.a2a_server:create_app --app-dir examples/genai/multi-agent/agents --factory --host 0.0.0.0 --port 8003

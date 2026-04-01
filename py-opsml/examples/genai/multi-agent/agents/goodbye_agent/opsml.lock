@@ -1,0 +1,9 @@
+version = "0.30.0"
+
+[[artifact]]
+space = "opsml"
+name = "goodbye-agent"
+version = "0.1.0"
+uid = "019d3ff0-1ead-71c3-a0b7-43ec76f8ca04"
+write_dir = "opsml_service"
+registry_type = "agent"
