@@ -10,7 +10,7 @@ use opsml_types::{RegistryType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
 use opsml_utils::get_utc_datetime;
 use scouter_client::ProfileRequest;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use sha2::{Digest, Sha256};
 use std::path::PathBuf;
 use tracing::instrument;
@@ -180,6 +180,24 @@ impl SubAgentCard {
 
     pub fn model_validate_json(json_string: String) -> Result<SubAgentCard, SubAgentError> {
         Ok(serde_json::from_str(&json_string)?)
+    }
+
+    pub fn from_path(path: PathBuf) -> Result<Self, SubAgentError> {
+        deserialize_from_path(path)
+    }
+}
+
+fn deserialize_from_path<T: DeserializeOwned>(path: PathBuf) -> Result<T, SubAgentError> {
+    let ext = path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or_default();
+    let content = std::fs::read_to_string(&path)?;
+    match ext {
+        "json" => Ok(serde_json::from_str(&content)?),
+        other => Err(SubAgentError::Error(format!(
+            "Unsupported file extension for SubAgentCard deserialization: .{other}"
+        ))),
     }
 }
 
