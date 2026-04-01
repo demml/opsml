@@ -1,3 +1,4 @@
+pub mod agent_cli;
 pub mod card;
 pub mod experiment;
 pub mod files;
