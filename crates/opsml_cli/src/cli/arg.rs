@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use crate::error::CliError;
 use clap::{Args, ValueEnum};
+use opsml_cards::subagent::{ClaudeCodeTarget, CodexTarget, CopilotTarget, GeminiCliTarget, SubAgentCliTarget};
 use opsml_semver::VersionType;
 use opsml_service::service::DEFAULT_SERVICE_FILENAME;
 use opsml_types::{RegistryType, contracts::CardQueryArgs};
@@ -321,6 +322,15 @@ impl PullTarget {
             Self::GithubCopilot => home.join(format!(".github/copilot/skills/{name}/SKILL.md")),
         })
     }
+
+    pub fn as_subagent_target(&self) -> Box<dyn SubAgentCliTarget> {
+        match self {
+            Self::ClaudeCode => Box::new(ClaudeCodeTarget),
+            Self::Codex => Box::new(CodexTarget),
+            Self::GeminiCli => Box::new(GeminiCliTarget),
+            Self::GithubCopilot => Box::new(CopilotTarget),
+        }
+    }
 }
 
 #[derive(Args, Clone)]
@@ -421,6 +431,60 @@ pub struct SkillRemoveArgs {
     /// Remove from project scope instead of global
     #[arg(long = "local", default_value = "false")]
     pub local: bool,
+}
+
+// ---- Agent CLI args ----
+
+#[derive(Args, Clone)]
+pub struct AgentPushArgs {
+    /// Path to AGENT.md (YAML frontmatter + system prompt body)
+    pub path: PathBuf,
+    /// Override space for registration
+    #[arg(long = "space")]
+    pub space: Option<String>,
+    /// Tags to apply (comma-separated)
+    #[arg(long = "tags", use_value_delimiter = true, value_delimiter = ',')]
+    pub tags: Option<Vec<String>>,
+    /// Version bump type
+    #[arg(long = "version-type", default_value = "minor", value_parser = parse_version_type)]
+    pub version_type: VersionType,
+}
+
+#[derive(Args, Clone)]
+pub struct AgentPullArgs {
+    /// Agent identifier: space/name or name with --space
+    pub name: String,
+    #[arg(long = "version")]
+    pub version: Option<String>,
+    #[arg(long = "space")]
+    pub space: Option<String>,
+    /// Target CLI for auto-placement (claude-code, codex, gemini-cli, github-copilot)
+    #[arg(long = "target")]
+    pub target: Option<PullTarget>,
+    /// Write to current directory instead of home directory
+    #[arg(long = "local", default_value = "false")]
+    pub local: bool,
+}
+
+#[derive(Args, Clone)]
+pub struct AgentListArgs {
+    #[arg(long = "space")]
+    pub space: Option<String>,
+    #[arg(long = "name")]
+    pub name: Option<String>,
+    #[arg(long = "tags", use_value_delimiter = true, value_delimiter = ',')]
+    pub tags: Option<Vec<String>>,
+    #[arg(long = "limit")]
+    pub limit: Option<i32>,
+}
+
+#[derive(Args, Clone)]
+pub struct AgentInitArgs {
+    #[arg(long = "name")]
+    pub name: Option<String>,
+    /// Output path (default: ./AGENT.md)
+    #[arg(long = "output")]
+    pub output: Option<PathBuf>,
 }
 
 #[derive(Args, Clone)]

@@ -1222,6 +1222,17 @@ struct SkillCardTableEntry {
     uid: String,
 }
 
+#[derive(Tabled)]
+struct SubAgentCardTableEntry {
+    created_at: String,
+    name: String,
+    space: String,
+    version: String,
+    description: String,
+    compatible_clis: String,
+    uid: String,
+}
+
 #[pyclass]
 struct CardListIter {
     inner: std::vec::IntoIter<CardRecord>,
@@ -1340,6 +1351,42 @@ impl CardList {
             ),
         );
         table.to_string()
+    }
+
+    pub fn as_subagent_table(&self) {
+        let entries: Vec<SubAgentCardTableEntry> = self
+            .cards
+            .iter()
+            .filter_map(|card| {
+                if let CardRecord::SubAgent(r) = card {
+                    Some(SubAgentCardTableEntry {
+                        created_at: r.created_at.to_string(),
+                        name: r.name.clone(),
+                        space: r.space.clone(),
+                        version: r.version.clone(),
+                        description: r.description.clone().unwrap_or_else(|| "—".into()),
+                        compatible_clis: r.compatible_clis.join(", "),
+                        uid: Colorize::purple(&r.uid),
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        const DESCRIPTION_COLUMN: usize = 4;
+        let mut table = Table::new(entries);
+        table.with(Style::sharp());
+        table.modify(Columns::one(DESCRIPTION_COLUMN), Width::wrap(40));
+        table.modify(
+            Rows::new(0..1),
+            (
+                Format::content(Colorize::green),
+                Alignment::center(),
+                Color::BOLD,
+            ),
+        );
+        println!("{table}");
     }
 }
 
