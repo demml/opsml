@@ -105,6 +105,8 @@ async fn test_subagent_push_and_list() {
         assert_eq!(card.name, "list-test-agent");
         assert_eq!(card.space, "agent-test");
         assert_eq!(card.description.as_deref(), Some("A subagent for testing list"));
+        // Verify compatible_clis round-trips through the registry API.
+        assert_eq!(card.compatible_clis, vec!["claude-code".to_string()]);
 
         helper.cleanup();
     });

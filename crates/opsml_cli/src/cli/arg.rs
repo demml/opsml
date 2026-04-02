@@ -468,18 +468,23 @@ pub struct AgentPullArgs {
 
 #[derive(Args, Clone)]
 pub struct AgentListArgs {
+    /// Filter by space
     #[arg(long = "space")]
     pub space: Option<String>,
+    /// Filter by agent name
     #[arg(long = "name")]
     pub name: Option<String>,
+    /// Filter by tags (comma-separated)
     #[arg(long = "tags", use_value_delimiter = true, value_delimiter = ',')]
     pub tags: Option<Vec<String>>,
+    /// Maximum number of results to return
     #[arg(long = "limit")]
     pub limit: Option<i32>,
 }
 
 #[derive(Args, Clone)]
 pub struct AgentInitArgs {
+    /// Agent name to use in the generated template
     #[arg(long = "name")]
     pub name: Option<String>,
     /// Output path (default: ./AGENT.md)

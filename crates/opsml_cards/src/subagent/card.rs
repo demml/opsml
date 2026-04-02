@@ -18,6 +18,10 @@ use tracing::instrument;
 /// Parse a SubAgent markdown file (YAML frontmatter + markdown body) into a SubAgentCard.
 #[instrument(skip_all)]
 pub fn parse_subagent_markdown(content: &str) -> Result<SubAgentCard, SubAgentError> {
+    // Normalize Windows line endings so the delimiter search works cross-platform.
+    let content = content.replace("\r\n", "\n");
+    let content = content.as_str();
+
     // Extract YAML frontmatter between --- delimiters
     let after_open = content
         .strip_prefix("---\n")
@@ -31,6 +35,20 @@ pub fn parse_subagent_markdown(content: &str) -> Result<SubAgentCard, SubAgentEr
     let body = after_open[close_pos + 5..].to_string();
 
     let mut spec: SubAgentSpec = serde_yaml::from_str(yaml_str)?;
+
+    // Validate name: must be non-empty and contain only alphanumeric, '-', or '_'.
+    if spec.name.is_empty()
+        || !spec
+            .name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    {
+        return Err(SubAgentError::Error(format!(
+            "Invalid agent name '{}': must be non-empty and contain only [a-zA-Z0-9_-]",
+            spec.name
+        )));
+    }
+
     spec.system_prompt = if body.is_empty() { None } else { Some(body) };
 
     let name = spec.name.clone();
@@ -168,6 +186,15 @@ impl SubAgentCard {
         let dir = target.agent_dir(global);
         std::fs::create_dir_all(&dir)?;
         let file_path = dir.join(target.file_name(&self.spec.name));
+
+        // Guard against path traversal: ensure the resolved path stays within the agent dir.
+        if !file_path.starts_with(&dir) {
+            return Err(SubAgentError::Error(format!(
+                "Resolved agent path escapes target directory: {}",
+                file_path.display()
+            )));
+        }
+
         std::fs::write(&file_path, content)?;
         Ok(file_path)
     }
@@ -455,5 +482,80 @@ mod tests {
     fn test_parse_markdown_missing_delimiter() {
         let no_delims = "name: test\ndescription: test\n";
         assert!(parse_subagent_markdown(no_delims).is_err());
+    }
+
+    #[test]
+    fn test_parse_markdown_crlf_line_endings() {
+        // A valid markdown with Windows-style CRLF should parse successfully.
+        let crlf = "---\r\nname: my-agent\r\ndescription: test\r\n---\r\nDo something.\r\n";
+        let card = parse_subagent_markdown(crlf).unwrap();
+        assert_eq!(card.spec.name, "my-agent");
+        assert!(card.spec.system_prompt.is_some());
+    }
+
+    #[test]
+    fn test_parse_markdown_invalid_name_rejected() {
+        let bad_name = "---\nname: \"../../evil\"\ndescription: test\n---\n";
+        assert!(parse_subagent_markdown(bad_name).is_err());
+    }
+
+    #[test]
+    fn test_from_path_roundtrip() {
+        let spec = make_spec();
+        let mut card =
+            SubAgentCard::new_rs(spec, Some("test-space"), Some("test-agent"), None, None).unwrap();
+
+        let tmp = tempfile::tempdir().unwrap();
+        card.save_card(tmp.path().to_path_buf()).unwrap();
+
+        let json_path = tmp.path().join("Card.json");
+        let loaded = SubAgentCard::from_path(json_path).unwrap();
+
+        assert_eq!(loaded.name, card.name);
+        assert_eq!(loaded.spec.description, card.spec.description);
+        assert_eq!(loaded.spec.system_prompt, card.spec.system_prompt);
+    }
+
+    #[test]
+    fn test_from_path_unsupported_extension() {
+        let tmp = tempfile::tempdir().unwrap();
+        let yaml_path = tmp.path().join("Card.yaml");
+        std::fs::write(&yaml_path, "name: test").unwrap();
+        let err = SubAgentCard::from_path(yaml_path).unwrap_err();
+        assert!(err.to_string().contains("Unsupported"));
+    }
+
+    #[test]
+    fn test_to_markdown_system_prompt_not_in_frontmatter() {
+        let spec = make_spec();
+        let card =
+            SubAgentCard::new_rs(spec, Some("test-space"), Some("test-agent"), None, None).unwrap();
+
+        let md = card.to_markdown().unwrap();
+
+        // Extract the YAML frontmatter block between the two --- delimiters.
+        let after_open = md.strip_prefix("---\n").unwrap();
+        let close = after_open.find("\n---\n").unwrap();
+        let frontmatter = &after_open[..close];
+
+        assert!(
+            !frontmatter.contains("systemPrompt") && !frontmatter.contains("system_prompt"),
+            "systemPrompt must not appear in the YAML frontmatter block"
+        );
+    }
+
+    #[test]
+    fn test_content_hash_changes_with_system_prompt() {
+        let spec1 = make_spec();
+        let mut spec2 = spec1.clone();
+        spec2.system_prompt = Some("A completely different prompt.".to_string());
+
+        let card1 = SubAgentCard::new_rs(spec1, Some("s"), Some("a"), None, None).unwrap();
+        let card2 = SubAgentCard::new_rs(spec2, Some("s"), Some("a"), None, None).unwrap();
+
+        assert_ne!(
+            card1.calculate_content_hash().unwrap(),
+            card2.calculate_content_hash().unwrap()
+        );
     }
 }

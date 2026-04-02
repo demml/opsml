@@ -789,18 +789,31 @@ impl Default for SkillCardClientRecord {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[pyclass]
 pub struct SubAgentCardClientRecord {
+    #[pyo3(get, set)]
     pub uid: String,
+    #[pyo3(get, set)]
     pub created_at: DateTime<Utc>,
+    #[pyo3(get, set)]
     pub app_env: String,
+    #[pyo3(get, set)]
     pub space: String,
+    #[pyo3(get, set)]
     pub name: String,
+    #[pyo3(get, set)]
     pub version: String,
+    #[pyo3(get, set)]
     pub tags: Vec<String>,
+    #[pyo3(get, set)]
     pub opsml_version: String,
+    #[pyo3(get, set)]
     pub username: String,
+    #[pyo3(get, set)]
     pub compatible_clis: Vec<String>,
+    #[pyo3(get, set)]
     pub content_hash: Option<Vec<u8>>,
+    #[pyo3(get, set)]
     pub download_count: i64,
+    #[pyo3(get, set)]
     pub description: Option<String>,
 }
 
@@ -1354,6 +1367,10 @@ impl CardList {
     }
 
     pub fn as_subagent_table(&self) {
+        println!("{}", self.render_subagent_table());
+    }
+
+    fn render_subagent_table(&self) -> String {
         let entries: Vec<SubAgentCardTableEntry> = self
             .cards
             .iter()
@@ -1386,7 +1403,7 @@ impl CardList {
                 Color::BOLD,
             ),
         );
-        println!("{table}");
+        table.to_string()
     }
 }
 

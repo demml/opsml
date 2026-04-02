@@ -8,7 +8,8 @@ pub enum SubAgentPermissionMode {
     Default,
     AcceptEdits,
     DontAsk,
-    BypassPermissions,
+    // Note: BypassPermissions is intentionally excluded — it disables all tool-use prompts on
+    // the developer's machine and would be a supply chain attack vector if stored in the registry.
     Plan,
 }
 

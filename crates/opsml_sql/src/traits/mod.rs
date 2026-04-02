@@ -204,6 +204,8 @@ pub trait SkillLogicTrait {
     async fn get_marketplace_stats(&self) -> Result<MarketplaceStats, SqlError>;
 }
 
+/// SubAgent registry operations. Unlike [`SkillLogicTrait`], discovery methods here are
+/// space-scoped by design — subagents are team/project artifacts, not a global marketplace.
 #[async_trait]
 pub trait SubAgentLogicTrait {
     async fn get_subagent_card_by_name(

@@ -430,9 +430,14 @@ pub async fn list_cards(
 pub async fn create_card(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Json(card_request): Json<CreateCardRequest>,
+    Json(mut card_request): Json<CreateCardRequest>,
 ) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
     let table = CardTable::from_registry_type(&card_request.registry_type);
+
+    // Override username with the server-verified JWT identity to prevent client-side spoofing.
+    if let CardRecord::SubAgent(ref mut r) = card_request.card {
+        r.username = perms.username.clone();
+    }
 
     if !perms.has_write_permission(card_request.card.space()) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);

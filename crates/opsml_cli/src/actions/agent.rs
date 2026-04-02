@@ -34,7 +34,7 @@ fn parse_agent_identifier(
 #[instrument(skip_all)]
 pub fn push_agent(args: &AgentPushArgs) -> Result<(), CliError> {
     let content = std::fs::read_to_string(&args.path).map_err(|e| {
-        CliError::Error(format!("Failed to read agent file {:?}: {e}", args.path))
+        CliError::Error(format!("Failed to read agent file {}: {e}", args.path.display()))
     })?;
 
     let mut card: opsml_cards::SubAgentCard = parse_subagent_markdown(&content)
@@ -162,7 +162,7 @@ pub fn init_agent(args: &AgentInitArgs) -> Result<(), CliError> {
     }
 
     let template = format!(
-        "---\nname: \"{name}\"\ndescription: \"TODO: Describe what this agent does\"\ncompatibleClis:\n  - claude-code\n---\n# {name}\n\nTODO: Write your agent system prompt here.\n"
+        "---\nname: {name}\ndescription: \"TODO: Describe what this agent does\"\ncompatibleClis:\n  - ClaudeCode\n---\n# {name}\n\nTODO: Write your agent system prompt here.\n"
     );
 
     if let Some(parent) = output.parent()
@@ -176,4 +176,71 @@ pub fn init_agent(args: &AgentInitArgs) -> Result<(), CliError> {
     println!("{} {}", Colorize::green("Created"), output.display());
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::cli::arg::AgentInitArgs;
+
+    #[test]
+    fn test_parse_agent_identifier_slash_format() {
+        let (space, name) = parse_agent_identifier("my-space/my-agent", None).unwrap();
+        assert_eq!(space, "my-space");
+        assert_eq!(name, "my-agent");
+    }
+
+    #[test]
+    fn test_parse_agent_identifier_empty_space() {
+        assert!(parse_agent_identifier("/my-agent", None).is_err());
+    }
+
+    #[test]
+    fn test_parse_agent_identifier_empty_name() {
+        assert!(parse_agent_identifier("my-space/", None).is_err());
+    }
+
+    #[test]
+    fn test_parse_agent_identifier_no_space_provided() {
+        assert!(parse_agent_identifier("my-agent", None).is_err());
+    }
+
+    #[test]
+    fn test_parse_agent_identifier_explicit_space_fallback() {
+        let (space, name) =
+            parse_agent_identifier("my-agent", Some("explicit-space")).unwrap();
+        assert_eq!(space, "explicit-space");
+        assert_eq!(name, "my-agent");
+    }
+
+    #[test]
+    fn test_init_agent_creates_parseable_template() {
+        let tmp = tempfile::tempdir().unwrap();
+        let output = tmp.path().join("AGENT.md");
+
+        let args = AgentInitArgs {
+            name: Some("test-init".to_string()),
+            output: Some(output.clone()),
+        };
+        init_agent(&args).unwrap();
+
+        assert!(output.exists());
+        let content = std::fs::read_to_string(&output).unwrap();
+        // Template must parse successfully with parse_subagent_markdown
+        opsml_cards::parse_subagent_markdown(&content).unwrap();
+    }
+
+    #[test]
+    fn test_init_agent_rejects_existing_file() {
+        let tmp = tempfile::tempdir().unwrap();
+        let output = tmp.path().join("AGENT.md");
+        std::fs::write(&output, "existing").unwrap();
+
+        let args = AgentInitArgs {
+            name: Some("test".to_string()),
+            output: Some(output),
+        };
+        let err = init_agent(&args).unwrap_err();
+        assert!(err.to_string().contains("already exists"));
+    }
 }

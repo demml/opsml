@@ -1424,6 +1424,8 @@ impl SubAgentCardRecord {
             content_hash: client_card.content_hash,
             opsml_version: client_card.opsml_version,
             username: client_card.username,
+            // New records start at 0. The partial-column UPDATE SQL does NOT include
+            // download_count, so accumulated counts are preserved on update.
             download_count: 0,
         })
     }
