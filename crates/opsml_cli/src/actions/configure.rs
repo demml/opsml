@@ -20,7 +20,7 @@ pub fn configure_cli(args: &ConfigureArgs) -> Result<(), CliError> {
     }
 
     if args.lazy {
-        configure_lazy(args, &opsml_dir, &yaml_path, &home)
+        configure_lazy(args, &opsml_dir, &home)
     } else {
         configure_eager(args)
     }
@@ -38,7 +38,6 @@ fn configure_eager(args: &ConfigureArgs) -> Result<(), CliError> {
 fn configure_lazy(
     args: &ConfigureArgs,
     opsml_dir: &Path,
-    yaml_path: &Path,
     home: &Path,
 ) -> Result<(), CliError> {
     let hooks_dir = opsml_dir.join("hooks");
@@ -51,8 +50,7 @@ fn configure_lazy(
         .into_owned();
 
     let hook_content = crate::hooks::STARTUP_SH
-        .replace("__OPSML_BIN__", &opsml_bin)
-        .replace("__OPSML_SKILLS_YAML__", &yaml_path.to_string_lossy());
+        .replace("__OPSML_BIN__", &shell_single_quote(&opsml_bin));
 
     std::fs::write(&hook_path, hook_content)?;
 
@@ -65,11 +63,18 @@ fn configure_lazy(
     println!("{} {}", Colorize::green("Created"), hook_path.display());
 
     // sync with no --path → both layers
-    let hook_cmd = format!("\"{}\" skill sync --quiet", opsml_bin);
+    let hook_cmd = format!("{} skill sync --quiet", shell_single_quote(&opsml_bin));
     for target in &args.target.to_pull_targets() {
         register_hook(target, home, &hook_cmd)?;
     }
     Ok(())
+}
+
+/// Wraps `s` in POSIX single quotes, escaping any internal single quotes.
+/// A path like `/home/john doe/bin/opsml` becomes `'/home/john doe/bin/opsml'`.
+/// A path like `/weird'path/opsml` becomes `'/weird'\''path/opsml'`.
+fn shell_single_quote(s: &str) -> String {
+    format!("'{}'", s.replace('\'', r"'\''"))
 }
 
 fn register_hook(target: &PullTarget, base: &Path, cmd: &str) -> Result<(), CliError> {
