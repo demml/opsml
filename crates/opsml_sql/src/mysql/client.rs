@@ -201,7 +201,7 @@ mod tests {
 
             DELETE FROM opsml_skill_registry;
 
-            DELETE FROM opsml_sub_agent_registry;
+            DELETE FROM opsml_subagent_registry;
             "#,
         )
         .fetch_all(pool)
