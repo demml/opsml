@@ -494,8 +494,14 @@ impl ServerCardRegistry {
                     major: version.major as i32,
                     minor: version.minor as i32,
                     patch: version.patch as i32,
-                    pre_tag: { let s = version.pre.to_string(); if s.is_empty() { None } else { Some(s) } },
-                    build_tag: { let s = version.build.to_string(); if s.is_empty() { None } else { Some(s) } },
+                    pre_tag: {
+                        let s = version.pre.to_string();
+                        if s.is_empty() { None } else { Some(s) }
+                    },
+                    build_tag: {
+                        let s = version.build.to_string();
+                        if s.is_empty() { None } else { Some(s) }
+                    },
                     version: client_card.version,
                     tags: SqlxJson(client_card.tags),
                     compatible_clis: SqlxJson(client_card.compatible_clis),

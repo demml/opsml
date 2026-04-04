@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS opsml_subagent_registry (
     pre_tag TEXT,
     build_tag TEXT,
     version TEXT NOT NULL,
-    tags TEXT NOT NULL DEFAULT '[]',
+    tags JSON NOT NULL DEFAULT '[]',
     app_env TEXT NOT NULL DEFAULT 'dev',
     opsml_version TEXT NOT NULL,
     username TEXT NOT NULL DEFAULT 'guest',

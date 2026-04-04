@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 use crate::error::CliError;
 use clap::{Args, ValueEnum};
-use opsml_cards::subagent::{ClaudeCodeTarget, CodexTarget, CopilotTarget, GeminiCliTarget, SubAgentCliTarget};
+use opsml_cards::subagent::{
+    ClaudeCodeTarget, CodexTarget, CopilotTarget, GeminiCliTarget, SubAgentCliTarget,
+};
 use opsml_semver::VersionType;
 use opsml_service::service::DEFAULT_SERVICE_FILENAME;
 use opsml_types::{RegistryType, contracts::CardQueryArgs};

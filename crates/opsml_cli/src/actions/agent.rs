@@ -34,11 +34,14 @@ fn parse_agent_identifier(
 #[instrument(skip_all)]
 pub fn push_agent(args: &AgentPushArgs) -> Result<(), CliError> {
     let content = std::fs::read_to_string(&args.path).map_err(|e| {
-        CliError::Error(format!("Failed to read agent file {}: {e}", args.path.display()))
+        CliError::Error(format!(
+            "Failed to read agent file {}: {e}",
+            args.path.display()
+        ))
     })?;
 
-    let mut card: opsml_cards::SubAgentCard = parse_subagent_markdown(&content)
-        .map_err(|e| CliError::Error(e.to_string()))?;
+    let mut card: opsml_cards::SubAgentCard =
+        parse_subagent_markdown(&content).map_err(|e| CliError::Error(e.to_string()))?;
 
     card.space = clean_string(args.space.as_deref().unwrap_or(&card.space))?;
     card.name = clean_string(&card.name)?;
@@ -116,7 +119,10 @@ pub fn pull_agent(args: &AgentPullArgs) -> Result<(), CliError> {
 
 #[instrument(skip_all)]
 pub fn list_agents(args: &AgentListArgs) -> Result<(), CliError> {
-    println!("\nListing cards from {} registry", Colorize::green("subagent"));
+    println!(
+        "\nListing cards from {} registry",
+        Colorize::green("subagent")
+    );
 
     let space = args.space.clone().map(|s| clean_string(&s)).transpose()?;
     let name = args.name.clone().map(|n| clean_string(&n)).transpose()?;
@@ -131,7 +137,8 @@ pub fn list_agents(args: &AgentListArgs) -> Result<(), CliError> {
         ..Default::default()
     };
 
-    let registry = opsml_registry::registries::card::OpsmlCardRegistry::new(RegistryType::SubAgent)?;
+    let registry =
+        opsml_registry::registries::card::OpsmlCardRegistry::new(RegistryType::SubAgent)?;
     let cards = registry.list_cards(&query_args)?;
 
     CardList { cards }.as_subagent_table();
@@ -207,8 +214,7 @@ mod tests {
 
     #[test]
     fn test_parse_agent_identifier_explicit_space_fallback() {
-        let (space, name) =
-            parse_agent_identifier("my-agent", Some("explicit-space")).unwrap();
+        let (space, name) = parse_agent_identifier("my-agent", Some("explicit-space")).unwrap();
         assert_eq!(space, "explicit-space");
         assert_eq!(name, "my-agent");
     }

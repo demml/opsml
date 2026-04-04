@@ -104,7 +104,10 @@ async fn test_subagent_push_and_list() {
         };
         assert_eq!(card.name, "list-test-agent");
         assert_eq!(card.space, "agent-test");
-        assert_eq!(card.description.as_deref(), Some("A subagent for testing list"));
+        assert_eq!(
+            card.description.as_deref(),
+            Some("A subagent for testing list")
+        );
         // Verify compatible_clis round-trips through the registry API.
         assert_eq!(card.compatible_clis, vec!["claude-code".to_string()]);
 
@@ -212,7 +215,9 @@ async fn test_v1_map_includes_subagents() {
         let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
 
         assert_eq!(body["space"], "repo1");
-        let subagents = body["subagents"].as_array().expect("subagents must be array");
+        let subagents = body["subagents"]
+            .as_array()
+            .expect("subagents must be array");
         assert!(!subagents.is_empty(), "repo1 should have fixture subagents");
         let names: Vec<&str> = subagents
             .iter()
