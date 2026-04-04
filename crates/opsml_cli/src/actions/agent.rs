@@ -169,7 +169,7 @@ pub fn init_agent(args: &AgentInitArgs) -> Result<(), CliError> {
     }
 
     let template = format!(
-        "---\nname: {name}\ndescription: \"TODO: Describe what this agent does\"\ncompatibleClis:\n  - ClaudeCode\n---\n# {name}\n\nTODO: Write your agent system prompt here.\n"
+        "---\nname: {name}\ndescription: \"TODO: Describe what this agent does\"\ncompatibleClis:\n  - claude-code\n---\n# {name}\n\nTODO: Write your agent system prompt here.\n"
     );
 
     if let Some(parent) = output.parent()
@@ -232,8 +232,11 @@ mod tests {
 
         assert!(output.exists());
         let content = std::fs::read_to_string(&output).unwrap();
-        // Template must parse successfully with parse_subagent_markdown
-        opsml_cards::parse_subagent_markdown(&content).unwrap();
+        let card = opsml_cards::parse_subagent_markdown(&content).unwrap();
+        assert_eq!(
+            card.spec.compatible_clis,
+            vec![opsml_types::contracts::CompatibleTool::ClaudeCode]
+        );
     }
 
     #[test]
