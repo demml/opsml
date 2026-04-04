@@ -185,15 +185,15 @@ impl SubAgentCard {
         let content = target.serialize(&self.spec)?;
         let dir = target.agent_dir(global);
         std::fs::create_dir_all(&dir)?;
-        let file_path = dir.join(target.file_name(&self.spec.name));
 
-        // Guard against path traversal: ensure the resolved path stays within the agent dir.
-        if !file_path.starts_with(&dir) {
+        let fname = target.file_name(&self.spec.name);
+        if fname.contains("..") || fname.contains('/') || fname.contains(std::path::MAIN_SEPARATOR)
+        {
             return Err(SubAgentError::Error(format!(
-                "Resolved agent path escapes target directory: {}",
-                file_path.display()
+                "Invalid agent filename: {fname}"
             )));
         }
+        let file_path = dir.join(&fname);
 
         std::fs::write(&file_path, content)?;
         Ok(file_path)
@@ -296,6 +296,7 @@ impl ProfileExt for SubAgentCard {
 mod tests {
     use super::*;
     use crate::subagent::target::{ClaudeCodeTarget, CodexTarget, CopilotTarget, GeminiCliTarget};
+    use opsml_types::contracts::CompatibleTool;
 
     fn make_spec() -> SubAgentSpec {
         SubAgentSpec {
@@ -306,6 +307,7 @@ mod tests {
             tools: vec!["Read".to_string(), "Grep".to_string()],
             disallowed_tools: vec!["Bash".to_string()],
             max_turns: Some(5),
+            compatible_clis: vec![CompatibleTool::ClaudeCode, CompatibleTool::Codex],
             ..Default::default()
         }
     }
@@ -388,6 +390,7 @@ mod tests {
         let restored = parse_subagent_markdown(&md).unwrap();
         assert_eq!(restored.spec.name, card.spec.name);
         assert_eq!(restored.spec.description, card.spec.description);
+        assert_eq!(restored.spec.compatible_clis, card.spec.compatible_clis);
     }
 
     #[test]
