@@ -125,13 +125,22 @@ pub fn list_tools(args: &ToolListArgs) -> Result<(), CliError> {
         limit: args.limit,
         registry_type: RegistryType::Tool,
         sort_by_timestamp: Some(true),
-        service_type: args.tool_type.clone(),
         ..Default::default()
     };
 
     let registry =
         opsml_registry::registries::card::OpsmlCardRegistry::new(RegistryType::Tool)?;
-    let cards = registry.list_cards(&query_args)?;
+    let mut cards = registry.list_cards(&query_args)?;
+
+    if let Some(tool_type) = &args.tool_type {
+        cards.retain(|c| {
+            if let opsml_types::contracts::CardRecord::Tool(r) = c {
+                &r.tool_type == tool_type
+            } else {
+                false
+            }
+        });
+    }
 
     CardList { cards }.as_tool_table();
 
