@@ -6,9 +6,9 @@ use crate::error::SqlError;
 use crate::schemas::schema::{
     AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
     ModelCardRecord, PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SkillCardRecord,
-    VersionResult, VersionSummary,
+    SubAgentCardRecord, VersionResult, VersionSummary,
 };
-use crate::traits::{CardLogicTrait, SkillLogicTrait};
+use crate::traits::{CardLogicTrait, SkillLogicTrait, SubAgentLogicTrait};
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_types::contracts::skill::MarketplaceStats;
@@ -174,6 +174,12 @@ impl CardLogicTrait for CardLogicPostgresClient {
                     query_cards_generic::<SkillCardRecord>(&self.pool, &query, query_args, 50)
                         .await?;
                 Ok(CardResults::Skill(cards))
+            }
+            CardTable::SubAgent => {
+                let cards =
+                    query_cards_generic::<SubAgentCardRecord>(&self.pool, &query, query_args, 50)
+                        .await?;
+                Ok(CardResults::SubAgent(cards))
             }
             _ => Err(SqlError::InvalidTableName),
         }
@@ -397,6 +403,36 @@ impl CardLogicTrait for CardLogicPostgresClient {
                 }
             },
 
+            CardTable::SubAgent => match card {
+                ServerCard::SubAgent(record) => {
+                    let query = PostgresQueryHelper::get_subagent_card_insert_query();
+                    sqlx::query(query)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.tags)
+                        .bind(&record.compatible_clis)
+                        .bind(&record.description)
+                        .bind(&record.content_hash)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(record.download_count)
+                        .execute(&self.pool)
+                        .await?;
+                    Ok(())
+                }
+                _ => {
+                    return Err(SqlError::InvalidCardType);
+                }
+            },
+
             _ => {
                 return Err(SqlError::InvalidTableName);
             }
@@ -574,6 +610,29 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.username)
                         .bind(&record.opsml_version)
                         .bind(&record.input_schema)
+                        .bind(&record.uid)
+                        .execute(&self.pool)
+                        .await?;
+                    Ok(())
+                }
+                _ => {
+                    return Err(SqlError::InvalidCardType);
+                }
+            },
+
+            CardTable::SubAgent => match card {
+                ServerCard::SubAgent(record) => {
+                    let query = PostgresQueryHelper::get_subagent_card_update_query();
+                    sqlx::query(query)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(&record.tags)
+                        .bind(&record.compatible_clis)
+                        .bind(&record.description)
+                        .bind(&record.content_hash)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
                         .bind(&record.uid)
                         .execute(&self.pool)
                         .await?;
@@ -889,6 +948,111 @@ impl SkillLogicTrait for CardLogicPostgresClient {
     async fn get_marketplace_stats(&self) -> Result<MarketplaceStats, SqlError> {
         let row: (i64, i64, i64) =
             sqlx::query_as(PostgresQueryHelper::get_marketplace_stats_query())
+                .fetch_one(&self.pool)
+                .await?;
+
+        Ok(MarketplaceStats {
+            total_skills: row.0,
+            total_spaces: row.1,
+            total_downloads: row.2,
+        })
+    }
+}
+
+#[async_trait]
+impl SubAgentLogicTrait for CardLogicPostgresClient {
+    async fn get_subagent_card_by_name(
+        &self,
+        space: &str,
+        name: &str,
+    ) -> Result<SubAgentCardRecord, SqlError> {
+        let record = sqlx::query_as::<_, SubAgentCardRecord>(
+            PostgresQueryHelper::get_subagent_card_by_name_query(),
+        )
+        .bind(space)
+        .bind(name)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or_else(|| SqlError::MissingField(format!("{}/{}", space, name)))?;
+        Ok(record)
+    }
+
+    async fn get_subagent_card_by_version(
+        &self,
+        space: &str,
+        name: &str,
+        version: &str,
+    ) -> Result<SubAgentCardRecord, SqlError> {
+        let record = sqlx::query_as::<_, SubAgentCardRecord>(
+            PostgresQueryHelper::get_subagent_card_by_version_query(),
+        )
+        .bind(space)
+        .bind(name)
+        .bind(version)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or_else(|| SqlError::MissingField(format!("{}/{}/{}", space, name, version)))?;
+        Ok(record)
+    }
+
+    async fn increment_subagent_download_count(&self, uid: &str) -> Result<(), SqlError> {
+        let result =
+            sqlx::query(PostgresQueryHelper::get_increment_subagent_download_count_query())
+                .bind(uid)
+                .execute(&self.pool)
+                .await?;
+        if result.rows_affected() == 0 {
+            return Err(SqlError::MissingField(format!(
+                "subagent uid not found: {uid}"
+            )));
+        }
+        Ok(())
+    }
+
+    async fn list_subagent_cards_by_space(
+        &self,
+        space: &str,
+    ) -> Result<Vec<SubAgentCardRecord>, SqlError> {
+        let records = sqlx::query_as::<_, SubAgentCardRecord>(
+            PostgresQueryHelper::get_list_subagent_cards_by_space_query(),
+        )
+        .bind(space)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(records)
+    }
+
+    async fn get_featured_subagents(
+        &self,
+        space: &str,
+        limit: i64,
+    ) -> Result<Vec<SubAgentCardRecord>, SqlError> {
+        let records = sqlx::query_as::<_, SubAgentCardRecord>(
+            PostgresQueryHelper::get_featured_subagents_query(),
+        )
+        .bind(space)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(records)
+    }
+
+    async fn get_all_subagent_tags(&self, space: &str) -> Result<Vec<String>, SqlError> {
+        let tags: Vec<String> =
+            sqlx::query_scalar(PostgresQueryHelper::get_all_subagent_tags_query())
+                .bind(space)
+                .fetch_all(&self.pool)
+                .await?;
+        Ok(tags)
+    }
+
+    async fn get_subagent_marketplace_stats(
+        &self,
+        space: &str,
+    ) -> Result<MarketplaceStats, SqlError> {
+        let row: (i64, i64, i64) =
+            sqlx::query_as(PostgresQueryHelper::get_subagent_marketplace_stats_query())
+                .bind(space)
                 .fetch_one(&self.pool)
                 .await?;
 

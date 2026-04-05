@@ -1,6 +1,7 @@
 use crate::cli::arg::{
-    ConfigureArgs, DownloadCard, KeyArgs, ListCards, LockArgs, RegisterArgs, ScouterArgs,
-    SkillInitArgs, SkillListArgs, SkillPullArgs, SkillPushArgs, SkillRemoveArgs, SyncArgs, UiArgs,
+    AgentInitArgs, AgentListArgs, AgentPullArgs, AgentPushArgs, ConfigureArgs, DownloadCard,
+    KeyArgs, ListCards, LockArgs, RegisterArgs, ScouterArgs, SkillInitArgs, SkillListArgs,
+    SkillPullArgs, SkillPushArgs, SkillRemoveArgs, SyncArgs, UiArgs,
 };
 use clap::Parser;
 use clap::Subcommand;
@@ -152,6 +153,15 @@ pub enum Commands {
     /// opsml configure --target claude-code
     /// opsml configure --target all --lazy
     Configure(ConfigureArgs),
+
+    /// Manage OpsML subagents
+    ///
+    /// # Example
+    /// opsml agent push ./AGENT.md --space my-space
+    Agent {
+        #[command(subcommand)]
+        command: AgentCommands,
+    },
 }
 
 #[derive(Subcommand)]
@@ -273,6 +283,19 @@ pub enum SkillCommands {
     /// opsml skill remove my-space/my-skill
     /// opsml skill remove my-skill --space my-space --local
     Remove(SkillRemoveArgs),
+}
+
+#[derive(Subcommand)]
+#[command(version = None)]
+pub enum AgentCommands {
+    /// Push an AGENT.md file to the SubAgent registry
+    Push(AgentPushArgs),
+    /// Pull a subagent and install to CLI agent directory
+    Pull(AgentPullArgs),
+    /// List subagents in the registry
+    List(AgentListArgs),
+    /// Scaffold a new AGENT.md file
+    Init(AgentInitArgs),
 }
 
 pub const LOGO_TEXT: &str = "

@@ -72,7 +72,7 @@ mod tests {
     use crate::schemas::schema::{
         ArtifactSqlRecord, AuditCardRecord, CardResults, DataCardRecord, ExperimentCardRecord,
         HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-        ServerCard, ServiceCardRecord, SkillCardRecord, User,
+        ServerCard, ServiceCardRecord, SkillCardRecord, SubAgentCardRecord, User,
     };
     use crate::traits::EvaluationLogicTrait;
     use crate::traits::{
@@ -197,10 +197,11 @@ mod tests {
             DELETE
             FROM opsml_space;
 
-            DELETE
-            FROM opsml_evaluation_registry;
+            DELETE FROM opsml_evaluation_registry;
 
             DELETE FROM opsml_skill_registry;
+
+            DELETE FROM opsml_subagent_registry;
             "#,
         )
         .fetch_all(pool)
@@ -222,6 +223,7 @@ mod tests {
             CardTable::Prompt => ServerCard::Prompt(PromptCardRecord::default()),
             CardTable::Service => ServerCard::Service(Box::default()),
             CardTable::Skill => ServerCard::Skill(SkillCardRecord::default()),
+            CardTable::SubAgent => ServerCard::SubAgent(SubAgentCardRecord::default()),
             _ => panic!("Invalid card type"),
         };
 
@@ -234,6 +236,7 @@ mod tests {
             ServerCard::Prompt(c) => c.uid.clone(),
             ServerCard::Service(c) => c.uid.clone(),
             ServerCard::Skill(c) => c.uid.clone(),
+            ServerCard::SubAgent(c) => c.uid.clone(),
         };
 
         // Test Insert
@@ -326,6 +329,7 @@ mod tests {
             CardResults::Prompt(cards) => assert_eq!(cards[0].name, updated_name),
             CardResults::Service(cards) => assert_eq!(cards[0].name, updated_name),
             CardResults::Skill(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::SubAgent(cards) => assert_eq!(cards[0].name, updated_name),
         }
 
         // delete card

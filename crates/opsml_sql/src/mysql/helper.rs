@@ -44,6 +44,7 @@ const INSERT_SERVICECARD_SQL: &str = include_str!("sql/card/insert_servicecard.s
 const INSERT_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/insert_mcp_card.sql");
 const INSERT_AGENTCARD_SQL: &str = include_str!("sql/card/insert_agent_card.sql");
 const INSERT_SKILL_CARD_SQL: &str = include_str!("sql/card/insert_skill_card.sql");
+const INSERT_SUBAGENT_CARD_SQL: &str = include_str!("sql/card/insert_subagent_card.sql");
 const UPDATE_DATACARD_SQL: &str = include_str!("sql/card/update_datacard.sql");
 const UPDATE_PROMPTCARD_SQL: &str = include_str!("sql/card/update_promptcard.sql");
 const UPDATE_MODELCARD_SQL: &str = include_str!("sql/card/update_modelcard.sql");
@@ -53,6 +54,7 @@ const UPDATE_SERVICECARD_SQL: &str = include_str!("sql/card/update_servicecard.s
 const UPDATE_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/update_mcp_card.sql");
 const UPDATE_AGENTCARD_SQL: &str = include_str!("sql/card/update_agent_card.sql");
 const UPDATE_SKILL_CARD_SQL: &str = include_str!("sql/card/update_skill_card.sql");
+const UPDATE_SUBAGENT_CARD_SQL: &str = include_str!("sql/card/update_subagent_card.sql");
 const GET_DASHBOARD_STATS_SQL: &str = include_str!("sql/card/get_dashboard_stats.sql");
 
 // skill queries
@@ -64,6 +66,20 @@ const LIST_SKILL_CARDS_BY_SPACE_SQL: &str = include_str!("sql/skill/list_skill_c
 const GET_FEATURED_SKILLS_SQL: &str = include_str!("sql/skill/get_featured_skills.sql");
 const GET_ALL_SKILL_TAGS_SQL: &str = include_str!("sql/skill/get_all_skill_tags.sql");
 const GET_MARKETPLACE_STATS_SQL: &str = include_str!("sql/skill/get_marketplace_stats.sql");
+
+// subagent queries
+const GET_SUBAGENT_CARD_BY_NAME_SQL: &str =
+    include_str!("sql/subagent/get_subagent_card_by_name.sql");
+const GET_SUBAGENT_CARD_BY_VERSION_SQL: &str =
+    include_str!("sql/subagent/get_subagent_card_by_version.sql");
+const INCREMENT_SUBAGENT_DOWNLOAD_COUNT_SQL: &str =
+    include_str!("sql/subagent/increment_subagent_download_count.sql");
+const LIST_SUBAGENT_CARDS_BY_SPACE_SQL: &str =
+    include_str!("sql/subagent/list_subagent_cards_by_space.sql");
+const GET_FEATURED_SUBAGENTS_SQL: &str = include_str!("sql/subagent/get_featured_subagents.sql");
+const GET_ALL_SUBAGENT_TAGS_SQL: &str = include_str!("sql/subagent/get_all_subagent_tags.sql");
+const GET_SUBAGENT_MARKETPLACE_STATS_SQL: &str =
+    include_str!("sql/subagent/get_subagent_marketplace_stats.sql");
 
 // artifact keys
 const INSERT_ARTIFACT_KEY_SQL: &str = include_str!("sql/artifact/insert_artifact_key.sql");
@@ -548,6 +564,42 @@ impl MySqlQueryHelper {
 
     pub fn get_marketplace_stats_query() -> &'static str {
         GET_MARKETPLACE_STATS_SQL
+    }
+
+    pub fn get_subagent_card_insert_query() -> &'static str {
+        INSERT_SUBAGENT_CARD_SQL
+    }
+
+    pub fn get_subagent_card_update_query() -> &'static str {
+        UPDATE_SUBAGENT_CARD_SQL
+    }
+
+    pub fn get_subagent_card_by_name_query() -> &'static str {
+        GET_SUBAGENT_CARD_BY_NAME_SQL
+    }
+
+    pub fn get_subagent_card_by_version_query() -> &'static str {
+        GET_SUBAGENT_CARD_BY_VERSION_SQL
+    }
+
+    pub fn get_increment_subagent_download_count_query() -> &'static str {
+        INCREMENT_SUBAGENT_DOWNLOAD_COUNT_SQL
+    }
+
+    pub fn get_list_subagent_cards_by_space_query() -> &'static str {
+        LIST_SUBAGENT_CARDS_BY_SPACE_SQL
+    }
+
+    pub fn get_featured_subagents_query() -> &'static str {
+        GET_FEATURED_SUBAGENTS_SQL
+    }
+
+    pub fn get_all_subagent_tags_query() -> &'static str {
+        GET_ALL_SUBAGENT_TAGS_SQL
+    }
+
+    pub fn get_subagent_marketplace_stats_query() -> &'static str {
+        GET_SUBAGENT_MARKETPLACE_STATS_SQL
     }
 
     pub fn get_promptcard_update_query() -> &'static str {

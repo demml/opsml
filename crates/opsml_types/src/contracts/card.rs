@@ -787,6 +787,57 @@ impl Default for SkillCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct SubAgentCardClientRecord {
+    #[pyo3(get, set)]
+    pub uid: String,
+    #[pyo3(get, set)]
+    pub created_at: DateTime<Utc>,
+    #[pyo3(get, set)]
+    pub app_env: String,
+    #[pyo3(get, set)]
+    pub space: String,
+    #[pyo3(get, set)]
+    pub name: String,
+    #[pyo3(get, set)]
+    pub version: String,
+    #[pyo3(get, set)]
+    pub tags: Vec<String>,
+    #[pyo3(get, set)]
+    pub opsml_version: String,
+    #[pyo3(get, set)]
+    pub username: String,
+    #[pyo3(get, set)]
+    pub compatible_clis: Vec<String>,
+    #[pyo3(get, set)]
+    pub content_hash: Option<Vec<u8>>,
+    #[pyo3(get, set)]
+    pub download_count: i64,
+    #[pyo3(get, set)]
+    pub description: Option<String>,
+}
+
+impl Default for SubAgentCardClientRecord {
+    fn default() -> Self {
+        Self {
+            uid: "".to_string(),
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
+            space: "".to_string(),
+            name: "".to_string(),
+            version: "".to_string(),
+            tags: Vec::new(),
+            opsml_version: opsml_version::version(),
+            username: "guest".to_string(),
+            compatible_clis: Vec::new(),
+            content_hash: None,
+            download_count: 0,
+            description: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 #[pyclass]
 pub enum CardRecord {
@@ -797,6 +848,7 @@ pub enum CardRecord {
     Prompt(PromptCardClientRecord),
     Service(Box<ServiceCardClientRecord>),
     Skill(SkillCardClientRecord),
+    SubAgent(SubAgentCardClientRecord),
 }
 
 #[pymethods]
@@ -815,6 +867,7 @@ impl CardRecord {
             Self::Prompt(card) => &card.uid,
             Self::Service(card) => &card.uid,
             Self::Skill(card) => &card.uid,
+            Self::SubAgent(card) => &card.uid,
         }
     }
 
@@ -828,6 +881,7 @@ impl CardRecord {
             Self::Prompt(card) => card.created_at,
             Self::Service(card) => card.created_at,
             Self::Skill(card) => card.created_at,
+            Self::SubAgent(card) => card.created_at,
         }
     }
 
@@ -841,6 +895,7 @@ impl CardRecord {
             Self::Prompt(card) => card.app_env.as_ref(),
             Self::Service(card) => card.app_env.as_ref(),
             Self::Skill(card) => card.app_env.as_ref(),
+            Self::SubAgent(card) => card.app_env.as_ref(),
         }
     }
 
@@ -854,6 +909,7 @@ impl CardRecord {
             Self::Prompt(card) => card.name.as_ref(),
             Self::Service(card) => card.name.as_ref(),
             Self::Skill(card) => card.name.as_ref(),
+            Self::SubAgent(card) => card.name.as_ref(),
         }
     }
 
@@ -867,6 +923,7 @@ impl CardRecord {
             Self::Prompt(card) => card.space.as_ref(),
             Self::Service(card) => card.space.as_ref(),
             Self::Skill(card) => card.space.as_ref(),
+            Self::SubAgent(card) => card.space.as_ref(),
         }
     }
 
@@ -880,6 +937,7 @@ impl CardRecord {
             Self::Prompt(card) => card.version.as_ref(),
             Self::Service(card) => card.version.as_ref(),
             Self::Skill(card) => card.version.as_ref(),
+            Self::SubAgent(card) => card.version.as_ref(),
         }
     }
 
@@ -894,6 +952,7 @@ impl CardRecord {
             Self::Prompt(card) => &card.tags,
             Self::Service(_card) => &EMPTY_TAGS,
             Self::Skill(card) => &card.tags,
+            Self::SubAgent(card) => &card.tags,
         }
     }
 
@@ -907,6 +966,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -922,6 +982,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -935,6 +996,7 @@ impl CardRecord {
             Self::Prompt(card) => Some(vec![&card.uid]),
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -953,6 +1015,7 @@ impl CardRecord {
             Self::Prompt(card) => Some(vec![&card.experimentcard_uid.as_deref().unwrap()]),
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -966,6 +1029,7 @@ impl CardRecord {
             Self::Prompt(card) => card.auditcard_uid.as_deref(),
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -979,6 +1043,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -992,6 +1057,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -1005,6 +1071,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -1018,6 +1085,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(_) => None,
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 }
@@ -1032,6 +1100,7 @@ impl CardRecord {
             Self::Prompt(_) => None,
             Self::Service(card) => Some(card.cards.clone()),
             Self::Skill(_) => None,
+            Self::SubAgent(_) => None,
         }
     }
 
@@ -1104,6 +1173,16 @@ impl CardRecord {
                 );
                 Ok(Path::new(&uri).to_path_buf())
             }
+            Self::SubAgent(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::SubAgent,
+                    card.space,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
         }
     }
 
@@ -1116,6 +1195,7 @@ impl CardRecord {
             Self::Prompt(_) => RegistryType::Prompt,
             Self::Service(card) => RegistryType::from(&card.service_type),
             Self::Skill(_) => RegistryType::Skill,
+            Self::SubAgent(_) => RegistryType::SubAgent,
         }
     }
 }
@@ -1152,6 +1232,17 @@ struct SkillCardTableEntry {
     space: String,
     version: String,
     description: String,
+    uid: String,
+}
+
+#[derive(Tabled)]
+struct SubAgentCardTableEntry {
+    created_at: String,
+    name: String,
+    space: String,
+    version: String,
+    description: String,
+    compatible_clis: String,
     uid: String,
 }
 
@@ -1264,6 +1355,46 @@ impl CardList {
         let mut table = Table::new(entries);
         table.with(Style::sharp());
         table.modify(Columns::one(SKILL_DESCRIPTION_COLUMN), Width::wrap(40));
+        table.modify(
+            Rows::new(0..1),
+            (
+                Format::content(Colorize::green),
+                Alignment::center(),
+                Color::BOLD,
+            ),
+        );
+        table.to_string()
+    }
+
+    pub fn as_subagent_table(&self) {
+        println!("{}", self.render_subagent_table());
+    }
+
+    fn render_subagent_table(&self) -> String {
+        let entries: Vec<SubAgentCardTableEntry> = self
+            .cards
+            .iter()
+            .filter_map(|card| {
+                if let CardRecord::SubAgent(r) = card {
+                    Some(SubAgentCardTableEntry {
+                        created_at: r.created_at.to_string(),
+                        name: r.name.clone(),
+                        space: r.space.clone(),
+                        version: r.version.clone(),
+                        description: r.description.clone().unwrap_or_else(|| "—".into()),
+                        compatible_clis: r.compatible_clis.join(", "),
+                        uid: Colorize::purple(&r.uid),
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        const DESCRIPTION_COLUMN: usize = 4;
+        let mut table = Table::new(entries);
+        table.with(Style::sharp());
+        table.modify(Columns::one(DESCRIPTION_COLUMN), Width::wrap(40));
         table.modify(
             Rows::new(0..1),
             (

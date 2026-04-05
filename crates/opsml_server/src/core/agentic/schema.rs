@@ -14,6 +14,7 @@ pub struct ArtifactMeta {
 pub struct MapResponse {
     pub space: String,
     pub skills: Vec<ArtifactMeta>,
+    pub subagents: Vec<ArtifactMeta>,
     /// Reserved for tool cards (ToolCard — PR 7). Always empty until then.
     pub tools: Vec<ArtifactMeta>,
     /// Reserved for agent configs (AgentSpec — PR 7). Always empty until then.

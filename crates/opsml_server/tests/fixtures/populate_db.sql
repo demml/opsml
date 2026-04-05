@@ -96,3 +96,22 @@ INSERT INTO opsml_audit_registry (uid, app_env, name, space, major, minor, patch
 ('550e8400-e29b-41d4-a716-446655440007', 'development', 'Audit8', 'repo8', 2, 1, 1, 'theta', 'build8', '0.0.0', '[]', 0, '[]', '[]', '[]'),
 ('550e8400-e29b-41d4-a716-446655440008', 'development', 'Audit9', 'repo9', 3, 0, 0, 'iota', 'build9', '0.0.0', '[]', 1, '[]', '[]', '[]'),
 ('550e8400-e29b-41d4-a716-446655440009', 'development', 'Audit10', 'repo10', 3, 0, 1, 'kappa', 'build10', '0.0.0', '[]', 0, '[]', '[]', '[]');
+
+-- Populate opsml_subagent_registry
+INSERT INTO opsml_subagent_registry
+    (uid, created_at, app_env, space, name, major, minor, patch,
+     pre_tag, build_tag, version, tags, compatible_clis,
+     description, content_hash, opsml_version, username, download_count)
+VALUES
+    ('660e8400-e29b-41d4-a716-446655440001', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Agent1', 1, 0, 0, NULL, NULL, '1.0.0',
+     '["tag1"]', '["claude-code"]',
+     'A test agent', NULL, '2.0.0', 'guest', 0),
+    ('660e8400-e29b-41d4-a716-446655440002', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Agent2', 1, 1, 0, NULL, NULL, '1.1.0',
+     '["tag2"]', '["codex","claude-code"]',
+     'Another test agent', NULL, '2.0.0', 'guest', 0),
+    ('660e8400-e29b-41d4-a716-446655440003', '2023-11-28 00:00:00', 'development',
+     'repo2', 'Agent3', 1, 0, 0, NULL, NULL, '1.0.0',
+     '[]', '["gemini-cli"]',
+     'Gemini agent', NULL, '2.0.0', 'guest', 0);

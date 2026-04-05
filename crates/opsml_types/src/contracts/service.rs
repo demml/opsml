@@ -1,6 +1,7 @@
 use crate::RegistryType;
 use crate::contracts::AgentSpec;
 use crate::contracts::mcp::McpConfig;
+use crate::contracts::potato::PotatoAgentConfig;
 use crate::error::{AgentConfigError, TypeError};
 use opsml_semver::VersionType;
 use opsml_utils::extract_py_attr;
@@ -570,6 +571,8 @@ pub struct ServiceConfig {
     pub mcp: Option<McpConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub agent: Option<AgentConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub potato: Option<PotatoAgentConfig>,
 }
 
 impl ServiceConfig {
@@ -653,6 +656,7 @@ impl ServiceConfig {
             write_dir,
             mcp,
             agent: agent_config,
+            potato: None,
         })
     }
 

@@ -1,15 +1,28 @@
 use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum CompatibleTool {
     ClaudeCode,
     Codex,
     GeminiCli,
     GithubCopilotCli,
     Custom(String),
+}
+
+impl Serialize for CompatibleTool {
+    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_str(&self.to_string())
+    }
+}
+
+impl<'de> Deserialize<'de> for CompatibleTool {
+    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(d)?;
+        Ok(CompatibleTool::from(s.as_str()))
+    }
 }
 
 impl std::fmt::Display for CompatibleTool {

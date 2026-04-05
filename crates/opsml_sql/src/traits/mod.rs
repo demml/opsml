@@ -1,7 +1,8 @@
 use crate::error::SqlError;
 use crate::schemas::schema::{
     ArtifactSqlRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord,
-    ParameterRecord, QueryStats, ServerCard, SkillCardRecord, User, VersionSummary,
+    ParameterRecord, QueryStats, ServerCard, SkillCardRecord, SubAgentCardRecord, User,
+    VersionSummary,
 };
 use crate::schemas::{EvaluationSqlRecord, ServiceCardRecord};
 use async_trait::async_trait;
@@ -201,4 +202,42 @@ pub trait SkillLogicTrait {
     async fn get_all_skill_tags(&self) -> Result<Vec<String>, SqlError>;
 
     async fn get_marketplace_stats(&self) -> Result<MarketplaceStats, SqlError>;
+}
+
+/// SubAgent registry operations. Unlike [`SkillLogicTrait`], discovery methods here are
+/// space-scoped by design — subagents are team/project artifacts, not a global marketplace.
+#[async_trait]
+pub trait SubAgentLogicTrait {
+    async fn get_subagent_card_by_name(
+        &self,
+        space: &str,
+        name: &str,
+    ) -> Result<SubAgentCardRecord, SqlError>;
+
+    async fn get_subagent_card_by_version(
+        &self,
+        space: &str,
+        name: &str,
+        version: &str,
+    ) -> Result<SubAgentCardRecord, SqlError>;
+
+    async fn increment_subagent_download_count(&self, uid: &str) -> Result<(), SqlError>;
+
+    async fn list_subagent_cards_by_space(
+        &self,
+        space: &str,
+    ) -> Result<Vec<SubAgentCardRecord>, SqlError>;
+
+    async fn get_featured_subagents(
+        &self,
+        space: &str,
+        limit: i64,
+    ) -> Result<Vec<SubAgentCardRecord>, SqlError>;
+
+    async fn get_all_subagent_tags(&self, space: &str) -> Result<Vec<String>, SqlError>;
+
+    async fn get_subagent_marketplace_stats(
+        &self,
+        space: &str,
+    ) -> Result<MarketplaceStats, SqlError>;
 }

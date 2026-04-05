@@ -8,8 +8,8 @@ use crate::actions::skill::{init_skill, list_skills, pull_skill, push_skill, rem
 use crate::actions::sync::sync_skills;
 pub use crate::actions::{download_card, download_service, list_cards};
 use crate::cli::{
-    Cli, Commands, GenerateCommands, GetCommands, InstallCommands, LOGO_TEXT, ListCommands,
-    SkillCommands,
+    AgentCommands, Cli, Commands, GenerateCommands, GetCommands, InstallCommands, LOGO_TEXT,
+    ListCommands, SkillCommands,
 };
 pub use actions::{
     generate_key,
@@ -155,6 +155,21 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
         Some(Commands::Configure(args)) => {
             configure_cli(args).context("Failed to configure CLI integration")
         }
+
+        Some(Commands::Agent { command }) => match command {
+            AgentCommands::Push(args) => {
+                actions::agent::push_agent(args).context("Failed to push agent")
+            }
+            AgentCommands::Pull(args) => {
+                actions::agent::pull_agent(args).context("Failed to pull agent")
+            }
+            AgentCommands::List(args) => {
+                actions::agent::list_agents(args).context("Failed to list agents")
+            }
+            AgentCommands::Init(args) => {
+                actions::agent::init_agent(args).context("Failed to init agent")
+            }
+        },
 
         None => {
             println!("No command provided");

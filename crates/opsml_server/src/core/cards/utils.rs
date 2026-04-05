@@ -146,6 +146,20 @@ pub async fn insert_card_into_db(
             );
             ServerCard::Skill(server_card)
         }
+        CardRecord::SubAgent(client_card) => {
+            let server_card = SubAgentCardRecord::new(
+                client_card.name,
+                client_card.space,
+                version,
+                client_card.tags,
+                client_card.compatible_clis,
+                client_card.description,
+                client_card.opsml_version,
+                client_card.username,
+                client_card.content_hash,
+            );
+            ServerCard::SubAgent(server_card)
+        }
     };
     sql_client.insert_card(table, &card).await?;
 
