@@ -407,6 +407,11 @@ pub async fn list_cards(
                 .map(convert_subagent_card)
                 .collect::<Vec<_>>(),
         ),
+        CardResults::Tool(data) => Json(
+            data.into_iter()
+                .map(convert_tool_card)
+                .collect::<Vec<_>>(),
+        ),
     };
 
     // Create response and add audit context

@@ -1,0 +1,1 @@
+INSERT INTO opsml_tool_registry (uid, app_env, name, space, major, minor, patch, version, pre_tag, build_tag, tags, tool_type, args_schema, description, content_hash, username, opsml_version, download_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

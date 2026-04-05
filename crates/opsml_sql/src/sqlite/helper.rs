@@ -46,6 +46,7 @@ const INSERT_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/insert_mcp_card.
 const INSERT_AGENTCARD_SQL: &str = include_str!("sql/card/insert_agent_card.sql");
 const INSERT_SKILL_CARD_SQL: &str = include_str!("sql/card/insert_skill_card.sql");
 const INSERT_SUBAGENT_CARD_SQL: &str = include_str!("sql/card/insert_subagent_card.sql");
+const INSERT_TOOL_CARD_SQL: &str = include_str!("sql/card/insert_tool_card.sql");
 const UPDATE_DATACARD_SQL: &str = include_str!("sql/card/update_datacard.sql");
 const UPDATE_PROMPTCARD_SQL: &str = include_str!("sql/card/update_promptcard.sql");
 const UPDATE_MODELCARD_SQL: &str = include_str!("sql/card/update_modelcard.sql");
@@ -56,6 +57,7 @@ const UPDATE_MCP_SERVICECARD_SQL: &str = include_str!("sql/card/update_mcp_card.
 const UPDATE_AGENTCARD_SQL: &str = include_str!("sql/card/update_agent_card.sql");
 const UPDATE_SKILL_CARD_SQL: &str = include_str!("sql/card/update_skill_card.sql");
 const UPDATE_SUBAGENT_CARD_SQL: &str = include_str!("sql/card/update_subagent_card.sql");
+const UPDATE_TOOL_CARD_SQL: &str = include_str!("sql/card/update_tool_card.sql");
 const GET_DASHBOARD_STATS_SQL: &str = include_str!("sql/card/get_dashboard_stats.sql");
 
 // skill queries
@@ -81,6 +83,17 @@ const GET_FEATURED_SUBAGENTS_SQL: &str = include_str!("sql/subagent/get_featured
 const GET_ALL_SUBAGENT_TAGS_SQL: &str = include_str!("sql/subagent/get_all_subagent_tags.sql");
 const GET_SUBAGENT_MARKETPLACE_STATS_SQL: &str =
     include_str!("sql/subagent/get_subagent_marketplace_stats.sql");
+
+// tool queries
+const GET_TOOL_CARD_BY_NAME_SQL: &str = include_str!("sql/tool/get_tool_card_by_name.sql");
+const GET_TOOL_CARD_BY_VERSION_SQL: &str = include_str!("sql/tool/get_tool_card_by_version.sql");
+const INCREMENT_TOOL_DOWNLOAD_COUNT_SQL: &str =
+    include_str!("sql/tool/increment_tool_download_count.sql");
+const LIST_TOOL_CARDS_BY_SPACE_SQL: &str = include_str!("sql/tool/list_tool_cards_by_space.sql");
+const GET_FEATURED_TOOLS_SQL: &str = include_str!("sql/tool/get_featured_tools.sql");
+const GET_ALL_TOOL_TAGS_SQL: &str = include_str!("sql/tool/get_all_tool_tags.sql");
+const GET_TOOL_MARKETPLACE_STATS_SQL: &str =
+    include_str!("sql/tool/get_tool_marketplace_stats.sql");
 
 // evaluation
 const INSERT_EVALUATION_SQL: &str = include_str!("sql/evaluation/insert_evaluation.sql");
@@ -609,6 +622,42 @@ impl SqliteQueryHelper {
 
     pub fn get_subagent_marketplace_stats_query() -> &'static str {
         GET_SUBAGENT_MARKETPLACE_STATS_SQL
+    }
+
+    pub fn get_tool_card_insert_query() -> &'static str {
+        INSERT_TOOL_CARD_SQL
+    }
+
+    pub fn get_tool_card_update_query() -> &'static str {
+        UPDATE_TOOL_CARD_SQL
+    }
+
+    pub fn get_tool_card_by_name_query() -> &'static str {
+        GET_TOOL_CARD_BY_NAME_SQL
+    }
+
+    pub fn get_tool_card_by_version_query() -> &'static str {
+        GET_TOOL_CARD_BY_VERSION_SQL
+    }
+
+    pub fn get_increment_tool_download_count_query() -> &'static str {
+        INCREMENT_TOOL_DOWNLOAD_COUNT_SQL
+    }
+
+    pub fn get_list_tool_cards_by_space_query() -> &'static str {
+        LIST_TOOL_CARDS_BY_SPACE_SQL
+    }
+
+    pub fn get_featured_tools_query() -> &'static str {
+        GET_FEATURED_TOOLS_SQL
+    }
+
+    pub fn get_all_tool_tags_query() -> &'static str {
+        GET_ALL_TOOL_TAGS_SQL
+    }
+
+    pub fn get_tool_marketplace_stats_query() -> &'static str {
+        GET_TOOL_MARKETPLACE_STATS_SQL
     }
 
     pub fn get_promptcard_update_query() -> &'static str {

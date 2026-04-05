@@ -92,6 +92,10 @@ impl ServerCardRegistry {
                 let cards = data.into_iter().map(convert_subagent_card).collect();
                 Ok(cards)
             }
+            CardResults::Tool(data) => {
+                let cards = data.into_iter().map(convert_tool_card).collect();
+                Ok(cards)
+            }
         }
     }
 
@@ -247,6 +251,22 @@ impl ServerCardRegistry {
                     client_card.content_hash,
                 );
                 ServerCard::SubAgent(server_card)
+            }
+
+            CardRecord::Tool(client_card) => {
+                let server_card = ToolCardRecord::new(
+                    client_card.name,
+                    client_card.space,
+                    version,
+                    client_card.tags,
+                    client_card.tool_type,
+                    client_card.args_schema,
+                    client_card.description,
+                    client_card.opsml_version,
+                    client_card.username,
+                    client_card.content_hash,
+                );
+                ServerCard::Tool(server_card)
             }
         };
 
@@ -512,6 +532,40 @@ impl ServerCardRegistry {
                     download_count: client_card.download_count,
                 };
                 ServerCard::SubAgent(server_card)
+            }
+
+            CardRecord::Tool(client_card) => {
+                let version =
+                    Version::parse(&client_card.version).map_err(VersionError::InvalidVersion)?;
+
+                let server_card = ToolCardRecord {
+                    uid: client_card.uid,
+                    created_at: client_card.created_at,
+                    app_env: client_card.app_env,
+                    name: client_card.name,
+                    space: client_card.space,
+                    major: version.major as i32,
+                    minor: version.minor as i32,
+                    patch: version.patch as i32,
+                    pre_tag: {
+                        let s = version.pre.to_string();
+                        if s.is_empty() { None } else { Some(s) }
+                    },
+                    build_tag: {
+                        let s = version.build.to_string();
+                        if s.is_empty() { None } else { Some(s) }
+                    },
+                    version: client_card.version,
+                    tags: SqlxJson(client_card.tags),
+                    tool_type: client_card.tool_type,
+                    args_schema: client_card.args_schema.map(SqlxJson),
+                    description: client_card.description,
+                    content_hash: client_card.content_hash,
+                    opsml_version: client_card.opsml_version,
+                    username: client_card.username,
+                    download_count: client_card.download_count,
+                };
+                ServerCard::Tool(server_card)
             }
         };
 

@@ -1,8 +1,8 @@
 use crate::error::SqlError;
 use crate::schemas::schema::{
     ArtifactSqlRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord,
-    ParameterRecord, QueryStats, ServerCard, SkillCardRecord, SubAgentCardRecord, User,
-    VersionSummary,
+    ParameterRecord, QueryStats, ServerCard, SkillCardRecord, SubAgentCardRecord, ToolCardRecord,
+    User, VersionSummary,
 };
 use crate::schemas::{EvaluationSqlRecord, ServiceCardRecord};
 use async_trait::async_trait;
@@ -237,6 +237,45 @@ pub trait SubAgentLogicTrait {
     async fn get_all_subagent_tags(&self, space: &str) -> Result<Vec<String>, SqlError>;
 
     async fn get_subagent_marketplace_stats(
+        &self,
+        space: &str,
+    ) -> Result<MarketplaceStats, SqlError>;
+}
+
+/// Tool registry operations. Space-scoped, like SubAgent. Includes an optional `tool_type` filter
+/// on the list operation.
+#[async_trait]
+pub trait ToolLogicTrait {
+    async fn get_tool_card_by_name(
+        &self,
+        space: &str,
+        name: &str,
+    ) -> Result<ToolCardRecord, SqlError>;
+
+    async fn get_tool_card_by_version(
+        &self,
+        space: &str,
+        name: &str,
+        version: &str,
+    ) -> Result<ToolCardRecord, SqlError>;
+
+    async fn increment_tool_download_count(&self, uid: &str) -> Result<(), SqlError>;
+
+    async fn list_tool_cards_by_space(
+        &self,
+        space: &str,
+        tool_type: Option<&str>,
+    ) -> Result<Vec<ToolCardRecord>, SqlError>;
+
+    async fn get_featured_tools(
+        &self,
+        space: &str,
+        limit: i64,
+    ) -> Result<Vec<ToolCardRecord>, SqlError>;
+
+    async fn get_all_tool_tags(&self, space: &str) -> Result<Vec<String>, SqlError>;
+
+    async fn get_tool_marketplace_stats(
         &self,
         space: &str,
     ) -> Result<MarketplaceStats, SqlError>;

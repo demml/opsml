@@ -6,9 +6,9 @@ use crate::error::SqlError;
 use crate::schemas::schema::{
     AuditCardRecord, CardResults, CardSummary, DataCardRecord, ExperimentCardRecord,
     ModelCardRecord, PromptCardRecord, QueryStats, ServerCard, ServiceCardRecord, SkillCardRecord,
-    SubAgentCardRecord, VersionResult, VersionSummary,
+    SubAgentCardRecord, ToolCardRecord, VersionResult, VersionSummary,
 };
-use crate::traits::{CardLogicTrait, SkillLogicTrait, SubAgentLogicTrait};
+use crate::traits::{CardLogicTrait, SkillLogicTrait, SubAgentLogicTrait, ToolLogicTrait};
 use async_trait::async_trait;
 use opsml_semver::VersionValidator;
 use opsml_types::contracts::skill::MarketplaceStats;
@@ -222,6 +222,12 @@ impl CardLogicTrait for CardLogicMySqlClient {
                     query_cards_generic::<SubAgentCardRecord>(&self.pool, &query, query_args, 50)
                         .await?;
                 Ok(CardResults::SubAgent(cards))
+            }
+            CardTable::Tool => {
+                let cards =
+                    query_cards_generic::<ToolCardRecord>(&self.pool, &query, query_args, 50)
+                        .await?;
+                Ok(CardResults::Tool(cards))
             }
             _ => Err(SqlError::InvalidTableName),
         }
@@ -475,6 +481,41 @@ impl CardLogicTrait for CardLogicMySqlClient {
                 }
             },
 
+            CardTable::Tool => match card {
+                ServerCard::Tool(record) => {
+                    let query = MySqlQueryHelper::get_tool_card_insert_query();
+                    let args_schema_str = record
+                        .args_schema
+                        .as_ref()
+                        .map(|v| serde_json::to_string(v).unwrap());
+                    sqlx::query(query)
+                        .bind(&record.uid)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(record.major)
+                        .bind(record.minor)
+                        .bind(record.patch)
+                        .bind(&record.version)
+                        .bind(&record.pre_tag)
+                        .bind(&record.build_tag)
+                        .bind(&record.tags)
+                        .bind(&record.tool_type)
+                        .bind(args_schema_str)
+                        .bind(&record.description)
+                        .bind(&record.content_hash)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(record.download_count)
+                        .execute(&self.pool)
+                        .await?;
+                    Ok(())
+                }
+                _ => {
+                    return Err(SqlError::InvalidCardType);
+                }
+            },
+
             _ => {
                 return Err(SqlError::InvalidTableName);
             }
@@ -670,6 +711,34 @@ impl CardLogicTrait for CardLogicMySqlClient {
                         .bind(&record.space)
                         .bind(&record.tags)
                         .bind(&record.compatible_clis)
+                        .bind(&record.description)
+                        .bind(&record.content_hash)
+                        .bind(&record.username)
+                        .bind(&record.opsml_version)
+                        .bind(&record.uid)
+                        .execute(&self.pool)
+                        .await?;
+                    Ok(())
+                }
+                _ => {
+                    return Err(SqlError::InvalidCardType);
+                }
+            },
+
+            CardTable::Tool => match card {
+                ServerCard::Tool(record) => {
+                    let query = MySqlQueryHelper::get_tool_card_update_query();
+                    let args_schema_str = record
+                        .args_schema
+                        .as_ref()
+                        .map(|v| serde_json::to_string(v).unwrap());
+                    sqlx::query(query)
+                        .bind(&record.app_env)
+                        .bind(&record.name)
+                        .bind(&record.space)
+                        .bind(&record.tags)
+                        .bind(&record.tool_type)
+                        .bind(args_schema_str)
                         .bind(&record.description)
                         .bind(&record.content_hash)
                         .bind(&record.username)
@@ -1076,6 +1145,110 @@ impl SubAgentLogicTrait for CardLogicMySqlClient {
     ) -> Result<MarketplaceStats, SqlError> {
         let row: (i64, i64, i64) =
             sqlx::query_as(MySqlQueryHelper::get_subagent_marketplace_stats_query())
+                .bind(space)
+                .fetch_one(&self.pool)
+                .await?;
+
+        Ok(MarketplaceStats {
+            total_skills: row.0,
+            total_spaces: row.1,
+            total_downloads: row.2,
+        })
+    }
+}
+
+#[async_trait]
+impl ToolLogicTrait for CardLogicMySqlClient {
+    async fn get_tool_card_by_name(
+        &self,
+        space: &str,
+        name: &str,
+    ) -> Result<ToolCardRecord, SqlError> {
+        let record = sqlx::query_as::<_, ToolCardRecord>(
+            MySqlQueryHelper::get_tool_card_by_name_query(),
+        )
+        .bind(space)
+        .bind(name)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or_else(|| SqlError::MissingField(format!("{}/{}", space, name)))?;
+        Ok(record)
+    }
+
+    async fn get_tool_card_by_version(
+        &self,
+        space: &str,
+        name: &str,
+        version: &str,
+    ) -> Result<ToolCardRecord, SqlError> {
+        let record = sqlx::query_as::<_, ToolCardRecord>(
+            MySqlQueryHelper::get_tool_card_by_version_query(),
+        )
+        .bind(space)
+        .bind(name)
+        .bind(version)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or_else(|| SqlError::MissingField(format!("{}/{}/{}", space, name, version)))?;
+        Ok(record)
+    }
+
+    async fn increment_tool_download_count(&self, uid: &str) -> Result<(), SqlError> {
+        let result = sqlx::query(MySqlQueryHelper::get_increment_tool_download_count_query())
+            .bind(uid)
+            .execute(&self.pool)
+            .await?;
+        if result.rows_affected() == 0 {
+            return Err(SqlError::MissingField(format!("tool uid not found: {uid}")));
+        }
+        Ok(())
+    }
+
+    async fn list_tool_cards_by_space(
+        &self,
+        space: &str,
+        tool_type: Option<&str>,
+    ) -> Result<Vec<ToolCardRecord>, SqlError> {
+        let records = sqlx::query_as::<_, ToolCardRecord>(
+            MySqlQueryHelper::get_list_tool_cards_by_space_query(),
+        )
+        .bind(space)
+        .bind(tool_type)
+        .bind(tool_type)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(records)
+    }
+
+    async fn get_featured_tools(
+        &self,
+        space: &str,
+        limit: i64,
+    ) -> Result<Vec<ToolCardRecord>, SqlError> {
+        let records = sqlx::query_as::<_, ToolCardRecord>(
+            MySqlQueryHelper::get_featured_tools_query(),
+        )
+        .bind(space)
+        .bind(limit)
+        .fetch_all(&self.pool)
+        .await?;
+        Ok(records)
+    }
+
+    async fn get_all_tool_tags(&self, space: &str) -> Result<Vec<String>, SqlError> {
+        let tags: Vec<String> = sqlx::query_scalar(MySqlQueryHelper::get_all_tool_tags_query())
+            .bind(space)
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(tags)
+    }
+
+    async fn get_tool_marketplace_stats(
+        &self,
+        space: &str,
+    ) -> Result<MarketplaceStats, SqlError> {
+        let row: (i64, i64, i64) =
+            sqlx::query_as(MySqlQueryHelper::get_tool_marketplace_stats_query())
                 .bind(space)
                 .fetch_one(&self.pool)
                 .await?;

@@ -7,7 +7,7 @@ use opsml_types::contracts::{
     ArtifactRecord, AuditCardClientRecord, CardEntry, CardRecord, DataCardClientRecord,
     ExperimentCardClientRecord, McpServer, ModelCardClientRecord, PromptCardClientRecord,
     ServiceCardClientRecord, ServiceConfig, SkillCardClientRecord, SkillDependency,
-    SubAgentCardClientRecord,
+    SubAgentCardClientRecord, ToolCardClientRecord,
 };
 use opsml_types::contracts::{ArtifactType, DeploymentConfig, ServiceMetadata, ServiceType};
 use opsml_types::{CommonKwargs, DataType, ModelType, RegistryType};
@@ -1466,6 +1466,144 @@ impl Default for SubAgentCardRecord {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct ToolCardRecord {
+    pub uid: String,
+    pub created_at: DateTime<Utc>,
+    pub app_env: String,
+    pub name: String,
+    pub space: String,
+    pub major: i32,
+    pub minor: i32,
+    pub patch: i32,
+    pub pre_tag: Option<String>,
+    pub build_tag: Option<String>,
+    pub version: String,
+    pub tags: Json<Vec<String>>,
+    pub tool_type: String,
+    pub args_schema: Option<Json<serde_json::Value>>,
+    pub description: Option<String>,
+    pub content_hash: Option<Vec<u8>>,
+    pub opsml_version: String,
+    pub username: String,
+    pub download_count: i64,
+}
+
+impl ToolCardRecord {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        name: String,
+        space: String,
+        version: Version,
+        tags: Vec<String>,
+        tool_type: String,
+        args_schema: Option<serde_json::Value>,
+        description: Option<String>,
+        opsml_version: String,
+        username: String,
+        content_hash: Option<Vec<u8>>,
+    ) -> Self {
+        let created_at = get_utc_datetime();
+        let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
+        let uid = create_uuid7();
+
+        ToolCardRecord {
+            uid,
+            created_at,
+            app_env,
+            name,
+            space,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            version: version.to_string(),
+            tags: Json(tags),
+            tool_type,
+            args_schema: args_schema.map(Json),
+            description,
+            content_hash,
+            opsml_version,
+            username,
+            download_count: 0,
+        }
+    }
+
+    pub fn from_client_card(client_card: ToolCardClientRecord) -> Result<Self, SqlError> {
+        let version = Version::parse(&client_card.version).map_err(VersionError::InvalidVersion)?;
+        Ok(ToolCardRecord {
+            uid: client_card.uid,
+            created_at: client_card.created_at,
+            app_env: client_card.app_env,
+            name: client_card.name,
+            space: client_card.space,
+            major: version.major as i32,
+            minor: version.minor as i32,
+            patch: version.patch as i32,
+            pre_tag: {
+                let s = version.pre.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            build_tag: {
+                let s = version.build.to_string();
+                if s.is_empty() { None } else { Some(s) }
+            },
+            version: client_card.version,
+            tags: Json(client_card.tags),
+            tool_type: client_card.tool_type,
+            args_schema: client_card.args_schema.map(Json),
+            description: client_card.description,
+            content_hash: client_card.content_hash,
+            opsml_version: client_card.opsml_version,
+            username: client_card.username,
+            download_count: 0,
+        })
+    }
+
+    pub fn uri(&self) -> String {
+        format!(
+            "{}/{}/{}/v{}",
+            CardTable::Tool,
+            self.space,
+            self.name,
+            self.version
+        )
+    }
+}
+
+impl Default for ToolCardRecord {
+    fn default() -> Self {
+        ToolCardRecord {
+            uid: create_uuid7(),
+            created_at: get_utc_datetime(),
+            app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
+            name: CommonKwargs::Undefined.to_string(),
+            space: CommonKwargs::Undefined.to_string(),
+            major: 1,
+            minor: 0,
+            patch: 0,
+            pre_tag: None,
+            build_tag: None,
+            version: Version::new(1, 0, 0).to_string(),
+            tags: Json(Vec::new()),
+            tool_type: "ShellScript".to_string(),
+            args_schema: None,
+            description: None,
+            content_hash: None,
+            opsml_version: opsml_version::version(),
+            username: CommonKwargs::Undefined.to_string(),
+            download_count: 0,
+        }
+    }
+}
+
 // create enum that takes vec of cards
 // TODO: There should also be a client side enum that matches this (don't want to install opsml_sql on client)
 #[derive(Debug, Serialize, Deserialize)]
@@ -1478,6 +1616,7 @@ pub enum CardResults {
     Service(Vec<ServiceCardRecord>),
     Skill(Vec<SkillCardRecord>),
     SubAgent(Vec<SubAgentCardRecord>),
+    Tool(Vec<ToolCardRecord>),
 }
 
 impl CardResults {
@@ -1491,6 +1630,7 @@ impl CardResults {
             CardResults::Service(cards) => cards.len(),
             CardResults::Skill(cards) => cards.len(),
             CardResults::SubAgent(cards) => cards.len(),
+            CardResults::Tool(cards) => cards.len(),
         }
     }
     pub fn is_empty(&self) -> bool {
@@ -1503,6 +1643,7 @@ impl CardResults {
             CardResults::Service(cards) => cards.is_empty(),
             CardResults::Skill(cards) => cards.is_empty(),
             CardResults::SubAgent(cards) => cards.is_empty(),
+            CardResults::Tool(cards) => cards.is_empty(),
         }
     }
     pub fn to_json(&self) -> Vec<String> {
@@ -1539,6 +1680,10 @@ impl CardResults {
                 .iter()
                 .map(|card| serde_json::to_string_pretty(card).unwrap())
                 .collect(),
+            CardResults::Tool(cards) => cards
+                .iter()
+                .map(|card| serde_json::to_string_pretty(card).unwrap())
+                .collect(),
         }
     }
 }
@@ -1554,6 +1699,7 @@ pub enum ServerCard {
     // Not boxed — SkillCardRecord is small enough that boxing adds overhead without benefit
     Skill(SkillCardRecord),
     SubAgent(SubAgentCardRecord),
+    Tool(ToolCardRecord),
 }
 
 impl ServerCard {
@@ -1567,6 +1713,7 @@ impl ServerCard {
             ServerCard::Service(card) => card.uid.as_str(),
             ServerCard::Skill(card) => card.uid.as_str(),
             ServerCard::SubAgent(card) => card.uid.as_str(),
+            ServerCard::Tool(card) => card.uid.as_str(),
         }
     }
 
@@ -1583,6 +1730,7 @@ impl ServerCard {
             }
             ServerCard::Skill(_) => RegistryType::Skill.to_string(),
             ServerCard::SubAgent(_) => RegistryType::SubAgent.to_string(),
+            ServerCard::Tool(_) => RegistryType::Tool.to_string(),
         }
     }
 
@@ -1596,6 +1744,7 @@ impl ServerCard {
             ServerCard::Service(card) => card.version.clone(),
             ServerCard::Skill(card) => card.version.clone(),
             ServerCard::SubAgent(card) => card.version.clone(),
+            ServerCard::Tool(card) => card.version.clone(),
         }
     }
 
@@ -1609,6 +1758,7 @@ impl ServerCard {
             ServerCard::Service(card) => card.space.clone(),
             ServerCard::Skill(card) => card.space.clone(),
             ServerCard::SubAgent(card) => card.space.clone(),
+            ServerCard::Tool(card) => card.space.clone(),
         }
     }
 
@@ -1622,6 +1772,7 @@ impl ServerCard {
             ServerCard::Service(card) => card.name.clone(),
             ServerCard::Skill(card) => card.name.clone(),
             ServerCard::SubAgent(card) => card.name.clone(),
+            ServerCard::Tool(card) => card.name.clone(),
         }
     }
 
@@ -1635,6 +1786,7 @@ impl ServerCard {
             ServerCard::Service(card) => card.uri(),
             ServerCard::Skill(card) => card.uri(),
             ServerCard::SubAgent(card) => card.uri(),
+            ServerCard::Tool(card) => card.uri(),
         }
     }
 
@@ -1648,6 +1800,7 @@ impl ServerCard {
             ServerCard::Service(card) => card.app_env.clone(),
             ServerCard::Skill(card) => card.app_env.clone(),
             ServerCard::SubAgent(card) => card.app_env.clone(),
+            ServerCard::Tool(card) => card.app_env.clone(),
         }
     }
 
@@ -1661,6 +1814,7 @@ impl ServerCard {
             ServerCard::Service(card) => card.created_at,
             ServerCard::Skill(card) => card.created_at,
             ServerCard::SubAgent(card) => card.created_at,
+            ServerCard::Tool(card) => card.created_at,
         }
     }
 
@@ -1692,6 +1846,9 @@ impl ServerCard {
             CardRecord::SubAgent(card) => Ok(ServerCard::SubAgent(
                 SubAgentCardRecord::from_client_card(card)?,
             )),
+            CardRecord::Tool(card) => {
+                Ok(ServerCard::Tool(ToolCardRecord::from_client_card(card)?))
+            }
         }
     }
 }
