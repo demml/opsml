@@ -333,6 +333,24 @@ impl PullTarget {
             Self::GithubCopilot => Box::new(CopilotTarget),
         }
     }
+
+    pub fn as_slash_command_installer(&self) -> Box<dyn opsml_cards::SlashCommandInstaller> {
+        match self {
+            Self::ClaudeCode => Box::new(opsml_cards::ClaudeCodeInstaller),
+            Self::Codex => Box::new(opsml_cards::CodexInstaller),
+            Self::GeminiCli => Box::new(opsml_cards::GeminiCliInstaller),
+            Self::GithubCopilot => Box::new(opsml_cards::CopilotInstaller),
+        }
+    }
+
+    pub fn as_mcp_config_installer(&self) -> Box<dyn opsml_cards::McpConfigInstaller> {
+        match self {
+            Self::ClaudeCode => Box::new(opsml_cards::ClaudeCodeInstaller),
+            Self::Codex => Box::new(opsml_cards::CodexInstaller),
+            Self::GeminiCli => Box::new(opsml_cards::GeminiCliInstaller),
+            Self::GithubCopilot => Box::new(opsml_cards::CopilotInstaller),
+        }
+    }
 }
 
 #[derive(Args, Clone)]
@@ -553,6 +571,68 @@ pub struct ConfigureArgs {
     /// Lazy mode: write startup hook instead of pulling skills immediately
     #[arg(long = "lazy", default_value = "false")]
     pub lazy: bool,
+}
+
+// ---- Tool CLI args ----
+
+#[derive(Args, Clone)]
+pub struct ToolPushArgs {
+    /// Path to TOOL.md (YAML frontmatter + body)
+    pub path: PathBuf,
+    /// Override space for registration
+    #[arg(long = "space")]
+    pub space: Option<String>,
+    /// Tags to apply (comma-separated)
+    #[arg(long = "tags", use_value_delimiter = true, value_delimiter = ',')]
+    pub tags: Option<Vec<String>>,
+    /// Version bump type
+    #[arg(long = "version-type", default_value = "minor", value_parser = parse_version_type)]
+    pub version_type: VersionType,
+}
+
+#[derive(Args, Clone)]
+pub struct ToolPullArgs {
+    /// Tool identifier: space/name or name with --space
+    pub name: String,
+    #[arg(long = "version")]
+    pub version: Option<String>,
+    #[arg(long = "space")]
+    pub space: Option<String>,
+    /// Output directory (defaults to current directory)
+    #[arg(long = "output")]
+    pub output: Option<PathBuf>,
+}
+
+#[derive(Args, Clone)]
+pub struct ToolListArgs {
+    /// Filter by space
+    #[arg(long = "space")]
+    pub space: Option<String>,
+    /// Filter by name
+    #[arg(long = "name")]
+    pub name: Option<String>,
+    /// Filter by tags (comma-separated)
+    #[arg(long = "tags", use_value_delimiter = true, value_delimiter = ',')]
+    pub tags: Option<Vec<String>>,
+    /// Filter by tool type (ShellScript, SlashCommand, McpServer, ApiCall, InternalFunction)
+    #[arg(long = "type")]
+    pub tool_type: Option<String>,
+    /// Maximum number of results
+    #[arg(long = "limit")]
+    pub limit: Option<i32>,
+}
+
+#[derive(Args, Clone)]
+pub struct ToolInitArgs {
+    /// Tool name
+    #[arg(long = "name")]
+    pub name: Option<String>,
+    /// Output path (defaults to ./TOOL.md)
+    #[arg(long = "output")]
+    pub output: Option<PathBuf>,
+    /// Tool type template (shell, slash, mcp) — defaults to shell
+    #[arg(long = "type", default_value = "shell")]
+    pub tool_type: String,
 }
 
 #[cfg(test)]

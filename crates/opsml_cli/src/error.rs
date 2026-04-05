@@ -75,6 +75,9 @@ pub enum CliError {
     #[error(transparent)]
     SubAgentError(#[from] opsml_cards::subagent::SubAgentError),
 
+    #[error(transparent)]
+    ToolError(#[from] opsml_cards::ToolError),
+
     #[error("{0}")]
     Error(String),
 

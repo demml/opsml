@@ -1,7 +1,8 @@
 use crate::cli::arg::{
     AgentInitArgs, AgentListArgs, AgentPullArgs, AgentPushArgs, ConfigureArgs, DownloadCard,
     KeyArgs, ListCards, LockArgs, RegisterArgs, ScouterArgs, SkillInitArgs, SkillListArgs,
-    SkillPullArgs, SkillPushArgs, SkillRemoveArgs, SyncArgs, UiArgs,
+    SkillPullArgs, SkillPushArgs, SkillRemoveArgs, SyncArgs, ToolInitArgs, ToolListArgs,
+    ToolPullArgs, ToolPushArgs, UiArgs,
 };
 use clap::Parser;
 use clap::Subcommand;
@@ -162,6 +163,15 @@ pub enum Commands {
         #[command(subcommand)]
         command: AgentCommands,
     },
+
+    /// Manage OpsML tools
+    ///
+    /// # Example
+    /// opsml tool push ./TOOL.md --space my-space
+    Tool {
+        #[command(subcommand)]
+        command: ToolCommands,
+    },
 }
 
 #[derive(Subcommand)]
@@ -296,6 +306,19 @@ pub enum AgentCommands {
     List(AgentListArgs),
     /// Scaffold a new AGENT.md file
     Init(AgentInitArgs),
+}
+
+#[derive(Subcommand)]
+#[command(version = None)]
+pub enum ToolCommands {
+    /// Push a TOOL.md file to the Tool registry
+    Push(ToolPushArgs),
+    /// Pull a tool and install to local directory
+    Pull(ToolPullArgs),
+    /// List tools in the registry
+    List(ToolListArgs),
+    /// Scaffold a new TOOL.md file
+    Init(ToolInitArgs),
 }
 
 pub const LOGO_TEXT: &str = "

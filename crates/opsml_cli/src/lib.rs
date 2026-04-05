@@ -9,7 +9,7 @@ use crate::actions::sync::sync_skills;
 pub use crate::actions::{download_card, download_service, list_cards};
 use crate::cli::{
     AgentCommands, Cli, Commands, GenerateCommands, GetCommands, InstallCommands, LOGO_TEXT,
-    ListCommands, SkillCommands,
+    ListCommands, SkillCommands, ToolCommands,
 };
 pub use actions::{
     generate_key,
@@ -168,6 +168,21 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             }
             AgentCommands::Init(args) => {
                 actions::agent::init_agent(args).context("Failed to init agent")
+            }
+        },
+
+        Some(Commands::Tool { command }) => match command {
+            ToolCommands::Push(args) => {
+                actions::tool::push_tool(args).context("Failed to push tool")
+            }
+            ToolCommands::Pull(args) => {
+                actions::tool::pull_tool(args).context("Failed to pull tool")
+            }
+            ToolCommands::List(args) => {
+                actions::tool::list_tools(args).context("Failed to list tools")
+            }
+            ToolCommands::Init(args) => {
+                actions::tool::init_tool(args).context("Failed to init tool")
             }
         },
 
