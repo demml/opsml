@@ -19,10 +19,10 @@ pub(crate) fn default_merge_mcp_entry(
     name: &str,
     entry: serde_json::Value,
 ) -> Result<(), ToolError> {
-    if let Some(parent) = mcp_config_path.parent() {
-        if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent)?;
-        }
+    if let Some(parent) = mcp_config_path.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        std::fs::create_dir_all(parent)?;
     }
 
     let existing = if mcp_config_path.exists() {
@@ -47,7 +47,7 @@ pub(crate) fn default_merge_mcp_entry(
         .insert(name.to_string(), entry);
 
     let content = serde_json::to_string_pretty(&root)?;
-    std::fs::write(&mcp_config_path, content)?;
+    std::fs::write(mcp_config_path, content)?;
     Ok(())
 }
 
@@ -72,10 +72,10 @@ fn read_json_or_default(path: &Path) -> Value {
 }
 
 fn write_json(path: &Path, value: &Value) -> Result<(), ToolError> {
-    if let Some(parent) = path.parent() {
-        if !parent.as_os_str().is_empty() {
-            std::fs::create_dir_all(parent)?;
-        }
+    if let Some(parent) = path.parent()
+        && !parent.as_os_str().is_empty()
+    {
+        std::fs::create_dir_all(parent)?;
     }
     let content = serde_json::to_string_pretty(value)?;
     std::fs::write(path, content)?;
@@ -390,10 +390,10 @@ impl HookInstaller for CodexInstaller {
             }
         }
 
-        if let Some(parent) = config_path.parent() {
-            if !parent.as_os_str().is_empty() {
-                std::fs::create_dir_all(parent)?;
-            }
+        if let Some(parent) = config_path.parent()
+            && !parent.as_os_str().is_empty()
+        {
+            std::fs::create_dir_all(parent)?;
         }
         let yaml_content = serde_yaml::to_string(&config)?;
         std::fs::write(&config_path, yaml_content)?;

@@ -36,7 +36,7 @@ pub enum OpsmlCardRegistry {
     Client(ClientCardRegistry),
 
     #[cfg(feature = "server")]
-    Server(ServerCardRegistry),
+    Server(Box<ServerCardRegistry>),
 }
 
 impl OpsmlCardRegistry {
