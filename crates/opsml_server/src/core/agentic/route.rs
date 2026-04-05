@@ -197,38 +197,27 @@ pub async fn get_skill_map(
             internal_server_error(e, "Failed to list tools", None)
         })?;
 
-    let tools: Vec<ArtifactMeta> = tool_records
-        .iter()
-        .map(|r| ArtifactMeta {
-            name: r.name.clone(),
-            latest_version: r.version.clone(),
-            description: r.description.clone(),
-            etag: r
-                .content_hash
-                .as_deref()
-                .map(bytes_to_hex)
-                .unwrap_or_default(),
-            compatible_tools: vec![r.tool_type.clone()],
-            download_count: r.download_count,
-        })
-        .collect();
+    let mut tools: Vec<ArtifactMeta> = Vec::with_capacity(tool_records.len());
+    let mut commands: Vec<ArtifactMeta> = Vec::new();
 
-    let commands: Vec<ArtifactMeta> = tool_records
-        .iter()
-        .filter(|r| r.tool_type == "SlashCommand")
-        .map(|r| ArtifactMeta {
-            name: r.name.clone(),
-            latest_version: r.version.clone(),
-            description: r.description.clone(),
+    for r in tool_records {
+        let meta = ArtifactMeta {
+            name: r.name,
+            latest_version: r.version,
+            description: r.description,
             etag: r
                 .content_hash
                 .as_deref()
                 .map(bytes_to_hex)
                 .unwrap_or_default(),
-            compatible_tools: vec![r.tool_type.clone()],
+            compatible_tools: vec![r.tool_type],
             download_count: r.download_count,
-        })
-        .collect();
+        };
+        if meta.compatible_tools[0] == "SlashCommand" {
+            commands.push(meta.clone());
+        }
+        tools.push(meta);
+    }
 
     Ok(Json(MapResponse {
         space,
