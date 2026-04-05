@@ -213,7 +213,7 @@ pub async fn get_skill_map(
             compatible_tools: vec![r.tool_type],
             download_count: r.download_count,
         };
-        if meta.compatible_tools[0] == "SlashCommand" {
+        if meta.compatible_tools.first().map(|t| t == "SlashCommand").unwrap_or(false) {
             commands.push(meta.clone());
         }
         tools.push(meta);

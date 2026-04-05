@@ -247,6 +247,109 @@ mod tests {
     }
 
     #[test]
+    fn test_init_tool_slash_creates_parseable_template() {
+        let tmp = tempfile::tempdir().unwrap();
+        let output = tmp.path().join("TOOL.md");
+
+        let args = ToolInitArgs {
+            name: Some("my-slash".to_string()),
+            output: Some(output.clone()),
+            tool_type: "slash".to_string(),
+        };
+        init_tool(&args).unwrap();
+
+        assert!(output.exists());
+        let content = std::fs::read_to_string(&output).unwrap();
+        let card = opsml_cards::parse_tool_markdown(&content).unwrap();
+        assert_eq!(card.spec.name, "my-slash");
+        assert_eq!(
+            card.spec.tool_type,
+            opsml_types::contracts::tool::ToolType::SlashCommand
+        );
+    }
+
+    #[test]
+    fn test_init_tool_mcp_creates_parseable_template() {
+        let tmp = tempfile::tempdir().unwrap();
+        let output = tmp.path().join("TOOL.md");
+
+        let args = ToolInitArgs {
+            name: Some("my-mcp".to_string()),
+            output: Some(output.clone()),
+            tool_type: "mcp".to_string(),
+        };
+        init_tool(&args).unwrap();
+
+        assert!(output.exists());
+        let content = std::fs::read_to_string(&output).unwrap();
+        let card = opsml_cards::parse_tool_markdown(&content).unwrap();
+        assert_eq!(card.spec.name, "my-mcp");
+        assert_eq!(
+            card.spec.tool_type,
+            opsml_types::contracts::tool::ToolType::McpServer
+        );
+    }
+
+    #[test]
+    fn test_list_tools_type_filter_retain() {
+        use opsml_types::contracts::{CardRecord, ToolCardClientRecord};
+
+        fn make_tool_record(tool_type: &str) -> CardRecord {
+            CardRecord::Tool(ToolCardClientRecord {
+                uid: "uid".to_string(),
+                created_at: chrono::Utc::now(),
+                app_env: "dev".to_string(),
+                space: "test".to_string(),
+                name: "tool".to_string(),
+                version: "0.0.1".to_string(),
+                tags: vec![],
+                opsml_version: "0.0.0".to_string(),
+                username: "guest".to_string(),
+                tool_type: tool_type.to_string(),
+                args_schema: None,
+                content_hash: None,
+                download_count: 0,
+                description: None,
+            })
+        }
+
+        let mut cards = vec![
+            make_tool_record("ShellScript"),
+            make_tool_record("SlashCommand"),
+            make_tool_record("McpServer"),
+            make_tool_record("SlashCommand"),
+        ];
+
+        let filter = "SlashCommand".to_string();
+        cards.retain(|c| {
+            if let CardRecord::Tool(r) = c {
+                &r.tool_type == &filter
+            } else {
+                false
+            }
+        });
+
+        assert_eq!(cards.len(), 2);
+        for c in &cards {
+            if let CardRecord::Tool(r) = c {
+                assert_eq!(r.tool_type, "SlashCommand");
+            }
+        }
+
+        // Case sensitivity: "slashcommand" must not match "SlashCommand"
+        let mut cards2 = vec![make_tool_record("SlashCommand")];
+        let wrong_case = "slashcommand".to_string();
+        cards2.retain(|c| {
+            if let CardRecord::Tool(r) = c {
+                &r.tool_type == &wrong_case
+            } else {
+                false
+            }
+        });
+        assert_eq!(cards2.len(), 0, "case-insensitive match must not occur");
+    }
+
+    #[test]
     fn test_init_tool_rejects_existing_file() {
         let tmp = tempfile::tempdir().unwrap();
         let output = tmp.path().join("TOOL.md");

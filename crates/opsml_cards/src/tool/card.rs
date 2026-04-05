@@ -128,6 +128,9 @@ impl ToolCard {
         let mut hasher = Sha256::new();
         let canonical = serde_json::to_vec(&self.spec)?;
         hasher.update(&canonical);
+        if let Some(body) = &self.body {
+            hasher.update(body.as_bytes());
+        }
         Ok(hasher.finalize().to_vec())
     }
 
@@ -174,6 +177,17 @@ impl ToolCard {
     }
 
     pub fn pull_artifacts(&self, install_dir: PathBuf) -> Result<PathBuf, ToolError> {
+        if self.name.is_empty()
+            || !self
+                .name
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        {
+            return Err(ToolError::Error(format!(
+                "Invalid tool name '{}': must be non-empty and contain only [a-zA-Z0-9_-]",
+                self.name
+            )));
+        }
         std::fs::create_dir_all(&install_dir)?;
         let body_content = self.body.as_deref().unwrap_or("");
 

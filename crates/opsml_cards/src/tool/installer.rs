@@ -11,11 +11,17 @@ pub trait McpConfigInstaller {
     fn merge_mcp_entry(&self, name: &str, entry: serde_json::Value) -> Result<(), ToolError>;
 }
 
-fn default_merge_mcp_entry(
+pub(crate) fn default_merge_mcp_entry(
     mcp_config_path: &Path,
     name: &str,
     entry: serde_json::Value,
 ) -> Result<(), ToolError> {
+    if let Some(parent) = mcp_config_path.parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent)?;
+        }
+    }
+
     let existing = if mcp_config_path.exists() {
         std::fs::read_to_string(mcp_config_path)?
     } else {
@@ -143,5 +149,76 @@ impl McpConfigInstaller for CopilotInstaller {
 
     fn merge_mcp_entry(&self, name: &str, entry: serde_json::Value) -> Result<(), ToolError> {
         default_merge_mcp_entry(&self.mcp_config_path(), name, entry)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn entry() -> serde_json::Value {
+        serde_json::json!({"command": "npx", "args": ["-y", "test-server"]})
+    }
+
+    fn assert_idempotent(config_path: &Path) {
+        let e = entry();
+        default_merge_mcp_entry(config_path, "test-server", e.clone()).unwrap();
+        default_merge_mcp_entry(config_path, "test-server", e).unwrap();
+
+        let content = std::fs::read_to_string(config_path).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&content).unwrap();
+        let mcp_servers = parsed["mcpServers"].as_object().unwrap();
+        assert_eq!(mcp_servers.len(), 1, "idempotent: key must not duplicate");
+        assert!(mcp_servers.contains_key("test-server"));
+    }
+
+    #[test]
+    fn test_gemini_cli_slash_command_dirs() {
+        let installer = GeminiCliInstaller;
+        assert!(installer.command_dir().to_str().unwrap().contains(".gemini"));
+        let global = installer.global_command_dir().unwrap();
+        assert!(global.to_str().unwrap().contains(".gemini"));
+    }
+
+    #[test]
+    fn test_gemini_cli_merge_mcp_idempotent() {
+        let tmp = tempfile::tempdir().unwrap();
+        assert_idempotent(&tmp.path().join(".mcp.json"));
+    }
+
+    #[test]
+    fn test_codex_slash_command_dirs() {
+        let installer = CodexInstaller;
+        assert!(installer.command_dir().to_str().unwrap().contains(".codex"));
+        let global = installer.global_command_dir().unwrap();
+        assert!(global.to_str().unwrap().contains(".codex"));
+    }
+
+    #[test]
+    fn test_codex_merge_mcp_idempotent() {
+        let tmp = tempfile::tempdir().unwrap();
+        assert_idempotent(&tmp.path().join(".mcp.json"));
+    }
+
+    #[test]
+    fn test_copilot_slash_command_dirs() {
+        let installer = CopilotInstaller;
+        assert!(installer.command_dir().to_str().unwrap().contains(".github"));
+        let global = installer.global_command_dir().unwrap();
+        assert!(global.to_str().unwrap().contains(".github"));
+    }
+
+    #[test]
+    fn test_copilot_merge_mcp_idempotent() {
+        let tmp = tempfile::tempdir().unwrap();
+        assert_idempotent(&tmp.path().join(".mcp.json"));
+    }
+
+    #[test]
+    fn test_merge_mcp_creates_parent_dirs() {
+        let tmp = tempfile::tempdir().unwrap();
+        let config_path = tmp.path().join("nested/deep/.mcp.json");
+        default_merge_mcp_entry(&config_path, "server", entry()).unwrap();
+        assert!(config_path.exists());
     }
 }
