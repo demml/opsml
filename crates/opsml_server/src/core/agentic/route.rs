@@ -12,10 +12,10 @@ use axum::{
     routing::{get, post},
 };
 use opsml_auth::permission::UserPermissions;
-use opsml_cards::SubAgentCard;
+use opsml_cards::{SubAgentCard, ToolCard};
 use opsml_crypt::decrypt_directory;
 use opsml_events::AuditContext;
-use opsml_sql::traits::{ArtifactLogicTrait, SkillLogicTrait, SubAgentLogicTrait};
+use opsml_sql::traits::{ArtifactLogicTrait, SkillLogicTrait, SubAgentLogicTrait, ToolLogicTrait};
 use opsml_types::{
     RegistryType, SaveName, Suffix,
     contracts::{Operation, ResourceType, skill::MarketplaceStats},
@@ -188,11 +188,54 @@ pub async fn get_skill_map(
         })
         .collect();
 
+    let tool_records = state
+        .sql_client
+        .list_tool_cards_by_space(&space, None)
+        .await
+        .map_err(|e| {
+            error!("Failed to list tools for space {space}: {e}");
+            internal_server_error(e, "Failed to list tools", None)
+        })?;
+
+    let tools: Vec<ArtifactMeta> = tool_records
+        .iter()
+        .map(|r| ArtifactMeta {
+            name: r.name.clone(),
+            latest_version: r.version.clone(),
+            description: r.description.clone(),
+            etag: r
+                .content_hash
+                .as_deref()
+                .map(bytes_to_hex)
+                .unwrap_or_default(),
+            compatible_tools: vec![r.tool_type.clone()],
+            download_count: r.download_count,
+        })
+        .collect();
+
+    let commands: Vec<ArtifactMeta> = tool_records
+        .iter()
+        .filter(|r| r.tool_type == "SlashCommand")
+        .map(|r| ArtifactMeta {
+            name: r.name.clone(),
+            latest_version: r.version.clone(),
+            description: r.description.clone(),
+            etag: r
+                .content_hash
+                .as_deref()
+                .map(bytes_to_hex)
+                .unwrap_or_default(),
+            compatible_tools: vec![r.tool_type.clone()],
+            download_count: r.download_count,
+        })
+        .collect();
+
     Ok(Json(MapResponse {
         space,
         skills,
         subagents,
-        tools: vec![],
+        tools,
+        commands,
         agents: vec![],
     }))
 }
@@ -484,6 +527,166 @@ async fn load_subagent_markdown(
     })
 }
 
+/// Serve the latest version of a tool as markdown.
+#[instrument(skip_all)]
+pub async fn get_tool_latest(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Path((space, name)): Path<(String, String)>,
+) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
+    if !perms.has_read_permission(&space) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
+    let record = state
+        .sql_client
+        .get_tool_card_by_name(&space, &name)
+        .await
+        .map_err(|e| {
+            error!("Failed to get tool card {space}/{name}: {e}");
+            internal_server_error(e, "Tool not found", None)
+        })?;
+
+    let markdown = load_tool_markdown(&state, &record.uid).await?;
+
+    if let Err(e) = state
+        .sql_client
+        .increment_tool_download_count(&record.uid)
+        .await
+    {
+        warn!("Failed to increment download count for {}: {e}", record.uid);
+    }
+
+    let mut response = Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "text/markdown; charset=utf-8")
+        .header("X-Content-Type-Options", "nosniff")
+        .body(Body::from(markdown))
+        .map_err(|e| internal_server_error(e, "Failed to build response", None))?;
+
+    response.extensions_mut().insert(AuditContext {
+        resource_id: record.uid,
+        resource_type: ResourceType::Card,
+        metadata: format!("space={space} name={name}"),
+        operation: Operation::Read,
+        registry_type: Some(RegistryType::Tool),
+        access_location: None,
+    });
+
+    Ok(response)
+}
+
+/// Serve a pinned version of a tool as markdown.
+#[instrument(skip_all)]
+pub async fn get_tool_pinned(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Path((space, name, version)): Path<(String, String, String)>,
+) -> Result<Response, (StatusCode, Json<OpsmlServerError>)> {
+    if !perms.has_read_permission(&space) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
+    let record = state
+        .sql_client
+        .get_tool_card_by_version(&space, &name, &version)
+        .await
+        .map_err(|e| {
+            error!("Failed to get tool card {space}/{name}/{version}: {e}");
+            internal_server_error(e, "Tool not found", None)
+        })?;
+
+    let markdown = load_tool_markdown(&state, &record.uid).await?;
+
+    if let Err(e) = state
+        .sql_client
+        .increment_tool_download_count(&record.uid)
+        .await
+    {
+        warn!("Failed to increment download count for {}: {e}", record.uid);
+    }
+
+    let mut response = Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "text/markdown; charset=utf-8")
+        .header("X-Content-Type-Options", "nosniff")
+        .body(Body::from(markdown))
+        .map_err(|e| internal_server_error(e, "Failed to build response", None))?;
+
+    response.extensions_mut().insert(AuditContext {
+        resource_id: record.uid,
+        resource_type: ResourceType::Card,
+        metadata: format!("space={space} name={name} version={version}"),
+        operation: Operation::Read,
+        registry_type: Some(RegistryType::Tool),
+        access_location: None,
+    });
+
+    Ok(response)
+}
+
+async fn load_tool_markdown(
+    state: &Arc<AppState>,
+    uid: &str,
+) -> Result<String, (StatusCode, Json<OpsmlServerError>)> {
+    let registry_type = RegistryType::Tool.to_string();
+
+    let key = state
+        .sql_client
+        .get_artifact_key(uid, &registry_type)
+        .await
+        .map_err(|e| {
+            error!("Failed to get artifact key for {uid}: {e}");
+            internal_server_error(e, "Failed to get artifact key", None)
+        })?;
+
+    let tmp_dir = tempdir().map_err(|e| {
+        error!("Failed to create temp dir: {e}");
+        internal_server_error(e, "Failed to create temp dir", None)
+    })?;
+
+    let tmp_path = tmp_dir.path();
+    let lpath = tmp_path.join(SaveName::Card).with_extension(Suffix::Json);
+    let rpath = key
+        .storage_path()
+        .join(SaveName::Card)
+        .with_extension(Suffix::Json);
+
+    state
+        .storage_client
+        .get(&lpath, &rpath, false)
+        .await
+        .map_err(|e| {
+            error!("Failed to download tool artifact for {uid}: {e}");
+            internal_server_error(e, "Failed to download tool artifact", None)
+        })?;
+
+    let decryption_key = key.get_crypt_key().map_err(|e| {
+        error!("Failed to get decryption key for {uid}: {e}");
+        internal_server_error(e, "Failed to get decryption key", None)
+    })?;
+
+    decrypt_directory(tmp_path, &decryption_key).map_err(|e| {
+        error!("Failed to decrypt tool artifact for {uid}: {e}");
+        internal_server_error(e, "Failed to decrypt tool artifact", None)
+    })?;
+
+    let json_str = std::fs::read_to_string(&lpath).map_err(|e| {
+        error!("Failed to read tool artifact for {uid}: {e}");
+        internal_server_error(e, "Failed to read tool artifact", None)
+    })?;
+
+    let card = ToolCard::model_validate_json(json_str).map_err(|e| {
+        error!("Failed to parse ToolCard for {uid}: {e}");
+        internal_server_error(e, "Failed to parse tool card", None)
+    })?;
+
+    card.to_markdown().map_err(|e| {
+        error!("Failed to render tool markdown for {uid}: {e}");
+        internal_server_error(e, "Failed to render tool markdown", None)
+    })
+}
+
 pub async fn get_agentic_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let router = Router::new()
         .route(
@@ -510,6 +713,14 @@ pub async fn get_agentic_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
         .route(
             &format!("{prefix}/v1/subagent/{{space}}/{{name}}/{{version}}"),
             get(get_subagent_pinned),
+        )
+        .route(
+            &format!("{prefix}/v1/tool/{{space}}/{{name}}"),
+            get(get_tool_latest),
+        )
+        .route(
+            &format!("{prefix}/v1/tool/{{space}}/{{name}}/{{version}}"),
+            get(get_tool_pinned),
         )
         .route(
             &format!("{prefix}/v1/marketplace/featured"),

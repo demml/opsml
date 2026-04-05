@@ -84,6 +84,25 @@ VALUES
      '["tag1","tag2"]', '[]', '[]',
      'Skill ten', 'MIT', '', '2.0.0', 'guest');
 
+-- Populate opsml_subagent_registry
+INSERT INTO opsml_subagent_registry
+    (uid, created_at, app_env, space, name, major, minor, patch,
+     pre_tag, build_tag, version, tags, compatible_clis,
+     description, content_hash, opsml_version, username, download_count)
+VALUES
+    ('660e8400-e29b-41d4-a716-446655440001', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Agent1', 1, 0, 0, NULL, NULL, '1.0.0',
+     '["tag1"]', '["claude-code"]',
+     'A test agent', NULL, '2.0.0', 'guest', 0),
+    ('660e8400-e29b-41d4-a716-446655440002', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Agent2', 1, 1, 0, NULL, NULL, '1.1.0',
+     '["tag2"]', '["codex","claude-code"]',
+     'Another test agent', NULL, '2.0.0', 'guest', 0),
+    ('660e8400-e29b-41d4-a716-446655440003', '2023-11-28 00:00:00', 'development',
+     'repo2', 'Agent3', 1, 0, 0, NULL, NULL, '1.0.0',
+     '[]', '["gemini-cli"]',
+     'Gemini agent', NULL, '2.0.0', 'guest', 0);
+
 -- Populate opsml_audit_registry
 INSERT INTO opsml_audit_registry (uid, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, approved, datacard_uids, modelcard_uids, experimentcard_uids) VALUES 
 ('550e8400-e29b-41d4-a716-446655440000', 'development', 'Audit1', 'repo1', 1, 0, 0, 'alpha', 'build1', '0.0.0', '[]', 1, '[]', '[]', '[]'), 
@@ -115,3 +134,22 @@ VALUES
      'repo2', 'Agent3', 1, 0, 0, NULL, NULL, '1.0.0',
      '[]', '["gemini-cli"]',
      'Gemini agent', NULL, '2.0.0', 'guest', 0);
+
+-- Populate opsml_tool_registry
+INSERT INTO opsml_tool_registry
+    (uid, created_at, app_env, space, name, major, minor, patch,
+     pre_tag, build_tag, version, tags, tool_type,
+     args_schema, description, content_hash, opsml_version, username, download_count)
+VALUES
+    ('770e8400-e29b-41d4-a716-446655440001', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Tool1', 1, 0, 0, NULL, NULL, '1.0.0',
+     '["tag1"]', 'ShellScript',
+     NULL, 'A shell script tool', NULL, '2.0.0', 'guest', 0),
+    ('770e8400-e29b-41d4-a716-446655440002', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Tool2', 1, 1, 0, NULL, NULL, '1.1.0',
+     '["tag2"]', 'SlashCommand',
+     NULL, 'A slash command tool', NULL, '2.0.0', 'guest', 5),
+    ('770e8400-e29b-41d4-a716-446655440003', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Tool3', 1, 0, 0, NULL, NULL, '1.0.0',
+     '[]', 'McpServer',
+     NULL, 'An MCP server tool', NULL, '2.0.0', 'guest', 0);
