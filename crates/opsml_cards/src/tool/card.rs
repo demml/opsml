@@ -154,6 +154,10 @@ impl ToolCard {
             #[serde(skip_serializing_if = "<[_]>::is_empty")]
             allowed_tools: &'a [String],
             requires_approval: bool,
+            #[serde(skip_serializing_if = "<[_]>::is_empty")]
+            hook_events: &'a [opsml_types::contracts::tool::HookEvent],
+            #[serde(skip_serializing_if = "Option::is_none")]
+            hook_matcher: Option<&'a serde_json::Value>,
         }
 
         let fm = ToolFrontmatter {
@@ -167,6 +171,8 @@ impl ToolCard {
             mcp_server_name: self.spec.mcp_server_name.as_deref(),
             allowed_tools: &self.spec.allowed_tools,
             requires_approval: self.spec.requires_approval,
+            hook_events: &self.spec.hook_events,
+            hook_matcher: self.spec.hook_matcher.as_ref(),
         };
 
         let yaml = serde_yaml::to_string(&fm)?;
@@ -176,7 +182,12 @@ impl ToolCard {
         Ok(format!("---\n{yaml}---\n{body}"))
     }
 
-    pub fn pull_artifacts(&self, install_dir: PathBuf) -> Result<PathBuf, ToolError> {
+    pub fn pull_artifacts(
+        &self,
+        install_dir: PathBuf,
+        hook_installer: Option<&dyn super::installer::HookInstaller>,
+        global: bool,
+    ) -> Result<PathBuf, ToolError> {
         if self.name.is_empty()
             || !self
                 .name
@@ -234,6 +245,31 @@ impl ToolCard {
                 let path = install_dir.join(format!("{}-api.yaml", self.name));
                 let yaml_content = serde_yaml::to_string(&self.spec)?;
                 std::fs::write(&path, yaml_content)?;
+                Ok(path)
+            }
+            ToolType::Hook => {
+                let hook_dir = install_dir.join(".opsml/hooks");
+                std::fs::create_dir_all(&hook_dir)?;
+                let path = hook_dir.join(format!("{}.sh", self.name));
+                std::fs::write(&path, body_content)?;
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    let mut perms = std::fs::metadata(&path)?.permissions();
+                    perms.set_mode(0o755);
+                    std::fs::set_permissions(&path, perms)?;
+                }
+                let relative_path =
+                    PathBuf::from(format!(".opsml/hooks/{}.sh", self.name));
+                if let Some(installer) = hook_installer {
+                    installer.install_hook(
+                        &self.name,
+                        &relative_path,
+                        &self.spec.hook_events,
+                        self.spec.hook_matcher.as_ref(),
+                        global,
+                    )?;
+                }
                 Ok(path)
             }
             ToolType::InternalFunction | ToolType::Custom(_) => {
@@ -341,7 +377,7 @@ impl ProfileExt for ToolCard {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use opsml_types::contracts::tool::{ApiCallConfig, ShellScriptConfig};
+    use opsml_types::contracts::tool::{ApiCallConfig, HookEvent, ShellScriptConfig};
 
     fn make_spec() -> ToolSpec {
         ToolSpec {
@@ -523,7 +559,9 @@ mod tests {
             ToolCard::new_rs(spec, Some("test-space"), Some("my-tool"), None, None).unwrap();
         card.body = Some("#!/bin/bash\necho hello\n".to_string());
 
-        let path = card.pull_artifacts(tmp.path().to_path_buf()).unwrap();
+        let path = card
+            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .unwrap();
         assert!(path.exists());
         assert!(path.to_str().unwrap().ends_with(".sh"));
         let content = std::fs::read_to_string(&path).unwrap();
@@ -538,7 +576,9 @@ mod tests {
             ToolCard::new_rs(spec, Some("test-space"), Some("my-slash"), None, None).unwrap();
         card.body = Some("Run the linter.\n".to_string());
 
-        let path = card.pull_artifacts(tmp.path().to_path_buf()).unwrap();
+        let path = card
+            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .unwrap();
         assert!(path.exists());
         assert!(path.to_str().unwrap().ends_with(".md"));
         let content = std::fs::read_to_string(&path).unwrap();
@@ -554,7 +594,9 @@ mod tests {
         let card =
             ToolCard::new_rs(spec, Some("test-space"), Some("my-mcp"), None, None).unwrap();
 
-        let path = card.pull_artifacts(tmp.path().to_path_buf()).unwrap();
+        let path = card
+            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .unwrap();
         assert!(path.exists());
         assert!(path.to_str().unwrap().ends_with("-mcp.json"));
     }
@@ -566,7 +608,9 @@ mod tests {
         let card =
             ToolCard::new_rs(spec, Some("test-space"), Some("my-api"), None, None).unwrap();
 
-        let path = card.pull_artifacts(tmp.path().to_path_buf()).unwrap();
+        let path = card
+            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .unwrap();
         assert!(path.exists());
         assert!(path.to_str().unwrap().ends_with("-api.yaml"));
     }
@@ -631,7 +675,9 @@ mod tests {
             ..Default::default()
         };
         let card = ToolCard::new_rs(spec, Some("s"), Some("my-func"), None, None).unwrap();
-        let output = card.pull_artifacts(tmp.path().to_path_buf()).unwrap();
+        let output = card
+            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .unwrap();
         assert!(output.exists());
         assert!(output.to_string_lossy().ends_with("-spec.yaml"));
     }
@@ -646,7 +692,9 @@ mod tests {
             ..Default::default()
         };
         let card = ToolCard::new_rs(spec, Some("s"), Some("my-custom"), None, None).unwrap();
-        let output = card.pull_artifacts(tmp.path().to_path_buf()).unwrap();
+        let output = card
+            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .unwrap();
         assert!(output.exists());
         assert!(output.to_string_lossy().ends_with("-spec.yaml"));
     }
@@ -667,5 +715,48 @@ mod tests {
         assert_eq!(loaded.name, card.name);
         assert_eq!(loaded.spec.description, card.spec.description);
         assert_eq!(loaded.body, card.body);
+    }
+
+    #[test]
+    fn test_pull_hook_writes_script_and_sets_executable() {
+        let tmp = tempfile::tempdir().unwrap();
+        let spec = ToolSpec {
+            name: "my-hook".to_string(),
+            description: "A hook".to_string(),
+            tool_type: ToolType::Hook,
+            hook_events: vec![HookEvent::PostToolUse],
+            ..Default::default()
+        };
+        let mut card = ToolCard::new_rs(spec, Some("s"), Some("my-hook"), None, None).unwrap();
+        card.body = Some("#!/bin/bash\necho hook\n".to_string());
+
+        let path = card
+            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .unwrap();
+        assert!(path.exists());
+        assert!(path.to_string_lossy().ends_with(".sh"));
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let perms = std::fs::metadata(&path).unwrap().permissions();
+            assert_eq!(perms.mode() & 0o777, 0o755);
+        }
+    }
+
+    #[test]
+    fn test_pull_hook_no_installer_still_writes_script() {
+        let tmp = tempfile::tempdir().unwrap();
+        let spec = ToolSpec {
+            name: "no-installer".to_string(),
+            description: "Hook without installer".to_string(),
+            tool_type: ToolType::Hook,
+            ..Default::default()
+        };
+        let card = ToolCard::new_rs(spec, Some("s"), Some("no-installer"), None, None).unwrap();
+        let path = card
+            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .unwrap();
+        assert!(path.exists());
     }
 }

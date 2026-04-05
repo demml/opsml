@@ -93,7 +93,7 @@ pub fn pull_tool(args: &ToolPullArgs) -> Result<(), CliError> {
 
     let output_dir = args.output.clone().unwrap_or_else(|| PathBuf::from("."));
     let installed_path = card
-        .pull_artifacts(output_dir)
+        .pull_artifacts(output_dir, None, false)
         .map_err(|e| CliError::Error(e.to_string()))?;
 
     println!(

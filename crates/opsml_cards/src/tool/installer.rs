@@ -1,5 +1,8 @@
 use super::error::ToolError;
+use opsml_types::contracts::tool::HookEvent;
+use serde_json::Value;
 use std::path::{Path, PathBuf};
+use tracing::warn;
 
 pub trait SlashCommandInstaller {
     fn command_dir(&self) -> PathBuf;
@@ -48,6 +51,94 @@ pub(crate) fn default_merge_mcp_entry(
     Ok(())
 }
 
+fn read_json_or_default(path: &Path) -> Value {
+    if path.exists() {
+        match std::fs::read_to_string(path) {
+            Ok(content) => match serde_json::from_str::<Value>(&content) {
+                Ok(v) => v,
+                Err(e) => {
+                    warn!("Failed to parse {}: {e} — starting with empty config", path.display());
+                    Value::Object(serde_json::Map::new())
+                }
+            },
+            Err(e) => {
+                warn!("Failed to read {}: {e} — starting with empty config", path.display());
+                Value::Object(serde_json::Map::new())
+            }
+        }
+    } else {
+        Value::Object(serde_json::Map::new())
+    }
+}
+
+fn write_json(path: &Path, value: &Value) -> Result<(), ToolError> {
+    if let Some(parent) = path.parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent)?;
+        }
+    }
+    let content = serde_json::to_string_pretty(value)?;
+    std::fs::write(path, content)?;
+    Ok(())
+}
+
+fn command_exists_in_arr(arr: &Value, script_path: &Path) -> bool {
+    let script_str = script_path.to_string_lossy();
+    arr.as_array()
+        .map(|entries| {
+            entries.iter().any(|entry| {
+                entry
+                    .get("hooks")
+                    .and_then(|h| h.as_array())
+                    .map(|hooks| {
+                        hooks.iter().any(|h| {
+                            h.get("command")
+                                .and_then(|c| c.as_str())
+                                .map(|c| c == script_str)
+                                .unwrap_or(false)
+                        })
+                    })
+                    .unwrap_or(false)
+            })
+        })
+        .unwrap_or(false)
+}
+
+fn script_exists_in_arr(arr: &Value, script_path: &Path) -> bool {
+    let script_str = script_path.to_string_lossy();
+    arr.as_array()
+        .map(|entries| {
+            entries.iter().any(|entry| {
+                entry
+                    .get("script")
+                    .and_then(|s| s.as_str())
+                    .map(|s| s == script_str)
+                    .unwrap_or(false)
+            })
+        })
+        .unwrap_or(false)
+}
+
+fn hook_event_snake_case(e: &HookEvent) -> &'static str {
+    match e {
+        HookEvent::PreToolUse => "pre_tool_use",
+        HookEvent::PostToolUse => "post_tool_use",
+        HookEvent::Stop => "stop",
+        HookEvent::Notification => "notification",
+    }
+}
+
+pub trait HookInstaller {
+    fn install_hook(
+        &self,
+        name: &str,
+        script_path: &Path,
+        events: &[HookEvent],
+        matcher: Option<&Value>,
+        global: bool,
+    ) -> Result<(), ToolError>;
+}
+
 // ClaudeCodeInstaller
 
 pub struct ClaudeCodeInstaller;
@@ -71,6 +162,66 @@ impl McpConfigInstaller for ClaudeCodeInstaller {
 
     fn merge_mcp_entry(&self, name: &str, entry: serde_json::Value) -> Result<(), ToolError> {
         default_merge_mcp_entry(&self.mcp_config_path(), name, entry)
+    }
+}
+
+impl HookInstaller for ClaudeCodeInstaller {
+    fn install_hook(
+        &self,
+        _name: &str,
+        script_path: &Path,
+        events: &[HookEvent],
+        matcher: Option<&Value>,
+        global: bool,
+    ) -> Result<(), ToolError> {
+        let settings_path = if global {
+            dirs::home_dir()
+                .ok_or_else(|| ToolError::Error("Could not determine home directory".to_string()))?
+                .join(".claude/settings.json")
+        } else {
+            PathBuf::from(".claude/settings.json")
+        };
+
+        let mut settings = read_json_or_default(&settings_path);
+        let hooks_obj = settings
+            .as_object_mut()
+            .ok_or_else(|| ToolError::Error("settings.json root is not an object".to_string()))?
+            .entry("hooks")
+            .or_insert_with(|| Value::Object(serde_json::Map::new()));
+        let hooks_obj = hooks_obj
+            .as_object_mut()
+            .ok_or_else(|| ToolError::Error("hooks is not an object".to_string()))?;
+
+        let script_str = script_path.to_string_lossy().to_string();
+        let hook_entry = serde_json::json!({
+            "type": "command",
+            "command": script_str
+        });
+        let new_entry = serde_json::json!({
+            "matcher": matcher.cloned().unwrap_or(Value::Null),
+            "hooks": [hook_entry]
+        });
+
+        for event in events {
+            let key = match event {
+                HookEvent::PreToolUse => "PreToolUse",
+                HookEvent::PostToolUse => "PostToolUse",
+                HookEvent::Stop => "Stop",
+                HookEvent::Notification => "Notification",
+            };
+            let arr = hooks_obj
+                .entry(key)
+                .or_insert_with(|| Value::Array(vec![]));
+            if !command_exists_in_arr(arr, script_path) {
+                arr.as_array_mut()
+                    .ok_or_else(|| {
+                        ToolError::Error("hooks event array is not an array".to_string())
+                    })?
+                    .push(new_entry.clone());
+            }
+        }
+
+        write_json(&settings_path, &settings)
     }
 }
 
@@ -100,6 +251,57 @@ impl McpConfigInstaller for GeminiCliInstaller {
     }
 }
 
+impl HookInstaller for GeminiCliInstaller {
+    fn install_hook(
+        &self,
+        _name: &str,
+        script_path: &Path,
+        events: &[HookEvent],
+        matcher: Option<&Value>,
+        global: bool,
+    ) -> Result<(), ToolError> {
+        let settings_path = if global {
+            dirs::home_dir()
+                .ok_or_else(|| ToolError::Error("Could not determine home directory".to_string()))?
+                .join(".gemini/settings.json")
+        } else {
+            PathBuf::from(".gemini/settings.json")
+        };
+
+        let mut settings = read_json_or_default(&settings_path);
+        let hooks_obj = settings
+            .as_object_mut()
+            .ok_or_else(|| ToolError::Error("settings.json root is not an object".to_string()))?
+            .entry("hooks")
+            .or_insert_with(|| Value::Object(serde_json::Map::new()));
+        let hooks_obj = hooks_obj
+            .as_object_mut()
+            .ok_or_else(|| ToolError::Error("hooks is not an object".to_string()))?;
+
+        let script_str = script_path.to_string_lossy().to_string();
+        let new_entry = serde_json::json!({
+            "script": script_str,
+            "matcher": matcher.cloned().unwrap_or(Value::Null)
+        });
+
+        for event in events {
+            let key = hook_event_snake_case(event);
+            let arr = hooks_obj
+                .entry(key)
+                .or_insert_with(|| Value::Array(vec![]));
+            if !script_exists_in_arr(arr, script_path) {
+                arr.as_array_mut()
+                    .ok_or_else(|| {
+                        ToolError::Error("hooks event array is not an array".to_string())
+                    })?
+                    .push(new_entry.clone());
+            }
+        }
+
+        write_json(&settings_path, &settings)
+    }
+}
+
 // CodexInstaller
 
 pub struct CodexInstaller;
@@ -126,6 +328,79 @@ impl McpConfigInstaller for CodexInstaller {
     }
 }
 
+impl HookInstaller for CodexInstaller {
+    fn install_hook(
+        &self,
+        _name: &str,
+        script_path: &Path,
+        events: &[HookEvent],
+        matcher: Option<&Value>,
+        global: bool,
+    ) -> Result<(), ToolError> {
+        let config_path = if global {
+            dirs::home_dir()
+                .ok_or_else(|| ToolError::Error("Could not determine home directory".to_string()))?
+                .join(".codex/config.yaml")
+        } else {
+            PathBuf::from(".codex/config.yaml")
+        };
+
+        let mut config: Value = if config_path.exists() {
+            let content = std::fs::read_to_string(&config_path)?;
+            serde_yaml::from_str(&content)?
+        } else {
+            Value::Object(serde_json::Map::new())
+        };
+
+        let hooks_arr = config
+            .as_object_mut()
+            .ok_or_else(|| ToolError::Error("config.yaml root is not an object".to_string()))?
+            .entry("hooks")
+            .or_insert_with(|| Value::Array(vec![]));
+        let hooks_arr = hooks_arr
+            .as_array_mut()
+            .ok_or_else(|| ToolError::Error("hooks is not an array".to_string()))?;
+
+        let script_str = script_path.to_string_lossy().to_string();
+
+        for event in events {
+            let event_name = hook_event_snake_case(event);
+            let already_exists = hooks_arr.iter().any(|e| {
+                e.get("script")
+                    .and_then(|s| s.as_str())
+                    .map(|s| s == script_str)
+                    .unwrap_or(false)
+                    && e.get("event")
+                        .and_then(|ev| ev.as_str())
+                        .map(|ev| ev == event_name)
+                        .unwrap_or(false)
+            });
+            if !already_exists {
+                let mut entry = serde_json::json!({
+                    "event": event_name,
+                    "script": script_str,
+                });
+                if let Some(m) = matcher {
+                    entry
+                        .as_object_mut()
+                        .ok_or_else(|| ToolError::Error("hook entry is not an object".to_string()))?
+                        .insert("filter".to_string(), m.clone());
+                }
+                hooks_arr.push(entry);
+            }
+        }
+
+        if let Some(parent) = config_path.parent() {
+            if !parent.as_os_str().is_empty() {
+                std::fs::create_dir_all(parent)?;
+            }
+        }
+        let yaml_content = serde_yaml::to_string(&config)?;
+        std::fs::write(&config_path, yaml_content)?;
+        Ok(())
+    }
+}
+
 // CopilotInstaller
 
 pub struct CopilotInstaller;
@@ -149,6 +424,24 @@ impl McpConfigInstaller for CopilotInstaller {
 
     fn merge_mcp_entry(&self, name: &str, entry: serde_json::Value) -> Result<(), ToolError> {
         default_merge_mcp_entry(&self.mcp_config_path(), name, entry)
+    }
+}
+
+impl HookInstaller for CopilotInstaller {
+    fn install_hook(
+        &self,
+        _name: &str,
+        script_path: &Path,
+        _events: &[HookEvent],
+        _matcher: Option<&Value>,
+        _global: bool,
+    ) -> Result<(), ToolError> {
+        eprintln!(
+            "Warning: GitHub Copilot does not support lifecycle hooks. \
+             Script written to {}. Register it manually if needed.",
+            script_path.display()
+        );
+        Ok(())
     }
 }
 
@@ -220,5 +513,170 @@ mod tests {
         let config_path = tmp.path().join("nested/deep/.mcp.json");
         default_merge_mcp_entry(&config_path, "server", entry()).unwrap();
         assert!(config_path.exists());
+    }
+
+    // --- HookInstaller tests ---
+
+    use std::sync::Mutex;
+    static CWD_LOCK: Mutex<()> = Mutex::new(());
+
+    fn with_tempdir<F: FnOnce(&std::path::Path)>(f: F) {
+        let tmp = tempfile::tempdir().unwrap();
+        let _guard = CWD_LOCK.lock().unwrap();
+        let orig = std::env::current_dir().unwrap();
+        std::env::set_current_dir(tmp.path()).unwrap();
+        f(tmp.path());
+        std::env::set_current_dir(orig).unwrap();
+    }
+
+    #[test]
+    fn test_claude_code_hook_creates_settings_json() {
+        with_tempdir(|tmp| {
+            let script = Path::new(".opsml/hooks/my-hook.sh");
+            ClaudeCodeInstaller
+                .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
+                .unwrap();
+
+            let settings_path = tmp.join(".claude/settings.json");
+            assert!(settings_path.exists());
+            let content: Value =
+                serde_json::from_str(&std::fs::read_to_string(&settings_path).unwrap()).unwrap();
+            let hooks = &content["hooks"]["PostToolUse"];
+            assert!(hooks.is_array());
+            let arr = hooks.as_array().unwrap();
+            assert_eq!(arr.len(), 1);
+            assert_eq!(arr[0]["hooks"][0]["command"], ".opsml/hooks/my-hook.sh");
+        });
+    }
+
+    #[test]
+    fn test_claude_code_hook_idempotent() {
+        with_tempdir(|tmp| {
+            let script = Path::new(".opsml/hooks/my-hook.sh");
+            ClaudeCodeInstaller
+                .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
+                .unwrap();
+            ClaudeCodeInstaller
+                .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
+                .unwrap();
+
+            let settings_path = tmp.join(".claude/settings.json");
+            let content: Value =
+                serde_json::from_str(&std::fs::read_to_string(&settings_path).unwrap()).unwrap();
+            let arr = content["hooks"]["PostToolUse"].as_array().unwrap();
+            assert_eq!(arr.len(), 1, "idempotent: must not duplicate");
+        });
+    }
+
+    #[test]
+    fn test_claude_code_hook_multiple_events() {
+        with_tempdir(|tmp| {
+            let script = Path::new(".opsml/hooks/my-hook.sh");
+            ClaudeCodeInstaller
+                .install_hook(
+                    "my-hook",
+                    script,
+                    &[HookEvent::PostToolUse, HookEvent::PreToolUse],
+                    None,
+                    false,
+                )
+                .unwrap();
+
+            let settings_path = tmp.join(".claude/settings.json");
+            let content: Value =
+                serde_json::from_str(&std::fs::read_to_string(&settings_path).unwrap()).unwrap();
+            assert!(content["hooks"]["PostToolUse"].is_array());
+            assert!(content["hooks"]["PreToolUse"].is_array());
+        });
+    }
+
+    #[test]
+    fn test_gemini_hook_snake_case_keys() {
+        with_tempdir(|tmp| {
+            let script = Path::new(".opsml/hooks/my-hook.sh");
+            GeminiCliInstaller
+                .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
+                .unwrap();
+
+            let settings_path = tmp.join(".gemini/settings.json");
+            let content: Value =
+                serde_json::from_str(&std::fs::read_to_string(&settings_path).unwrap()).unwrap();
+            assert!(
+                content["hooks"]["post_tool_use"].is_array(),
+                "expected post_tool_use key"
+            );
+            assert!(
+                !content["hooks"]
+                    .as_object()
+                    .map(|o| o.contains_key("PostToolUse"))
+                    .unwrap_or(false)
+            );
+        });
+    }
+
+    #[test]
+    fn test_gemini_hook_idempotent() {
+        with_tempdir(|tmp| {
+            let script = Path::new(".opsml/hooks/my-hook.sh");
+            GeminiCliInstaller
+                .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
+                .unwrap();
+            GeminiCliInstaller
+                .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
+                .unwrap();
+
+            let settings_path = tmp.join(".gemini/settings.json");
+            let content: Value =
+                serde_json::from_str(&std::fs::read_to_string(&settings_path).unwrap()).unwrap();
+            let arr = content["hooks"]["post_tool_use"].as_array().unwrap();
+            assert_eq!(arr.len(), 1);
+        });
+    }
+
+    #[test]
+    fn test_codex_hook_yaml_format() {
+        with_tempdir(|tmp| {
+            let script = Path::new(".opsml/hooks/my-hook.sh");
+            CodexInstaller
+                .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
+                .unwrap();
+
+            let config_path = tmp.join(".codex/config.yaml");
+            assert!(config_path.exists());
+            let content = std::fs::read_to_string(&config_path).unwrap();
+            let parsed: Value = serde_yaml::from_str(&content).unwrap();
+            let hooks = parsed["hooks"].as_array().unwrap();
+            assert_eq!(hooks.len(), 1);
+            assert_eq!(hooks[0]["event"], "post_tool_use");
+            assert_eq!(hooks[0]["script"], ".opsml/hooks/my-hook.sh");
+        });
+    }
+
+    #[test]
+    fn test_codex_hook_idempotent() {
+        with_tempdir(|tmp| {
+            let script = Path::new(".opsml/hooks/my-hook.sh");
+            CodexInstaller
+                .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
+                .unwrap();
+            CodexInstaller
+                .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
+                .unwrap();
+
+            let config_path = tmp.join(".codex/config.yaml");
+            let content = std::fs::read_to_string(&config_path).unwrap();
+            let parsed: Value = serde_yaml::from_str(&content).unwrap();
+            let hooks = parsed["hooks"].as_array().unwrap();
+            assert_eq!(hooks.len(), 1, "idempotent");
+        });
+    }
+
+    #[test]
+    fn test_copilot_hook_returns_ok() {
+        let tmp = tempfile::tempdir().unwrap();
+        let script = tmp.path().join(".opsml/hooks/my-hook.sh");
+        let result =
+            CopilotInstaller.install_hook("my-hook", &script, &[HookEvent::PostToolUse], None, false);
+        assert!(result.is_ok());
     }
 }

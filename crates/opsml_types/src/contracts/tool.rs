@@ -158,6 +158,7 @@ mod tests {
             (ToolType::ApiCall, "\"ApiCall\""),
             (ToolType::InternalFunction, "\"InternalFunction\""),
             (ToolType::SlashCommand, "\"SlashCommand\""),
+            (ToolType::Hook, "\"Hook\""),
         ];
         for (variant, expected_json) in variants {
             let json = serde_json::to_string(&variant).unwrap();
