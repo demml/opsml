@@ -517,12 +517,11 @@ mod tests {
 
     // --- HookInstaller tests ---
 
-    use std::sync::Mutex;
-    static CWD_LOCK: Mutex<()> = Mutex::new(());
-
     fn with_tempdir<F: FnOnce(&std::path::Path)>(f: F) {
         let tmp = tempfile::tempdir().unwrap();
-        let _guard = CWD_LOCK.lock().unwrap();
+        let _guard = crate::tool::test_util::CWD_LOCK
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let orig = std::env::current_dir().unwrap();
         std::env::set_current_dir(tmp.path()).unwrap();
         f(tmp.path());

@@ -351,6 +351,15 @@ impl PullTarget {
             Self::GithubCopilot => Box::new(opsml_cards::CopilotInstaller),
         }
     }
+
+    pub fn as_hook_installer(&self) -> Box<dyn opsml_cards::HookInstaller> {
+        match self {
+            Self::ClaudeCode => Box::new(opsml_cards::ClaudeCodeInstaller),
+            Self::Codex => Box::new(opsml_cards::CodexInstaller),
+            Self::GeminiCli => Box::new(opsml_cards::GeminiCliInstaller),
+            Self::GithubCopilot => Box::new(opsml_cards::CopilotInstaller),
+        }
+    }
 }
 
 #[derive(Args, Clone)]
@@ -601,6 +610,12 @@ pub struct ToolPullArgs {
     /// Output directory (defaults to current directory)
     #[arg(long = "output")]
     pub output: Option<PathBuf>,
+    /// Target CLI for hook registration (required for Hook tools)
+    #[arg(long = "target")]
+    pub target: Option<PullTarget>,
+    /// Register hook globally (~/.claude/settings.json etc.) instead of project-local
+    #[arg(long = "global", default_value_t = false)]
+    pub global: bool,
 }
 
 #[derive(Args, Clone)]

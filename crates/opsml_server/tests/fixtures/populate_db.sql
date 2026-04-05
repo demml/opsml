@@ -133,4 +133,8 @@ VALUES
     ('770e8400-e29b-41d4-a716-446655440003', '2023-11-28 00:00:00', 'development',
      'repo1', 'Tool3', 1, 0, 0, NULL, NULL, '1.0.0',
      '[]', 'McpServer',
-     NULL, 'An MCP server tool', NULL, '2.0.0', 'guest', 0);
+     NULL, 'An MCP server tool', NULL, '2.0.0', 'guest', 0),
+    ('770e8400-e29b-41d4-a716-446655440004', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Tool4', 1, 0, 0, NULL, NULL, '1.0.0',
+     '[]', 'Hook',
+     NULL, 'A lifecycle hook', NULL, '2.0.0', 'guest', 0);

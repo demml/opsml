@@ -23,6 +23,6 @@ pub use subagent::{
 pub use tool::{ToolCard, ToolError, parse_tool_markdown};
 pub use tool::installer::{
     ClaudeCodeInstaller, CodexInstaller, CopilotInstaller, GeminiCliInstaller,
-    McpConfigInstaller, SlashCommandInstaller,
+    HookInstaller, McpConfigInstaller, SlashCommandInstaller,
 };
 pub use utils::*;
