@@ -296,7 +296,10 @@ impl ToolCard {
                     perms.set_mode(0o700);
                     std::fs::set_permissions(&path, perms)?;
                 }
-                let relative_path = PathBuf::from(format!(".opsml/hooks/{}.sh", self.name));
+                let relative_path = std::env::current_dir()
+                    .ok()
+                    .and_then(|cwd| path.strip_prefix(&cwd).ok().map(|p| p.to_path_buf()))
+                    .unwrap_or_else(|| path.clone());
                 if let Some(installer) = hook_installer {
                     installer.install_hook(
                         &self.name,
@@ -844,6 +847,48 @@ mod tests {
                 "Claude Code command path"
             );
         });
+    }
+
+    #[test]
+    fn test_pull_hook_custom_output_dir_config_path_correct() {
+        use crate::tool::installer::ClaudeCodeInstaller;
+        let cwd_tmp = tempfile::tempdir().unwrap();
+        let install_tmp = tempfile::tempdir().unwrap();
+
+        let _guard = crate::tool::test_util::CWD_LOCK
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+        let orig = std::env::current_dir().unwrap();
+        std::env::set_current_dir(cwd_tmp.path()).unwrap();
+
+        let card = make_hook_card("my-hook");
+        let installer = ClaudeCodeInstaller;
+        let path = card
+            .pull_artifacts(install_tmp.path().to_path_buf(), Some(&installer), false)
+            .unwrap();
+        assert!(path.exists(), "script must be written at install_dir");
+
+        let settings: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(cwd_tmp.path().join(".claude/settings.json")).unwrap(),
+        )
+        .unwrap();
+        let arr = settings["hooks"]["PostToolUse"].as_array().unwrap();
+        assert_eq!(arr.len(), 1);
+
+        let command = arr[0]["hooks"][0]["command"].as_str().unwrap();
+        let script_path = std::path::Path::new(command);
+        // The command must resolve to the actual script location from CWD
+        let resolved = if script_path.is_absolute() {
+            script_path.to_path_buf()
+        } else {
+            cwd_tmp.path().join(script_path)
+        };
+        assert!(
+            resolved.exists(),
+            "command path '{command}' must resolve to an existing file from CWD, but it doesn't"
+        );
+
+        std::env::set_current_dir(orig).unwrap();
     }
 
     #[test]
