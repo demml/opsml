@@ -16,10 +16,19 @@ pub enum ToolError {
 
     #[error(transparent)]
     UtilError(#[from] opsml_utils::error::UtilError),
+
+    #[error("TOML serialization error: {0}")]
+    TomlError(String),
 }
 
 impl From<ToolError> for crate::error::CardError {
     fn from(err: ToolError) -> Self {
         crate::error::CardError::Error(err.to_string())
+    }
+}
+
+impl From<toml::ser::Error> for ToolError {
+    fn from(err: toml::ser::Error) -> Self {
+        ToolError::TomlError(err.to_string())
     }
 }

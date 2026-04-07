@@ -76,7 +76,7 @@ impl OpsmlCardRegistry {
                         .await
                     })?;
 
-                    Ok(Self::Server(server_registry))
+                    Ok(Self::Server(Box::new(server_registry)))
                 }
                 #[cfg(not(feature = "server"))]
                 {

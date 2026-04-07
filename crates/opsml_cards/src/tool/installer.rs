@@ -46,9 +46,7 @@ pub(crate) fn default_merge_mcp_entry(
         .ok_or_else(|| ToolError::Error("mcpServers is not an object".to_string()))?
         .insert(name.to_string(), entry);
 
-    let content = serde_json::to_string_pretty(&root)?;
-    std::fs::write(mcp_config_path, content)?;
-    Ok(())
+    write_json(mcp_config_path, &root)
 }
 
 fn read_json_or_default(path: &Path) -> Value {
@@ -57,12 +55,18 @@ fn read_json_or_default(path: &Path) -> Value {
             Ok(content) => match serde_json::from_str::<Value>(&content) {
                 Ok(v) => v,
                 Err(e) => {
-                    warn!("Failed to parse {}: {e} — starting with empty config", path.display());
+                    warn!(
+                        "Failed to parse {}: {e} — starting with empty config",
+                        path.display()
+                    );
                     Value::Object(serde_json::Map::new())
                 }
             },
             Err(e) => {
-                warn!("Failed to read {}: {e} — starting with empty config", path.display());
+                warn!(
+                    "Failed to read {}: {e} — starting with empty config",
+                    path.display()
+                );
                 Value::Object(serde_json::Map::new())
             }
         }
@@ -78,7 +82,9 @@ fn write_json(path: &Path, value: &Value) -> Result<(), ToolError> {
         std::fs::create_dir_all(parent)?;
     }
     let content = serde_json::to_string_pretty(value)?;
-    std::fs::write(path, content)?;
+    let tmp_path = path.with_extension("json.tmp");
+    std::fs::write(&tmp_path, &content)?;
+    std::fs::rename(&tmp_path, path)?;
     Ok(())
 }
 
@@ -119,12 +125,29 @@ fn script_exists_in_arr(arr: &Value, script_path: &Path) -> bool {
         .unwrap_or(false)
 }
 
-fn hook_event_snake_case(e: &HookEvent) -> &'static str {
-    match e {
-        HookEvent::PreToolUse => "pre_tool_use",
-        HookEvent::PostToolUse => "post_tool_use",
-        HookEvent::Stop => "stop",
-        HookEvent::Notification => "notification",
+pub(crate) fn validate_hook_matcher(v: &serde_json::Value) -> Result<(), ToolError> {
+    match v {
+        serde_json::Value::Null | serde_json::Value::String(_) => Ok(()),
+        serde_json::Value::Object(map) => {
+            if map.len() == 1
+                && let Some(tool_val) = map.get("tool")
+            {
+                match tool_val {
+                    serde_json::Value::String(_) => return Ok(()),
+                    serde_json::Value::Array(arr) if arr.iter().all(|v| v.is_string()) => {
+                        return Ok(());
+                    }
+                    _ => {}
+                }
+            }
+            Err(ToolError::Error(
+                "hook_matcher must be null, a string, or an object with a single 'tool' key mapping to a string or array of strings".to_string(),
+            ))
+        }
+        _ => Err(ToolError::Error(
+            "hook_matcher must be null, a string, or an object with a single 'tool' key"
+                .to_string(),
+        )),
     }
 }
 
@@ -174,6 +197,14 @@ impl HookInstaller for ClaudeCodeInstaller {
         matcher: Option<&Value>,
         global: bool,
     ) -> Result<(), ToolError> {
+        if events.is_empty() {
+            return Err(ToolError::Error(
+                "Hook tool has no hook_events configured; nothing to register".to_string(),
+            ));
+        }
+        if let Some(m) = matcher {
+            validate_hook_matcher(m)?;
+        }
         let settings_path = if global {
             dirs::home_dir()
                 .ok_or_else(|| ToolError::Error("Could not determine home directory".to_string()))?
@@ -203,15 +234,8 @@ impl HookInstaller for ClaudeCodeInstaller {
         });
 
         for event in events {
-            let key = match event {
-                HookEvent::PreToolUse => "PreToolUse",
-                HookEvent::PostToolUse => "PostToolUse",
-                HookEvent::Stop => "Stop",
-                HookEvent::Notification => "Notification",
-            };
-            let arr = hooks_obj
-                .entry(key)
-                .or_insert_with(|| Value::Array(vec![]));
+            let key = event.as_pascal_case();
+            let arr = hooks_obj.entry(key).or_insert_with(|| Value::Array(vec![]));
             if !command_exists_in_arr(arr, script_path) {
                 arr.as_array_mut()
                     .ok_or_else(|| {
@@ -260,6 +284,14 @@ impl HookInstaller for GeminiCliInstaller {
         matcher: Option<&Value>,
         global: bool,
     ) -> Result<(), ToolError> {
+        if events.is_empty() {
+            return Err(ToolError::Error(
+                "Hook tool has no hook_events configured; nothing to register".to_string(),
+            ));
+        }
+        if let Some(m) = matcher {
+            validate_hook_matcher(m)?;
+        }
         let settings_path = if global {
             dirs::home_dir()
                 .ok_or_else(|| ToolError::Error("Could not determine home directory".to_string()))?
@@ -285,10 +317,8 @@ impl HookInstaller for GeminiCliInstaller {
         });
 
         for event in events {
-            let key = hook_event_snake_case(event);
-            let arr = hooks_obj
-                .entry(key)
-                .or_insert_with(|| Value::Array(vec![]));
+            let key = event.as_snake_case();
+            let arr = hooks_obj.entry(key).or_insert_with(|| Value::Array(vec![]));
             if !script_exists_in_arr(arr, script_path) {
                 arr.as_array_mut()
                     .ok_or_else(|| {
@@ -337,6 +367,14 @@ impl HookInstaller for CodexInstaller {
         matcher: Option<&Value>,
         global: bool,
     ) -> Result<(), ToolError> {
+        if events.is_empty() {
+            return Err(ToolError::Error(
+                "Hook tool has no hook_events configured; nothing to register".to_string(),
+            ));
+        }
+        if let Some(m) = matcher {
+            validate_hook_matcher(m)?;
+        }
         let config_path = if global {
             dirs::home_dir()
                 .ok_or_else(|| ToolError::Error("Could not determine home directory".to_string()))?
@@ -364,7 +402,7 @@ impl HookInstaller for CodexInstaller {
         let script_str = script_path.to_string_lossy().to_string();
 
         for event in events {
-            let event_name = hook_event_snake_case(event);
+            let event_name = event.as_snake_case();
             let already_exists = hooks_arr.iter().any(|e| {
                 e.get("script")
                     .and_then(|s| s.as_str())
@@ -396,7 +434,9 @@ impl HookInstaller for CodexInstaller {
             std::fs::create_dir_all(parent)?;
         }
         let yaml_content = serde_yaml::to_string(&config)?;
-        std::fs::write(&config_path, yaml_content)?;
+        let tmp_path = config_path.with_extension("yaml.tmp");
+        std::fs::write(&tmp_path, &yaml_content)?;
+        std::fs::rename(&tmp_path, &config_path)?;
         Ok(())
     }
 }
@@ -436,9 +476,8 @@ impl HookInstaller for CopilotInstaller {
         _matcher: Option<&Value>,
         _global: bool,
     ) -> Result<(), ToolError> {
-        eprintln!(
-            "Warning: GitHub Copilot does not support lifecycle hooks. \
-             Script written to {}. Register it manually if needed.",
+        warn!(
+            "GitHub Copilot does not support lifecycle hooks. Script written to {}. Register it manually if needed.",
             script_path.display()
         );
         Ok(())
@@ -468,7 +507,13 @@ mod tests {
     #[test]
     fn test_gemini_cli_slash_command_dirs() {
         let installer = GeminiCliInstaller;
-        assert!(installer.command_dir().to_str().unwrap().contains(".gemini"));
+        assert!(
+            installer
+                .command_dir()
+                .to_str()
+                .unwrap()
+                .contains(".gemini")
+        );
         let global = installer.global_command_dir().unwrap();
         assert!(global.to_str().unwrap().contains(".gemini"));
     }
@@ -496,7 +541,13 @@ mod tests {
     #[test]
     fn test_copilot_slash_command_dirs() {
         let installer = CopilotInstaller;
-        assert!(installer.command_dir().to_str().unwrap().contains(".github"));
+        assert!(
+            installer
+                .command_dir()
+                .to_str()
+                .unwrap()
+                .contains(".github")
+        );
         let global = installer.global_command_dir().unwrap();
         assert!(global.to_str().unwrap().contains(".github"));
     }
@@ -517,20 +568,9 @@ mod tests {
 
     // --- HookInstaller tests ---
 
-    fn with_tempdir<F: FnOnce(&std::path::Path)>(f: F) {
-        let tmp = tempfile::tempdir().unwrap();
-        let _guard = crate::tool::test_util::CWD_LOCK
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        let orig = std::env::current_dir().unwrap();
-        std::env::set_current_dir(tmp.path()).unwrap();
-        f(tmp.path());
-        std::env::set_current_dir(orig).unwrap();
-    }
-
     #[test]
     fn test_claude_code_hook_creates_settings_json() {
-        with_tempdir(|tmp| {
+        crate::tool::test_util::with_tempdir(|tmp| {
             let script = Path::new(".opsml/hooks/my-hook.sh");
             ClaudeCodeInstaller
                 .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
@@ -550,7 +590,7 @@ mod tests {
 
     #[test]
     fn test_claude_code_hook_idempotent() {
-        with_tempdir(|tmp| {
+        crate::tool::test_util::with_tempdir(|tmp| {
             let script = Path::new(".opsml/hooks/my-hook.sh");
             ClaudeCodeInstaller
                 .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
@@ -569,7 +609,7 @@ mod tests {
 
     #[test]
     fn test_claude_code_hook_multiple_events() {
-        with_tempdir(|tmp| {
+        crate::tool::test_util::with_tempdir(|tmp| {
             let script = Path::new(".opsml/hooks/my-hook.sh");
             ClaudeCodeInstaller
                 .install_hook(
@@ -591,7 +631,7 @@ mod tests {
 
     #[test]
     fn test_gemini_hook_snake_case_keys() {
-        with_tempdir(|tmp| {
+        crate::tool::test_util::with_tempdir(|tmp| {
             let script = Path::new(".opsml/hooks/my-hook.sh");
             GeminiCliInstaller
                 .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
@@ -615,7 +655,7 @@ mod tests {
 
     #[test]
     fn test_gemini_hook_idempotent() {
-        with_tempdir(|tmp| {
+        crate::tool::test_util::with_tempdir(|tmp| {
             let script = Path::new(".opsml/hooks/my-hook.sh");
             GeminiCliInstaller
                 .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
@@ -634,7 +674,7 @@ mod tests {
 
     #[test]
     fn test_codex_hook_yaml_format() {
-        with_tempdir(|tmp| {
+        crate::tool::test_util::with_tempdir(|tmp| {
             let script = Path::new(".opsml/hooks/my-hook.sh");
             CodexInstaller
                 .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
@@ -653,7 +693,7 @@ mod tests {
 
     #[test]
     fn test_codex_hook_idempotent() {
-        with_tempdir(|tmp| {
+        crate::tool::test_util::with_tempdir(|tmp| {
             let script = Path::new(".opsml/hooks/my-hook.sh");
             CodexInstaller
                 .install_hook("my-hook", script, &[HookEvent::PostToolUse], None, false)
@@ -674,8 +714,83 @@ mod tests {
     fn test_copilot_hook_returns_ok() {
         let tmp = tempfile::tempdir().unwrap();
         let script = tmp.path().join(".opsml/hooks/my-hook.sh");
-        let result =
-            CopilotInstaller.install_hook("my-hook", &script, &[HookEvent::PostToolUse], None, false);
+        let result = CopilotInstaller.install_hook(
+            "my-hook",
+            &script,
+            &[HookEvent::PostToolUse],
+            None,
+            false,
+        );
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_claude_code_hook_with_matcher() {
+        crate::tool::test_util::with_tempdir(|_tmp| {
+            let installer = ClaudeCodeInstaller;
+            let script_path = std::path::Path::new(".opsml/hooks/my-hook.sh");
+            let matcher = serde_json::json!({"tool": "Write"});
+            installer
+                .install_hook(
+                    "my-hook",
+                    script_path,
+                    &[HookEvent::PostToolUse],
+                    Some(&matcher),
+                    false,
+                )
+                .unwrap();
+            let content = std::fs::read_to_string(".claude/settings.json").unwrap();
+            let parsed: serde_json::Value = serde_json::from_str(&content).unwrap();
+            let entry = &parsed["hooks"]["PostToolUse"][0];
+            assert_eq!(entry["matcher"], serde_json::json!({"tool": "Write"}));
+        });
+    }
+
+    #[test]
+    fn test_install_hook_empty_events_returns_error() {
+        let installer = ClaudeCodeInstaller;
+        let tmp = tempfile::tempdir().unwrap();
+        let script_path = tmp.path().join("hook.sh");
+        let result = installer.install_hook("my-hook", &script_path, &[], None, false);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("hook_events"));
+    }
+
+    #[test]
+    fn test_claude_code_hook_global() {
+        let fake_home = tempfile::tempdir().unwrap();
+        let original_home = std::env::var("HOME").ok();
+        // SAFETY: test runs under --test-threads=1
+        unsafe { std::env::set_var("HOME", fake_home.path()) };
+        let result = std::panic::catch_unwind(|| {
+            let installer = ClaudeCodeInstaller;
+            let script_path = std::path::Path::new(".opsml/hooks/global-hook.sh");
+            installer
+                .install_hook(
+                    "global-hook",
+                    script_path,
+                    &[HookEvent::PostToolUse],
+                    None,
+                    true,
+                )
+                .unwrap();
+            let settings_path = fake_home.path().join(".claude/settings.json");
+            assert!(
+                settings_path.exists(),
+                "settings.json not created in fake home"
+            );
+            let content = std::fs::read_to_string(&settings_path).unwrap();
+            let parsed: serde_json::Value = serde_json::from_str(&content).unwrap();
+            assert!(parsed["hooks"]["PostToolUse"].is_array());
+        });
+        // SAFETY: test runs under --test-threads=1
+        unsafe {
+            if let Some(h) = original_home {
+                std::env::set_var("HOME", h);
+            } else {
+                std::env::remove_var("HOME");
+            }
+        }
+        result.unwrap();
     }
 }

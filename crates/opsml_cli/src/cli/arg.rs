@@ -20,6 +20,23 @@ fn parse_version_type(s: &str) -> Result<VersionType, String> {
     })
 }
 
+fn parse_tool_type(s: &str) -> Result<opsml_types::contracts::tool::ToolType, String> {
+    use opsml_types::contracts::tool::ToolType;
+    match s {
+        "ShellScript" | "shell_script" | "shell-script" => Ok(ToolType::ShellScript),
+        "McpServer" | "mcp_server" | "mcp-server" => Ok(ToolType::McpServer),
+        "ApiCall" | "api_call" | "api-call" => Ok(ToolType::ApiCall),
+        "InternalFunction" | "internal_function" | "internal-function" => {
+            Ok(ToolType::InternalFunction)
+        }
+        "SlashCommand" | "slash_command" | "slash-command" => Ok(ToolType::SlashCommand),
+        "Hook" | "hook" => Ok(ToolType::Hook),
+        other => Err(format!(
+            "unknown tool type '{other}'; valid values: ShellScript, McpServer, ApiCall, InternalFunction, SlashCommand, Hook"
+        )),
+    }
+}
+
 fn default_spec_path() -> String {
     let path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
     let joined = path.join(DEFAULT_SERVICE_FILENAME);
@@ -629,9 +646,9 @@ pub struct ToolListArgs {
     /// Filter by tags (comma-separated)
     #[arg(long = "tags", use_value_delimiter = true, value_delimiter = ',')]
     pub tags: Option<Vec<String>>,
-    /// Filter by tool type (ShellScript, SlashCommand, McpServer, ApiCall, InternalFunction)
-    #[arg(long = "type")]
-    pub tool_type: Option<String>,
+    /// Filter by tool type (ShellScript, SlashCommand, McpServer, ApiCall, InternalFunction, Hook)
+    #[arg(long = "type", value_parser = parse_tool_type)]
+    pub tool_type: Option<opsml_types::contracts::tool::ToolType>,
     /// Maximum number of results
     #[arg(long = "limit")]
     pub limit: Option<i32>,

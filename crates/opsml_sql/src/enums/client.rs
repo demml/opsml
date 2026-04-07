@@ -868,15 +868,9 @@ impl ToolLogicTrait for SqlClientEnum {
         name: &str,
     ) -> Result<ToolCardRecord, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => {
-                client.card.get_tool_card_by_name(space, name).await
-            }
-            SqlClientEnum::Sqlite(client) => {
-                client.card.get_tool_card_by_name(space, name).await
-            }
-            SqlClientEnum::MySql(client) => {
-                client.card.get_tool_card_by_name(space, name).await
-            }
+            SqlClientEnum::Postgres(client) => client.card.get_tool_card_by_name(space, name).await,
+            SqlClientEnum::Sqlite(client) => client.card.get_tool_card_by_name(space, name).await,
+            SqlClientEnum::MySql(client) => client.card.get_tool_card_by_name(space, name).await,
         }
     }
 
@@ -910,15 +904,9 @@ impl ToolLogicTrait for SqlClientEnum {
 
     async fn increment_tool_download_count(&self, uid: &str) -> Result<(), SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => {
-                client.card.increment_tool_download_count(uid).await
-            }
-            SqlClientEnum::Sqlite(client) => {
-                client.card.increment_tool_download_count(uid).await
-            }
-            SqlClientEnum::MySql(client) => {
-                client.card.increment_tool_download_count(uid).await
-            }
+            SqlClientEnum::Postgres(client) => client.card.increment_tool_download_count(uid).await,
+            SqlClientEnum::Sqlite(client) => client.card.increment_tool_download_count(uid).await,
+            SqlClientEnum::MySql(client) => client.card.increment_tool_download_count(uid).await,
         }
     }
 
@@ -946,9 +934,7 @@ impl ToolLogicTrait for SqlClientEnum {
         limit: i64,
     ) -> Result<Vec<ToolCardRecord>, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => {
-                client.card.get_featured_tools(space, limit).await
-            }
+            SqlClientEnum::Postgres(client) => client.card.get_featured_tools(space, limit).await,
             SqlClientEnum::Sqlite(client) => client.card.get_featured_tools(space, limit).await,
             SqlClientEnum::MySql(client) => client.card.get_featured_tools(space, limit).await,
         }
@@ -962,17 +948,10 @@ impl ToolLogicTrait for SqlClientEnum {
         }
     }
 
-    async fn get_tool_marketplace_stats(
-        &self,
-        space: &str,
-    ) -> Result<MarketplaceStats, SqlError> {
+    async fn get_tool_marketplace_stats(&self, space: &str) -> Result<MarketplaceStats, SqlError> {
         match self {
-            SqlClientEnum::Postgres(client) => {
-                client.card.get_tool_marketplace_stats(space).await
-            }
-            SqlClientEnum::Sqlite(client) => {
-                client.card.get_tool_marketplace_stats(space).await
-            }
+            SqlClientEnum::Postgres(client) => client.card.get_tool_marketplace_stats(space).await,
+            SqlClientEnum::Sqlite(client) => client.card.get_tool_marketplace_stats(space).await,
             SqlClientEnum::MySql(client) => client.card.get_tool_marketplace_stats(space).await,
         }
     }

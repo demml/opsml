@@ -120,10 +120,7 @@ pub fn pull_tool(args: &ToolPullArgs) -> Result<(), CliError> {
 
 #[instrument(skip_all)]
 pub fn list_tools(args: &ToolListArgs) -> Result<(), CliError> {
-    println!(
-        "\nListing cards from {} registry",
-        Colorize::green("tool")
-    );
+    println!("\nListing cards from {} registry", Colorize::green("tool"));
 
     let space = args.space.clone().map(|s| clean_string(&s)).transpose()?;
     let name = args.name.clone().map(|n| clean_string(&n)).transpose()?;
@@ -138,14 +135,14 @@ pub fn list_tools(args: &ToolListArgs) -> Result<(), CliError> {
         ..Default::default()
     };
 
-    let registry =
-        opsml_registry::registries::card::OpsmlCardRegistry::new(RegistryType::Tool)?;
+    let registry = opsml_registry::registries::card::OpsmlCardRegistry::new(RegistryType::Tool)?;
     let mut cards = registry.list_cards(&query_args)?;
 
     if let Some(tool_type) = &args.tool_type {
+        let filter = tool_type.to_string();
         cards.retain(|c| {
             if let opsml_types::contracts::CardRecord::Tool(r) = c {
-                &r.tool_type == tool_type
+                r.tool_type == filter
             } else {
                 false
             }
@@ -359,7 +356,7 @@ mod tests {
         let filter = "SlashCommand".to_string();
         cards.retain(|c| {
             if let CardRecord::Tool(r) = c {
-                &r.tool_type == &filter
+                r.tool_type == filter
             } else {
                 false
             }
@@ -377,7 +374,7 @@ mod tests {
         let wrong_case = "slashcommand".to_string();
         cards2.retain(|c| {
             if let CardRecord::Tool(r) = c {
-                &r.tool_type == &wrong_case
+                r.tool_type == wrong_case
             } else {
                 false
             }

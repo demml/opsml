@@ -275,8 +275,5 @@ pub trait ToolLogicTrait {
 
     async fn get_all_tool_tags(&self, space: &str) -> Result<Vec<String>, SqlError>;
 
-    async fn get_tool_marketplace_stats(
-        &self,
-        space: &str,
-    ) -> Result<MarketplaceStats, SqlError>;
+    async fn get_tool_marketplace_stats(&self, space: &str) -> Result<MarketplaceStats, SqlError>;
 }

@@ -48,6 +48,10 @@ pub fn parse_tool_markdown(content: &str) -> Result<ToolCard, ToolError> {
         )));
     }
 
+    if let Some(m) = &spec.hook_matcher {
+        super::installer::validate_hook_matcher(m)?;
+    }
+
     let body_opt = if body.is_empty() { None } else { Some(body) };
     let name = spec.name.clone();
 
@@ -125,8 +129,27 @@ impl ToolCard {
     }
 
     pub fn calculate_content_hash(&self) -> Result<Vec<u8>, ToolError> {
+        fn sort_json_keys(v: serde_json::Value) -> serde_json::Value {
+            match v {
+                serde_json::Value::Object(map) => {
+                    let sorted: serde_json::Map<String, serde_json::Value> = map
+                        .into_iter()
+                        .map(|(k, v)| (k, sort_json_keys(v)))
+                        .collect::<std::collections::BTreeMap<_, _>>()
+                        .into_iter()
+                        .collect();
+                    serde_json::Value::Object(sorted)
+                }
+                serde_json::Value::Array(arr) => {
+                    serde_json::Value::Array(arr.into_iter().map(sort_json_keys).collect())
+                }
+                other => other,
+            }
+        }
+
         let mut hasher = Sha256::new();
-        let canonical = serde_json::to_vec(&self.spec)?;
+        let spec_value = serde_json::to_value(&self.spec)?;
+        let canonical = serde_json::to_vec(&sort_json_keys(spec_value))?;
         hasher.update(&canonical);
         if let Some(body) = &self.body {
             hasher.update(body.as_bytes());
@@ -160,6 +183,11 @@ impl ToolCard {
             hook_matcher: Option<&'a serde_json::Value>,
         }
 
+        let sanitized_api_config = self
+            .spec
+            .api_config
+            .as_ref()
+            .map(|c| c.sanitize_for_response());
         let fm = ToolFrontmatter {
             name: &self.spec.name,
             description: &self.spec.description,
@@ -167,7 +195,7 @@ impl ToolCard {
             args_schema: self.spec.args_schema.as_ref(),
             output_schema: self.spec.output_schema.as_ref(),
             script_config: self.spec.script_config.as_ref(),
-            api_config: self.spec.api_config.as_ref(),
+            api_config: sanitized_api_config.as_ref(),
             mcp_server_name: self.spec.mcp_server_name.as_deref(),
             allowed_tools: &self.spec.allowed_tools,
             requires_approval: self.spec.requires_approval,
@@ -200,6 +228,15 @@ impl ToolCard {
             )));
         }
         std::fs::create_dir_all(&install_dir)?;
+        let install_dir = install_dir.canonicalize()?;
+        if matches!(self.spec.tool_type, ToolType::ShellScript | ToolType::Hook)
+            && self.body.is_none()
+        {
+            return Err(ToolError::Error(format!(
+                "{} tool '{}' has no body; cannot install",
+                self.spec.tool_type, self.name
+            )));
+        }
         let body_content = self.body.as_deref().unwrap_or("");
 
         match &self.spec.tool_type {
@@ -210,7 +247,7 @@ impl ToolCard {
                 {
                     use std::os::unix::fs::PermissionsExt;
                     let mut perms = std::fs::metadata(&path)?.permissions();
-                    perms.set_mode(0o755);
+                    perms.set_mode(0o700);
                     std::fs::set_permissions(&path, perms)?;
                 }
                 Ok(path)
@@ -256,11 +293,10 @@ impl ToolCard {
                 {
                     use std::os::unix::fs::PermissionsExt;
                     let mut perms = std::fs::metadata(&path)?.permissions();
-                    perms.set_mode(0o755);
+                    perms.set_mode(0o700);
                     std::fs::set_permissions(&path, perms)?;
                 }
-                let relative_path =
-                    PathBuf::from(format!(".opsml/hooks/{}.sh", self.name));
+                let relative_path = PathBuf::from(format!(".opsml/hooks/{}.sh", self.name));
                 if let Some(installer) = hook_installer {
                     installer.install_hook(
                         &self.name,
@@ -457,8 +493,7 @@ mod tests {
     #[test]
     fn test_tool_card_json_roundtrip() {
         let spec = make_shell_spec();
-        let card =
-            ToolCard::new_rs(spec, Some("test-space"), Some("my-tool"), None, None).unwrap();
+        let card = ToolCard::new_rs(spec, Some("test-space"), Some("my-tool"), None, None).unwrap();
 
         let json = serde_json::to_string(&card).unwrap();
         let restored = ToolCard::model_validate_json(json).unwrap();
@@ -471,8 +506,7 @@ mod tests {
     #[test]
     fn test_tool_card_get_registry_card() {
         let spec = make_shell_spec();
-        let card =
-            ToolCard::new_rs(spec, Some("test-space"), Some("my-tool"), None, None).unwrap();
+        let card = ToolCard::new_rs(spec, Some("test-space"), Some("my-tool"), None, None).unwrap();
 
         let record = card.get_registry_card().unwrap();
         match record {
@@ -591,8 +625,7 @@ mod tests {
     fn test_pull_artifacts_mcp_server() {
         let tmp = tempfile::tempdir().unwrap();
         let spec = make_mcp_spec();
-        let card =
-            ToolCard::new_rs(spec, Some("test-space"), Some("my-mcp"), None, None).unwrap();
+        let card = ToolCard::new_rs(spec, Some("test-space"), Some("my-mcp"), None, None).unwrap();
 
         let path = card
             .pull_artifacts(tmp.path().to_path_buf(), None, false)
@@ -605,8 +638,7 @@ mod tests {
     fn test_pull_artifacts_api_call() {
         let tmp = tempfile::tempdir().unwrap();
         let spec = make_api_spec();
-        let card =
-            ToolCard::new_rs(spec, Some("test-space"), Some("my-api"), None, None).unwrap();
+        let card = ToolCard::new_rs(spec, Some("test-space"), Some("my-api"), None, None).unwrap();
 
         let path = card
             .pull_artifacts(tmp.path().to_path_buf(), None, false)
@@ -629,7 +661,9 @@ mod tests {
             "args": ["-y", "my-mcp-server"]
         });
 
-        installer.merge_mcp_entry("my-server", entry.clone()).unwrap();
+        installer
+            .merge_mcp_entry("my-server", entry.clone())
+            .unwrap();
         installer.merge_mcp_entry("my-server", entry).unwrap();
 
         let content = std::fs::read_to_string(installer.mcp_config_path()).unwrap();
@@ -740,7 +774,7 @@ mod tests {
         {
             use std::os::unix::fs::PermissionsExt;
             let perms = std::fs::metadata(&path).unwrap().permissions();
-            assert_eq!(perms.mode() & 0o777, 0o755);
+            assert_eq!(perms.mode() & 0o777, 0o700);
         }
     }
 
@@ -753,7 +787,8 @@ mod tests {
             tool_type: ToolType::Hook,
             ..Default::default()
         };
-        let card = ToolCard::new_rs(spec, Some("s"), Some("no-installer"), None, None).unwrap();
+        let mut card = ToolCard::new_rs(spec, Some("s"), Some("no-installer"), None, None).unwrap();
+        card.body = Some("#!/bin/bash\necho no-installer\n".to_string());
         let path = card
             .pull_artifacts(tmp.path().to_path_buf(), None, false)
             .unwrap();
@@ -805,8 +840,7 @@ mod tests {
             let arr = settings["hooks"]["PostToolUse"].as_array().unwrap();
             assert_eq!(arr.len(), 1);
             assert_eq!(
-                arr[0]["hooks"][0]["command"],
-                ".opsml/hooks/my-hook.sh",
+                arr[0]["hooks"][0]["command"], ".opsml/hooks/my-hook.sh",
                 "Claude Code command path"
             );
         });
@@ -830,8 +864,7 @@ mod tests {
             let arr = settings["hooks"]["post_tool_use"].as_array().unwrap();
             assert_eq!(arr.len(), 1);
             assert_eq!(
-                arr[0]["script"],
-                ".opsml/hooks/my-hook.sh",
+                arr[0]["script"], ".opsml/hooks/my-hook.sh",
                 "Gemini script path"
             );
         });
@@ -928,9 +961,10 @@ mod tests {
             );
 
             // Codex config
-            let codex: serde_json::Value =
-                serde_yaml::from_str(&std::fs::read_to_string(tmp.join(".codex/config.yaml")).unwrap())
-                    .unwrap();
+            let codex: serde_json::Value = serde_yaml::from_str(
+                &std::fs::read_to_string(tmp.join(".codex/config.yaml")).unwrap(),
+            )
+            .unwrap();
             assert!(
                 !codex["hooks"].as_array().unwrap().is_empty(),
                 "Codex hooks registered"
@@ -950,9 +984,10 @@ mod tests {
             card.pull_artifacts(tmp.to_path_buf(), Some(&ClaudeCodeInstaller), false)
                 .unwrap();
 
-            let codex: serde_json::Value =
-                serde_yaml::from_str(&std::fs::read_to_string(tmp.join(".codex/config.yaml")).unwrap())
-                    .unwrap();
+            let codex: serde_json::Value = serde_yaml::from_str(
+                &std::fs::read_to_string(tmp.join(".codex/config.yaml")).unwrap(),
+            )
+            .unwrap();
             assert_eq!(codex["hooks"].as_array().unwrap().len(), 1);
 
             let claude: serde_json::Value = serde_json::from_str(
@@ -988,5 +1023,192 @@ mod tests {
             let arr = gemini["hooks"]["post_tool_use"].as_array().unwrap();
             assert_eq!(arr.len(), 1, "Gemini must have exactly one hook entry");
         });
+    }
+
+    #[test]
+    fn test_parse_markdown_hook() {
+        let md = "---\nname: my-hook\ndescription: A hook\ntoolType: Hook\nhookEvents:\n  - PostToolUse\nhookMatcher:\n  tool: Write\n---\n";
+        let card = parse_tool_markdown(md).unwrap();
+        assert_eq!(card.spec.tool_type, ToolType::Hook);
+        assert_eq!(card.spec.hook_events, vec![HookEvent::PostToolUse]);
+        assert_eq!(
+            card.spec.hook_matcher,
+            Some(serde_json::json!({"tool": "Write"}))
+        );
+    }
+
+    #[test]
+    fn test_parse_markdown_mcp_server() {
+        let md = "---\nname: my-mcp\ndescription: An MCP server\ntoolType: McpServer\n\
+                  mcpServerName: my-server\n---\n";
+        let card = parse_tool_markdown(md).unwrap();
+        assert_eq!(card.spec.tool_type, ToolType::McpServer);
+        assert_eq!(card.spec.mcp_server_name, Some("my-server".to_string()));
+    }
+
+    #[test]
+    fn test_parse_markdown_api_call() {
+        let md = "---\nname: my-api\ndescription: An API call\ntoolType: ApiCall\napiConfig:\n  url: https://example.com\n  method: GET\n---\n";
+        let card = parse_tool_markdown(md).unwrap();
+        assert_eq!(card.spec.tool_type, ToolType::ApiCall);
+        assert_eq!(
+            card.spec.api_config.as_ref().unwrap().url,
+            "https://example.com"
+        );
+    }
+
+    #[test]
+    fn test_to_markdown_roundtrip_hook() {
+        let spec = ToolSpec {
+            name: "rt-hook".to_string(),
+            description: "roundtrip hook".to_string(),
+            tool_type: ToolType::Hook,
+            hook_events: vec![HookEvent::PostToolUse],
+            hook_matcher: Some(serde_json::json!({"tool": "Write"})),
+            ..Default::default()
+        };
+        let mut card = ToolCard::new_rs(spec, Some("test"), Some("rt-hook"), None, None).unwrap();
+        card.body = Some("#!/bin/bash\necho hi\n".to_string());
+        let md = card.to_markdown().unwrap();
+        let parsed = parse_tool_markdown(&md).unwrap();
+        assert_eq!(parsed.spec.tool_type, ToolType::Hook);
+        assert_eq!(parsed.spec.hook_events, vec![HookEvent::PostToolUse]);
+        assert_eq!(parsed.spec.hook_matcher, card.spec.hook_matcher);
+    }
+
+    #[test]
+    fn test_to_markdown_roundtrip_mcp_server() {
+        let spec = ToolSpec {
+            name: "rt-mcp".to_string(),
+            description: "roundtrip mcp".to_string(),
+            tool_type: ToolType::McpServer,
+            mcp_server_name: Some("my-server".to_string()),
+            ..Default::default()
+        };
+        let card = ToolCard::new_rs(spec, Some("test"), Some("rt-mcp"), None, None).unwrap();
+        let md = card.to_markdown().unwrap();
+        let parsed = parse_tool_markdown(&md).unwrap();
+        assert_eq!(parsed.spec.tool_type, ToolType::McpServer);
+        assert_eq!(parsed.spec.mcp_server_name, Some("my-server".to_string()));
+    }
+
+    #[test]
+    fn test_to_markdown_roundtrip_api_call() {
+        let spec = ToolSpec {
+            name: "rt-api".to_string(),
+            description: "roundtrip api".to_string(),
+            tool_type: ToolType::ApiCall,
+            api_config: Some(ApiCallConfig {
+                url: "https://example.com".to_string(),
+                method: "POST".to_string(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        let card = ToolCard::new_rs(spec, Some("test"), Some("rt-api"), None, None).unwrap();
+        let md = card.to_markdown().unwrap();
+        let parsed = parse_tool_markdown(&md).unwrap();
+        assert_eq!(parsed.spec.tool_type, ToolType::ApiCall);
+        assert_eq!(
+            parsed.spec.api_config.as_ref().unwrap().url,
+            "https://example.com"
+        );
+    }
+
+    #[test]
+    fn test_pull_artifacts_shell_script_no_body_returns_error() {
+        let spec = ToolSpec {
+            name: "no-body".to_string(),
+            description: "test".to_string(),
+            tool_type: ToolType::ShellScript,
+            ..Default::default()
+        };
+        let card = ToolCard::new_rs(spec, Some("test"), Some("no-body"), None, None).unwrap();
+        let tmp = tempfile::tempdir().unwrap();
+        let result = card.pull_artifacts(tmp.path().to_path_buf(), None, false);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("no body"));
+    }
+
+    #[test]
+    fn test_pull_artifacts_hook_no_body_returns_error() {
+        let spec = ToolSpec {
+            name: "no-body-hook".to_string(),
+            description: "test".to_string(),
+            tool_type: ToolType::Hook,
+            hook_events: vec![HookEvent::PostToolUse],
+            ..Default::default()
+        };
+        let card = ToolCard::new_rs(spec, Some("test"), Some("no-body-hook"), None, None).unwrap();
+        let tmp = tempfile::tempdir().unwrap();
+        let result = card.pull_artifacts(tmp.path().to_path_buf(), None, false);
+        assert!(result.is_err());
+        assert!(result.unwrap_err().to_string().contains("no body"));
+    }
+
+    #[test]
+    fn test_from_path_unsupported_extension() {
+        let tmp = tempfile::tempdir().unwrap();
+        let yaml_path = tmp.path().join("card.yaml");
+        std::fs::write(&yaml_path, "name: test\n").unwrap();
+        let result = ToolCard::from_path(yaml_path);
+        assert!(result.is_err());
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .to_lowercase()
+                .contains("unsupported")
+        );
+    }
+
+    #[test]
+    fn test_calculate_content_hash_stable_key_order() {
+        let spec1 = ToolSpec {
+            name: "hash-test".to_string(),
+            description: "test".to_string(),
+            tool_type: ToolType::ApiCall,
+            args_schema: Some(serde_json::json!({"b": 2, "a": 1})),
+            ..Default::default()
+        };
+        let spec2 = ToolSpec {
+            name: "hash-test".to_string(),
+            description: "test".to_string(),
+            tool_type: ToolType::ApiCall,
+            args_schema: Some(serde_json::json!({"a": 1, "b": 2})),
+            ..Default::default()
+        };
+        let card1 = ToolCard::new_rs(spec1, Some("test"), Some("hash-test"), None, None).unwrap();
+        let card2 = ToolCard::new_rs(spec2, Some("test"), Some("hash-test"), None, None).unwrap();
+        assert_eq!(
+            card1.calculate_content_hash().unwrap(),
+            card2.calculate_content_hash().unwrap()
+        );
+    }
+
+    #[test]
+    fn test_hook_matcher_roundtrip_hash_stable() {
+        // Verify that hook_matcher survives a to_markdown → parse_tool_markdown roundtrip
+        // and that content_hash is stable across the roundtrip.
+        let spec = ToolSpec {
+            name: "stable-hook".to_string(),
+            description: "test".to_string(),
+            tool_type: ToolType::Hook,
+            hook_events: vec![HookEvent::PostToolUse],
+            hook_matcher: Some(serde_json::json!({"tool": "Write"})),
+            ..Default::default()
+        };
+        let mut card =
+            ToolCard::new_rs(spec, Some("test"), Some("stable-hook"), None, None).unwrap();
+        card.body = Some("#!/bin/bash\n".to_string());
+        let hash_before = card.calculate_content_hash().unwrap();
+        let md = card.to_markdown().unwrap();
+        let parsed = parse_tool_markdown(&md).unwrap();
+        let hash_after = parsed.calculate_content_hash().unwrap();
+        assert_eq!(
+            parsed.spec.hook_matcher,
+            Some(serde_json::json!({"tool": "Write"}))
+        );
+        assert_eq!(hash_before, hash_after);
     }
 }

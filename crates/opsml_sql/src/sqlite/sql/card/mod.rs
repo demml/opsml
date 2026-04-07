@@ -1174,14 +1174,13 @@ impl ToolLogicTrait for CardLogicSqliteClient {
         space: &str,
         name: &str,
     ) -> Result<ToolCardRecord, SqlError> {
-        let record = sqlx::query_as::<_, ToolCardRecord>(
-            SqliteQueryHelper::get_tool_card_by_name_query(),
-        )
-        .bind(space)
-        .bind(name)
-        .fetch_optional(&self.pool)
-        .await?
-        .ok_or_else(|| SqlError::MissingField(format!("{}/{}", space, name)))?;
+        let record =
+            sqlx::query_as::<_, ToolCardRecord>(SqliteQueryHelper::get_tool_card_by_name_query())
+                .bind(space)
+                .bind(name)
+                .fetch_optional(&self.pool)
+                .await?
+                .ok_or_else(|| SqlError::MissingField(format!("{}/{}", space, name)))?;
         Ok(record)
     }
 
@@ -1235,29 +1234,24 @@ impl ToolLogicTrait for CardLogicSqliteClient {
         space: &str,
         limit: i64,
     ) -> Result<Vec<ToolCardRecord>, SqlError> {
-        let records = sqlx::query_as::<_, ToolCardRecord>(
-            SqliteQueryHelper::get_featured_tools_query(),
-        )
-        .bind(space)
-        .bind(limit)
-        .fetch_all(&self.pool)
-        .await?;
+        let records =
+            sqlx::query_as::<_, ToolCardRecord>(SqliteQueryHelper::get_featured_tools_query())
+                .bind(space)
+                .bind(limit)
+                .fetch_all(&self.pool)
+                .await?;
         Ok(records)
     }
 
     async fn get_all_tool_tags(&self, space: &str) -> Result<Vec<String>, SqlError> {
-        let tags: Vec<String> =
-            sqlx::query_scalar(SqliteQueryHelper::get_all_tool_tags_query())
-                .bind(space)
-                .fetch_all(&self.pool)
-                .await?;
+        let tags: Vec<String> = sqlx::query_scalar(SqliteQueryHelper::get_all_tool_tags_query())
+            .bind(space)
+            .fetch_all(&self.pool)
+            .await?;
         Ok(tags)
     }
 
-    async fn get_tool_marketplace_stats(
-        &self,
-        space: &str,
-    ) -> Result<MarketplaceStats, SqlError> {
+    async fn get_tool_marketplace_stats(&self, space: &str) -> Result<MarketplaceStats, SqlError> {
         let row: (i64, i64, i64) =
             sqlx::query_as(SqliteQueryHelper::get_tool_marketplace_stats_query())
                 .bind(space)

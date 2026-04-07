@@ -91,6 +91,31 @@ impl Default for ApiCallConfig {
     }
 }
 
+impl ApiCallConfig {
+    pub fn sanitize_for_response(&self) -> Self {
+        const SENSITIVE_KEYS: &[&str] = &[
+            "authorization",
+            "x-api-key",
+            "x-auth-token",
+            "cookie",
+            "x-secret",
+            "proxy-authorization",
+        ];
+        let headers = self
+            .headers
+            .iter()
+            .filter(|(k, _)| !SENSITIVE_KEYS.contains(&k.to_lowercase().as_str()))
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect();
+        Self {
+            url: self.url.clone(),
+            method: self.method.clone(),
+            headers,
+            body_template: self.body_template.clone(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "PascalCase")]
 pub enum HookEvent {
@@ -99,6 +124,26 @@ pub enum HookEvent {
     PreToolUse,
     Stop,
     Notification,
+}
+
+impl HookEvent {
+    pub fn as_snake_case(&self) -> &'static str {
+        match self {
+            HookEvent::PreToolUse => "pre_tool_use",
+            HookEvent::PostToolUse => "post_tool_use",
+            HookEvent::Stop => "stop",
+            HookEvent::Notification => "notification",
+        }
+    }
+
+    pub fn as_pascal_case(&self) -> &'static str {
+        match self {
+            HookEvent::PreToolUse => "PreToolUse",
+            HookEvent::PostToolUse => "PostToolUse",
+            HookEvent::Stop => "Stop",
+            HookEvent::Notification => "Notification",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -144,7 +189,10 @@ mod tests {
             ..Default::default()
         };
         let json = serde_json::to_string(&spec).unwrap();
-        assert!(json.contains("\"toolType\""), "expected camelCase 'toolType' key, got: {json}");
+        assert!(
+            json.contains("\"toolType\""),
+            "expected camelCase 'toolType' key, got: {json}"
+        );
         let restored: ToolSpec = serde_json::from_str(&json).unwrap();
         assert_eq!(restored.name, spec.name);
         assert_eq!(restored.tool_type, ToolType::ShellScript);
@@ -218,7 +266,10 @@ mod tests {
         assert_eq!(restored.name, spec.name);
         assert_eq!(restored.tool_type, ToolType::Hook);
         assert_eq!(restored.hook_events, vec![HookEvent::PostToolUse]);
-        assert_eq!(restored.hook_matcher, Some(serde_json::json!({"tool": "Write"})));
+        assert_eq!(
+            restored.hook_matcher,
+            Some(serde_json::json!({"tool": "Write"}))
+        );
     }
 
     #[test]
