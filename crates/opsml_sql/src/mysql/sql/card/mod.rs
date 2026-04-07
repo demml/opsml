@@ -484,10 +484,6 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Tool => match card {
                 ServerCard::Tool(record) => {
                     let query = MySqlQueryHelper::get_tool_card_insert_query();
-                    let args_schema_str = record
-                        .args_schema
-                        .as_ref()
-                        .map(|v| serde_json::to_string(v).unwrap());
                     sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -501,7 +497,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
                         .bind(&record.build_tag)
                         .bind(&record.tags)
                         .bind(&record.tool_type)
-                        .bind(args_schema_str)
+                        .bind(&record.args_schema)
                         .bind(&record.description)
                         .bind(&record.content_hash)
                         .bind(&record.username)
@@ -728,17 +724,13 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Tool => match card {
                 ServerCard::Tool(record) => {
                     let query = MySqlQueryHelper::get_tool_card_update_query();
-                    let args_schema_str = record
-                        .args_schema
-                        .as_ref()
-                        .map(|v| serde_json::to_string(v).unwrap());
                     sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
                         .bind(&record.tags)
                         .bind(&record.tool_type)
-                        .bind(args_schema_str)
+                        .bind(&record.args_schema)
                         .bind(&record.description)
                         .bind(&record.content_hash)
                         .bind(&record.username)
