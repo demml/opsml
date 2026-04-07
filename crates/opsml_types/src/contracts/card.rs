@@ -838,6 +838,60 @@ impl Default for SubAgentCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[pyclass]
+pub struct ToolCardClientRecord {
+    #[pyo3(get, set)]
+    pub uid: String,
+    #[pyo3(get, set)]
+    pub created_at: DateTime<Utc>,
+    #[pyo3(get, set)]
+    pub app_env: String,
+    #[pyo3(get, set)]
+    pub space: String,
+    #[pyo3(get, set)]
+    pub name: String,
+    #[pyo3(get, set)]
+    pub version: String,
+    #[pyo3(get, set)]
+    pub tags: Vec<String>,
+    #[pyo3(get, set)]
+    pub opsml_version: String,
+    #[pyo3(get, set)]
+    pub username: String,
+    #[pyo3(get, set)]
+    pub tool_type: String,
+    // serde_json::Value does not implement IntoPyObject; expose via manual #[pymethods] getter if Python access is needed
+    pub args_schema: Option<serde_json::Value>,
+    #[pyo3(get, set)]
+    pub content_hash: Option<Vec<u8>>,
+    #[pyo3(get, set)]
+    pub download_count: i64,
+    #[pyo3(get, set)]
+    pub description: Option<String>,
+}
+
+impl Default for ToolCardClientRecord {
+    fn default() -> Self {
+        Self {
+            uid: "".to_string(),
+            created_at: get_utc_datetime(),
+            app_env: "development".to_string(),
+            space: "".to_string(),
+            name: "".to_string(),
+            version: "".to_string(),
+            tags: Vec::new(),
+            opsml_version: opsml_version::version(),
+            username: "guest".to_string(),
+            tool_type: "ShellScript".to_string(),
+            args_schema: None,
+            content_hash: None,
+            download_count: 0,
+            description: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
 #[pyclass]
 pub enum CardRecord {
@@ -849,6 +903,7 @@ pub enum CardRecord {
     Service(Box<ServiceCardClientRecord>),
     Skill(SkillCardClientRecord),
     SubAgent(SubAgentCardClientRecord),
+    Tool(ToolCardClientRecord),
 }
 
 #[pymethods]
@@ -868,6 +923,7 @@ impl CardRecord {
             Self::Service(card) => &card.uid,
             Self::Skill(card) => &card.uid,
             Self::SubAgent(card) => &card.uid,
+            Self::Tool(card) => &card.uid,
         }
     }
 
@@ -882,6 +938,7 @@ impl CardRecord {
             Self::Service(card) => card.created_at,
             Self::Skill(card) => card.created_at,
             Self::SubAgent(card) => card.created_at,
+            Self::Tool(card) => card.created_at,
         }
     }
 
@@ -896,6 +953,7 @@ impl CardRecord {
             Self::Service(card) => card.app_env.as_ref(),
             Self::Skill(card) => card.app_env.as_ref(),
             Self::SubAgent(card) => card.app_env.as_ref(),
+            Self::Tool(card) => card.app_env.as_ref(),
         }
     }
 
@@ -910,6 +968,7 @@ impl CardRecord {
             Self::Service(card) => card.name.as_ref(),
             Self::Skill(card) => card.name.as_ref(),
             Self::SubAgent(card) => card.name.as_ref(),
+            Self::Tool(card) => card.name.as_ref(),
         }
     }
 
@@ -924,6 +983,7 @@ impl CardRecord {
             Self::Service(card) => card.space.as_ref(),
             Self::Skill(card) => card.space.as_ref(),
             Self::SubAgent(card) => card.space.as_ref(),
+            Self::Tool(card) => card.space.as_ref(),
         }
     }
 
@@ -938,6 +998,7 @@ impl CardRecord {
             Self::Service(card) => card.version.as_ref(),
             Self::Skill(card) => card.version.as_ref(),
             Self::SubAgent(card) => card.version.as_ref(),
+            Self::Tool(card) => card.version.as_ref(),
         }
     }
 
@@ -953,6 +1014,7 @@ impl CardRecord {
             Self::Service(_card) => &EMPTY_TAGS,
             Self::Skill(card) => &card.tags,
             Self::SubAgent(card) => &card.tags,
+            Self::Tool(card) => &card.tags,
         }
     }
 
@@ -967,6 +1029,7 @@ impl CardRecord {
             Self::Service(_) => None,
             Self::Skill(_) => None,
             Self::SubAgent(_) => None,
+            Self::Tool(_) => None,
         }
     }
 
@@ -983,6 +1046,7 @@ impl CardRecord {
             Self::Service(_) => None,
             Self::Skill(_) => None,
             Self::SubAgent(_) => None,
+            Self::Tool(_) => None,
         }
     }
 
@@ -997,6 +1061,7 @@ impl CardRecord {
             Self::Service(_) => None,
             Self::Skill(_) => None,
             Self::SubAgent(_) => None,
+            Self::Tool(_) => None,
         }
     }
 
@@ -1016,6 +1081,7 @@ impl CardRecord {
             Self::Service(_) => None,
             Self::Skill(_) => None,
             Self::SubAgent(_) => None,
+            Self::Tool(_) => None,
         }
     }
 
@@ -1030,6 +1096,7 @@ impl CardRecord {
             Self::Service(_) => None,
             Self::Skill(_) => None,
             Self::SubAgent(_) => None,
+            Self::Tool(_) => None,
         }
     }
 
@@ -1044,6 +1111,7 @@ impl CardRecord {
             Self::Service(_) => None,
             Self::Skill(_) => None,
             Self::SubAgent(_) => None,
+            Self::Tool(_) => None,
         }
     }
 
@@ -1058,6 +1126,7 @@ impl CardRecord {
             Self::Service(_) => None,
             Self::Skill(_) => None,
             Self::SubAgent(_) => None,
+            Self::Tool(_) => None,
         }
     }
 
@@ -1072,6 +1141,7 @@ impl CardRecord {
             Self::Service(_) => None,
             Self::Skill(_) => None,
             Self::SubAgent(_) => None,
+            Self::Tool(_) => None,
         }
     }
 
@@ -1086,6 +1156,7 @@ impl CardRecord {
             Self::Service(_) => None,
             Self::Skill(_) => None,
             Self::SubAgent(_) => None,
+            Self::Tool(_) => None,
         }
     }
 }
@@ -1101,6 +1172,7 @@ impl CardRecord {
             Self::Service(card) => Some(card.cards.clone()),
             Self::Skill(_) => None,
             Self::SubAgent(_) => None,
+            Self::Tool(_) => None,
         }
     }
 
@@ -1183,6 +1255,16 @@ impl CardRecord {
                 );
                 Ok(Path::new(&uri).to_path_buf())
             }
+            Self::Tool(card) => {
+                let uri = format!(
+                    "{}/{}/{}/v{}",
+                    CardTable::Tool,
+                    card.space,
+                    card.name,
+                    card.version
+                );
+                Ok(Path::new(&uri).to_path_buf())
+            }
         }
     }
 
@@ -1196,6 +1278,7 @@ impl CardRecord {
             Self::Service(card) => RegistryType::from(&card.service_type),
             Self::Skill(_) => RegistryType::Skill,
             Self::SubAgent(_) => RegistryType::SubAgent,
+            Self::Tool(_) => RegistryType::Tool,
         }
     }
 }
@@ -1243,6 +1326,17 @@ struct SubAgentCardTableEntry {
     version: String,
     description: String,
     compatible_clis: String,
+    uid: String,
+}
+
+#[derive(Tabled)]
+struct ToolCardTableEntry {
+    created_at: String,
+    name: String,
+    space: String,
+    version: String,
+    tool_type: String,
+    description: String,
     uid: String,
 }
 
@@ -1395,6 +1489,47 @@ impl CardList {
         let mut table = Table::new(entries);
         table.with(Style::sharp());
         table.modify(Columns::one(DESCRIPTION_COLUMN), Width::wrap(40));
+        table.modify(
+            Rows::new(0..1),
+            (
+                Format::content(Colorize::green),
+                Alignment::center(),
+                Color::BOLD,
+            ),
+        );
+        table.to_string()
+    }
+
+    pub fn as_tool_table(&self) {
+        println!("{}", self.render_tool_table());
+    }
+
+    fn render_tool_table(&self) -> String {
+        let entries: Vec<ToolCardTableEntry> = self
+            .cards
+            .iter()
+            .filter_map(|card| {
+                if let CardRecord::Tool(r) = card {
+                    Some(ToolCardTableEntry {
+                        created_at: r.created_at.to_string(),
+                        name: r.name.clone(),
+                        space: r.space.clone(),
+                        version: r.version.clone(),
+                        tool_type: r.tool_type.clone(),
+                        description: r.description.clone().unwrap_or_else(|| "—".into()),
+                        uid: Colorize::purple(&r.uid),
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // Column index for 'description' in ToolCardTableEntry (0=created_at, 1=name, 2=space, 3=version, 4=tool_type, 5=description, 6=uid)
+        const TOOL_DESCRIPTION_COLUMN: usize = 5;
+        let mut table = Table::new(entries);
+        table.with(Style::sharp());
+        table.modify(Columns::one(TOOL_DESCRIPTION_COLUMN), Width::wrap(40));
         table.modify(
             Rows::new(0..1),
             (

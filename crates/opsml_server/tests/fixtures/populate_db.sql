@@ -1,5 +1,5 @@
 -- Populate opsml_data_registry
-INSERT INTO opsml_data_registry (uid, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, data_type, experimentcard_uid,  auditcard_uid, interface_type) VALUES 
+INSERT INTO opsml_data_registry (uid, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, data_type, experimentcard_uid,  auditcard_uid, interface_type) VALUES
 ('550e8400-e29b-41d4-a716-446655440000', 'development', 'Data1', 'repo1', 1, 0, 0, 'alpha', 'build1', '1.0.0-alpha+build1',  '["key1", "key2"]', 'type1', 'experimentcard1',  'auditcard1', 'typeA'),
 ('550e8400-e29b-41d4-a716-446655440001', 'development', 'Data1', 'repo1', 1, 0, 1, 'beta', 'build2', '1.0.1-beta+build2',  '[]', 'type2', 'experimentcard2',  'auditcard2', 'typeB'),
 ('550e8400-e29b-41d4-a716-446655440002', 'development', 'Data1', 'repo1', 1, 1, 0, 'gamma', 'build3', '1.1.0-gamma+build3', '[]', 'type3', 'experimentcard3',  'auditcard3', 'typeC'),
@@ -12,7 +12,7 @@ INSERT INTO opsml_data_registry (uid, app_env, name, space, major, minor, patch,
 ('550e8400-e29b-41d4-a716-446655440009', 'development', 'Data1', 'repo1', 3, 0, 1, 'kappa', 'build10', '3.0.1', '[]', 'type10', 'experimentcard10',  'auditcard10', 'typeJ');
 
 -- Populate opsml_model_registry
-INSERT INTO opsml_model_registry (uid, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, datacard_uid, data_type, model_type, experimentcard_uid,  auditcard_uid, interface_type, task_type) VALUES 
+INSERT INTO opsml_model_registry (uid, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, datacard_uid, data_type, model_type, experimentcard_uid,  auditcard_uid, interface_type, task_type) VALUES
 ('550e8400-e29b-41d4-a716-446655440000', 'development', 'Model1', 'repo1', 1, 0, 0, 'alpha', 'build1', '1.0.0', '["hello", "world"]', 'datacard1', 'sample1', 'type1', 'experimentcard1',  'auditcard1', 'typeA', 'task1'),
 ('550e8400-e29b-41d4-a716-446655440001', 'development', 'Model2', 'repo2', 1, 0, 1, 'beta', 'build2', '1.0.0', '["hello", "world"]', 'datacard2', 'sample2', 'type2', 'experimentcard2',  'auditcard2', 'typeB', 'task2'),
 ('550e8400-e29b-41d4-a716-446655440002', 'development', 'Model3', 'repo3', 1, 1, 0, 'gamma', 'build3', '1.0.0', '["v3"]', 'datacard3', 'sample3', 'type3', 'experimentcard3',  'auditcard3', 'typeC', 'task3'),
@@ -25,7 +25,7 @@ INSERT INTO opsml_model_registry (uid, app_env, name, space, major, minor, patch
 ('550e8400-e29b-41d4-a716-446655440009', 'development', 'Model10', 'repo10', 3, 0, 1, 'kappa', 'build10', '1.0.0', '[]', 'datacard10', 'sample10', 'type10', 'experimentcard10',  'auditcard10', 'typeJ', 'task10');
 
 -- Populate opsml_experiment_registry
-INSERT INTO opsml_experiment_registry (uid, created_at, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, datacard_uids, modelcard_uids, promptcard_uids) VALUES 
+INSERT INTO opsml_experiment_registry (uid, created_at, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, datacard_uids, modelcard_uids, promptcard_uids) VALUES
 ('550e8400-e29b-41d4-a716-446655440000', '2023-11-28 00:00:00', 'development', 'Run1', 'repo1', 1, 0, 0, 'alpha', 'build1', '0.0.0',  '[]', '["datacard1"]', '["modelcard1"]', '["modelcard1"]'),
 ('550e8400-e29b-41d4-a716-446655440001', '2023-11-28 00:00:00', 'development', 'Run2', 'repo2', 1, 0, 1, 'beta', 'build2',  '0.0.0', '[]', '["datacard1"]', '["modelcard1"]',  '["modelcard1"]'),
 ('550e8400-e29b-41d4-a716-446655440002', '2023-11-29 00:00:00', 'development', 'Run3', 'repo3', 1, 1, 0, 'gamma', 'build3', '0.0.0', '[]', '["datacard1"]', '["modelcard1"]',  '["modelcard1"]'),
@@ -84,19 +84,6 @@ VALUES
      '["tag1","tag2"]', '[]', '[]',
      'Skill ten', 'MIT', '', '2.0.0', 'guest');
 
--- Populate opsml_audit_registry
-INSERT INTO opsml_audit_registry (uid, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, approved, datacard_uids, modelcard_uids, experimentcard_uids) VALUES 
-('550e8400-e29b-41d4-a716-446655440000', 'development', 'Audit1', 'repo1', 1, 0, 0, 'alpha', 'build1', '0.0.0', '[]', 1, '[]', '[]', '[]'), 
-('550e8400-e29b-41d4-a716-446655440001', 'development', 'Audit2', 'repo2', 1, 0, 1, 'beta', 'build2', '0.0.0', '[]', 0, '[]', '[]', '[]'),
-('550e8400-e29b-41d4-a716-446655440002', 'development', 'Audit3', 'repo3', 1, 1, 0, 'gamma', 'build3', '0.0.0', '[]', 1, '[]', '[]', '[]'),
-('550e8400-e29b-41d4-a716-446655440003', 'development', 'Audit4', 'repo4', 1, 1, 1, 'delta', 'build4', '0.0.0', '[]', 0, '[]', '[]', '[]'),
-('550e8400-e29b-41d4-a716-446655440004', 'development', 'Audit5', 'repo5', 2, 0, 0, 'epsilon', 'build5', '0.0.0', '[]', 1, '[]', '[]', '[]'),
-('550e8400-e29b-41d4-a716-446655440005', 'development', 'Audit6', 'repo6', 2, 0, 1, 'zeta', 'build6', '0.0.0', '[]', 0, '[]', '[]', '[]'),
-('550e8400-e29b-41d4-a716-446655440006', 'development', 'Audit7', 'repo7', 2, 1, 0, 'eta', 'build7', '0.0.0', '[]', 1, '[]', '[]', '[]'),
-('550e8400-e29b-41d4-a716-446655440007', 'development', 'Audit8', 'repo8', 2, 1, 1, 'theta', 'build8', '0.0.0', '[]', 0, '[]', '[]', '[]'),
-('550e8400-e29b-41d4-a716-446655440008', 'development', 'Audit9', 'repo9', 3, 0, 0, 'iota', 'build9', '0.0.0', '[]', 1, '[]', '[]', '[]'),
-('550e8400-e29b-41d4-a716-446655440009', 'development', 'Audit10', 'repo10', 3, 0, 1, 'kappa', 'build10', '0.0.0', '[]', 0, '[]', '[]', '[]');
-
 -- Populate opsml_subagent_registry
 INSERT INTO opsml_subagent_registry
     (uid, created_at, app_env, space, name, major, minor, patch,
@@ -115,3 +102,35 @@ VALUES
      'repo2', 'Agent3', 1, 0, 0, NULL, NULL, '1.0.0',
      '[]', '["gemini-cli"]',
      'Gemini agent', NULL, '2.0.0', 'guest', 0);
+
+-- Populate opsml_audit_registry
+INSERT INTO opsml_audit_registry (uid, app_env, name, space, major, minor, patch, pre_tag, build_tag, version,  tags, approved, datacard_uids, modelcard_uids, experimentcard_uids) VALUES
+('550e8400-e29b-41d4-a716-446655440000', 'development', 'Audit1', 'repo1', 1, 0, 0, 'alpha', 'build1', '0.0.0', '[]', 1, '[]', '[]', '[]'),
+('550e8400-e29b-41d4-a716-446655440001', 'development', 'Audit2', 'repo2', 1, 0, 1, 'beta', 'build2', '0.0.0', '[]', 0, '[]', '[]', '[]'),
+('550e8400-e29b-41d4-a716-446655440002', 'development', 'Audit3', 'repo3', 1, 1, 0, 'gamma', 'build3', '0.0.0', '[]', 1, '[]', '[]', '[]'),
+('550e8400-e29b-41d4-a716-446655440003', 'development', 'Audit4', 'repo4', 1, 1, 1, 'delta', 'build4', '0.0.0', '[]', 0, '[]', '[]', '[]'),
+('550e8400-e29b-41d4-a716-446655440004', 'development', 'Audit5', 'repo5', 2, 0, 0, 'epsilon', 'build5', '0.0.0', '[]', 1, '[]', '[]', '[]'),
+('550e8400-e29b-41d4-a716-446655440005', 'development', 'Audit6', 'repo6', 2, 0, 1, 'zeta', 'build6', '0.0.0', '[]', 0, '[]', '[]', '[]'),
+('550e8400-e29b-41d4-a716-446655440006', 'development', 'Audit7', 'repo7', 2, 1, 0, 'eta', 'build7', '0.0.0', '[]', 1, '[]', '[]', '[]'),
+('550e8400-e29b-41d4-a716-446655440007', 'development', 'Audit8', 'repo8', 2, 1, 1, 'theta', 'build8', '0.0.0', '[]', 0, '[]', '[]', '[]'),
+('550e8400-e29b-41d4-a716-446655440008', 'development', 'Audit9', 'repo9', 3, 0, 0, 'iota', 'build9', '0.0.0', '[]', 1, '[]', '[]', '[]'),
+('550e8400-e29b-41d4-a716-446655440009', 'development', 'Audit10', 'repo10', 3, 0, 1, 'kappa', 'build10', '0.0.0', '[]', 0, '[]', '[]', '[]');
+
+-- Populate opsml_tool_registry
+INSERT INTO opsml_tool_registry
+    (uid, created_at, app_env, space, name, major, minor, patch,
+     pre_tag, build_tag, version, tags, tool_type,
+     args_schema, description, content_hash, opsml_version, username, download_count)
+VALUES
+    ('770e8400-e29b-41d4-a716-446655440001', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Tool1', 1, 0, 0, NULL, NULL, '1.0.0',
+     '["tag1"]', 'ShellScript',
+     NULL, 'A shell script tool', NULL, '2.0.0', 'guest', 0),
+    ('770e8400-e29b-41d4-a716-446655440002', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Tool2', 1, 1, 0, NULL, NULL, '1.1.0',
+     '["tag2"]', 'SlashCommand',
+     NULL, 'A slash command tool', NULL, '2.0.0', 'guest', 5),
+    ('770e8400-e29b-41d4-a716-446655440003', '2023-11-28 00:00:00', 'development',
+     'repo1', 'Tool3', 1, 0, 0, NULL, NULL, '1.0.0',
+     '[]', 'McpServer',
+     NULL, 'An MCP server tool', NULL, '2.0.0', 'guest', 0);

@@ -160,6 +160,21 @@ pub async fn insert_card_into_db(
             );
             ServerCard::SubAgent(server_card)
         }
+        CardRecord::Tool(client_card) => {
+            let server_card = ToolCardRecord::new(
+                client_card.name,
+                client_card.space,
+                version,
+                client_card.tags,
+                client_card.tool_type,
+                client_card.args_schema,
+                client_card.description,
+                client_card.opsml_version,
+                client_card.username,
+                client_card.content_hash,
+            );
+            ServerCard::Tool(server_card)
+        }
     };
     sql_client.insert_card(table, &card).await?;
 

@@ -7,5 +7,6 @@ pub mod scouter;
 pub mod skill_cli;
 pub mod skill_scan;
 pub mod subagent_cli;
+pub mod tool_cli;
 pub mod user;
 pub mod v1;

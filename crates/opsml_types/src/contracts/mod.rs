@@ -13,6 +13,7 @@ pub mod security;
 pub mod service;
 pub mod skill;
 pub mod subagent;
+pub mod tool;
 pub mod traits;
 
 pub use agent::*;
@@ -29,4 +30,5 @@ pub use security::*;
 pub use service::*;
 pub use skill::*;
 pub use subagent::*;
+pub use tool::*;
 pub use traits::*;

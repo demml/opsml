@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArtifactMeta {
     pub name: String,
     pub latest_version: String,
@@ -15,8 +15,7 @@ pub struct MapResponse {
     pub space: String,
     pub skills: Vec<ArtifactMeta>,
     pub subagents: Vec<ArtifactMeta>,
-    /// Reserved for tool cards (ToolCard — PR 7). Always empty until then.
     pub tools: Vec<ArtifactMeta>,
-    /// Reserved for agent configs (AgentSpec — PR 7). Always empty until then.
+    pub commands: Vec<ArtifactMeta>,
     pub agents: Vec<ArtifactMeta>,
 }

@@ -1,4 +1,4 @@
-pub mod card;
+mod card;
 pub mod error;
 pub mod target;
 

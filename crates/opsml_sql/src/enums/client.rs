@@ -5,12 +5,12 @@ use crate::schemas::VersionSummary;
 use crate::schemas::schema::{
     ArtifactSqlRecord, CardResults, CardSummary, HardwareMetricsRecord, MetricRecord,
     ParameterRecord, QueryStats, ServerCard, ServiceCardRecord, SkillCardRecord,
-    SubAgentCardRecord, User,
+    SubAgentCardRecord, ToolCardRecord, User,
 };
 use crate::sqlite::client::SqliteClient;
 use crate::traits::{
     ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, ExperimentLogicTrait, SkillLogicTrait,
-    SpaceLogicTrait, SubAgentLogicTrait, UserLogicTrait,
+    SpaceLogicTrait, SubAgentLogicTrait, ToolLogicTrait, UserLogicTrait,
 };
 use anyhow::Context;
 use anyhow::Result as AnyhowResult;
@@ -856,6 +856,124 @@ impl SubAgentLogicTrait for SqlClientEnum {
                 client.card.get_subagent_marketplace_stats(space).await
             }
             SqlClientEnum::MySql(client) => client.card.get_subagent_marketplace_stats(space).await,
+        }
+    }
+}
+
+#[async_trait]
+impl ToolLogicTrait for SqlClientEnum {
+    async fn get_tool_card_by_name(
+        &self,
+        space: &str,
+        name: &str,
+    ) -> Result<ToolCardRecord, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.card.get_tool_card_by_name(space, name).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.card.get_tool_card_by_name(space, name).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.card.get_tool_card_by_name(space, name).await
+            }
+        }
+    }
+
+    async fn get_tool_card_by_version(
+        &self,
+        space: &str,
+        name: &str,
+        version: &str,
+    ) -> Result<ToolCardRecord, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client
+                    .card
+                    .get_tool_card_by_version(space, name, version)
+                    .await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client
+                    .card
+                    .get_tool_card_by_version(space, name, version)
+                    .await
+            }
+            SqlClientEnum::MySql(client) => {
+                client
+                    .card
+                    .get_tool_card_by_version(space, name, version)
+                    .await
+            }
+        }
+    }
+
+    async fn increment_tool_download_count(&self, uid: &str) -> Result<(), SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.card.increment_tool_download_count(uid).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.card.increment_tool_download_count(uid).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.card.increment_tool_download_count(uid).await
+            }
+        }
+    }
+
+    async fn list_tool_cards_by_space(
+        &self,
+        space: &str,
+        tool_type: Option<&str>,
+    ) -> Result<Vec<ToolCardRecord>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.card.list_tool_cards_by_space(space, tool_type).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.card.list_tool_cards_by_space(space, tool_type).await
+            }
+            SqlClientEnum::MySql(client) => {
+                client.card.list_tool_cards_by_space(space, tool_type).await
+            }
+        }
+    }
+
+    async fn get_featured_tools(
+        &self,
+        space: &str,
+        limit: i64,
+    ) -> Result<Vec<ToolCardRecord>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.card.get_featured_tools(space, limit).await
+            }
+            SqlClientEnum::Sqlite(client) => client.card.get_featured_tools(space, limit).await,
+            SqlClientEnum::MySql(client) => client.card.get_featured_tools(space, limit).await,
+        }
+    }
+
+    async fn get_all_tool_tags(&self, space: &str) -> Result<Vec<String>, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => client.card.get_all_tool_tags(space).await,
+            SqlClientEnum::Sqlite(client) => client.card.get_all_tool_tags(space).await,
+            SqlClientEnum::MySql(client) => client.card.get_all_tool_tags(space).await,
+        }
+    }
+
+    async fn get_tool_marketplace_stats(
+        &self,
+        space: &str,
+    ) -> Result<MarketplaceStats, SqlError> {
+        match self {
+            SqlClientEnum::Postgres(client) => {
+                client.card.get_tool_marketplace_stats(space).await
+            }
+            SqlClientEnum::Sqlite(client) => {
+                client.card.get_tool_marketplace_stats(space).await
+            }
+            SqlClientEnum::MySql(client) => client.card.get_tool_marketplace_stats(space).await,
         }
     }
 }

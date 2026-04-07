@@ -72,7 +72,7 @@ mod tests {
     use crate::schemas::schema::{
         ArtifactSqlRecord, AuditCardRecord, CardResults, DataCardRecord, ExperimentCardRecord,
         HardwareMetricsRecord, MetricRecord, ModelCardRecord, ParameterRecord, PromptCardRecord,
-        ServerCard, ServiceCardRecord, SkillCardRecord, SubAgentCardRecord, User,
+        ServerCard, ServiceCardRecord, SkillCardRecord, SubAgentCardRecord, ToolCardRecord, User,
     };
     use crate::traits::EvaluationLogicTrait;
     use crate::traits::{
@@ -224,6 +224,7 @@ mod tests {
             CardTable::Service => ServerCard::Service(Box::default()),
             CardTable::Skill => ServerCard::Skill(SkillCardRecord::default()),
             CardTable::SubAgent => ServerCard::SubAgent(SubAgentCardRecord::default()),
+            CardTable::Tool => ServerCard::Tool(ToolCardRecord::default()),
             _ => panic!("Invalid card type"),
         };
 
@@ -237,6 +238,7 @@ mod tests {
             ServerCard::Service(c) => c.uid.clone(),
             ServerCard::Skill(c) => c.uid.clone(),
             ServerCard::SubAgent(c) => c.uid.clone(),
+            ServerCard::Tool(c) => c.uid.clone(),
         };
 
         // Test Insert
@@ -330,6 +332,7 @@ mod tests {
             CardResults::Service(cards) => assert_eq!(cards[0].name, updated_name),
             CardResults::Skill(cards) => assert_eq!(cards[0].name, updated_name),
             CardResults::SubAgent(cards) => assert_eq!(cards[0].name, updated_name),
+            CardResults::Tool(cards) => assert_eq!(cards[0].name, updated_name),
         }
 
         // delete card

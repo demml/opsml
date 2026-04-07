@@ -30,6 +30,7 @@ pub enum RegistryType {
     Agent,
     Skill,
     SubAgent,
+    Tool,
 }
 
 impl<'de> Deserialize<'de> for RegistryType {
@@ -56,6 +57,7 @@ impl<'de> Deserialize<'de> for RegistryType {
             "agent" => Ok(RegistryType::Agent),
             "skill" => Ok(RegistryType::Skill),
             "subagent" | "sub_agent" => Ok(RegistryType::SubAgent),
+            "tool" => Ok(RegistryType::Tool),
             _ => Err(serde::de::Error::custom(format!(
                 "Invalid registry type: {s}"
             ))),
@@ -83,6 +85,7 @@ impl Display for RegistryType {
             RegistryType::Agent => write!(f, "agent"),
             RegistryType::Skill => write!(f, "skill"),
             RegistryType::SubAgent => write!(f, "subagent"),
+            RegistryType::Tool => write!(f, "tool"),
         }
     }
 }
@@ -106,6 +109,7 @@ impl RegistryType {
             "agent" => Ok(RegistryType::Agent),
             "skill" => Ok(RegistryType::Skill),
             "subagent" | "sub_agent" => Ok(RegistryType::SubAgent),
+            "tool" => Ok(RegistryType::Tool),
             _ => Err(TypeError::InvalidRegistryType),
         }
     }
@@ -129,6 +133,7 @@ impl RegistryType {
             RegistryType::Agent => b"agent",
             RegistryType::Skill => b"skill",
             RegistryType::SubAgent => b"subagent",
+            RegistryType::Tool => b"tool",
         }
     }
 }
