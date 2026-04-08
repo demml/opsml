@@ -270,15 +270,15 @@ impl ToolCard {
         }
 
         // Verify content hash before writing any script to disk.
-        if matches!(self.spec.tool_type, ToolType::ShellScript | ToolType::Hook) {
-            if let Some(expected) = expected_hash {
-                let actual = self.calculate_content_hash()?;
-                if actual != expected {
-                    return Err(ToolError::Error(format!(
-                        "Content hash mismatch for '{}': registry record does not match received body. Refusing to install.",
-                        self.name
-                    )));
-                }
+        if matches!(self.spec.tool_type, ToolType::ShellScript | ToolType::Hook)
+            && let Some(expected) = expected_hash
+        {
+            let actual = self.calculate_content_hash()?;
+            if actual != expected {
+                return Err(ToolError::Error(format!(
+                    "Content hash mismatch for '{}': registry record does not match received body. Refusing to install.",
+                    self.name
+                )));
             }
         }
 
