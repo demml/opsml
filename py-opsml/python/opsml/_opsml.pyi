@@ -19697,6 +19697,7 @@ class ServiceType:
     Api: "ServiceType"
     Mcp: "ServiceType"
     Agent: "ServiceType"
+    Workflow: "ServiceType"
 
 class CardRecord:
     uid: Optional[str]

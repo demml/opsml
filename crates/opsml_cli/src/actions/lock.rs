@@ -10,10 +10,11 @@ use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_service::{OpsmlServiceSpec, service::DEFAULT_SERVICE_FILENAME};
 use opsml_toml::{LockArtifact, LockFile};
 use opsml_types::IntegratedService;
-use opsml_types::contracts::CardVariant;
+use opsml_types::contracts::{CardVariant, ServiceType};
 use opsml_types::{RegistryType, contracts::CardRecord};
 use pyo3::prelude::*;
 use scouter_client::{DriftType, ProfileStatusRequest};
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::vec;
@@ -103,6 +104,52 @@ pub(crate) fn create_lock_artifact_from_service_card(
         registry_type: service_card.registry_type.clone(),
         write_dir: write_dir.to_string(),
     }
+}
+
+/// Resolve all CardRefs from workflow steps into LockArtifacts.
+/// Each step's skill/agent/mcp ref is resolved against its respective registry.
+/// Returns an empty Vec if the spec has no workflow config.
+fn resolve_workflow_refs(
+    spec: &OpsmlServiceSpec,
+    registries: &CardRegistries,
+) -> Result<Vec<LockArtifact>, CliError> {
+    let workflow = spec
+        .service
+        .as_ref()
+        .and_then(|s| s.workflow.as_ref());
+
+    let Some(workflow) = workflow else {
+        return Ok(Vec::new());
+    };
+
+    let mut artifacts = Vec::new();
+    let mut seen: HashSet<(String, String)> = HashSet::new();
+
+    for (card_ref, registry_type) in workflow.card_refs() {
+        let key = (card_ref.space.clone(), card_ref.name.clone());
+        if !seen.insert(key) {
+            continue;
+        }
+
+        let registry = registries.get_registry(&registry_type);
+        if let Some(record) = get_service_from_registry(
+            registry,
+            &card_ref.space,
+            &card_ref.name,
+            card_ref.version.as_ref(),
+        )? {
+            artifacts.push(LockArtifact {
+                space: record.space().to_string(),
+                name: record.name().to_string(),
+                version: record.version().to_string(),
+                uid: record.uid().to_string(),
+                registry_type,
+                write_dir: format!("opsml_workflow/{}", card_ref.name),
+            });
+        }
+    }
+
+    Ok(artifacts)
 }
 
 /// Gets the write directory with a fallback default
@@ -241,7 +288,12 @@ fn download_service_artifacts(
 ) -> Result<(), CliError> {
     for artifact in lockfile.artifact {
         match artifact.registry_type {
-            RegistryType::Service | RegistryType::Mcp | RegistryType::Agent => {
+            RegistryType::Service
+            | RegistryType::Mcp
+            | RegistryType::Agent
+            | RegistryType::Skill
+            | RegistryType::SubAgent
+            | RegistryType::Tool => {
                 println!(
                     "Downloading ServiceCard {}, type: {} to path {}",
                     Colorize::green(&format!(
@@ -389,18 +441,27 @@ pub fn install_service_locally(path: PathBuf, write_path: Option<PathBuf>) -> Re
 #[pyfunction]
 pub fn lock_service(path: PathBuf) -> Result<(), CliError> {
     debug!("Locking service with path: {:?}", path);
-    // handle case of no cards
     let mut spec = OpsmlServiceSpec::from_path(&path).inspect_err(|e| {
         error!("Failed to read service spec: {:?}", e);
     })?;
 
-    // Create a lock file
-    let lock_file = LockFile {
-        artifact: vec![lock_service_card(&mut spec).inspect_err(|e| {
-            error!("Failed to lock service card: {:?}", e);
-        })?],
-    };
-    // TODO
+    let service_artifact = lock_service_card(&mut spec).inspect_err(|e| {
+        error!("Failed to lock service card: {:?}", e);
+    })?;
+
+    let mut artifacts = vec![service_artifact];
+
+    // For workflow services, also resolve step CardRefs into lock artifacts
+    if spec.service_type == ServiceType::Workflow {
+        let registries = CardRegistries::new()?;
+        let mut workflow_artifacts =
+            resolve_workflow_refs(&spec, &registries).inspect_err(|e| {
+                error!("Failed to resolve workflow card refs: {:?}", e);
+            })?;
+        artifacts.append(&mut workflow_artifacts);
+    }
+
+    let lock_file = LockFile { artifact: artifacts };
     lock_file.write(&spec.root_path)?;
 
     Ok(())

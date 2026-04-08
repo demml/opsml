@@ -62,6 +62,9 @@ pub enum TypeError {
 
     #[error("Invalid card type. Expected either Card or CardPath")]
     InvalidCardType,
+
+    #[error("Workflow validation: {0}")]
+    WorkflowValidation(String),
 }
 
 impl From<PythonizeError> for TypeError {

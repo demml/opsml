@@ -98,6 +98,7 @@ impl CardTable {
             ServiceType::Mcp => CardTable::Mcp,
             ServiceType::Api => CardTable::Service,
             ServiceType::Agent => CardTable::Agent,
+            ServiceType::Workflow => CardTable::Service,
         }
     }
 }
