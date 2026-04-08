@@ -100,6 +100,11 @@ impl ApiCallConfig {
             "cookie",
             "x-secret",
             "proxy-authorization",
+            "x-amz-security-token",
+            "x-goog-api-key",
+            "x-functions-key",
+            "apikey",
+            "token",
         ];
         let headers = self
             .headers
@@ -107,11 +112,17 @@ impl ApiCallConfig {
             .filter(|(k, _)| !SENSITIVE_KEYS.contains(&k.to_lowercase().as_str()))
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect();
+        // Strip query string — credential-bearing params must never be returned to callers.
+        let url = self
+            .url
+            .split_once('?')
+            .map(|(base, _)| base.to_string())
+            .unwrap_or_else(|| self.url.clone());
         Self {
-            url: self.url.clone(),
+            url,
             method: self.method.clone(),
             headers,
-            body_template: self.body_template.clone(),
+            body_template: None,
         }
     }
 }

@@ -112,9 +112,32 @@ impl WorkflowSpec {
     /// - every step has at least one action (skill/agent/mcp/tool/prompt)
     /// - the DAG is acyclic (Kahn's algorithm)
     pub fn validate(&self) -> Result<(), TypeError> {
+        const MAX_STEPS: usize = 500;
+        const MAX_DEPS_PER_STEP: usize = 100;
+
+        if self.steps.len() > MAX_STEPS {
+            return Err(TypeError::WorkflowValidation(format!(
+                "workflow exceeds maximum step count ({MAX_STEPS})"
+            )));
+        }
+
         let mut seen_names: HashSet<&str> = HashSet::new();
 
         for step in &self.steps {
+            if step.depends_on.len() > MAX_DEPS_PER_STEP {
+                return Err(TypeError::WorkflowValidation(format!(
+                    "step '{}' exceeds maximum depends_on count ({MAX_DEPS_PER_STEP})",
+                    step.name
+                )));
+            }
+            for key in step.inputs.keys() {
+                if !key.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+                    return Err(TypeError::WorkflowValidation(format!(
+                        "step '{}' input key '{key}' must contain only [a-zA-Z0-9_]",
+                        step.name
+                    )));
+                }
+            }
             if step.name.is_empty() {
                 return Err(TypeError::WorkflowValidation(
                     "step name must not be empty".into(),
@@ -148,22 +171,12 @@ impl WorkflowSpec {
         }
 
         // Kahn's algorithm for cycle detection
+        // in_degree[step] = number of steps that step depends on
         let mut in_degree: HashMap<&str, usize> = self
             .steps
             .iter()
-            .map(|s| (s.name.as_str(), 0))
+            .map(|s| (s.name.as_str(), s.depends_on.len()))
             .collect();
-
-        for step in &self.steps {
-            for dep in &step.depends_on {
-                *in_degree.entry(step.name.as_str()).or_insert(0) += 1;
-                let _ = dep; // dep drives step's in-degree; we already counted above
-            }
-        }
-
-        // Re-compute cleanly: in_degree[step] = number of steps that step depends on
-        let mut in_degree: HashMap<&str, usize> =
-            self.steps.iter().map(|s| (s.name.as_str(), s.depends_on.len())).collect();
 
         // Build reverse adjacency: for each dep, which steps depend on it
         let mut dependents: HashMap<&str, Vec<&str>> = self
@@ -174,7 +187,10 @@ impl WorkflowSpec {
 
         for step in &self.steps {
             for dep in &step.depends_on {
-                dependents.entry(dep.as_str()).or_default().push(step.name.as_str());
+                dependents
+                    .entry(dep.as_str())
+                    .or_default()
+                    .push(step.name.as_str());
             }
         }
 
@@ -271,14 +287,11 @@ mod tests {
                 );
                 m
             },
-            steps: vec![
-                make_step("fetch", "skill"),
-                {
-                    let mut s = make_step("review", "agent");
-                    s.depends_on = vec!["fetch".into()];
-                    s
-                },
-            ],
+            steps: vec![make_step("fetch", "skill"), {
+                let mut s = make_step("review", "agent");
+                s.depends_on = vec!["fetch".into()];
+                s
+            }],
             outputs: {
                 let mut m = HashMap::new();
                 m.insert("summary".into(), "{{ review.summary }}".into());
@@ -472,5 +485,85 @@ mod tests {
         let roundtrip: WorkflowStep = serde_json::from_str(&json).unwrap();
         assert_eq!(step.name, roundtrip.name);
         assert!(roundtrip.tool.is_some());
+    }
+
+    #[test]
+    fn test_workflow_card_refs_includes_mcp() {
+        let mut step = make_step("s1", "skill");
+        step.mcp = Some(CardRef {
+            space: "platform".into(),
+            name: "my-mcp".into(),
+            version: None,
+        });
+        let spec = WorkflowSpec {
+            steps: vec![step],
+            ..Default::default()
+        };
+        let refs = spec.card_refs();
+        assert_eq!(refs.len(), 2);
+        let types: Vec<_> = refs.iter().map(|(_, t)| t).collect();
+        assert!(types.contains(&&RegistryType::Skill));
+        assert!(types.contains(&&RegistryType::Mcp));
+    }
+
+    #[test]
+    fn test_workflow_card_refs_excludes_tool_only_steps() {
+        let skill_step = make_step("s1", "skill");
+        let mut tool_step = WorkflowStep {
+            name: "t1".into(),
+            ..Default::default()
+        };
+        tool_step.tool = Some(ToolSpec {
+            name: "inline-tool".into(),
+            description: "inline".into(),
+            tool_type: ToolType::ShellScript,
+            ..Default::default()
+        });
+        let spec = WorkflowSpec {
+            steps: vec![skill_step, tool_step],
+            ..Default::default()
+        };
+        let refs = spec.card_refs();
+        assert_eq!(refs.len(), 1, "tool-only step must not produce a CardRef");
+        assert_eq!(refs[0].1, RegistryType::Skill);
+    }
+
+    #[test]
+    fn test_workflow_validate_max_steps_exceeded() {
+        let steps: Vec<WorkflowStep> = (0..501)
+            .map(|i| {
+                let mut s = make_step(&format!("s{i}"), "skill");
+                s.name = format!("s{i}");
+                s
+            })
+            .collect();
+        let spec = WorkflowSpec {
+            steps,
+            ..Default::default()
+        };
+        assert!(spec.validate().is_err());
+    }
+
+    #[test]
+    fn test_workflow_validate_inputs_key_must_be_alphanumeric_underscore() {
+        let mut step = make_step("s1", "skill");
+        step.inputs.insert("bad-key".into(), "value".into());
+        let spec = WorkflowSpec {
+            steps: vec![step],
+            ..Default::default()
+        };
+        let err = spec.validate().unwrap_err();
+        assert!(err.to_string().contains("bad-key") || err.to_string().contains("input key"));
+    }
+
+    #[test]
+    fn test_workflow_validate_valid_inputs_key() {
+        let mut step = make_step("s1", "skill");
+        step.inputs.insert("good_key123".into(), "value".into());
+        let spec = WorkflowSpec {
+            steps: vec![step],
+            ..Default::default()
+        };
+        assert!(spec.validate().is_ok());
     }
 }

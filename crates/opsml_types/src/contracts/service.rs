@@ -697,3 +697,92 @@ impl ServiceConfig {
         Ok(None)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::contracts::workflow::{CardRef, WorkflowStep};
+
+    fn skill_step(name: &str) -> WorkflowStep {
+        WorkflowStep {
+            name: name.into(),
+            skill: Some(CardRef {
+                space: "platform".into(),
+                name: "my-skill".into(),
+                version: None,
+            }),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn test_service_config_workflow_missing_config_returns_err() {
+        let mut config = ServiceConfig::default();
+        let err = config
+            .validate(
+                std::path::Path::new("."),
+                "test",
+                &ServiceType::Workflow,
+                &None,
+            )
+            .unwrap_err();
+        assert!(
+            err.to_string().contains("workflow") || err.to_string().contains("Workflow"),
+            "unexpected error: {err}"
+        );
+    }
+
+    #[test]
+    fn test_service_config_workflow_invalid_dag_propagates_err() {
+        // Cycle: s1 → s2 → s1
+        let mut s1 = skill_step("s1");
+        s1.depends_on = vec!["s2".into()];
+        let mut s2 = skill_step("s2");
+        s2.depends_on = vec!["s1".into()];
+
+        let mut config = ServiceConfig {
+            workflow: Some(WorkflowSpec {
+                steps: vec![s1, s2],
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        let err = config
+            .validate(
+                std::path::Path::new("."),
+                "test",
+                &ServiceType::Workflow,
+                &None,
+            )
+            .unwrap_err();
+        assert!(
+            err.to_string().contains("cycle"),
+            "expected cycle error, got: {err}"
+        );
+    }
+
+    #[test]
+    fn test_service_config_workflow_valid_linear_dag_is_ok() {
+        let s1 = skill_step("s1");
+        let mut s2 = skill_step("s2");
+        s2.depends_on = vec!["s1".into()];
+
+        let mut config = ServiceConfig {
+            workflow: Some(WorkflowSpec {
+                steps: vec![s1, s2],
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        assert!(
+            config
+                .validate(
+                    std::path::Path::new("."),
+                    "test",
+                    &ServiceType::Workflow,
+                    &None,
+                )
+                .is_ok()
+        );
+    }
+}

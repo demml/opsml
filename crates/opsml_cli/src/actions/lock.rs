@@ -113,20 +113,21 @@ fn resolve_workflow_refs(
     spec: &OpsmlServiceSpec,
     registries: &CardRegistries,
 ) -> Result<Vec<LockArtifact>, CliError> {
-    let workflow = spec
-        .service
-        .as_ref()
-        .and_then(|s| s.workflow.as_ref());
+    let workflow = spec.service.as_ref().and_then(|s| s.workflow.as_ref());
 
     let Some(workflow) = workflow else {
         return Ok(Vec::new());
     };
 
     let mut artifacts = Vec::new();
-    let mut seen: HashSet<(String, String)> = HashSet::new();
+    let mut seen: HashSet<(String, String, String)> = HashSet::new();
 
     for (card_ref, registry_type) in workflow.card_refs() {
-        let key = (card_ref.space.clone(), card_ref.name.clone());
+        let key = (
+            card_ref.space.clone(),
+            card_ref.name.clone(),
+            format!("{registry_type:?}"),
+        );
         if !seen.insert(key) {
             continue;
         }
@@ -461,7 +462,9 @@ pub fn lock_service(path: PathBuf) -> Result<(), CliError> {
         artifacts.append(&mut workflow_artifacts);
     }
 
-    let lock_file = LockFile { artifact: artifacts };
+    let lock_file = LockFile {
+        artifact: artifacts,
+    };
     lock_file.write(&spec.root_path)?;
 
     Ok(())
