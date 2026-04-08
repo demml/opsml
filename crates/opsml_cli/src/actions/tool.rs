@@ -92,8 +92,18 @@ pub fn pull_tool(args: &ToolPullArgs) -> Result<(), CliError> {
     let card = opsml_cards::ToolCard::from_path(card_json)?;
 
     let output_dir = args.output.clone().unwrap_or_else(|| PathBuf::from("."));
+    let is_hook = matches!(
+        card.spec.tool_type,
+        opsml_types::contracts::tool::ToolType::Hook
+    );
+    if is_hook && args.target.is_none() {
+        return Err(CliError::Error(
+            "Hook tools require --target (claudecode|geminicli|codex|githubcopilot)".into(),
+        ));
+    }
+    let hook_installer = args.target.as_ref().map(|t| t.as_hook_installer());
     let installed_path = card
-        .pull_artifacts(output_dir)
+        .pull_artifacts(output_dir, hook_installer.as_deref(), args.global)
         .map_err(|e| CliError::Error(e.to_string()))?;
 
     println!(
@@ -110,10 +120,7 @@ pub fn pull_tool(args: &ToolPullArgs) -> Result<(), CliError> {
 
 #[instrument(skip_all)]
 pub fn list_tools(args: &ToolListArgs) -> Result<(), CliError> {
-    println!(
-        "\nListing cards from {} registry",
-        Colorize::green("tool")
-    );
+    println!("\nListing cards from {} registry", Colorize::green("tool"));
 
     let space = args.space.clone().map(|s| clean_string(&s)).transpose()?;
     let name = args.name.clone().map(|n| clean_string(&n)).transpose()?;
@@ -128,14 +135,14 @@ pub fn list_tools(args: &ToolListArgs) -> Result<(), CliError> {
         ..Default::default()
     };
 
-    let registry =
-        opsml_registry::registries::card::OpsmlCardRegistry::new(RegistryType::Tool)?;
+    let registry = opsml_registry::registries::card::OpsmlCardRegistry::new(RegistryType::Tool)?;
     let mut cards = registry.list_cards(&query_args)?;
 
     if let Some(tool_type) = &args.tool_type {
+        let filter = tool_type.to_string();
         cards.retain(|c| {
             if let opsml_types::contracts::CardRecord::Tool(r) = c {
-                &r.tool_type == tool_type
+                r.tool_type == filter
             } else {
                 false
             }
@@ -175,6 +182,9 @@ pub fn init_tool(args: &ToolInitArgs) -> Result<(), CliError> {
         ),
         "mcp" => format!(
             "---\nname: {name}\ndescription: \"TODO: Describe what this MCP server does\"\ntoolType: McpServer\nmcpServerName: \"{name}\"\n---\n# {name}\n\nTODO: Describe the MCP server configuration here.\n"
+        ),
+        "hook" => format!(
+            "---\nname: {name}\ndescription: \"TODO: Describe what this hook does\"\ntoolType: Hook\nhookEvents:\n  - PostToolUse\nhookMatcher:\n  tool: Write\nrequiresApproval: false\n---\n#!/bin/bash\n# Hook body: runs after each Write tool call.\n"
         ),
         _ => format!(
             "---\nname: {name}\ndescription: \"TODO: Describe what this tool does\"\ntoolType: ShellScript\nscriptConfig:\n  script: \"echo hello\"\n  shell: \"/bin/bash\"\n---\n# {name}\n\nTODO: Write the shell script body here.\n"
@@ -291,6 +301,29 @@ mod tests {
     }
 
     #[test]
+    fn test_init_tool_hook_creates_parseable_template() {
+        let tmp = tempfile::tempdir().unwrap();
+        let output = tmp.path().join("TOOL.md");
+
+        let args = ToolInitArgs {
+            name: Some("my-hook".to_string()),
+            output: Some(output.clone()),
+            tool_type: "hook".to_string(),
+        };
+        init_tool(&args).unwrap();
+
+        assert!(output.exists());
+        let content = std::fs::read_to_string(&output).unwrap();
+        let card = opsml_cards::parse_tool_markdown(&content).unwrap();
+        assert_eq!(card.spec.name, "my-hook");
+        assert_eq!(
+            card.spec.tool_type,
+            opsml_types::contracts::tool::ToolType::Hook
+        );
+        assert!(!card.spec.hook_events.is_empty());
+    }
+
+    #[test]
     fn test_list_tools_type_filter_retain() {
         use opsml_types::contracts::{CardRecord, ToolCardClientRecord};
 
@@ -323,7 +356,7 @@ mod tests {
         let filter = "SlashCommand".to_string();
         cards.retain(|c| {
             if let CardRecord::Tool(r) = c {
-                &r.tool_type == &filter
+                r.tool_type == filter
             } else {
                 false
             }
@@ -341,7 +374,7 @@ mod tests {
         let wrong_case = "slashcommand".to_string();
         cards2.retain(|c| {
             if let CardRecord::Tool(r) = c {
-                &r.tool_type == &wrong_case
+                r.tool_type == wrong_case
             } else {
                 false
             }

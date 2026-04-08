@@ -10,6 +10,7 @@ pub enum ToolType {
     ApiCall,
     InternalFunction,
     SlashCommand,
+    Hook,
     Custom(String),
 }
 
@@ -21,6 +22,7 @@ impl std::fmt::Display for ToolType {
             ToolType::ApiCall => write!(f, "ApiCall"),
             ToolType::InternalFunction => write!(f, "InternalFunction"),
             ToolType::SlashCommand => write!(f, "SlashCommand"),
+            ToolType::Hook => write!(f, "Hook"),
             ToolType::Custom(s) => write!(f, "{s}"),
         }
     }
@@ -34,6 +36,7 @@ impl From<&str> for ToolType {
             "ApiCall" => ToolType::ApiCall,
             "InternalFunction" => ToolType::InternalFunction,
             "SlashCommand" => ToolType::SlashCommand,
+            "Hook" => ToolType::Hook,
             other => ToolType::Custom(other.to_string()),
         }
     }
@@ -88,6 +91,61 @@ impl Default for ApiCallConfig {
     }
 }
 
+impl ApiCallConfig {
+    pub fn sanitize_for_response(&self) -> Self {
+        const SENSITIVE_KEYS: &[&str] = &[
+            "authorization",
+            "x-api-key",
+            "x-auth-token",
+            "cookie",
+            "x-secret",
+            "proxy-authorization",
+        ];
+        let headers = self
+            .headers
+            .iter()
+            .filter(|(k, _)| !SENSITIVE_KEYS.contains(&k.to_lowercase().as_str()))
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect();
+        Self {
+            url: self.url.clone(),
+            method: self.method.clone(),
+            headers,
+            body_template: self.body_template.clone(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+#[serde(rename_all = "PascalCase")]
+pub enum HookEvent {
+    #[default]
+    PostToolUse,
+    PreToolUse,
+    Stop,
+    Notification,
+}
+
+impl HookEvent {
+    pub fn as_snake_case(&self) -> &'static str {
+        match self {
+            HookEvent::PreToolUse => "pre_tool_use",
+            HookEvent::PostToolUse => "post_tool_use",
+            HookEvent::Stop => "stop",
+            HookEvent::Notification => "notification",
+        }
+    }
+
+    pub fn as_pascal_case(&self) -> &'static str {
+        match self {
+            HookEvent::PreToolUse => "PreToolUse",
+            HookEvent::PostToolUse => "PostToolUse",
+            HookEvent::Stop => "Stop",
+            HookEvent::Notification => "Notification",
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ToolSpec {
@@ -107,6 +165,10 @@ pub struct ToolSpec {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub allowed_tools: Vec<String>,
     pub requires_approval: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hook_events: Vec<HookEvent>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hook_matcher: Option<serde_json::Value>,
 }
 
 #[cfg(test)]
@@ -127,7 +189,10 @@ mod tests {
             ..Default::default()
         };
         let json = serde_json::to_string(&spec).unwrap();
-        assert!(json.contains("\"toolType\""), "expected camelCase 'toolType' key, got: {json}");
+        assert!(
+            json.contains("\"toolType\""),
+            "expected camelCase 'toolType' key, got: {json}"
+        );
         let restored: ToolSpec = serde_json::from_str(&json).unwrap();
         assert_eq!(restored.name, spec.name);
         assert_eq!(restored.tool_type, ToolType::ShellScript);
@@ -141,6 +206,7 @@ mod tests {
             (ToolType::ApiCall, "\"ApiCall\""),
             (ToolType::InternalFunction, "\"InternalFunction\""),
             (ToolType::SlashCommand, "\"SlashCommand\""),
+            (ToolType::Hook, "\"Hook\""),
         ];
         for (variant, expected_json) in variants {
             let json = serde_json::to_string(&variant).unwrap();
@@ -177,5 +243,40 @@ mod tests {
         let json = serde_json::to_string(&config).unwrap();
         let restored: ApiCallConfig = serde_json::from_str(&json).unwrap();
         assert_eq!(restored.method, "GET");
+    }
+
+    #[test]
+    fn test_hook_event_pascal_case() {
+        let json = serde_json::to_string(&HookEvent::PreToolUse).unwrap();
+        assert_eq!(json, "\"PreToolUse\"");
+    }
+
+    #[test]
+    fn test_tool_spec_hook_roundtrip() {
+        let spec = ToolSpec {
+            name: "my-hook".to_string(),
+            description: "A hook tool".to_string(),
+            tool_type: ToolType::Hook,
+            hook_events: vec![HookEvent::PostToolUse],
+            hook_matcher: Some(serde_json::json!({"tool": "Write"})),
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&spec).unwrap();
+        let restored: ToolSpec = serde_json::from_str(&json).unwrap();
+        assert_eq!(restored.name, spec.name);
+        assert_eq!(restored.tool_type, ToolType::Hook);
+        assert_eq!(restored.hook_events, vec![HookEvent::PostToolUse]);
+        assert_eq!(
+            restored.hook_matcher,
+            Some(serde_json::json!({"tool": "Write"}))
+        );
+    }
+
+    #[test]
+    fn test_hook_variant_does_not_break_existing_serde() {
+        let shell: ToolType = serde_json::from_str("\"ShellScript\"").unwrap();
+        assert_eq!(shell, ToolType::ShellScript);
+        let slash: ToolType = serde_json::from_str("\"SlashCommand\"").unwrap();
+        assert_eq!(slash, ToolType::SlashCommand);
     }
 }

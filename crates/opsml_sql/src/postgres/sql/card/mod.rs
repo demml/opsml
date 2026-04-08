@@ -442,10 +442,6 @@ impl CardLogicTrait for CardLogicPostgresClient {
             CardTable::Tool => match card {
                 ServerCard::Tool(record) => {
                     let query = PostgresQueryHelper::get_tool_card_insert_query();
-                    let args_schema_str = record
-                        .args_schema
-                        .as_ref()
-                        .map(|v| serde_json::to_string(v).unwrap());
                     sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -459,7 +455,7 @@ impl CardLogicTrait for CardLogicPostgresClient {
                         .bind(&record.build_tag)
                         .bind(&record.tags)
                         .bind(&record.tool_type)
-                        .bind(args_schema_str)
+                        .bind(&record.args_schema)
                         .bind(&record.description)
                         .bind(&record.content_hash)
                         .bind(&record.username)
@@ -687,17 +683,13 @@ impl CardLogicTrait for CardLogicPostgresClient {
             CardTable::Tool => match card {
                 ServerCard::Tool(record) => {
                     let query = PostgresQueryHelper::get_tool_card_update_query();
-                    let args_schema_str = record
-                        .args_schema
-                        .as_ref()
-                        .map(|v| serde_json::to_string(v).unwrap());
                     sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
                         .bind(&record.tags)
                         .bind(&record.tool_type)
-                        .bind(args_schema_str)
+                        .bind(&record.args_schema)
                         .bind(&record.description)
                         .bind(&record.content_hash)
                         .bind(&record.username)
@@ -1140,14 +1132,13 @@ impl ToolLogicTrait for CardLogicPostgresClient {
         space: &str,
         name: &str,
     ) -> Result<ToolCardRecord, SqlError> {
-        let record = sqlx::query_as::<_, ToolCardRecord>(
-            PostgresQueryHelper::get_tool_card_by_name_query(),
-        )
-        .bind(space)
-        .bind(name)
-        .fetch_optional(&self.pool)
-        .await?
-        .ok_or_else(|| SqlError::MissingField(format!("{}/{}", space, name)))?;
+        let record =
+            sqlx::query_as::<_, ToolCardRecord>(PostgresQueryHelper::get_tool_card_by_name_query())
+                .bind(space)
+                .bind(name)
+                .fetch_optional(&self.pool)
+                .await?
+                .ok_or_else(|| SqlError::MissingField(format!("{}/{}", space, name)))?;
         Ok(record)
     }
 
@@ -1170,11 +1161,10 @@ impl ToolLogicTrait for CardLogicPostgresClient {
     }
 
     async fn increment_tool_download_count(&self, uid: &str) -> Result<(), SqlError> {
-        let result =
-            sqlx::query(PostgresQueryHelper::get_increment_tool_download_count_query())
-                .bind(uid)
-                .execute(&self.pool)
-                .await?;
+        let result = sqlx::query(PostgresQueryHelper::get_increment_tool_download_count_query())
+            .bind(uid)
+            .execute(&self.pool)
+            .await?;
         if result.rows_affected() == 0 {
             return Err(SqlError::MissingField(format!("tool uid not found: {uid}")));
         }
@@ -1201,29 +1191,24 @@ impl ToolLogicTrait for CardLogicPostgresClient {
         space: &str,
         limit: i64,
     ) -> Result<Vec<ToolCardRecord>, SqlError> {
-        let records = sqlx::query_as::<_, ToolCardRecord>(
-            PostgresQueryHelper::get_featured_tools_query(),
-        )
-        .bind(space)
-        .bind(limit)
-        .fetch_all(&self.pool)
-        .await?;
+        let records =
+            sqlx::query_as::<_, ToolCardRecord>(PostgresQueryHelper::get_featured_tools_query())
+                .bind(space)
+                .bind(limit)
+                .fetch_all(&self.pool)
+                .await?;
         Ok(records)
     }
 
     async fn get_all_tool_tags(&self, space: &str) -> Result<Vec<String>, SqlError> {
-        let tags: Vec<String> =
-            sqlx::query_scalar(PostgresQueryHelper::get_all_tool_tags_query())
-                .bind(space)
-                .fetch_all(&self.pool)
-                .await?;
+        let tags: Vec<String> = sqlx::query_scalar(PostgresQueryHelper::get_all_tool_tags_query())
+            .bind(space)
+            .fetch_all(&self.pool)
+            .await?;
         Ok(tags)
     }
 
-    async fn get_tool_marketplace_stats(
-        &self,
-        space: &str,
-    ) -> Result<MarketplaceStats, SqlError> {
+    async fn get_tool_marketplace_stats(&self, space: &str) -> Result<MarketplaceStats, SqlError> {
         let row: (i64, i64, i64) =
             sqlx::query_as(PostgresQueryHelper::get_tool_marketplace_stats_query())
                 .bind(space)

@@ -217,14 +217,83 @@ async fn test_v1_map_includes_tools() {
         let tools = body["tools"].as_array().expect("tools must be array");
         assert!(!tools.is_empty(), "repo1 should have fixture tools");
 
-        let names: Vec<&str> = tools
-            .iter()
-            .filter_map(|t| t["name"].as_str())
-            .collect();
+        let names: Vec<&str> = tools.iter().filter_map(|t| t["name"].as_str()).collect();
         assert!(
             names.contains(&"Tool1") || names.contains(&"Tool2") || names.contains(&"Tool3"),
             "expected at least one of Tool1/Tool2/Tool3 in tools"
         );
+
+        helper.cleanup();
+    });
+}
+
+#[tokio::test]
+async fn test_tool_cli_push_and_list_hook() {
+    retry_flaky_test!({
+        let helper = TestHelper::new(None).await;
+
+        let resp = create_tool(
+            &helper,
+            "hook-tool",
+            "repo1",
+            "Hook",
+            Some("A lifecycle hook".to_string()),
+        )
+        .await;
+        assert!(resp.registered);
+
+        let query = CardQueryArgs {
+            space: Some("repo1".to_string()),
+            name: Some("hook-tool".to_string()),
+            registry_type: RegistryType::Tool,
+            ..Default::default()
+        };
+        let cards = list_tools(&helper, &query).await;
+        assert_eq!(cards.len(), 1);
+        if let CardRecord::Tool(r) = &cards[0] {
+            assert_eq!(r.tool_type, "Hook");
+        } else {
+            panic!("expected Tool record");
+        }
+
+        helper.cleanup();
+    });
+}
+
+#[tokio::test]
+async fn test_v1_map_hook_not_in_commands() {
+    retry_flaky_test!({
+        let helper = TestHelper::new(None).await;
+
+        // Fixtures already include Tool4 (Hook) in repo1
+        let request = Request::builder()
+            .uri("/opsml/api/v1/map/repo1")
+            .method("GET")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let map: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+
+        let tools = map["tools"].as_array().expect("tools must be an array");
+        let commands = map["commands"]
+            .as_array()
+            .expect("commands must be an array");
+
+        // Tool4 (Hook) must appear in tools — compatible_tools[0] holds tool_type
+        let has_hook = tools
+            .iter()
+            .any(|t| t["compatible_tools"][0] == "Hook" && t["name"] == "Tool4");
+        assert!(has_hook, "Hook tool must appear in tools");
+
+        // Hook must NOT appear in commands (commands = SlashCommand only)
+        let hook_in_commands = commands
+            .iter()
+            .any(|c| c["compatible_tools"][0] == "Hook" || c["name"] == "Tool4");
+        assert!(!hook_in_commands, "Hook must not appear in commands");
 
         helper.cleanup();
     });
@@ -249,27 +318,50 @@ async fn test_v1_map_commands_are_slash_commands() {
         let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
 
         let commands = body["commands"].as_array().expect("commands must be array");
-        assert!(!commands.is_empty(), "repo1 should have SlashCommand tools in commands");
+        assert!(
+            !commands.is_empty(),
+            "repo1 should have SlashCommand tools in commands"
+        );
 
         for cmd in commands {
             let compatible_tools = cmd["compatible_tools"]
                 .as_array()
                 .expect("compatible_tools must be array");
-            let tool_types: Vec<&str> = compatible_tools
-                .iter()
-                .filter_map(|t| t.as_str())
-                .collect();
+            let tool_types: Vec<&str> =
+                compatible_tools.iter().filter_map(|t| t.as_str()).collect();
             assert!(
                 tool_types.contains(&"SlashCommand"),
                 "commands array must only contain SlashCommand tools, got: {tool_types:?}"
             );
         }
 
-        let cmd_names: Vec<&str> = commands
-            .iter()
-            .filter_map(|c| c["name"].as_str())
-            .collect();
-        assert!(cmd_names.contains(&"Tool2"), "Tool2 (SlashCommand) must be in commands");
+        let cmd_names: Vec<&str> = commands.iter().filter_map(|c| c["name"].as_str()).collect();
+        assert!(
+            cmd_names.contains(&"Tool2"),
+            "Tool2 (SlashCommand) must be in commands"
+        );
+
+        helper.cleanup();
+    });
+}
+
+#[tokio::test]
+async fn test_get_tool_latest_not_found() {
+    retry_flaky_test!({
+        let helper = TestHelper::new(None).await;
+
+        let request = Request::builder()
+            .uri("/opsml/api/v1/tool/nonexistent/nonexistent-tool")
+            .method("GET")
+            .body(Body::empty())
+            .unwrap();
+
+        let response = helper.send_oneshot(request).await;
+        assert_ne!(
+            response.status(),
+            StatusCode::OK,
+            "nonexistent tool must not return 200"
+        );
 
         helper.cleanup();
     });

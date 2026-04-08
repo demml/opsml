@@ -20,6 +20,23 @@ fn parse_version_type(s: &str) -> Result<VersionType, String> {
     })
 }
 
+fn parse_tool_type(s: &str) -> Result<opsml_types::contracts::tool::ToolType, String> {
+    use opsml_types::contracts::tool::ToolType;
+    match s {
+        "ShellScript" | "shell_script" | "shell-script" => Ok(ToolType::ShellScript),
+        "McpServer" | "mcp_server" | "mcp-server" => Ok(ToolType::McpServer),
+        "ApiCall" | "api_call" | "api-call" => Ok(ToolType::ApiCall),
+        "InternalFunction" | "internal_function" | "internal-function" => {
+            Ok(ToolType::InternalFunction)
+        }
+        "SlashCommand" | "slash_command" | "slash-command" => Ok(ToolType::SlashCommand),
+        "Hook" | "hook" => Ok(ToolType::Hook),
+        other => Err(format!(
+            "unknown tool type '{other}'; valid values: ShellScript, McpServer, ApiCall, InternalFunction, SlashCommand, Hook"
+        )),
+    }
+}
+
 fn default_spec_path() -> String {
     let path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
     let joined = path.join(DEFAULT_SERVICE_FILENAME);
@@ -351,6 +368,15 @@ impl PullTarget {
             Self::GithubCopilot => Box::new(opsml_cards::CopilotInstaller),
         }
     }
+
+    pub fn as_hook_installer(&self) -> Box<dyn opsml_cards::HookInstaller> {
+        match self {
+            Self::ClaudeCode => Box::new(opsml_cards::ClaudeCodeInstaller),
+            Self::Codex => Box::new(opsml_cards::CodexInstaller),
+            Self::GeminiCli => Box::new(opsml_cards::GeminiCliInstaller),
+            Self::GithubCopilot => Box::new(opsml_cards::CopilotInstaller),
+        }
+    }
 }
 
 #[derive(Args, Clone)]
@@ -601,6 +627,12 @@ pub struct ToolPullArgs {
     /// Output directory (defaults to current directory)
     #[arg(long = "output")]
     pub output: Option<PathBuf>,
+    /// Target CLI for hook registration (required for Hook tools)
+    #[arg(long = "target")]
+    pub target: Option<PullTarget>,
+    /// Register hook globally (~/.claude/settings.json etc.) instead of project-local
+    #[arg(long = "global", default_value_t = false)]
+    pub global: bool,
 }
 
 #[derive(Args, Clone)]
@@ -614,9 +646,9 @@ pub struct ToolListArgs {
     /// Filter by tags (comma-separated)
     #[arg(long = "tags", use_value_delimiter = true, value_delimiter = ',')]
     pub tags: Option<Vec<String>>,
-    /// Filter by tool type (ShellScript, SlashCommand, McpServer, ApiCall, InternalFunction)
-    #[arg(long = "type")]
-    pub tool_type: Option<String>,
+    /// Filter by tool type (ShellScript, SlashCommand, McpServer, ApiCall, InternalFunction, Hook)
+    #[arg(long = "type", value_parser = parse_tool_type)]
+    pub tool_type: Option<opsml_types::contracts::tool::ToolType>,
     /// Maximum number of results
     #[arg(long = "limit")]
     pub limit: Option<i32>,

@@ -36,6 +36,13 @@ pub struct ScouterServer {
 }
 
 #[cfg(feature = "server")]
+impl Default for ScouterServer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(feature = "server")]
 impl ScouterServer {
     pub fn new() -> Self {
         let mut server = mockito::Server::new();
@@ -258,9 +265,9 @@ impl OpsmlTestServer {
                 std::env::set_var("APP_ENV", "dev_server");
             }
 
-            if self.base_path.is_some() {
+            if let Some(base_path) = &self.base_path {
                 unsafe {
-                    std::env::set_var("OPSML_BASE_PATH", self.base_path.as_ref().unwrap());
+                    std::env::set_var("OPSML_BASE_PATH", base_path);
                 }
             }
 
@@ -302,7 +309,7 @@ impl OpsmlTestServer {
                     port
                 );
                 let res = client
-                    .get(&format!("http://localhost:{}/opsml/api/healthcheck", port))
+                    .get(format!("http://localhost:{}/opsml/api/healthcheck", port))
                     .send();
                 if let Ok(response) = res {
                     if response.status() == 200 {
@@ -333,7 +340,7 @@ impl OpsmlTestServer {
                 // set env vars for OPSML_TRACKING_URI
             }
 
-            return Err(TestServerError::ServerStartError.into());
+            Err(TestServerError::ServerStartError.into())
         }
         #[cfg(not(feature = "server"))]
         {

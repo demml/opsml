@@ -1846,9 +1846,7 @@ impl ServerCard {
             CardRecord::SubAgent(card) => Ok(ServerCard::SubAgent(
                 SubAgentCardRecord::from_client_card(card)?,
             )),
-            CardRecord::Tool(card) => {
-                Ok(ServerCard::Tool(ToolCardRecord::from_client_card(card)?))
-            }
+            CardRecord::Tool(card) => Ok(ServerCard::Tool(ToolCardRecord::from_client_card(card)?)),
         }
     }
 }

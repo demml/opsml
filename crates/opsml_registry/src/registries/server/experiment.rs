@@ -52,7 +52,7 @@ impl ServerExperiment {
 
         let record = HardwareMetricsRecord {
             experiment_uid: metrics.experiment_uid.clone(),
-            created_at: created_at.clone(),
+            created_at,
             cpu_percent_utilization: metrics.metrics.cpu.cpu_percent_utilization,
             cpu_percent_per_core: SqlxJson(metrics.metrics.cpu.cpu_percent_per_core.clone()),
             free_memory: metrics.metrics.memory.free_memory,

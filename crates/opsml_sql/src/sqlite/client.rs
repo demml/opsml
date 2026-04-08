@@ -104,7 +104,7 @@ mod tests {
     };
     use crate::traits::{
         ArtifactLogicTrait, AuditLogicTrait, CardLogicTrait, EvaluationLogicTrait,
-        ExperimentLogicTrait, SpaceLogicTrait, UserLogicTrait,
+        ExperimentLogicTrait, SpaceLogicTrait, ToolLogicTrait, UserLogicTrait,
     };
     use opsml_settings::config::DatabaseSettings;
     use opsml_types::SqlType;
@@ -2261,6 +2261,76 @@ mod tests {
         assert_eq!(deployment[0].urls.len(), 1);
         assert_eq!(deployment[0].urls[0], "http://localhost:8000");
         assert_eq!(deployment[0].healthcheck.as_deref(), Some("/health"));
+
+        cleanup();
+    }
+
+    #[tokio::test]
+    async fn test_tool_card_crud() {
+        cleanup();
+
+        let config = DatabaseSettings {
+            connection_uri: get_connection_uri(),
+            max_connections: 1,
+            sql_type: SqlType::Sqlite,
+        };
+
+        let client = SqliteClient::new(&config).await.unwrap();
+
+        let version = Version::new(0, 1, 0);
+        let record = ToolCardRecord::new(
+            "test-tool".to_string(),
+            SPACE.to_string(),
+            version,
+            vec!["ci".to_string()],
+            "ShellScript".to_string(),
+            None,
+            Some("A test tool".to_string()),
+            "0.0.0".to_string(),
+            "admin".to_string(),
+            None,
+        );
+
+        let uid = record.uid.clone();
+
+        client
+            .card
+            .insert_card(&CardTable::Tool, &ServerCard::Tool(record))
+            .await
+            .unwrap();
+
+        let fetched = client
+            .card
+            .get_tool_card_by_name(SPACE, "test-tool")
+            .await
+            .unwrap();
+        assert_eq!(fetched.name, "test-tool");
+        assert_eq!(fetched.space, SPACE);
+        assert_eq!(fetched.tool_type, "ShellScript");
+        assert_eq!(fetched.download_count, 0);
+
+        client
+            .card
+            .increment_tool_download_count(&uid)
+            .await
+            .unwrap();
+
+        let fetched2 = client
+            .card
+            .get_tool_card_by_name(SPACE, "test-tool")
+            .await
+            .unwrap();
+        assert_eq!(fetched2.download_count, 1);
+
+        let listed = client
+            .card
+            .list_tool_cards_by_space(SPACE, None)
+            .await
+            .unwrap();
+        assert!(
+            listed.iter().any(|r| r.name == "test-tool"),
+            "test-tool must appear in list"
+        );
 
         cleanup();
     }

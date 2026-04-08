@@ -20,9 +20,8 @@ pub use subagent::{
     ClaudeCodeTarget, CodexTarget, CopilotTarget, GeminiCliTarget, SubAgentCard, SubAgentCliTarget,
     SubAgentError, parse_subagent_markdown,
 };
-pub use tool::{ToolCard, ToolError, parse_tool_markdown};
-pub use tool::installer::{
-    ClaudeCodeInstaller, CodexInstaller, CopilotInstaller, GeminiCliInstaller,
-    McpConfigInstaller, SlashCommandInstaller,
+pub use tool::{
+    ClaudeCodeInstaller, CodexInstaller, CopilotInstaller, GeminiCliInstaller, HookInstaller,
+    McpConfigInstaller, SlashCommandInstaller, ToolCard, ToolError, parse_tool_markdown,
 };
 pub use utils::*;

@@ -407,11 +407,9 @@ pub async fn list_cards(
                 .map(convert_subagent_card)
                 .collect::<Vec<_>>(),
         ),
-        CardResults::Tool(data) => Json(
-            data.into_iter()
-                .map(convert_tool_card)
-                .collect::<Vec<_>>(),
-        ),
+        CardResults::Tool(data) => {
+            Json(data.into_iter().map(convert_tool_card).collect::<Vec<_>>())
+        }
     };
 
     // Create response and add audit context
@@ -443,9 +441,26 @@ pub async fn create_card(
     if let CardRecord::SubAgent(ref mut r) = card_request.card {
         r.username = perms.username.clone();
     }
+    if let CardRecord::Tool(ref mut r) = card_request.card {
+        r.username = perms.username.clone();
+    }
 
     if !perms.has_write_permission(card_request.card.space()) {
         return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
+    // Size validation for ToolCard blobs
+    const MAX_SCHEMA_BYTES: usize = 64 * 1024;
+    if let CardRecord::Tool(ref r) = card_request.card
+        && let Some(schema) = &r.args_schema
+        && serde_json::to_vec(schema).map(|v| v.len()).unwrap_or(0) > MAX_SCHEMA_BYTES
+    {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(OpsmlServerError {
+                error: "args_schema exceeds maximum size of 64KB".to_string(),
+            }),
+        ));
     }
 
     // Run skill scan gate for SkillCards

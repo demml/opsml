@@ -11,9 +11,9 @@ pub mod ui;
 pub mod list;
 pub mod lock;
 pub mod register;
+pub mod tool;
 pub mod update_profile;
 pub mod utils;
-pub mod tool;
 pub mod validate;
 
 pub use download::{download_card, download_service};

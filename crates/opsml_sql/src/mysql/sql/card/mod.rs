@@ -484,10 +484,6 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Tool => match card {
                 ServerCard::Tool(record) => {
                     let query = MySqlQueryHelper::get_tool_card_insert_query();
-                    let args_schema_str = record
-                        .args_schema
-                        .as_ref()
-                        .map(|v| serde_json::to_string(v).unwrap());
                     sqlx::query(query)
                         .bind(&record.uid)
                         .bind(&record.app_env)
@@ -501,7 +497,7 @@ impl CardLogicTrait for CardLogicMySqlClient {
                         .bind(&record.build_tag)
                         .bind(&record.tags)
                         .bind(&record.tool_type)
-                        .bind(args_schema_str)
+                        .bind(&record.args_schema)
                         .bind(&record.description)
                         .bind(&record.content_hash)
                         .bind(&record.username)
@@ -728,17 +724,13 @@ impl CardLogicTrait for CardLogicMySqlClient {
             CardTable::Tool => match card {
                 ServerCard::Tool(record) => {
                     let query = MySqlQueryHelper::get_tool_card_update_query();
-                    let args_schema_str = record
-                        .args_schema
-                        .as_ref()
-                        .map(|v| serde_json::to_string(v).unwrap());
                     sqlx::query(query)
                         .bind(&record.app_env)
                         .bind(&record.name)
                         .bind(&record.space)
                         .bind(&record.tags)
                         .bind(&record.tool_type)
-                        .bind(args_schema_str)
+                        .bind(&record.args_schema)
                         .bind(&record.description)
                         .bind(&record.content_hash)
                         .bind(&record.username)
@@ -1164,14 +1156,13 @@ impl ToolLogicTrait for CardLogicMySqlClient {
         space: &str,
         name: &str,
     ) -> Result<ToolCardRecord, SqlError> {
-        let record = sqlx::query_as::<_, ToolCardRecord>(
-            MySqlQueryHelper::get_tool_card_by_name_query(),
-        )
-        .bind(space)
-        .bind(name)
-        .fetch_optional(&self.pool)
-        .await?
-        .ok_or_else(|| SqlError::MissingField(format!("{}/{}", space, name)))?;
+        let record =
+            sqlx::query_as::<_, ToolCardRecord>(MySqlQueryHelper::get_tool_card_by_name_query())
+                .bind(space)
+                .bind(name)
+                .fetch_optional(&self.pool)
+                .await?
+                .ok_or_else(|| SqlError::MissingField(format!("{}/{}", space, name)))?;
         Ok(record)
     }
 
@@ -1181,15 +1172,14 @@ impl ToolLogicTrait for CardLogicMySqlClient {
         name: &str,
         version: &str,
     ) -> Result<ToolCardRecord, SqlError> {
-        let record = sqlx::query_as::<_, ToolCardRecord>(
-            MySqlQueryHelper::get_tool_card_by_version_query(),
-        )
-        .bind(space)
-        .bind(name)
-        .bind(version)
-        .fetch_optional(&self.pool)
-        .await?
-        .ok_or_else(|| SqlError::MissingField(format!("{}/{}/{}", space, name, version)))?;
+        let record =
+            sqlx::query_as::<_, ToolCardRecord>(MySqlQueryHelper::get_tool_card_by_version_query())
+                .bind(space)
+                .bind(name)
+                .bind(version)
+                .fetch_optional(&self.pool)
+                .await?
+                .ok_or_else(|| SqlError::MissingField(format!("{}/{}/{}", space, name, version)))?;
         Ok(record)
     }
 
@@ -1225,13 +1215,12 @@ impl ToolLogicTrait for CardLogicMySqlClient {
         space: &str,
         limit: i64,
     ) -> Result<Vec<ToolCardRecord>, SqlError> {
-        let records = sqlx::query_as::<_, ToolCardRecord>(
-            MySqlQueryHelper::get_featured_tools_query(),
-        )
-        .bind(space)
-        .bind(limit)
-        .fetch_all(&self.pool)
-        .await?;
+        let records =
+            sqlx::query_as::<_, ToolCardRecord>(MySqlQueryHelper::get_featured_tools_query())
+                .bind(space)
+                .bind(limit)
+                .fetch_all(&self.pool)
+                .await?;
         Ok(records)
     }
 
@@ -1243,10 +1232,7 @@ impl ToolLogicTrait for CardLogicMySqlClient {
         Ok(tags)
     }
 
-    async fn get_tool_marketplace_stats(
-        &self,
-        space: &str,
-    ) -> Result<MarketplaceStats, SqlError> {
+    async fn get_tool_marketplace_stats(&self, space: &str) -> Result<MarketplaceStats, SqlError> {
         let row: (i64, i64, i64) =
             sqlx::query_as(MySqlQueryHelper::get_tool_marketplace_stats_query())
                 .bind(space)
