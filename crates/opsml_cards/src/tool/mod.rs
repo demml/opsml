@@ -18,8 +18,12 @@ pub(crate) mod test_util {
 
     pub(crate) fn with_tempdir<F: FnOnce(&Path)>(f: F) {
         let _guard = CWD_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let orig = std::env::current_dir().ok();
         let tmp = tempfile::tempdir().expect("tempdir");
         std::env::set_current_dir(tmp.path()).expect("set_current_dir");
         f(tmp.path());
+        if let Some(orig) = orig {
+            let _ = std::env::set_current_dir(orig);
+        }
     }
 }
