@@ -15,6 +15,7 @@ pub mod skill;
 pub mod subagent;
 pub mod tool;
 pub mod traits;
+pub mod workflow;
 
 pub use agent::*;
 pub use agent_invoke::*;
@@ -32,3 +33,4 @@ pub use skill::*;
 pub use subagent::*;
 pub use tool::*;
 pub use traits::*;
+pub use workflow::*;

@@ -3,7 +3,9 @@ use crate::BaseArgs;
 use crate::error::CardError;
 use crate::traits::{OpsmlCard, ProfileExt};
 use chrono::{DateTime, Utc};
-use opsml_types::contracts::tool::{ToolSpec, ToolType};
+use opsml_types::contracts::tool::{
+    ApiCallConfig, HookEvent, ShellScriptConfig, ToolSpec, ToolType,
+};
 use opsml_types::contracts::{CardRecord, ToolCardClientRecord};
 use opsml_types::{RegistryType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
@@ -58,6 +60,33 @@ pub fn parse_tool_markdown(content: &str) -> Result<ToolCard, ToolError> {
     let mut card = ToolCard::new_rs(spec, Some("opsml"), Some(&name), None, None)?;
     card.body = body_opt;
     Ok(card)
+}
+
+/// Validate a shell script body before writing to disk.
+/// Enforces a 1 MB size limit and requires a shebang from the allowlist.
+fn validate_script_body(body: &str, tool_name: &str) -> Result<(), ToolError> {
+    const MAX_BYTES: usize = 1024 * 1024;
+    const ALLOWED_SHEBANGS: &[&str] = &[
+        "#!/bin/sh",
+        "#!/bin/bash",
+        "#!/usr/bin/env bash",
+        "#!/usr/bin/env sh",
+    ];
+    if body.len() > MAX_BYTES {
+        return Err(ToolError::Error(format!(
+            "script body for '{}' exceeds 1 MB limit",
+            tool_name
+        )));
+    }
+    let first_line = body.lines().next().unwrap_or("");
+    if !ALLOWED_SHEBANGS.iter().any(|s| first_line.starts_with(s)) {
+        return Err(ToolError::Error(format!(
+            "script body for '{}' must start with one of: {}",
+            tool_name,
+            ALLOWED_SHEBANGS.join(", ")
+        )));
+    }
+    Ok(())
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
@@ -169,16 +198,16 @@ impl ToolCard {
             #[serde(skip_serializing_if = "Option::is_none")]
             output_schema: Option<&'a serde_json::Value>,
             #[serde(skip_serializing_if = "Option::is_none")]
-            script_config: Option<&'a opsml_types::contracts::tool::ShellScriptConfig>,
+            script_config: Option<&'a ShellScriptConfig>,
             #[serde(skip_serializing_if = "Option::is_none")]
-            api_config: Option<&'a opsml_types::contracts::tool::ApiCallConfig>,
+            api_config: Option<&'a ApiCallConfig>,
             #[serde(skip_serializing_if = "Option::is_none")]
             mcp_server_name: Option<&'a str>,
             #[serde(skip_serializing_if = "<[_]>::is_empty")]
             allowed_tools: &'a [String],
             requires_approval: bool,
             #[serde(skip_serializing_if = "<[_]>::is_empty")]
-            hook_events: &'a [opsml_types::contracts::tool::HookEvent],
+            hook_events: &'a [HookEvent],
             #[serde(skip_serializing_if = "Option::is_none")]
             hook_matcher: Option<&'a serde_json::Value>,
         }
@@ -215,6 +244,7 @@ impl ToolCard {
         install_dir: PathBuf,
         hook_installer: Option<&dyn super::installer::HookInstaller>,
         global: bool,
+        expected_hash: Option<&[u8]>,
     ) -> Result<PathBuf, ToolError> {
         if self.name.is_empty()
             || !self
@@ -228,6 +258,7 @@ impl ToolCard {
             )));
         }
         std::fs::create_dir_all(&install_dir)?;
+        #[cfg(unix)]
         let install_dir = install_dir.canonicalize()?;
         if matches!(self.spec.tool_type, ToolType::ShellScript | ToolType::Hook)
             && self.body.is_none()
@@ -237,7 +268,26 @@ impl ToolCard {
                 self.spec.tool_type, self.name
             )));
         }
+
+        // Verify content hash before writing any script to disk.
+        if matches!(self.spec.tool_type, ToolType::ShellScript | ToolType::Hook)
+            && let Some(expected) = expected_hash
+        {
+            let actual = self.calculate_content_hash()?;
+            if actual != expected {
+                return Err(ToolError::Error(format!(
+                    "Content hash mismatch for '{}': registry record does not match received body. Refusing to install.",
+                    self.name
+                )));
+            }
+        }
+
         let body_content = self.body.as_deref().unwrap_or("");
+
+        // Validate script body content (size + shebang) before writing.
+        if matches!(self.spec.tool_type, ToolType::ShellScript | ToolType::Hook) {
+            validate_script_body(body_content, &self.name)?;
+        }
 
         match &self.spec.tool_type {
             ToolType::ShellScript => {
@@ -299,7 +349,13 @@ impl ToolCard {
                 let relative_path = std::env::current_dir()
                     .ok()
                     .and_then(|cwd| path.strip_prefix(&cwd).ok().map(|p| p.to_path_buf()))
-                    .unwrap_or_else(|| path.clone());
+                    .unwrap_or_else(|| {
+                        tracing::warn!(
+                            "Could not make hook path relative to CWD; registering absolute path: {}",
+                            path.display()
+                        );
+                        path.clone()
+                    });
                 if let Some(installer) = hook_installer {
                     installer.install_hook(
                         &self.name,
@@ -597,7 +653,7 @@ mod tests {
         card.body = Some("#!/bin/bash\necho hello\n".to_string());
 
         let path = card
-            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .pull_artifacts(tmp.path().to_path_buf(), None, false, None)
             .unwrap();
         assert!(path.exists());
         assert!(path.to_str().unwrap().ends_with(".sh"));
@@ -614,7 +670,7 @@ mod tests {
         card.body = Some("Run the linter.\n".to_string());
 
         let path = card
-            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .pull_artifacts(tmp.path().to_path_buf(), None, false, None)
             .unwrap();
         assert!(path.exists());
         assert!(path.to_str().unwrap().ends_with(".md"));
@@ -631,7 +687,7 @@ mod tests {
         let card = ToolCard::new_rs(spec, Some("test-space"), Some("my-mcp"), None, None).unwrap();
 
         let path = card
-            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .pull_artifacts(tmp.path().to_path_buf(), None, false, None)
             .unwrap();
         assert!(path.exists());
         assert!(path.to_str().unwrap().ends_with("-mcp.json"));
@@ -644,7 +700,7 @@ mod tests {
         let card = ToolCard::new_rs(spec, Some("test-space"), Some("my-api"), None, None).unwrap();
 
         let path = card
-            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .pull_artifacts(tmp.path().to_path_buf(), None, false, None)
             .unwrap();
         assert!(path.exists());
         assert!(path.to_str().unwrap().ends_with("-api.yaml"));
@@ -713,7 +769,7 @@ mod tests {
         };
         let card = ToolCard::new_rs(spec, Some("s"), Some("my-func"), None, None).unwrap();
         let output = card
-            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .pull_artifacts(tmp.path().to_path_buf(), None, false, None)
             .unwrap();
         assert!(output.exists());
         assert!(output.to_string_lossy().ends_with("-spec.yaml"));
@@ -730,7 +786,7 @@ mod tests {
         };
         let card = ToolCard::new_rs(spec, Some("s"), Some("my-custom"), None, None).unwrap();
         let output = card
-            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .pull_artifacts(tmp.path().to_path_buf(), None, false, None)
             .unwrap();
         assert!(output.exists());
         assert!(output.to_string_lossy().ends_with("-spec.yaml"));
@@ -768,7 +824,7 @@ mod tests {
         card.body = Some("#!/bin/bash\necho hook\n".to_string());
 
         let path = card
-            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .pull_artifacts(tmp.path().to_path_buf(), None, false, None)
             .unwrap();
         assert!(path.exists());
         assert!(path.to_string_lossy().ends_with(".sh"));
@@ -793,7 +849,7 @@ mod tests {
         let mut card = ToolCard::new_rs(spec, Some("s"), Some("no-installer"), None, None).unwrap();
         card.body = Some("#!/bin/bash\necho no-installer\n".to_string());
         let path = card
-            .pull_artifacts(tmp.path().to_path_buf(), None, false)
+            .pull_artifacts(tmp.path().to_path_buf(), None, false, None)
             .unwrap();
         assert!(path.exists());
     }
@@ -832,7 +888,7 @@ mod tests {
             let card = make_hook_card("my-hook");
             let installer = ClaudeCodeInstaller;
             let path = card
-                .pull_artifacts(tmp.to_path_buf(), Some(&installer), false)
+                .pull_artifacts(tmp.to_path_buf(), Some(&installer), false, None)
                 .unwrap();
             assert!(path.exists(), "script must be written");
 
@@ -864,7 +920,12 @@ mod tests {
         let card = make_hook_card("my-hook");
         let installer = ClaudeCodeInstaller;
         let path = card
-            .pull_artifacts(install_tmp.path().to_path_buf(), Some(&installer), false)
+            .pull_artifacts(
+                install_tmp.path().to_path_buf(),
+                Some(&installer),
+                false,
+                None,
+            )
             .unwrap();
         assert!(path.exists(), "script must be written at install_dir");
 
@@ -898,7 +959,7 @@ mod tests {
             let card = make_hook_card("my-hook");
             let installer = GeminiCliInstaller;
             let path = card
-                .pull_artifacts(tmp.to_path_buf(), Some(&installer), false)
+                .pull_artifacts(tmp.to_path_buf(), Some(&installer), false, None)
                 .unwrap();
             assert!(path.exists(), "script must be written");
 
@@ -922,7 +983,7 @@ mod tests {
             let card = make_hook_card("my-hook");
             let installer = CodexInstaller;
             let path = card
-                .pull_artifacts(tmp.to_path_buf(), Some(&installer), false)
+                .pull_artifacts(tmp.to_path_buf(), Some(&installer), false, None)
                 .unwrap();
             assert!(path.exists(), "script must be written");
 
@@ -944,7 +1005,7 @@ mod tests {
             let card = make_hook_card("my-hook");
             let installer = CopilotInstaller;
             let path = card
-                .pull_artifacts(tmp.to_path_buf(), Some(&installer), false)
+                .pull_artifacts(tmp.to_path_buf(), Some(&installer), false, None)
                 .unwrap();
             // Copilot writes the script but no config file
             assert!(path.exists(), "script must be written");
@@ -972,13 +1033,13 @@ mod tests {
             let card = make_hook_card("multi-hook");
 
             // Pull to all four targets in sequence (same working dir = same config dir)
-            card.pull_artifacts(tmp.to_path_buf(), Some(&ClaudeCodeInstaller), false)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&ClaudeCodeInstaller), false, None)
                 .unwrap();
-            card.pull_artifacts(tmp.to_path_buf(), Some(&GeminiCliInstaller), false)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&GeminiCliInstaller), false, None)
                 .unwrap();
-            card.pull_artifacts(tmp.to_path_buf(), Some(&CodexInstaller), false)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&CodexInstaller), false, None)
                 .unwrap();
-            card.pull_artifacts(tmp.to_path_buf(), Some(&CopilotInstaller), false)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&CopilotInstaller), false, None)
                 .unwrap();
 
             // Script written once (subsequent pulls overwrite same path — that's fine)
@@ -1024,9 +1085,9 @@ mod tests {
             let card = make_hook_card("cross-hook");
 
             // Register in Codex first, then Claude — both configs must be independent
-            card.pull_artifacts(tmp.to_path_buf(), Some(&CodexInstaller), false)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&CodexInstaller), false, None)
                 .unwrap();
-            card.pull_artifacts(tmp.to_path_buf(), Some(&ClaudeCodeInstaller), false)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&ClaudeCodeInstaller), false, None)
                 .unwrap();
 
             let codex: serde_json::Value = serde_yaml::from_str(
@@ -1049,9 +1110,9 @@ mod tests {
         with_hook_tempdir(|tmp| {
             let card = make_hook_card("cross-hook2");
 
-            card.pull_artifacts(tmp.to_path_buf(), Some(&ClaudeCodeInstaller), false)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&ClaudeCodeInstaller), false, None)
                 .unwrap();
-            card.pull_artifacts(tmp.to_path_buf(), Some(&GeminiCliInstaller), false)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&GeminiCliInstaller), false, None)
                 .unwrap();
 
             let claude: serde_json::Value = serde_json::from_str(
@@ -1170,7 +1231,7 @@ mod tests {
         };
         let card = ToolCard::new_rs(spec, Some("test"), Some("no-body"), None, None).unwrap();
         let tmp = tempfile::tempdir().unwrap();
-        let result = card.pull_artifacts(tmp.path().to_path_buf(), None, false);
+        let result = card.pull_artifacts(tmp.path().to_path_buf(), None, false, None);
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("no body"));
     }
@@ -1186,7 +1247,7 @@ mod tests {
         };
         let card = ToolCard::new_rs(spec, Some("test"), Some("no-body-hook"), None, None).unwrap();
         let tmp = tempfile::tempdir().unwrap();
-        let result = card.pull_artifacts(tmp.path().to_path_buf(), None, false);
+        let result = card.pull_artifacts(tmp.path().to_path_buf(), None, false, None);
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("no body"));
     }
@@ -1255,5 +1316,77 @@ mod tests {
             Some(serde_json::json!({"tool": "Write"}))
         );
         assert_eq!(hash_before, hash_after);
+    }
+
+    #[test]
+    fn test_parse_tool_markdown_invalid_hook_matcher_is_err() {
+        let md = "---\nname: bad-hook\ndescription: test\ntoolType: Hook\nhookEvents:\n  - PostToolUse\nhookMatcher: 42\n---\n#!/bin/bash\n";
+        let result = parse_tool_markdown(md);
+        assert!(result.is_err(), "expected parse error for hookMatcher: 42");
+    }
+
+    #[test]
+    fn test_pull_artifacts_hash_mismatch_returns_error() {
+        let spec = ToolSpec {
+            name: "tampered".to_string(),
+            description: "test".to_string(),
+            tool_type: ToolType::Hook,
+            hook_events: vec![HookEvent::PostToolUse],
+            ..Default::default()
+        };
+        let mut card = ToolCard::new_rs(spec, Some("s"), Some("tampered"), None, None).unwrap();
+        card.body = Some("#!/bin/bash\necho legit\n".to_string());
+
+        let wrong_hash = vec![0u8; 32]; // deliberately wrong 32-byte hash
+        let tmp = tempfile::tempdir().unwrap();
+        let result = card.pull_artifacts(tmp.path().to_path_buf(), None, false, Some(&wrong_hash));
+        assert!(result.is_err());
+        let msg = result.unwrap_err().to_string();
+        assert!(
+            msg.contains("hash mismatch") || msg.contains("Content hash"),
+            "unexpected error: {msg}"
+        );
+    }
+
+    #[test]
+    fn test_validate_script_body_size_limit() {
+        let spec = ToolSpec {
+            name: "big-script".to_string(),
+            description: "test".to_string(),
+            tool_type: ToolType::ShellScript,
+            ..Default::default()
+        };
+        let mut card = ToolCard::new_rs(spec, Some("s"), Some("big-script"), None, None).unwrap();
+        // Body just over 1 MB — must fail validation
+        let body = format!("#!/bin/bash\n{}", "x".repeat(1024 * 1024));
+        card.body = Some(body);
+        let tmp = tempfile::tempdir().unwrap();
+        let result = card.pull_artifacts(tmp.path().to_path_buf(), None, false, None);
+        assert!(result.is_err());
+        let msg = result.unwrap_err().to_string();
+        assert!(
+            msg.contains("1 MB") || msg.contains("exceeds"),
+            "unexpected: {msg}"
+        );
+    }
+
+    #[test]
+    fn test_validate_script_body_missing_shebang_is_err() {
+        let spec = ToolSpec {
+            name: "no-shebang".to_string(),
+            description: "test".to_string(),
+            tool_type: ToolType::ShellScript,
+            ..Default::default()
+        };
+        let mut card = ToolCard::new_rs(spec, Some("s"), Some("no-shebang"), None, None).unwrap();
+        card.body = Some("echo hello\n".to_string());
+        let tmp = tempfile::tempdir().unwrap();
+        let result = card.pull_artifacts(tmp.path().to_path_buf(), None, false, None);
+        assert!(result.is_err());
+        let msg = result.unwrap_err().to_string();
+        assert!(
+            msg.contains("shebang") || msg.contains("#!"),
+            "unexpected: {msg}"
+        );
     }
 }

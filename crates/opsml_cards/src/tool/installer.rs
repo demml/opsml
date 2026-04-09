@@ -1,8 +1,20 @@
 use super::error::ToolError;
 use opsml_types::contracts::tool::HookEvent;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tracing::warn;
+
+/// Typed representation of `.codex/config.yaml` that preserves unknown fields on round-trip.
+/// Using a typed struct instead of `serde_json::Value` prevents block-scalar corruption.
+#[derive(Debug, Default, Serialize, Deserialize)]
+struct CodexConfig {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    hooks: Vec<Value>,
+    #[serde(flatten)]
+    other: HashMap<String, Value>,
+}
 
 pub trait SlashCommandInstaller {
     fn command_dir(&self) -> PathBuf;
@@ -76,15 +88,17 @@ fn read_json_or_default(path: &Path) -> Value {
 }
 
 fn write_json(path: &Path, value: &Value) -> Result<(), ToolError> {
-    if let Some(parent) = path.parent()
-        && !parent.as_os_str().is_empty()
-    {
+    let parent = path.parent().unwrap_or_else(|| std::path::Path::new("."));
+    if !parent.as_os_str().is_empty() {
         std::fs::create_dir_all(parent)?;
     }
     let content = serde_json::to_string_pretty(value)?;
-    let tmp_path = path.with_extension("json.tmp");
-    std::fs::write(&tmp_path, &content)?;
-    std::fs::rename(&tmp_path, path)?;
+    let mut tmp = tempfile::NamedTempFile::new_in(parent)
+        .map_err(|e| ToolError::Error(format!("Failed to create temp file: {e}")))?;
+    use std::io::Write;
+    tmp.write_all(content.as_bytes())?;
+    tmp.persist(path)
+        .map_err(|e| ToolError::Error(format!("Failed to persist {}: {e}", path.display())))?;
     Ok(())
 }
 
@@ -125,6 +139,24 @@ fn script_exists_in_arr(arr: &Value, script_path: &Path) -> bool {
         .unwrap_or(false)
 }
 
+fn validate_tool_string(s: &str) -> Result<(), ToolError> {
+    const MAX_LEN: usize = 128;
+    if s.len() > MAX_LEN {
+        return Err(ToolError::Error(format!(
+            "hook_matcher tool value exceeds {MAX_LEN} characters"
+        )));
+    }
+    if !s
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-' || c == ':')
+    {
+        return Err(ToolError::Error(format!(
+            "hook_matcher tool value '{s}' must contain only [a-zA-Z0-9_-:]"
+        )));
+    }
+    Ok(())
+}
+
 pub(crate) fn validate_hook_matcher(v: &serde_json::Value) -> Result<(), ToolError> {
     match v {
         serde_json::Value::Null | serde_json::Value::String(_) => Ok(()),
@@ -133,8 +165,13 @@ pub(crate) fn validate_hook_matcher(v: &serde_json::Value) -> Result<(), ToolErr
                 && let Some(tool_val) = map.get("tool")
             {
                 match tool_val {
-                    serde_json::Value::String(_) => return Ok(()),
+                    serde_json::Value::String(s) => return validate_tool_string(s),
                     serde_json::Value::Array(arr) if arr.iter().all(|v| v.is_string()) => {
+                        for s in arr {
+                            if let serde_json::Value::String(s) = s {
+                                validate_tool_string(s)?;
+                            }
+                        }
                         return Ok(());
                     }
                     _ => {}
@@ -149,6 +186,18 @@ pub(crate) fn validate_hook_matcher(v: &serde_json::Value) -> Result<(), ToolErr
                 .to_string(),
         )),
     }
+}
+
+fn validate_hook_args(events: &[HookEvent], matcher: Option<&Value>) -> Result<(), ToolError> {
+    if events.is_empty() {
+        return Err(ToolError::Error(
+            "Hook tool has no hook_events configured; nothing to register".to_string(),
+        ));
+    }
+    if let Some(m) = matcher {
+        validate_hook_matcher(m)?;
+    }
+    Ok(())
 }
 
 pub trait HookInstaller {
@@ -197,14 +246,7 @@ impl HookInstaller for ClaudeCodeInstaller {
         matcher: Option<&Value>,
         global: bool,
     ) -> Result<(), ToolError> {
-        if events.is_empty() {
-            return Err(ToolError::Error(
-                "Hook tool has no hook_events configured; nothing to register".to_string(),
-            ));
-        }
-        if let Some(m) = matcher {
-            validate_hook_matcher(m)?;
-        }
+        validate_hook_args(events, matcher)?;
         let settings_path = if global {
             dirs::home_dir()
                 .ok_or_else(|| ToolError::Error("Could not determine home directory".to_string()))?
@@ -284,14 +326,7 @@ impl HookInstaller for GeminiCliInstaller {
         matcher: Option<&Value>,
         global: bool,
     ) -> Result<(), ToolError> {
-        if events.is_empty() {
-            return Err(ToolError::Error(
-                "Hook tool has no hook_events configured; nothing to register".to_string(),
-            ));
-        }
-        if let Some(m) = matcher {
-            validate_hook_matcher(m)?;
-        }
+        validate_hook_args(events, matcher)?;
         let settings_path = if global {
             dirs::home_dir()
                 .ok_or_else(|| ToolError::Error("Could not determine home directory".to_string()))?
@@ -367,14 +402,7 @@ impl HookInstaller for CodexInstaller {
         matcher: Option<&Value>,
         global: bool,
     ) -> Result<(), ToolError> {
-        if events.is_empty() {
-            return Err(ToolError::Error(
-                "Hook tool has no hook_events configured; nothing to register".to_string(),
-            ));
-        }
-        if let Some(m) = matcher {
-            validate_hook_matcher(m)?;
-        }
+        validate_hook_args(events, matcher)?;
         let config_path = if global {
             dirs::home_dir()
                 .ok_or_else(|| ToolError::Error("Could not determine home directory".to_string()))?
@@ -383,27 +411,18 @@ impl HookInstaller for CodexInstaller {
             PathBuf::from(".codex/config.yaml")
         };
 
-        let mut config: Value = if config_path.exists() {
+        let mut config: CodexConfig = if config_path.exists() {
             let content = std::fs::read_to_string(&config_path)?;
             serde_yaml::from_str(&content)?
         } else {
-            Value::Object(serde_json::Map::new())
+            CodexConfig::default()
         };
-
-        let hooks_arr = config
-            .as_object_mut()
-            .ok_or_else(|| ToolError::Error("config.yaml root is not an object".to_string()))?
-            .entry("hooks")
-            .or_insert_with(|| Value::Array(vec![]));
-        let hooks_arr = hooks_arr
-            .as_array_mut()
-            .ok_or_else(|| ToolError::Error("hooks is not an array".to_string()))?;
 
         let script_str = script_path.to_string_lossy().to_string();
 
         for event in events {
             let event_name = event.as_snake_case();
-            let already_exists = hooks_arr.iter().any(|e| {
+            let already_exists = config.hooks.iter().any(|e| {
                 e.get("script")
                     .and_then(|s| s.as_str())
                     .map(|s| s == script_str)
@@ -424,7 +443,7 @@ impl HookInstaller for CodexInstaller {
                         .ok_or_else(|| ToolError::Error("hook entry is not an object".to_string()))?
                         .insert("filter".to_string(), m.clone());
                 }
-                hooks_arr.push(entry);
+                config.hooks.push(entry);
             }
         }
 
@@ -434,9 +453,15 @@ impl HookInstaller for CodexInstaller {
             std::fs::create_dir_all(parent)?;
         }
         let yaml_content = serde_yaml::to_string(&config)?;
-        let tmp_path = config_path.with_extension("yaml.tmp");
-        std::fs::write(&tmp_path, &yaml_content)?;
-        std::fs::rename(&tmp_path, &config_path)?;
+        let parent = config_path
+            .parent()
+            .unwrap_or_else(|| std::path::Path::new("."));
+        let mut tmp = tempfile::NamedTempFile::new_in(parent)
+            .map_err(|e| ToolError::Error(format!("Failed to create temp file: {e}")))?;
+        use std::io::Write;
+        tmp.write_all(yaml_content.as_bytes())?;
+        tmp.persist(&config_path)
+            .map_err(|e| ToolError::Error(format!("Failed to persist config.yaml: {e}")))?;
         Ok(())
     }
 }
@@ -754,6 +779,36 @@ mod tests {
         let result = installer.install_hook("my-hook", &script_path, &[], None, false);
         assert!(result.is_err());
         assert!(result.unwrap_err().to_string().contains("hook_events"));
+    }
+
+    #[test]
+    fn test_validate_hook_matcher_non_string_tool_value_is_err() {
+        let bad = serde_json::json!({"tool": 42});
+        assert!(validate_hook_matcher(&bad).is_err());
+    }
+
+    #[test]
+    fn test_validate_hook_matcher_non_object_top_level_is_err() {
+        let bad = serde_json::json!(42);
+        assert!(validate_hook_matcher(&bad).is_err());
+    }
+
+    #[test]
+    fn test_validate_tool_string_too_long_is_err() {
+        let long = "a".repeat(129);
+        assert!(validate_tool_string(&long).is_err());
+    }
+
+    #[test]
+    fn test_validate_tool_string_invalid_chars_is_err() {
+        assert!(validate_tool_string("foo bar").is_err());
+        assert!(validate_tool_string("foo;bar").is_err());
+    }
+
+    #[test]
+    fn test_validate_tool_string_valid_passes() {
+        assert!(validate_tool_string("Write").is_ok());
+        assert!(validate_tool_string("my-tool_123:action").is_ok());
     }
 
     #[test]

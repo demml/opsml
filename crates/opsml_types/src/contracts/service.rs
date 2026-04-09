@@ -2,6 +2,7 @@ use crate::RegistryType;
 use crate::contracts::AgentSpec;
 use crate::contracts::mcp::McpConfig;
 use crate::contracts::potato::PotatoAgentConfig;
+use crate::contracts::workflow::WorkflowSpec;
 use crate::error::{AgentConfigError, TypeError};
 use opsml_semver::VersionType;
 use opsml_utils::extract_py_attr;
@@ -24,6 +25,8 @@ pub enum ServiceType {
     Mcp,
     #[serde(alias = "AGENT", alias = "agent")]
     Agent,
+    #[serde(alias = "WORKFLOW", alias = "workflow")]
+    Workflow,
 }
 
 impl Display for ServiceType {
@@ -32,6 +35,7 @@ impl Display for ServiceType {
             ServiceType::Api => write!(f, "Api"),
             ServiceType::Mcp => write!(f, "Mcp"),
             ServiceType::Agent => write!(f, "Agent"),
+            ServiceType::Workflow => write!(f, "Workflow"),
         }
     }
 }
@@ -41,6 +45,7 @@ impl From<String> for ServiceType {
             "api" => ServiceType::Api,
             "mcp" => ServiceType::Mcp,
             "agent" => ServiceType::Agent,
+            "workflow" => ServiceType::Workflow,
             _ => ServiceType::Api, // default to Api if unknown
         }
     }
@@ -51,6 +56,7 @@ impl From<&str> for ServiceType {
             "api" => ServiceType::Api,
             "mcp" => ServiceType::Mcp,
             "agent" => ServiceType::Agent,
+            "workflow" => ServiceType::Workflow,
             _ => ServiceType::Api, // default to Api if unknown
         }
     }
@@ -573,6 +579,8 @@ pub struct ServiceConfig {
     pub agent: Option<AgentConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub potato: Option<PotatoAgentConfig>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub workflow: Option<WorkflowSpec>,
 }
 
 impl ServiceConfig {
@@ -606,6 +614,18 @@ impl ServiceConfig {
             // 1. Agent Skills (if provided)
             agent_config.validate(root_path, deployment_config)?;
         }
+
+        // Workflow services must have a workflow config, and it must be a valid DAG
+        if service_type == &ServiceType::Workflow {
+            if let Some(wf) = &self.workflow {
+                wf.validate()?;
+            } else {
+                return Err(TypeError::WorkflowValidation(
+                    "Workflow service type requires 'workflow' configuration".into(),
+                ));
+            }
+        }
+
         Ok(())
     }
 
@@ -657,6 +677,7 @@ impl ServiceConfig {
             mcp,
             agent: agent_config,
             potato: None,
+            workflow: None,
         })
     }
 
@@ -674,5 +695,94 @@ impl ServiceConfig {
         }
 
         Ok(None)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::contracts::workflow::{CardRef, WorkflowStep};
+
+    fn skill_step(name: &str) -> WorkflowStep {
+        WorkflowStep {
+            name: name.into(),
+            skill: Some(CardRef {
+                space: "platform".into(),
+                name: "my-skill".into(),
+                version: None,
+            }),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn test_service_config_workflow_missing_config_returns_err() {
+        let mut config = ServiceConfig::default();
+        let err = config
+            .validate(
+                std::path::Path::new("."),
+                "test",
+                &ServiceType::Workflow,
+                &None,
+            )
+            .unwrap_err();
+        assert!(
+            err.to_string().contains("workflow") || err.to_string().contains("Workflow"),
+            "unexpected error: {err}"
+        );
+    }
+
+    #[test]
+    fn test_service_config_workflow_invalid_dag_propagates_err() {
+        // Cycle: s1 → s2 → s1
+        let mut s1 = skill_step("s1");
+        s1.depends_on = vec!["s2".into()];
+        let mut s2 = skill_step("s2");
+        s2.depends_on = vec!["s1".into()];
+
+        let mut config = ServiceConfig {
+            workflow: Some(WorkflowSpec {
+                steps: vec![s1, s2],
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        let err = config
+            .validate(
+                std::path::Path::new("."),
+                "test",
+                &ServiceType::Workflow,
+                &None,
+            )
+            .unwrap_err();
+        assert!(
+            err.to_string().contains("cycle"),
+            "expected cycle error, got: {err}"
+        );
+    }
+
+    #[test]
+    fn test_service_config_workflow_valid_linear_dag_is_ok() {
+        let s1 = skill_step("s1");
+        let mut s2 = skill_step("s2");
+        s2.depends_on = vec!["s1".into()];
+
+        let mut config = ServiceConfig {
+            workflow: Some(WorkflowSpec {
+                steps: vec![s1, s2],
+                ..Default::default()
+            }),
+            ..Default::default()
+        };
+        assert!(
+            config
+                .validate(
+                    std::path::Path::new("."),
+                    "test",
+                    &ServiceType::Workflow,
+                    &None,
+                )
+                .is_ok()
+        );
     }
 }

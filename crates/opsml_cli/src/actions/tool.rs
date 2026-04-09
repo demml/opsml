@@ -4,9 +4,10 @@ use crate::error::CliError;
 use opsml_cards::parse_tool_markdown;
 use opsml_colors::Colorize;
 use opsml_registry::download::download_card_from_registry;
+use opsml_registry::registries::card::OpsmlCardRegistry;
 use opsml_registry::registry::CardRegistry;
 use opsml_types::RegistryType;
-use opsml_types::contracts::{CardList, CardQueryArgs};
+use opsml_types::contracts::{CardList, CardQueryArgs, CardRecord};
 use opsml_utils::clean_string;
 use std::path::PathBuf;
 use tracing::instrument;
@@ -86,6 +87,22 @@ pub fn pull_tool(args: &ToolPullArgs) -> Result<(), CliError> {
         .map_err(|e| CliError::Error(format!("Failed to create temp dir: {e}")))?;
     let tmp_path = tmp_dir.path().to_path_buf();
 
+    // Fetch the stored content hash from the registry before downloading the artifact.
+    // For Hook and ShellScript tools, pull_artifacts will recompute the hash from the
+    // received body and compare against this value — rejecting any tampered content.
+    let registry =
+        OpsmlCardRegistry::new(RegistryType::Tool).map_err(|e| CliError::Error(e.to_string()))?;
+    let records = registry
+        .list_cards(&query_args)
+        .map_err(|e| CliError::Error(e.to_string()))?;
+    let expected_hash: Option<Vec<u8>> = records.into_iter().find_map(|r| {
+        if let CardRecord::Tool(t) = r {
+            t.content_hash
+        } else {
+            None
+        }
+    });
+
     download_card_from_registry(&query_args, tmp_path.clone())?;
 
     let card_json = find_card_json(&tmp_path, 0)?;
@@ -103,7 +120,12 @@ pub fn pull_tool(args: &ToolPullArgs) -> Result<(), CliError> {
     }
     let hook_installer = args.target.as_ref().map(|t| t.as_hook_installer());
     let installed_path = card
-        .pull_artifacts(output_dir, hook_installer.as_deref(), args.global)
+        .pull_artifacts(
+            output_dir,
+            hook_installer.as_deref(),
+            args.global,
+            expected_hash.as_deref(),
+        )
         .map_err(|e| CliError::Error(e.to_string()))?;
 
     println!(

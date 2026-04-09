@@ -144,6 +144,7 @@ impl From<&ServiceType> for RegistryType {
             ServiceType::Api => RegistryType::Service,
             ServiceType::Mcp => RegistryType::Mcp,
             ServiceType::Agent => RegistryType::Agent,
+            ServiceType::Workflow => RegistryType::Service,
         }
     }
 }
