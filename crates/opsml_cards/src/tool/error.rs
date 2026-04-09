@@ -27,8 +27,20 @@ impl From<ToolError> for crate::error::CardError {
     }
 }
 
+impl From<opsml_agent_cli::FrameworkError> for ToolError {
+    fn from(e: opsml_agent_cli::FrameworkError) -> Self {
+        ToolError::Error(e.to_string())
+    }
+}
+
 impl From<toml::ser::Error> for ToolError {
     fn from(err: toml::ser::Error) -> Self {
+        ToolError::TomlError(err.to_string())
+    }
+}
+
+impl From<toml::de::Error> for ToolError {
+    fn from(err: toml::de::Error) -> Self {
         ToolError::TomlError(err.to_string())
     }
 }

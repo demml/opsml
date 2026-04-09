@@ -18,8 +18,9 @@ use scouter_client::ProfileRequest;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tracing::{error, instrument};
+use walkdir::WalkDir;
 
 fn deserialize_from_path<T: DeserializeOwned>(path: PathBuf) -> Result<T, SkillError> {
     let content = std::fs::read_to_string(&path)?;
@@ -38,6 +39,45 @@ fn deserialize_from_path<T: DeserializeOwned>(path: PathBuf) -> Result<T, SkillE
         }
     };
     Ok(item)
+}
+
+fn copy_companion_files(source_dir: &Path, dest_dir: &Path) -> Result<(), SkillError> {
+    let canonical_dest = dest_dir
+        .canonicalize()
+        .map_err(|e| SkillError::Error(format!("cannot canonicalize dest_dir: {e}")))?;
+    for entry in WalkDir::new(source_dir).follow_links(false).min_depth(1) {
+        let entry = entry.map_err(|e| SkillError::Error(e.to_string()))?;
+        // Skip symlinks — following them could exfiltrate files outside the source tree.
+        if entry.file_type().is_symlink() {
+            continue;
+        }
+        let rel = entry
+            .path()
+            .strip_prefix(source_dir)
+            .map_err(|e| SkillError::Error(e.to_string()))?;
+        let file_name = rel.file_name().and_then(|f| f.to_str()).unwrap_or("");
+        if file_name == "SKILL.md" || file_name == "Card.json" {
+            continue;
+        }
+        let dest = dest_dir.join(rel);
+        if entry.file_type().is_dir() {
+            std::fs::create_dir_all(&dest)?;
+        } else {
+            if let Some(parent) = dest.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            // Containment check: ensure dest cannot escape dest_dir via path components.
+            let canonical_dest_file = dest.canonicalize().unwrap_or_else(|_| dest.clone());
+            if !canonical_dest_file.starts_with(&canonical_dest) {
+                return Err(SkillError::Error(format!(
+                    "path traversal detected: '{}' escapes destination directory",
+                    dest.display()
+                )));
+            }
+            std::fs::copy(entry.path(), &dest)?;
+        }
+    }
+    Ok(())
 }
 
 /// Parse a skill markdown file (YAML frontmatter + markdown body) into a SkillCard.
@@ -103,13 +143,16 @@ pub struct SkillCard {
 
     #[pyo3(get)]
     pub registry_type: RegistryType,
+
+    #[serde(skip)]
+    pub source_dir: Option<PathBuf>, // CLI-only; not exposed to Python or serialized to the registry.
 }
 
 #[pymethods]
 impl SkillCard {
     #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (skill, space=None, name=None, version=None, tags=None, compatible_tools=None, dependencies=None, input_schema=None))]
+    #[pyo3(signature = (skill, space=None, name=None, version=None, tags=None, compatible_tools=None, dependencies=None, input_schema=None, source_dir=None))]
     pub fn new(
         skill: &Bound<'_, PyAny>,
         space: Option<&str>,
@@ -119,6 +162,7 @@ impl SkillCard {
         compatible_tools: Option<Vec<String>>,
         dependencies: Option<Vec<SkillDependency>>,
         input_schema: Option<Bound<'_, PyAny>>,
+        source_dir: Option<PathBuf>,
     ) -> Result<Self, SkillError> {
         let py = skill.py();
         let skill = skill.extract::<AgentSkillStandard>().inspect_err(|e| {
@@ -131,7 +175,7 @@ impl SkillCard {
             .map(|schema| depythonize_object_to_value(py, &schema))
             .transpose()?;
 
-        Self::new_rs(
+        let mut card = Self::new_rs(
             skill,
             space,
             effective_name,
@@ -140,7 +184,9 @@ impl SkillCard {
             compatible_tools,
             dependencies,
             input_schema,
-        )
+        )?;
+        card.source_dir = source_dir;
+        Ok(card)
     }
 
     #[getter]
@@ -237,7 +283,21 @@ impl SkillCard {
     #[pyo3(signature = (path), name = "save")]
     pub fn save_card(&mut self, path: PathBuf) -> Result<(), SkillError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        PyHelperFuncs::save_to_json(self, card_save_path.as_path())?;
+        PyHelperFuncs::save_to_json(&mut *self, card_save_path.as_path())?;
+
+        let skill_md = self
+            .skill
+            .to_markdown()
+            .map_err(|e| SkillError::Error(e.to_string()))?;
+        std::fs::write(path.join("SKILL.md"), skill_md)?;
+
+        if let Some(ref source_dir) = self.source_dir.clone() {
+            copy_companion_files(source_dir, &path)?;
+        } else {
+            tracing::debug!(
+                "source_dir is None — skipping companion file copy (card was loaded from registry or deserialized without a local path)"
+            );
+        }
         Ok(())
     }
 
@@ -293,6 +353,7 @@ impl SkillCard {
             created_at: get_utc_datetime(),
             is_card: true,
             opsml_version: opsml_version::version(),
+            source_dir: None,
         })
     }
 }

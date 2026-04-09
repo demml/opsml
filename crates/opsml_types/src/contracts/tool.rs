@@ -122,7 +122,9 @@ impl ApiCallConfig {
             url,
             method: self.method.clone(),
             headers,
-            body_template: None,
+            // body_template is API specification (request format), not a credential — preserve it.
+            // Credentials must not be embedded here; use environment variables at runtime instead.
+            body_template: self.body_template.clone(),
         }
     }
 }
@@ -135,24 +137,20 @@ pub enum HookEvent {
     PreToolUse,
     Stop,
     Notification,
+    SessionStart,
+    UserPromptSubmit,
 }
 
 impl HookEvent {
-    pub fn as_snake_case(&self) -> &'static str {
-        match self {
-            HookEvent::PreToolUse => "pre_tool_use",
-            HookEvent::PostToolUse => "post_tool_use",
-            HookEvent::Stop => "stop",
-            HookEvent::Notification => "notification",
-        }
-    }
-
+    /// Returns the PascalCase event name used by Claude Code settings.json.
     pub fn as_pascal_case(&self) -> &'static str {
         match self {
             HookEvent::PreToolUse => "PreToolUse",
             HookEvent::PostToolUse => "PostToolUse",
             HookEvent::Stop => "Stop",
             HookEvent::Notification => "Notification",
+            HookEvent::SessionStart => "SessionStart",
+            HookEvent::UserPromptSubmit => "UserPromptSubmit",
         }
     }
 }

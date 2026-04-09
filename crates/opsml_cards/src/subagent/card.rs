@@ -1,9 +1,9 @@
 use super::error::SubAgentError;
-use super::target::SubAgentCliTarget;
 use crate::BaseArgs;
 use crate::error::CardError;
 use crate::traits::{OpsmlCard, ProfileExt};
 use chrono::{DateTime, Utc};
+use opsml_agent_cli::AgentCliFramework;
 use opsml_types::contracts::subagent::SubAgentSpec;
 use opsml_types::contracts::{CardRecord, SubAgentCardClientRecord};
 use opsml_types::{RegistryType, SaveName, Suffix};
@@ -179,14 +179,18 @@ impl SubAgentCard {
 
     pub fn install(
         &self,
-        target: &dyn SubAgentCliTarget,
+        framework: &dyn AgentCliFramework,
         global: bool,
     ) -> Result<PathBuf, SubAgentError> {
-        let content = target.serialize(&self.spec)?;
-        let dir = target.agent_dir(global);
+        let content = framework
+            .serialize_agent(&self.spec)
+            .map_err(|e| SubAgentError::Error(e.to_string()))?;
+        let dir = framework
+            .agent_dir(global)
+            .map_err(|e| SubAgentError::Error(e.to_string()))?;
         std::fs::create_dir_all(&dir)?;
 
-        let fname = target.file_name(&self.spec.name);
+        let fname = framework.agent_file_name(&self.spec.name);
         if fname.contains("..") || fname.contains('/') || fname.contains(std::path::MAIN_SEPARATOR)
         {
             return Err(SubAgentError::Error(format!(
@@ -295,7 +299,10 @@ impl ProfileExt for SubAgentCard {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::subagent::target::{ClaudeCodeTarget, CodexTarget, CopilotTarget, GeminiCliTarget};
+    use opsml_agent_cli::{
+        AgentCliFramework, ClaudeCodeFramework, CodexFramework, CopilotFramework,
+        GeminiCliFramework,
+    };
     use opsml_types::contracts::CompatibleTool;
 
     fn make_spec() -> SubAgentSpec {
@@ -394,10 +401,9 @@ mod tests {
     }
 
     #[test]
-    fn test_claude_code_target_serialize() {
+    fn test_claude_code_framework_serialize() {
         let spec = make_spec();
-        let target = ClaudeCodeTarget;
-        let output = target.serialize(&spec).unwrap();
+        let output = ClaudeCodeFramework.serialize_agent(&spec).unwrap();
 
         assert!(output.starts_with("---\n"));
         assert!(output.contains("maxTurns: 5"));
@@ -408,48 +414,64 @@ mod tests {
     }
 
     #[test]
-    fn test_gemini_cli_target_serialize() {
+    fn test_gemini_cli_framework_serialize() {
         let spec = make_spec();
-        let target = GeminiCliTarget;
-        let output = target.serialize(&spec).unwrap();
+        let output = GeminiCliFramework.serialize_agent(&spec).unwrap();
 
         assert!(output.starts_with("---\n"));
         assert!(output.contains("name: test-agent"));
         assert!(output.contains("description:"));
+        // compatible_clis must NOT appear in Gemini output
+        assert!(!output.contains("compatible_clis"));
     }
 
     #[test]
-    fn test_codex_target_serialize() {
+    fn test_codex_framework_serialize() {
         let spec = make_spec();
-        let target = CodexTarget;
-        let output = target.serialize(&spec).unwrap();
+        let output = CodexFramework.serialize_agent(&spec).unwrap();
 
         // TOML format, not YAML
         assert!(!output.starts_with("---"));
         assert!(output.contains("name = \"test-agent\""));
-        assert!(output.contains("mcp_servers"));
-        // developer_instructions must be last field (TOML serialization order)
-        let dev_instr_pos = output.find("developer_instructions").unwrap();
-        let mcp_pos = output.find("mcp_servers").unwrap();
-        assert!(dev_instr_pos > mcp_pos);
+        assert!(output.contains("developer_instructions"));
+        // mcp_servers section absent when spec.mcp_servers is empty
+        assert!(!output.contains("mcp_servers"));
     }
 
     #[test]
-    fn test_copilot_target_serialize() {
+    fn test_codex_framework_serialize_with_mcp_servers() {
+        let mut spec = make_spec();
+        spec.mcp_servers.insert(
+            "my-server".to_string(),
+            serde_json::json!({"command": "npx", "args": ["-y", "my-mcp-server"]}),
+        );
+        spec.sandbox_mode = Some("workspace-write".to_string());
+        let output = CodexFramework.serialize_agent(&spec).unwrap();
+
+        assert!(output.contains("[mcp_servers.my-server]"));
+        assert!(output.contains("command = \"npx\""));
+        assert!(output.contains("sandbox_mode = \"workspace-write\""));
+    }
+
+    #[test]
+    fn test_copilot_framework_serialize() {
         let spec = make_spec();
-        let target = CopilotTarget;
-        let output = target.serialize(&spec).unwrap();
-        let filename = target.file_name(&spec.name);
+        let output = CopilotFramework.serialize_agent(&spec).unwrap();
+        let filename = CopilotFramework.agent_file_name(&spec.name);
 
         assert!(output.starts_with("---\n"));
         assert!(output.contains("name: test-agent"));
+        assert!(output.contains("description:"));
+        assert!(output.contains("instructions:"));
         assert!(filename.ends_with(".agent.md"));
     }
 
     #[test]
     fn test_copilot_file_extension() {
-        let target = CopilotTarget;
-        assert_eq!(target.file_name("my-agent"), "my-agent.agent.md");
+        assert_eq!(
+            CopilotFramework.agent_file_name("my-agent"),
+            "my-agent.agent.md"
+        );
     }
 
     #[test]
@@ -459,22 +481,60 @@ mod tests {
             SubAgentCard::new_rs(spec, Some("test-space"), Some("test-agent"), None, None).unwrap();
 
         let tmp = tempfile::tempdir().unwrap();
-        // Override directory by using a custom target
-        struct TestTarget(PathBuf);
-        impl SubAgentCliTarget for TestTarget {
-            fn serialize(&self, spec: &SubAgentSpec) -> Result<String, SubAgentError> {
-                ClaudeCodeTarget.serialize(spec)
+
+        struct TestFramework(PathBuf);
+        impl opsml_agent_cli::AgentCliFramework for TestFramework {
+            fn name(&self) -> &'static str {
+                "test"
             }
-            fn file_name(&self, name: &str) -> String {
+            fn skill_path(&self, name: &str) -> PathBuf {
+                PathBuf::from(format!("{name}/SKILL.md"))
+            }
+            fn global_skill_path(
+                &self,
+                name: &str,
+            ) -> Result<PathBuf, opsml_agent_cli::FrameworkError> {
+                Ok(self.skill_path(name))
+            }
+            fn agent_dir(&self, _global: bool) -> Result<PathBuf, opsml_agent_cli::FrameworkError> {
+                Ok(self.0.clone())
+            }
+            fn agent_file_name(&self, name: &str) -> String {
                 format!("{name}.md")
             }
-            fn agent_dir(&self, _global: bool) -> PathBuf {
-                self.0.clone()
+            fn serialize_agent(
+                &self,
+                spec: &SubAgentSpec,
+            ) -> Result<String, opsml_agent_cli::FrameworkError> {
+                opsml_agent_cli::ClaudeCodeFramework.serialize_agent(spec)
+            }
+            fn command_dir(&self, _global: bool) -> PathBuf {
+                PathBuf::from(".commands")
+            }
+            fn mcp_config_path(&self) -> PathBuf {
+                PathBuf::from(".mcp.json")
+            }
+            fn merge_mcp_entry(
+                &self,
+                _name: &str,
+                _entry: serde_json::Value,
+            ) -> Result<(), opsml_agent_cli::FrameworkError> {
+                Ok(())
+            }
+            fn install_hook(
+                &self,
+                _name: &str,
+                _script_path: &std::path::Path,
+                _events: &[opsml_types::contracts::tool::HookEvent],
+                _matcher: Option<&serde_json::Value>,
+                _global: bool,
+            ) -> Result<(), opsml_agent_cli::FrameworkError> {
+                Ok(())
             }
         }
 
-        let test_target = TestTarget(tmp.path().to_path_buf());
-        let path = card.install(&test_target, false).unwrap();
+        let framework = TestFramework(tmp.path().to_path_buf());
+        let path = card.install(&framework, false).unwrap();
 
         assert!(path.exists());
         let content = std::fs::read_to_string(&path).unwrap();

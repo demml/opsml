@@ -1,6 +1,9 @@
 use crate::actions::skill::find_card_json;
-use crate::cli::arg::{AgentInitArgs, AgentListArgs, AgentPullArgs, AgentPushArgs};
+use crate::cli::arg::{AgentInitArgs, AgentListArgs, AgentPullArgs, AgentPushArgs, PullTarget};
 use crate::error::CliError;
+use opsml_agent_cli::{
+    AgentCliFramework, ClaudeCodeFramework, CodexFramework, CopilotFramework, GeminiCliFramework,
+};
 use opsml_cards::parse_subagent_markdown;
 use opsml_colors::Colorize;
 use opsml_registry::download::download_card_from_registry;
@@ -92,8 +95,13 @@ pub fn pull_agent(args: &AgentPullArgs) -> Result<(), CliError> {
     let card = opsml_cards::SubAgentCard::from_path(card_json)?;
 
     let installed_path = if let Some(target) = &args.target {
-        let cli_target = target.as_subagent_target();
-        card.install(cli_target.as_ref(), !args.local)
+        let framework: &dyn AgentCliFramework = match target {
+            PullTarget::ClaudeCode => &ClaudeCodeFramework,
+            PullTarget::Codex => &CodexFramework,
+            PullTarget::GeminiCli => &GeminiCliFramework,
+            PullTarget::GithubCopilot => &CopilotFramework,
+        };
+        card.install(framework, !args.local)
             .map_err(|e| CliError::Error(e.to_string()))?
     } else {
         // Default: write canonical markdown to current directory

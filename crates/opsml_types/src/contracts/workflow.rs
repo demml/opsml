@@ -124,20 +124,6 @@ impl WorkflowSpec {
         let mut seen_names: HashSet<&str> = HashSet::new();
 
         for step in &self.steps {
-            if step.depends_on.len() > MAX_DEPS_PER_STEP {
-                return Err(TypeError::WorkflowValidation(format!(
-                    "step '{}' exceeds maximum depends_on count ({MAX_DEPS_PER_STEP})",
-                    step.name
-                )));
-            }
-            for key in step.inputs.keys() {
-                if !key.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
-                    return Err(TypeError::WorkflowValidation(format!(
-                        "step '{}' input key '{key}' must contain only [a-zA-Z0-9_]",
-                        step.name
-                    )));
-                }
-            }
             if step.name.is_empty() {
                 return Err(TypeError::WorkflowValidation(
                     "step name must not be empty".into(),
@@ -148,6 +134,30 @@ impl WorkflowSpec {
                     "duplicate step name: '{}'",
                     step.name
                 )));
+            }
+            if step.depends_on.len() > MAX_DEPS_PER_STEP {
+                return Err(TypeError::WorkflowValidation(format!(
+                    "step '{}' exceeds maximum depends_on count ({MAX_DEPS_PER_STEP})",
+                    step.name
+                )));
+            }
+            // Reject duplicate dependency entries — they are semantically invalid.
+            let mut dep_seen: HashSet<&str> = HashSet::new();
+            for dep in &step.depends_on {
+                if !dep_seen.insert(dep.as_str()) {
+                    return Err(TypeError::WorkflowValidation(format!(
+                        "step '{}' lists dependency '{}' more than once",
+                        step.name, dep
+                    )));
+                }
+            }
+            for key in step.inputs.keys() {
+                if !key.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+                    return Err(TypeError::WorkflowValidation(format!(
+                        "step '{}' input key '{key}' must contain only [a-zA-Z0-9_]",
+                        step.name
+                    )));
+                }
             }
             if !step.has_action() {
                 return Err(TypeError::WorkflowValidation(format!(

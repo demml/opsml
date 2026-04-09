@@ -1,7 +1,8 @@
 use crate::actions::utils::{create_service_card_local, register_service_card};
-use crate::cli::arg::DownloadCard;
+use crate::cli::arg::{DownloadCard, IntoQueryArgs};
 use crate::download_service;
 use crate::error::CliError;
+use opsml_registry::download::download_card_from_registry;
 use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
 use opsml_registry::download::download_service_sub_cards;
@@ -288,44 +289,44 @@ fn download_service_artifacts(
     write_path: Option<PathBuf>,
 ) -> Result<(), CliError> {
     for artifact in lockfile.artifact {
+        let write_path = if let Some(path) = write_path.as_ref() {
+                path.to_path_buf()
+            } else {
+                std::env::current_dir()?
+            };
+        let args = DownloadCard {
+            space: Some(artifact.space),
+            name: Some(artifact.name),
+            version: Some(artifact.version),
+            uid: Some(artifact.uid),
+            write_dir: write_path
+                .join(&artifact.write_dir)
+                .into_os_string()
+                .into_string()
+                .map_err(|_| CliError::WritePathError)?,
+        };
+
+        println!(
+            "Downloading {}, type: {} to path {}",
+            Colorize::green(&format!(
+                "{}/{}/v{}",
+                args.name.as_deref().unwrap_or(""),
+                args.space.as_deref().unwrap_or(""),
+                args.version.as_deref().unwrap_or("")
+            )),
+            Colorize::alert(&format!("{:?}", &artifact.registry_type)),
+            Colorize::purple(&artifact.write_dir),
+        );
+
         match artifact.registry_type {
-            RegistryType::Service
-            | RegistryType::Mcp
-            | RegistryType::Agent
-            | RegistryType::Skill
-            | RegistryType::SubAgent
-            | RegistryType::Tool => {
-                println!(
-                    "Downloading ServiceCard {}, type: {} to path {}",
-                    Colorize::green(&format!(
-                        "{}/{}/v{}",
-                        &artifact.name, &artifact.space, &artifact.version
-                    )),
-                    Colorize::alert(&format!("{:?}", &artifact.registry_type)),
-                    Colorize::purple(&artifact.write_dir),
-                );
-
-                let write_path = if let Some(path) = write_path.as_ref() {
-                    path.to_path_buf()
-                } else {
-                    let current_dir = std::env::current_dir()?;
-                    // Store the `PathBuf` in a variable and return a reference to it
-                    current_dir.as_path().to_path_buf()
-                };
-
-                let args = DownloadCard {
-                    space: Some(artifact.space),
-                    name: Some(artifact.name),
-                    version: Some(artifact.version),
-                    uid: Some(artifact.uid),
-                    write_dir: write_path
-                        .join(artifact.write_dir)
-                        .into_os_string()
-                        .into_string()
-                        .map_err(|_| CliError::WritePathError)?,
-                };
-
+            RegistryType::Service | RegistryType::Mcp | RegistryType::Agent => {
                 download_service(&args, artifact.registry_type)?;
+            }
+            RegistryType::Skill | RegistryType::SubAgent | RegistryType::Tool => {
+                // These card types (SkillCard, SubAgentCard, ToolCard) have their own JSON schemas
+                // and must not be routed through download_service (which expects ServiceCard).
+                let query_args = args.into_query_args(artifact.registry_type)?;
+                download_card_from_registry(&query_args, args.write_path())?;
             }
             _ => {
                 return Err(RegistryError::RegistryTypeNotSupported(artifact.registry_type).into());

@@ -1,5 +1,6 @@
 use crate::contracts::CompatibleTool;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
 #[serde(rename_all = "camelCase")]
@@ -63,6 +64,17 @@ pub struct SubAgentSpec {
     pub isolation: Option<String>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub compatible_clis: Vec<CompatibleTool>,
+    /// MCP server definitions keyed by server name.
+    /// Used by Codex to populate the `[mcp_servers]` TOML table.
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
+    pub mcp_servers: HashMap<String, serde_json::Value>,
+    /// Codex sandbox mode override. When None, Codex uses its own default.
+    /// Valid values: "read-only", "workspace-write", "danger-full-access".
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sandbox_mode: Option<String>,
+    /// Model sampling temperature (0.0–2.0). Used by Gemini CLI agent frontmatter.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub temperature: Option<f32>,
 }
 
 #[cfg(test)]

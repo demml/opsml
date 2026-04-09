@@ -4546,6 +4546,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "opsml-agent-cli"
+version = "3.0.0"
+dependencies = [
+ "dirs",
+ "opsml-types",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tempfile",
+ "thiserror 2.0.18",
+ "toml",
+ "tracing",
+]
+
+[[package]]
 name = "opsml-app"
 version = "3.0.0"
 dependencies = [
@@ -4597,6 +4612,7 @@ dependencies = [
  "chrono",
  "dirs",
  "names",
+ "opsml-agent-cli",
  "opsml-colors",
  "opsml-crypt",
  "opsml-interfaces",
@@ -4621,6 +4637,7 @@ dependencies = [
  "tokio",
  "toml",
  "tracing",
+ "walkdir",
 ]
 
 [[package]]
@@ -4635,6 +4652,7 @@ dependencies = [
  "flate2",
  "mockall",
  "mockito",
+ "opsml-agent-cli",
  "opsml-cards",
  "opsml-colors",
  "opsml-crypt",

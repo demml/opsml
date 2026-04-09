@@ -13,15 +13,13 @@ pub mod utils;
 pub use data::*;
 pub use experiment::*;
 pub use model::*;
+pub use opsml_agent_cli::{
+    AgentCliFramework, ClaudeCodeFramework, CodexFramework, CopilotFramework, FrameworkError,
+    GeminiCliFramework,
+};
 pub use prompt::*;
 pub use service::*;
 pub use skill::*;
-pub use subagent::{
-    ClaudeCodeTarget, CodexTarget, CopilotTarget, GeminiCliTarget, SubAgentCard, SubAgentCliTarget,
-    SubAgentError, parse_subagent_markdown,
-};
-pub use tool::{
-    ClaudeCodeInstaller, CodexInstaller, CopilotInstaller, GeminiCliInstaller, HookInstaller,
-    McpConfigInstaller, SlashCommandInstaller, ToolCard, ToolError, parse_tool_markdown,
-};
+pub use subagent::{SubAgentCard, SubAgentError, parse_subagent_markdown};
+pub use tool::{ToolCard, ToolError, parse_tool_markdown};
 pub use utils::*;
