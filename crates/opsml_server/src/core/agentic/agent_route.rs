@@ -28,9 +28,7 @@ pub async fn invoke_agent(
     if !state.agent_store.has(&id) {
         return Err((
             StatusCode::NOT_FOUND,
-            Json(OpsmlServerError {
-                error: format!("Agent not found: {id}"),
-            }),
+            Json(OpsmlServerError::not_found(&format!("Agent '{id}'"))),
         ));
     }
 
@@ -39,9 +37,7 @@ pub async fn invoke_agent(
     if !perms.has_write_permission("") {
         return Err((
             StatusCode::FORBIDDEN,
-            Json(OpsmlServerError {
-                error: "Insufficient permissions to invoke agent".to_string(),
-            }),
+            Json(OpsmlServerError::permission_denied()),
         ));
     }
 
@@ -79,9 +75,7 @@ pub async fn get_agent_job(
     let job = state.agent_store.get_job(&job_id).await.ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,
-            Json(OpsmlServerError {
-                error: format!("Job not found: {job_id}"),
-            }),
+            Json(OpsmlServerError::not_found(&format!("Job '{job_id}'"))),
         )
     })?;
 

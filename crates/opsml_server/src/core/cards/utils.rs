@@ -202,10 +202,10 @@ pub async fn run_skill_scan(
     let Some(body) = &skill_record.body else {
         return Err((
             axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-            axum::Json(OpsmlServerError {
-                error: "Skill scan is enabled but no body was provided — registration rejected"
+            axum::Json(OpsmlServerError::new(
+                "Skill scan is enabled but no body was provided — registration rejected"
                     .to_string(),
-            }),
+            )),
         ));
     };
 
@@ -221,9 +221,9 @@ pub async fn run_skill_scan(
     let Some(result_value) = invoke_result.result else {
         return Err((
             axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-            axum::Json(OpsmlServerError {
-                error: "Skill scan returned no result — registration rejected".to_string(),
-            }),
+            axum::Json(OpsmlServerError::new(
+                "Skill scan returned no result — registration rejected".to_string(),
+            )),
         ));
     };
 
@@ -235,12 +235,10 @@ pub async fn run_skill_scan(
     if !scan.passed() {
         return Err((
             axum::http::StatusCode::UNPROCESSABLE_ENTITY,
-            axum::Json(OpsmlServerError {
-                error: format!(
-                    "Skill scan violation: {} — {:?}",
-                    scan.reason, scan.findings
-                ),
-            }),
+            axum::Json(OpsmlServerError::new(format!(
+                "Skill scan violation: {} — {:?}",
+                scan.reason, scan.findings
+            ))),
         ));
     }
 

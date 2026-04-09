@@ -11,29 +11,62 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use thiserror::Error;
 use tracing::error;
+use utoipa::ToSchema;
 
-/// Error structure for OpsML server
-/// This structure is used to return error messages in a consistent format
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct OpsmlServerError {
     pub error: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub code: Option<&'static str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub suggested_action: Option<&'static str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub retry: Option<bool>,
 }
 
 impl OpsmlServerError {
+    pub fn new(error: String) -> Self {
+        OpsmlServerError {
+            error,
+            code: None,
+            suggested_action: None,
+            retry: None,
+        }
+    }
+
+    pub fn not_found(resource: &str) -> Self {
+        OpsmlServerError {
+            error: format!("{resource} not found"),
+            code: Some("NOT_FOUND"),
+            suggested_action: Some("Call the corresponding list endpoint to see available resources"),
+            retry: Some(false),
+        }
+    }
+
     pub fn sso_not_enabled() -> Self {
         OpsmlServerError {
             error: "SSO is not enabled".to_string(),
+            code: Some("SSO_NOT_ENABLED"),
+            suggested_action: Some("Configure an SSO provider or use username/password authentication"),
+            retry: Some(false),
         }
     }
+
     pub fn permission_denied() -> Self {
         OpsmlServerError {
             error: "Permission denied".to_string(),
+            code: Some("PERMISSION_DENIED"),
+            suggested_action: Some("Verify your space permissions or authenticate with a different user"),
+            retry: Some(false),
         }
     }
 
     pub fn sso_provider_not_set() -> Self {
         OpsmlServerError {
             error: "SSO provider not set".to_string(),
+            code: Some("SSO_PROVIDER_NOT_SET"),
+            suggested_action: None,
+            retry: Some(false),
         }
     }
 
@@ -41,18 +74,27 @@ impl OpsmlServerError {
         error!("User does not have admin permissions");
         OpsmlServerError {
             error: "Need admin permission".to_string(),
+            code: Some("PERMISSION_DENIED"),
+            suggested_action: Some("This action requires admin privileges"),
+            retry: Some(false),
         }
     }
 
     pub fn user_already_exists() -> Self {
         OpsmlServerError {
             error: "User already exists".to_string(),
+            code: Some("USER_ALREADY_EXISTS"),
+            suggested_action: Some("Choose a different username"),
+            retry: Some(false),
         }
     }
 
     pub fn user_not_found() -> Self {
         OpsmlServerError {
             error: "User not found".to_string(),
+            code: Some("USER_NOT_FOUND"),
+            suggested_action: Some("Call GET /opsml/api/user to list users"),
+            retry: Some(false),
         }
     }
 
@@ -60,11 +102,18 @@ impl OpsmlServerError {
         error!("Cannot delete the last admin user");
         OpsmlServerError {
             error: "Cannot delete the last admin user".to_string(),
+            code: Some("VALIDATION_ERROR"),
+            suggested_action: Some("Promote another user to admin before deleting this one"),
+            retry: Some(false),
         }
     }
+
     pub fn key_header_not_found(key: String) -> Self {
         OpsmlServerError {
             error: format!("{key} header not found"),
+            code: Some("VALIDATION_ERROR"),
+            suggested_action: None,
+            retry: Some(false),
         }
     }
 
@@ -72,6 +121,9 @@ impl OpsmlServerError {
         error!("User validation failed");
         OpsmlServerError {
             error: "User validation failed".to_string(),
+            code: Some("VALIDATION_ERROR"),
+            suggested_action: None,
+            retry: Some(false),
         }
     }
 
@@ -79,6 +131,9 @@ impl OpsmlServerError {
         error!("Failed to generate token");
         OpsmlServerError {
             error: "Failed to generate token".to_string(),
+            code: Some("AUTH_TOKEN_ERROR"),
+            suggested_action: None,
+            retry: Some(true),
         }
     }
 
@@ -86,6 +141,9 @@ impl OpsmlServerError {
         error!("Failed to refresh token: {e}");
         OpsmlServerError {
             error: "Failed to refresh token".to_string(),
+            code: Some("AUTH_TOKEN_ERROR"),
+            suggested_action: Some("Re-authenticate via POST /opsml/api/auth/login"),
+            retry: Some(false),
         }
     }
 
@@ -93,6 +151,9 @@ impl OpsmlServerError {
         error!("Refresh token not found");
         OpsmlServerError {
             error: "Refresh token not found".to_string(),
+            code: Some("AUTH_MISSING_TOKEN"),
+            suggested_action: Some("Re-authenticate via POST /opsml/api/auth/login"),
+            retry: Some(false),
         }
     }
 
@@ -100,17 +161,19 @@ impl OpsmlServerError {
         error!("Failed to decode JWT token: {e}");
         OpsmlServerError {
             error: "Failed to decode JWT token".to_string(),
+            code: Some("AUTH_INVALID_TOKEN"),
+            suggested_action: Some("Re-authenticate via POST /opsml/api/auth/login"),
+            retry: Some(false),
         }
-    }
-
-    pub fn new(error: String) -> Self {
-        OpsmlServerError { error }
     }
 
     pub fn no_files_found() -> Self {
         error!("No files found");
         OpsmlServerError {
             error: "No files found".to_string(),
+            code: Some("NOT_FOUND"),
+            suggested_action: Some("Verify the card UID and artifact path are correct"),
+            retry: Some(false),
         }
     }
 
@@ -118,6 +181,9 @@ impl OpsmlServerError {
         error!("File too large");
         OpsmlServerError {
             error: "File too large".to_string(),
+            code: Some("FILE_TOO_LARGE"),
+            suggested_action: Some("Use multipart upload for large files"),
+            retry: Some(false),
         }
     }
 
@@ -125,6 +191,9 @@ impl OpsmlServerError {
         error!("No drift profile found");
         OpsmlServerError {
             error: "No drift profile found".to_string(),
+            code: Some("NOT_FOUND"),
+            suggested_action: Some("Register a drift profile before querying drift metrics"),
+            retry: Some(false),
         }
     }
 
@@ -132,6 +201,9 @@ impl OpsmlServerError {
         error!("Failed to save to storage: {e}");
         OpsmlServerError {
             error: "Failed to save to storage".to_string(),
+            code: Some("STORAGE_ERROR"),
+            suggested_action: None,
+            retry: Some(true),
         }
     }
 
@@ -139,6 +211,9 @@ impl OpsmlServerError {
         error!("Invalid path");
         OpsmlServerError {
             error: "Invalid path".to_string(),
+            code: Some("VALIDATION_ERROR"),
+            suggested_action: None,
+            retry: Some(false),
         }
     }
 
@@ -146,6 +221,9 @@ impl OpsmlServerError {
         error!("Missing session URI");
         OpsmlServerError {
             error: "Missing session URI".to_string(),
+            code: Some("VALIDATION_ERROR"),
+            suggested_action: Some("Initiate a multipart upload before uploading parts"),
+            retry: Some(false),
         }
     }
 
@@ -153,6 +231,9 @@ impl OpsmlServerError {
         error!("Missing part number");
         OpsmlServerError {
             error: "Missing part number".to_string(),
+            code: Some("VALIDATION_ERROR"),
+            suggested_action: None,
+            retry: Some(false),
         }
     }
 
@@ -160,6 +241,9 @@ impl OpsmlServerError {
         error!("Failed to delete file");
         OpsmlServerError {
             error: "Failed to delete file".to_string(),
+            code: Some("STORAGE_ERROR"),
+            suggested_action: None,
+            retry: Some(true),
         }
     }
 
@@ -167,6 +251,9 @@ impl OpsmlServerError {
         error!("Missing space and name");
         OpsmlServerError {
             error: "Missing space and name".to_string(),
+            code: Some("VALIDATION_ERROR"),
+            suggested_action: Some("Provide both 'space' and 'name' query parameters"),
+            retry: Some(false),
         }
     }
 
@@ -174,6 +261,9 @@ impl OpsmlServerError {
         error!("Invalid token");
         OpsmlServerError {
             error: "Invalid token".to_string(),
+            code: Some("AUTH_INVALID_TOKEN"),
+            suggested_action: Some("Re-authenticate via POST /opsml/api/auth/login"),
+            retry: Some(false),
         }
     }
 
@@ -181,6 +271,9 @@ impl OpsmlServerError {
         error!("Missing token");
         OpsmlServerError {
             error: "Missing token".to_string(),
+            code: Some("AUTH_MISSING_TOKEN"),
+            suggested_action: Some("Include a Bearer token in the Authorization header"),
+            retry: Some(false),
         }
     }
 
@@ -188,6 +281,9 @@ impl OpsmlServerError {
         error!("Invalid recovery token");
         OpsmlServerError {
             error: "Invalid recovery token".to_string(),
+            code: Some("AUTH_INVALID_TOKEN"),
+            suggested_action: None,
+            retry: Some(false),
         }
     }
 
@@ -195,6 +291,9 @@ impl OpsmlServerError {
         error!("Failed to pop from vector");
         OpsmlServerError {
             error: "Failed to pop from vector".to_string(),
+            code: Some("INTERNAL_ERROR"),
+            suggested_action: None,
+            retry: Some(true),
         }
     }
 
@@ -206,7 +305,6 @@ impl OpsmlServerError {
     }
 }
 
-/// Generic function for returning server errors
 pub fn internal_server_error<E: std::fmt::Display>(
     error: E,
     message: &str,
@@ -215,14 +313,15 @@ pub fn internal_server_error<E: std::fmt::Display>(
     let msg = format!("{message}: {error}");
     (
         status_code.unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
-        Json(OpsmlServerError::new(msg)),
+        Json(OpsmlServerError {
+            error: msg,
+            code: Some("INTERNAL_ERROR"),
+            suggested_action: None,
+            retry: Some(true),
+        }),
     )
 }
 
-// Server error enum
-// reminder: none of this Errors should implement a pyerr conversion
-// pyerr will require a python runtime. In rust-only code (like the server) we
-// don't want this
 #[derive(Error, Debug)]
 pub enum ServerError {
     #[error("Failed to create client with error: {0}")]
@@ -275,7 +374,6 @@ pub enum ServerError {
 }
 
 impl ServerError {
-    /// Returns true if this error is a unique constraint violation from the database.
     pub fn is_unique_violation(&self) -> bool {
         match self {
             ServerError::SqlError(sql_err) => sql_err.is_unique_violation(),

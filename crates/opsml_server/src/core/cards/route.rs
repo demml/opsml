@@ -457,9 +457,9 @@ pub async fn create_card(
     {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(OpsmlServerError {
-                error: "args_schema exceeds maximum size of 64KB".to_string(),
-            }),
+            Json(OpsmlServerError::new(
+                "args_schema exceeds maximum size of 64KB".to_string(),
+            )),
         ));
     }
 
