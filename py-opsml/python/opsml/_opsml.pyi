@@ -20883,6 +20883,7 @@ class SkillCard:
         compatible_tools: Optional[List[str]] = None,
         dependencies: Optional[List[SkillDependency]] = None,
         input_schema: Optional[Any] = None,
+        source_dir: Optional[Path] = None,
     ) -> None: ...
     @property
     def skill(self) -> AgentSkillStandard: ...

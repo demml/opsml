@@ -1,6 +1,9 @@
 use crate::actions::skill::find_card_json;
-use crate::cli::arg::{ToolInitArgs, ToolListArgs, ToolPullArgs, ToolPushArgs};
+use crate::cli::arg::{PullTarget, ToolInitArgs, ToolListArgs, ToolPullArgs, ToolPushArgs};
 use crate::error::CliError;
+use opsml_agent_cli::{
+    AgentCliFramework, ClaudeCodeFramework, CodexFramework, CopilotFramework, GeminiCliFramework,
+};
 use opsml_cards::parse_tool_markdown;
 use opsml_colors::Colorize;
 use opsml_registry::download::download_card_from_registry;
@@ -118,11 +121,17 @@ pub fn pull_tool(args: &ToolPullArgs) -> Result<(), CliError> {
             "Hook tools require --target (claudecode|geminicli|codex|githubcopilot)".into(),
         ));
     }
-    let hook_installer = args.target.as_ref().map(|t| t.as_hook_installer());
     let installed_path = card
         .pull_artifacts(
             output_dir,
-            hook_installer.as_deref(),
+            args.target.as_ref().map(|t| -> &dyn AgentCliFramework {
+                match t {
+                    PullTarget::ClaudeCode => &ClaudeCodeFramework,
+                    PullTarget::Codex => &CodexFramework,
+                    PullTarget::GeminiCli => &GeminiCliFramework,
+                    PullTarget::GithubCopilot => &CopilotFramework,
+                }
+            }),
             args.global,
             expected_hash.as_deref(),
         )

@@ -65,6 +65,13 @@ pub fn push_skill(args: &SkillPushArgs) -> Result<(), CliError> {
 
     let mut card = parse_skill_markdown(&content, Some(&args.path))?;
 
+    let skill_source_dir = args
+        .path
+        .parent()
+        .unwrap_or(std::path::Path::new("."))
+        .to_path_buf();
+    card.source_dir = Some(skill_source_dir);
+
     let root = args.path.parent().unwrap_or(std::path::Path::new("."));
     card.skill
         .validate(root)
@@ -125,7 +132,6 @@ pub fn pull_skill(args: &SkillPullArgs) -> Result<(), CliError> {
     let card = opsml_cards::SkillCard::from_path(card_json)?;
 
     let markdown = card.to_markdown()?;
-    // tmp_dir drops here, cleaning up automatically
 
     let output_path = resolve_pull_path(
         &name_clean,
@@ -134,11 +140,20 @@ pub fn pull_skill(args: &SkillPullArgs) -> Result<(), CliError> {
         args.local,
     )?;
 
-    if let Some(parent) = output_path.parent() {
-        std::fs::create_dir_all(parent)?;
+    let output_dir = output_path
+        .parent()
+        .unwrap_or_else(|| std::path::Path::new("."));
+
+    std::fs::create_dir_all(output_dir)?;
+    copy_downloaded_skill_files(&tmp_path, output_dir)?;
+
+    let skill_md_path = output_dir.join("SKILL.md");
+    if !skill_md_path.exists() {
+        std::fs::write(&skill_md_path, &markdown)?;
     }
 
-    std::fs::write(&output_path, &markdown)?;
+    // tmp_dir drops here, cleaning up automatically
+    drop(tmp_dir);
 
     // Auto-track: append to the appropriate skills.yaml unless --no-track
     if !args.no_track {
@@ -176,9 +191,78 @@ pub fn pull_skill(args: &SkillPullArgs) -> Result<(), CliError> {
         Colorize::purple(&card.space),
         card.name,
         Colorize::green(&card.version),
-        output_path.display(),
+        output_dir.display(),
     );
 
+    Ok(())
+}
+
+fn copy_downloaded_skill_files(
+    src_dir: &std::path::Path,
+    dest_dir: &std::path::Path,
+) -> Result<(), CliError> {
+    if !src_dir.is_dir() {
+        return Ok(());
+    }
+    let canonical_dest = dest_dir.canonicalize().map_err(|e| {
+        CliError::Error(format!(
+            "cannot canonicalize output dir '{}': {e}",
+            dest_dir.display()
+        ))
+    })?;
+    for entry in std::fs::read_dir(src_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        let file_name = entry.file_name();
+        let name = file_name.to_string_lossy();
+        if name == "Card.json" {
+            continue;
+        }
+        let dest = canonical_dest.join(&file_name);
+        if path.is_dir() {
+            copy_dir_recursive(&path, &dest, &canonical_dest)?;
+        } else {
+            if let Some(parent) = dest.parent() {
+                std::fs::create_dir_all(parent)?;
+            }
+            let canonical_file = dest.canonicalize().unwrap_or_else(|_| dest.clone());
+            if !canonical_file.starts_with(&canonical_dest) {
+                return Err(CliError::Error(format!(
+                    "path traversal detected: '{}' escapes output directory",
+                    dest.display()
+                )));
+            }
+            std::fs::copy(&path, &dest)?;
+        }
+    }
+    Ok(())
+}
+
+fn copy_dir_recursive(
+    src: &std::path::Path,
+    dest: &std::path::Path,
+    canonical_root: &std::path::Path,
+) -> Result<(), CliError> {
+    std::fs::create_dir_all(dest)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let src_path = entry.path();
+        let dest_path = dest.join(entry.file_name());
+        if src_path.is_dir() {
+            copy_dir_recursive(&src_path, &dest_path, canonical_root)?;
+        } else {
+            let canonical_file = dest_path
+                .canonicalize()
+                .unwrap_or_else(|_| dest_path.clone());
+            if !canonical_file.starts_with(canonical_root) {
+                return Err(CliError::Error(format!(
+                    "path traversal detected: '{}' escapes output directory",
+                    dest_path.display()
+                )));
+            }
+            std::fs::copy(&src_path, &dest_path)?;
+        }
+    }
     Ok(())
 }
 
@@ -375,7 +459,7 @@ mod tests {
         );
         assert_eq!(
             PullTarget::Codex.skill_path("my-skill"),
-            PathBuf::from(".agents/skills/my-skill/SKILL.md")
+            PathBuf::from(".codex/skills/my-skill/SKILL.md")
         );
         assert_eq!(
             PullTarget::GeminiCli.skill_path("my-skill"),
@@ -383,7 +467,7 @@ mod tests {
         );
         assert_eq!(
             PullTarget::GithubCopilot.skill_path("my-skill"),
-            PathBuf::from(".github/copilot/skills/my-skill/SKILL.md")
+            PathBuf::from(".github/skills/my-skill/SKILL.md")
         );
     }
 
@@ -446,10 +530,7 @@ mod tests {
     fn test_resolve_pull_path_local_flag() {
         let path =
             resolve_pull_path("my-skill", None, Some(&PullTarget::GithubCopilot), true).unwrap();
-        assert_eq!(
-            path,
-            PathBuf::from(".github/copilot/skills/my-skill/SKILL.md")
-        );
+        assert_eq!(path, PathBuf::from(".github/skills/my-skill/SKILL.md"));
     }
 
     #[test]

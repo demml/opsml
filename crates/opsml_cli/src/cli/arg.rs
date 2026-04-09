@@ -2,8 +2,8 @@ use std::path::PathBuf;
 
 use crate::error::CliError;
 use clap::{Args, ValueEnum};
-use opsml_cards::subagent::{
-    ClaudeCodeTarget, CodexTarget, CopilotTarget, GeminiCliTarget, SubAgentCliTarget,
+use opsml_agent_cli::{
+    AgentCliFramework, ClaudeCodeFramework, CodexFramework, CopilotFramework, GeminiCliFramework,
 };
 use opsml_semver::VersionType;
 use opsml_service::service::DEFAULT_SERVICE_FILENAME;
@@ -324,58 +324,21 @@ pub enum PullTarget {
 impl PullTarget {
     pub fn skill_path(&self, name: &str) -> PathBuf {
         match self {
-            Self::ClaudeCode => PathBuf::from(format!(".claude/skills/{name}/SKILL.md")),
-            Self::Codex => PathBuf::from(format!(".agents/skills/{name}/SKILL.md")),
-            Self::GeminiCli => PathBuf::from(format!(".gemini/skills/{name}/SKILL.md")),
-            Self::GithubCopilot => PathBuf::from(format!(".github/copilot/skills/{name}/SKILL.md")),
+            Self::ClaudeCode => ClaudeCodeFramework.skill_path(name),
+            Self::Codex => CodexFramework.skill_path(name),
+            Self::GeminiCli => GeminiCliFramework.skill_path(name),
+            Self::GithubCopilot => CopilotFramework.skill_path(name),
         }
     }
 
     pub fn global_skill_path(&self, name: &str) -> Result<PathBuf, CliError> {
-        let home = dirs::home_dir()
-            .ok_or_else(|| CliError::Error("Cannot determine home directory".into()))?;
-        Ok(match self {
-            Self::ClaudeCode => home.join(format!(".claude/skills/{name}/SKILL.md")),
-            Self::Codex => home.join(format!(".agents/skills/{name}/SKILL.md")),
-            Self::GeminiCli => home.join(format!(".gemini/skills/{name}/SKILL.md")),
-            Self::GithubCopilot => home.join(format!(".github/copilot/skills/{name}/SKILL.md")),
-        })
-    }
-
-    pub fn as_subagent_target(&self) -> Box<dyn SubAgentCliTarget> {
-        match self {
-            Self::ClaudeCode => Box::new(ClaudeCodeTarget),
-            Self::Codex => Box::new(CodexTarget),
-            Self::GeminiCli => Box::new(GeminiCliTarget),
-            Self::GithubCopilot => Box::new(CopilotTarget),
-        }
-    }
-
-    pub fn as_slash_command_installer(&self) -> Box<dyn opsml_cards::SlashCommandInstaller> {
-        match self {
-            Self::ClaudeCode => Box::new(opsml_cards::ClaudeCodeInstaller),
-            Self::Codex => Box::new(opsml_cards::CodexInstaller),
-            Self::GeminiCli => Box::new(opsml_cards::GeminiCliInstaller),
-            Self::GithubCopilot => Box::new(opsml_cards::CopilotInstaller),
-        }
-    }
-
-    pub fn as_mcp_config_installer(&self) -> Box<dyn opsml_cards::McpConfigInstaller> {
-        match self {
-            Self::ClaudeCode => Box::new(opsml_cards::ClaudeCodeInstaller),
-            Self::Codex => Box::new(opsml_cards::CodexInstaller),
-            Self::GeminiCli => Box::new(opsml_cards::GeminiCliInstaller),
-            Self::GithubCopilot => Box::new(opsml_cards::CopilotInstaller),
-        }
-    }
-
-    pub fn as_hook_installer(&self) -> Box<dyn opsml_cards::HookInstaller> {
-        match self {
-            Self::ClaudeCode => Box::new(opsml_cards::ClaudeCodeInstaller),
-            Self::Codex => Box::new(opsml_cards::CodexInstaller),
-            Self::GeminiCli => Box::new(opsml_cards::GeminiCliInstaller),
-            Self::GithubCopilot => Box::new(opsml_cards::CopilotInstaller),
-        }
+        let result = match self {
+            Self::ClaudeCode => ClaudeCodeFramework.global_skill_path(name),
+            Self::Codex => CodexFramework.global_skill_path(name),
+            Self::GeminiCli => GeminiCliFramework.global_skill_path(name),
+            Self::GithubCopilot => CopilotFramework.global_skill_path(name),
+        };
+        result.map_err(|e| CliError::Error(e.to_string()))
     }
 }
 

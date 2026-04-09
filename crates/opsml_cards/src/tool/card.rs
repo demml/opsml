@@ -51,7 +51,8 @@ pub fn parse_tool_markdown(content: &str) -> Result<ToolCard, ToolError> {
     }
 
     if let Some(m) = &spec.hook_matcher {
-        super::installer::validate_hook_matcher(m)?;
+        opsml_agent_cli::utils::validate_hook_matcher(m)
+            .map_err(|e| ToolError::Error(e.to_string()))?;
     }
 
     let body_opt = if body.is_empty() { None } else { Some(body) };
@@ -72,6 +73,12 @@ fn validate_script_body(body: &str, tool_name: &str) -> Result<(), ToolError> {
         "#!/usr/bin/env bash",
         "#!/usr/bin/env sh",
     ];
+    if body.is_empty() {
+        return Err(ToolError::Error(format!(
+            "script body for '{}' must not be empty",
+            tool_name
+        )));
+    }
     if body.len() > MAX_BYTES {
         return Err(ToolError::Error(format!(
             "script body for '{}' exceeds 1 MB limit",
@@ -79,7 +86,11 @@ fn validate_script_body(body: &str, tool_name: &str) -> Result<(), ToolError> {
         )));
     }
     let first_line = body.lines().next().unwrap_or("");
-    if !ALLOWED_SHEBANGS.iter().any(|s| first_line.starts_with(s)) {
+    // Use exact match (not starts_with) to prevent shebang flag injection (e.g. #!/bin/bash -x).
+    if !ALLOWED_SHEBANGS
+        .iter()
+        .any(|s| first_line.trim_end_matches('\r') == *s)
+    {
         return Err(ToolError::Error(format!(
             "script body for '{}' must start with one of: {}",
             tool_name,
@@ -242,7 +253,7 @@ impl ToolCard {
     pub fn pull_artifacts(
         &self,
         install_dir: PathBuf,
-        hook_installer: Option<&dyn super::installer::HookInstaller>,
+        framework: Option<&dyn opsml_agent_cli::AgentCliFramework>,
         global: bool,
         expected_hash: Option<&[u8]>,
     ) -> Result<PathBuf, ToolError> {
@@ -258,6 +269,7 @@ impl ToolCard {
             )));
         }
         std::fs::create_dir_all(&install_dir)?;
+        // Windows canonicalize changes drive prefix format and breaks path comparison; skip there.
         #[cfg(unix)]
         let install_dir = install_dir.canonicalize()?;
         if matches!(self.spec.tool_type, ToolType::ShellScript | ToolType::Hook)
@@ -292,7 +304,14 @@ impl ToolCard {
         match &self.spec.tool_type {
             ToolType::ShellScript => {
                 let path = install_dir.join(format!("{}.sh", self.name));
-                std::fs::write(&path, body_content)?;
+                {
+                    use std::io::Write;
+                    let mut tmp = tempfile::NamedTempFile::new_in(&install_dir)?;
+                    tmp.write_all(body_content.as_bytes())?;
+                    tmp.persist(&path).map_err(|e| {
+                        ToolError::Error(format!("Failed to persist script file: {e}"))
+                    })?;
+                }
                 #[cfg(unix)]
                 {
                     use std::os::unix::fs::PermissionsExt;
@@ -338,7 +357,14 @@ impl ToolCard {
                 let hook_dir = install_dir.join(".opsml/hooks");
                 std::fs::create_dir_all(&hook_dir)?;
                 let path = hook_dir.join(format!("{}.sh", self.name));
-                std::fs::write(&path, body_content)?;
+                {
+                    use std::io::Write;
+                    let mut tmp = tempfile::NamedTempFile::new_in(&hook_dir)?;
+                    tmp.write_all(body_content.as_bytes())?;
+                    tmp.persist(&path).map_err(|e| {
+                        ToolError::Error(format!("Failed to persist script file: {e}"))
+                    })?;
+                }
                 #[cfg(unix)]
                 {
                     use std::os::unix::fs::PermissionsExt;
@@ -356,8 +382,8 @@ impl ToolCard {
                         );
                         path.clone()
                     });
-                if let Some(installer) = hook_installer {
-                    installer.install_hook(
+                if let Some(fw) = framework {
+                    fw.install_hook(
                         &self.name,
                         &relative_path,
                         &self.spec.hook_events,
@@ -708,24 +734,25 @@ mod tests {
 
     #[test]
     fn test_merge_mcp_entry_idempotent() {
-        use crate::tool::installer::{ClaudeCodeInstaller, McpConfigInstaller};
+        use opsml_agent_cli::{AgentCliFramework, ClaudeCodeFramework};
 
         let tmp = tempfile::tempdir().unwrap();
+        let _guard = crate::tool::test_util::CWD_LOCK
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
         let orig_dir = std::env::current_dir().unwrap();
         std::env::set_current_dir(tmp.path()).unwrap();
 
-        let installer = ClaudeCodeInstaller;
+        let fw = ClaudeCodeFramework;
         let entry = serde_json::json!({
             "command": "npx",
             "args": ["-y", "my-mcp-server"]
         });
 
-        installer
-            .merge_mcp_entry("my-server", entry.clone())
-            .unwrap();
-        installer.merge_mcp_entry("my-server", entry).unwrap();
+        fw.merge_mcp_entry("my-server", entry.clone()).unwrap();
+        fw.merge_mcp_entry("my-server", entry).unwrap();
 
-        let content = std::fs::read_to_string(installer.mcp_config_path()).unwrap();
+        let content = std::fs::read_to_string(fw.mcp_config_path()).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&content).unwrap();
         let mcp_servers = parsed["mcpServers"].as_object().unwrap();
 
@@ -883,12 +910,12 @@ mod tests {
 
     #[test]
     fn test_pull_hook_with_claude_installer() {
-        use crate::tool::installer::ClaudeCodeInstaller;
+        use opsml_agent_cli::ClaudeCodeFramework;
         with_hook_tempdir(|tmp| {
             let card = make_hook_card("my-hook");
-            let installer = ClaudeCodeInstaller;
+            let framework = ClaudeCodeFramework;
             let path = card
-                .pull_artifacts(tmp.to_path_buf(), Some(&installer), false, None)
+                .pull_artifacts(tmp.to_path_buf(), Some(&framework), false, None)
                 .unwrap();
             assert!(path.exists(), "script must be written");
 
@@ -907,7 +934,7 @@ mod tests {
 
     #[test]
     fn test_pull_hook_custom_output_dir_config_path_correct() {
-        use crate::tool::installer::ClaudeCodeInstaller;
+        use opsml_agent_cli::ClaudeCodeFramework;
         let cwd_tmp = tempfile::tempdir().unwrap();
         let install_tmp = tempfile::tempdir().unwrap();
 
@@ -918,11 +945,11 @@ mod tests {
         std::env::set_current_dir(cwd_tmp.path()).unwrap();
 
         let card = make_hook_card("my-hook");
-        let installer = ClaudeCodeInstaller;
+        let framework = ClaudeCodeFramework;
         let path = card
             .pull_artifacts(
                 install_tmp.path().to_path_buf(),
-                Some(&installer),
+                Some(&framework),
                 false,
                 None,
             )
@@ -954,12 +981,12 @@ mod tests {
 
     #[test]
     fn test_pull_hook_with_gemini_installer() {
-        use crate::tool::installer::GeminiCliInstaller;
+        use opsml_agent_cli::GeminiCliFramework;
         with_hook_tempdir(|tmp| {
             let card = make_hook_card("my-hook");
-            let installer = GeminiCliInstaller;
+            let framework = GeminiCliFramework;
             let path = card
-                .pull_artifacts(tmp.to_path_buf(), Some(&installer), false, None)
+                .pull_artifacts(tmp.to_path_buf(), Some(&framework), false, None)
                 .unwrap();
             assert!(path.exists(), "script must be written");
 
@@ -967,79 +994,88 @@ mod tests {
                 &std::fs::read_to_string(tmp.join(".gemini/settings.json")).unwrap(),
             )
             .unwrap();
-            let arr = settings["hooks"]["post_tool_use"].as_array().unwrap();
+            // Gemini uses AfterTool (not post_tool_use) per Gemini CLI docs
+            let arr = settings["hooks"]["AfterTool"].as_array().unwrap();
             assert_eq!(arr.len(), 1);
+            // Gemini format: { "matcher": ..., "sequential": ..., "hooks": [{ "type": "command", "command": "..." }] }
             assert_eq!(
-                arr[0]["script"], ".opsml/hooks/my-hook.sh",
-                "Gemini script path"
+                arr[0]["hooks"][0]["command"], ".opsml/hooks/my-hook.sh",
+                "Gemini command path"
             );
         });
     }
 
     #[test]
     fn test_pull_hook_with_codex_installer() {
-        use crate::tool::installer::CodexInstaller;
+        use opsml_agent_cli::CodexFramework;
         with_hook_tempdir(|tmp| {
             let card = make_hook_card("my-hook");
-            let installer = CodexInstaller;
+            let framework = CodexFramework;
             let path = card
-                .pull_artifacts(tmp.to_path_buf(), Some(&installer), false, None)
+                .pull_artifacts(tmp.to_path_buf(), Some(&framework), false, None)
                 .unwrap();
             assert!(path.exists(), "script must be written");
 
-            let config_path = tmp.join(".codex/config.yaml");
-            assert!(config_path.exists());
+            // Codex hooks go to hooks.json, NOT config.toml
+            let hooks_path = tmp.join(".codex/hooks.json");
+            assert!(hooks_path.exists(), "hooks.json must be created");
             let parsed: serde_json::Value =
-                serde_yaml::from_str(&std::fs::read_to_string(&config_path).unwrap()).unwrap();
+                serde_json::from_str(&std::fs::read_to_string(&hooks_path).unwrap()).unwrap();
             let hooks = parsed["hooks"].as_array().unwrap();
             assert_eq!(hooks.len(), 1);
-            assert_eq!(hooks[0]["event"], "post_tool_use");
-            assert_eq!(hooks[0]["script"], ".opsml/hooks/my-hook.sh");
+            // PascalCase event name
+            assert_eq!(hooks[0]["event"].as_str().unwrap(), "PostToolUse");
+            // "command" field, not "script"
+            assert_eq!(
+                hooks[0]["command"].as_str().unwrap(),
+                ".opsml/hooks/my-hook.sh"
+            );
         });
     }
 
     #[test]
     fn test_pull_hook_with_copilot_installer() {
-        use crate::tool::installer::CopilotInstaller;
+        use opsml_agent_cli::CopilotFramework;
         with_hook_tempdir(|tmp| {
             let card = make_hook_card("my-hook");
-            let installer = CopilotInstaller;
+            let framework = CopilotFramework;
             let path = card
-                .pull_artifacts(tmp.to_path_buf(), Some(&installer), false, None)
+                .pull_artifacts(tmp.to_path_buf(), Some(&framework), false, None)
                 .unwrap();
-            // Copilot writes the script but no config file
             assert!(path.exists(), "script must be written");
-            assert!(
-                !tmp.join(".claude/settings.json").exists(),
-                "no Claude config for Copilot"
+
+            // Copilot writes to .github/hooks/hooks.json (camelCase events)
+            let hooks_path = tmp.join(".github/hooks/hooks.json");
+            assert!(hooks_path.exists(), "Copilot hooks.json must be created");
+            let parsed: serde_json::Value =
+                serde_json::from_str(&std::fs::read_to_string(&hooks_path).unwrap()).unwrap();
+            assert_eq!(
+                parsed["version"], 1,
+                "Copilot hooks.json must have version:1"
             );
-            assert!(
-                !tmp.join(".gemini/settings.json").exists(),
-                "no Gemini config for Copilot"
-            );
-            assert!(
-                !tmp.join(".codex/config.yaml").exists(),
-                "no Codex config for Copilot"
-            );
+            let arr = parsed["hooks"]["postToolUse"].as_array().unwrap();
+            assert_eq!(arr.len(), 1);
+            assert_eq!(arr[0]["type"].as_str().unwrap(), "command");
+            assert_eq!(arr[0]["bash"].as_str().unwrap(), ".opsml/hooks/my-hook.sh");
         });
     }
 
     #[test]
     fn test_pull_hook_to_all_installers() {
-        use crate::tool::installer::{
-            ClaudeCodeInstaller, CodexInstaller, CopilotInstaller, GeminiCliInstaller,
+        use opsml_agent_cli::{
+            ClaudeCodeFramework, CodexFramework, CopilotFramework, GeminiCliFramework,
         };
         with_hook_tempdir(|tmp| {
             let card = make_hook_card("multi-hook");
 
             // Pull to all four targets in sequence (same working dir = same config dir)
-            card.pull_artifacts(tmp.to_path_buf(), Some(&ClaudeCodeInstaller), false, None)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&ClaudeCodeFramework), false, None)
                 .unwrap();
-            card.pull_artifacts(tmp.to_path_buf(), Some(&GeminiCliInstaller), false, None)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&GeminiCliFramework), false, None)
                 .unwrap();
-            card.pull_artifacts(tmp.to_path_buf(), Some(&CodexInstaller), false, None)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&CodexFramework), false, None)
                 .unwrap();
-            card.pull_artifacts(tmp.to_path_buf(), Some(&CopilotInstaller), false, None)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&CopilotFramework), false, None)
                 .unwrap();
 
             // Script written once (subsequent pulls overwrite same path — that's fine)
@@ -1062,36 +1098,41 @@ mod tests {
             )
             .unwrap();
             assert!(
-                gemini["hooks"]["post_tool_use"].as_array().is_some(),
-                "Gemini post_tool_use registered"
+                gemini["hooks"]["AfterTool"].as_array().is_some(),
+                "Gemini AfterTool registered"
             );
 
-            // Codex config
-            let codex: serde_json::Value = serde_yaml::from_str(
-                &std::fs::read_to_string(tmp.join(".codex/config.yaml")).unwrap(),
+            // Codex hooks (hooks.json, PascalCase events)
+            let codex: serde_json::Value = serde_json::from_str(
+                &std::fs::read_to_string(tmp.join(".codex/hooks.json")).unwrap(),
             )
             .unwrap();
             assert!(
                 !codex["hooks"].as_array().unwrap().is_empty(),
                 "Codex hooks registered"
             );
+            assert_eq!(
+                codex["hooks"][0]["event"].as_str().unwrap(),
+                "PostToolUse",
+                "Codex hook event must be PascalCase"
+            );
         });
     }
 
     #[test]
     fn test_pull_hook_codex_then_claude() {
-        use crate::tool::installer::{ClaudeCodeInstaller, CodexInstaller};
+        use opsml_agent_cli::{ClaudeCodeFramework, CodexFramework};
         with_hook_tempdir(|tmp| {
             let card = make_hook_card("cross-hook");
 
             // Register in Codex first, then Claude — both configs must be independent
-            card.pull_artifacts(tmp.to_path_buf(), Some(&CodexInstaller), false, None)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&CodexFramework), false, None)
                 .unwrap();
-            card.pull_artifacts(tmp.to_path_buf(), Some(&ClaudeCodeInstaller), false, None)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&ClaudeCodeFramework), false, None)
                 .unwrap();
 
-            let codex: serde_json::Value = serde_yaml::from_str(
-                &std::fs::read_to_string(tmp.join(".codex/config.yaml")).unwrap(),
+            let codex: serde_json::Value = serde_json::from_str(
+                &std::fs::read_to_string(tmp.join(".codex/hooks.json")).unwrap(),
             )
             .unwrap();
             assert_eq!(codex["hooks"].as_array().unwrap().len(), 1);
@@ -1106,13 +1147,13 @@ mod tests {
 
     #[test]
     fn test_pull_hook_claude_then_gemini() {
-        use crate::tool::installer::{ClaudeCodeInstaller, GeminiCliInstaller};
+        use opsml_agent_cli::{ClaudeCodeFramework, GeminiCliFramework};
         with_hook_tempdir(|tmp| {
             let card = make_hook_card("cross-hook2");
 
-            card.pull_artifacts(tmp.to_path_buf(), Some(&ClaudeCodeInstaller), false, None)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&ClaudeCodeFramework), false, None)
                 .unwrap();
-            card.pull_artifacts(tmp.to_path_buf(), Some(&GeminiCliInstaller), false, None)
+            card.pull_artifacts(tmp.to_path_buf(), Some(&GeminiCliFramework), false, None)
                 .unwrap();
 
             let claude: serde_json::Value = serde_json::from_str(
@@ -1126,7 +1167,7 @@ mod tests {
                 &std::fs::read_to_string(tmp.join(".gemini/settings.json")).unwrap(),
             )
             .unwrap();
-            let arr = gemini["hooks"]["post_tool_use"].as_array().unwrap();
+            let arr = gemini["hooks"]["AfterTool"].as_array().unwrap();
             assert_eq!(arr.len(), 1, "Gemini must have exactly one hook entry");
         });
     }
