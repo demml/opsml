@@ -218,7 +218,7 @@ fn copy_downloaded_skill_files(
         if name == "Card.json" {
             continue;
         }
-        let dest = dest_dir.join(&file_name);
+        let dest = canonical_dest.join(&file_name);
         if path.is_dir() {
             copy_dir_recursive(&path, &dest, &canonical_dest)?;
         } else {

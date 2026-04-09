@@ -59,7 +59,7 @@ fn copy_companion_files(source_dir: &Path, dest_dir: &Path) -> Result<(), SkillE
         if file_name == "SKILL.md" || file_name == "Card.json" {
             continue;
         }
-        let dest = dest_dir.join(rel);
+        let dest = canonical_dest.join(rel);
         if entry.file_type().is_dir() {
             std::fs::create_dir_all(&dest)?;
         } else {
