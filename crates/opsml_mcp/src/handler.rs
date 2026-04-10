@@ -8,7 +8,7 @@ use serde_json::{Value, json};
 
 #[cfg(feature = "server")]
 use {
-    crate::protocol::{CardQueryArgs, RegistrySpaceRequest},
+    crate::protocol::{CardQueryArgs, RegistrySpaceRequest, ServiceToolsArgs},
     opsml_auth::permission::UserPermissions,
     opsml_sql::enums::client::SqlClientEnum,
     opsml_sql::traits::CardLogicTrait,
@@ -166,6 +166,21 @@ For Claude Desktop, set the header in claude_desktop_config.json under the serve
                     "required": ["registry_type", "name"]
                 }),
             },
+            ToolDef {
+                name: "service_tools",
+                description: "Generate callable tool definitions from a deployed OpsML service. \
+                    Works with any service type: Agent (generates one tool per skill), \
+                    MCP (generates server connection tool), Workflow (generates trigger tool). \
+                    Returns tool specs with full API call configuration.",
+                input_schema: json!({
+                    "type": "object",
+                    "properties": {
+                        "space": { "type": "string", "description": "The service's space name" },
+                        "name": { "type": "string", "description": "The service name" }
+                    },
+                    "required": ["space", "name"]
+                }),
+            },
         ]);
 
         JsonRpcResponse::ok(id, ToolsListResult { tools })
@@ -189,6 +204,8 @@ For Claude Desktop, set the header in claude_desktop_config.json under the serve
             ToolCall::ListSpaces(args) => self.tool_list_spaces(id, args, perms).await,
             #[cfg(feature = "server")]
             ToolCall::SearchCards(args) => self.tool_search_cards(id, args, perms).await,
+            #[cfg(feature = "server")]
+            ToolCall::ServiceTools(args) => self.tool_service_tools(id, args, perms).await,
             ToolCall::Unknown(name) => {
                 JsonRpcResponse::err(id, -32602, format!("Unknown tool: {name}"))
             }
@@ -393,5 +410,105 @@ For Claude Desktop, set the header in claude_desktop_config.json under the serve
             }
             Err(e) => JsonRpcResponse::err(id, -32603, format!("Query failed: {e}")),
         }
+    }
+
+    #[cfg(feature = "server")]
+    async fn tool_service_tools(
+        &self,
+        id: Option<Value>,
+        args: ServiceToolsArgs,
+        _perms: UserPermissions,
+    ) -> JsonRpcResponse {
+        use opsml_types::contracts::service::AgentConfig;
+        use opsml_types::contracts::service_tool::tools_from_service;
+
+        let sql = match self.sql.as_ref() {
+            Some(s) => s,
+            None => return JsonRpcResponse::err(id, -32603, "No database connection available"),
+        };
+
+        // Query the service card
+        let query_args = CardQueryArgs {
+            space: Some(args.space.clone()),
+            name: Some(args.name.clone()),
+            sort_by_timestamp: Some(true),
+            limit: Some(1),
+            ..Default::default()
+        };
+
+        let results = match sql.query_cards(&CardTable::Service, &query_args).await {
+            Ok(r) => r,
+            Err(e) => {
+                return JsonRpcResponse::err(
+                    id,
+                    -32603,
+                    format!("Failed to query service {}/{}: {e}", args.space, args.name),
+                );
+            }
+        };
+
+        let records = match results {
+            opsml_sql::schemas::CardResults::Service(recs) => recs,
+            _ => {
+                return JsonRpcResponse::err(id, -32603, "Unexpected result type");
+            }
+        };
+
+        let record = match records.into_iter().next() {
+            Some(r) => r,
+            None => {
+                return JsonRpcResponse::err(
+                    id,
+                    -32602,
+                    format!("Service {}/{} not found", args.space, args.name),
+                );
+            }
+        };
+
+        let deploy = record
+            .deployment
+            .as_ref()
+            .map(|d| d.0.as_slice())
+            .unwrap_or(&[]);
+
+        let service_type =
+            opsml_types::contracts::ServiceType::from(record.service_type.as_str());
+
+        let agent_spec = record
+            .service_config
+            .as_ref()
+            .and_then(|c| c.0.agent.as_ref())
+            .and_then(|a| match a {
+                AgentConfig::Spec(spec) => Some(spec.as_ref()),
+                AgentConfig::Path(_) => None,
+            });
+
+        let mcp_config = record
+            .service_config
+            .as_ref()
+            .and_then(|c| c.0.mcp.as_ref());
+
+        let workflow = record
+            .service_config
+            .as_ref()
+            .and_then(|c| c.0.workflow.as_ref());
+
+        let tools = tools_from_service(
+            &args.name,
+            &service_type,
+            deploy,
+            agent_spec,
+            mcp_config,
+            workflow,
+            None,
+        );
+
+        let text = serde_json::to_string_pretty(&tools).unwrap_or_default();
+        JsonRpcResponse::ok(
+            id,
+            ToolCallResult {
+                content: vec![TextContent::text(text)],
+            },
+        )
     }
 }

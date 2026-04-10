@@ -1,4 +1,18 @@
+use opsml_types::contracts::tool::ToolSpec;
 use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Deserialize)]
+pub struct ServiceToolsQuery {
+    /// Target deployment environment (default: "production")
+    pub environment: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ServiceToolsResponse {
+    pub service_name: String,
+    pub service_type: String,
+    pub tools: Vec<ToolSpec>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ArtifactMeta {

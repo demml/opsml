@@ -132,6 +132,8 @@ pub enum ToolCall {
     ListSpaces(RegistrySpaceRequest),
     #[cfg(feature = "server")]
     SearchCards(CardQueryArgs),
+    #[cfg(feature = "server")]
+    ServiceTools(ServiceToolsArgs),
     /// Unknown tool name — handler returns -32602.
     Unknown(String),
     /// Known tool with malformed arguments — handler returns -32602.
@@ -188,6 +190,13 @@ impl From<RawToolCall> for ToolCall {
                     name: name.clone(),
                     reason: e.to_string(),
                 }),
+            #[cfg(feature = "server")]
+            "service_tools" => serde_json::from_value::<ServiceToolsArgs>(args)
+                .map(ToolCall::ServiceTools)
+                .unwrap_or_else(|e| ToolCall::InvalidArgs {
+                    name: name.clone(),
+                    reason: e.to_string(),
+                }),
             _ => ToolCall::Unknown(name),
         }
     }
@@ -208,6 +217,13 @@ pub struct ReadExampleArgs {
 #[derive(Deserialize)]
 pub struct SearchDocsArgs {
     pub query: String,
+}
+
+#[cfg(feature = "server")]
+#[derive(Deserialize)]
+pub struct ServiceToolsArgs {
+    pub space: String,
+    pub name: String,
 }
 
 // ---- Response payload types ----

@@ -6,7 +6,7 @@ use anyhow::Result;
 use axum::{
     Extension, Json, Router,
     body::Body,
-    extract::{Path, State},
+    extract::{Path, Query, State},
     http::{StatusCode, header},
     response::Response,
     routing::{get, post},
@@ -15,11 +15,18 @@ use opsml_auth::permission::UserPermissions;
 use opsml_cards::{SubAgentCard, ToolCard};
 use opsml_crypt::decrypt_directory;
 use opsml_events::AuditContext;
-use opsml_sql::traits::{ArtifactLogicTrait, SkillLogicTrait, SubAgentLogicTrait, ToolLogicTrait};
+use opsml_sql::traits::{ArtifactLogicTrait, CardLogicTrait, SkillLogicTrait, SubAgentLogicTrait, ToolLogicTrait};
 use opsml_types::{
     RegistryType, SaveName, Suffix,
-    contracts::{Operation, ResourceType, skill::MarketplaceStats},
+    contracts::{
+        CardQueryArgs, Operation, ResourceType,
+        service::AgentConfig,
+        service_tool::tools_from_service,
+        skill::MarketplaceStats,
+        tool::ToolSpec,
+    },
 };
+use opsml_types::cards::CardTable;
 use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{error, instrument, warn};
@@ -681,6 +688,103 @@ async fn load_tool_markdown(
     })
 }
 
+/// Generate callable tool definitions from a deployed service's existing metadata.
+///
+/// Reads the service card's `service_type`, `deployment`, `service_config` (agent spec,
+/// MCP config, workflow spec) and converts them into `Vec<ToolSpec>`. No new config
+/// types are required — everything is derived from data already on the card.
+#[instrument(skip_all)]
+pub async fn get_service_tools(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Path((space, name)): Path<(String, String)>,
+    Query(query): Query<super::schema::ServiceToolsQuery>,
+) -> Result<Json<super::schema::ServiceToolsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !perms.has_read_permission(&space) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
+    // Query for the service card record
+    let query_args = CardQueryArgs {
+        space: Some(space.clone()),
+        name: Some(name.clone()),
+        sort_by_timestamp: Some(true),
+        limit: Some(1),
+        ..Default::default()
+    };
+
+    let results = state
+        .sql_client
+        .query_cards(&CardTable::Service, &query_args)
+        .await
+        .map_err(|e| {
+            error!("Failed to query service card {space}/{name}: {e}");
+            internal_server_error(e, "Service not found", None)
+        })?;
+
+    let records = match results {
+        opsml_sql::schemas::CardResults::Service(records) => records,
+        _ => {
+            return Err(internal_server_error(
+                "Unexpected result type",
+                "Expected service card results",
+                None,
+            ));
+        }
+    };
+
+    let record = records.into_iter().next().ok_or_else(|| {
+        internal_server_error(
+            "Not found",
+            &format!("Service {space}/{name} not found"),
+            None,
+        )
+    })?;
+
+    let deploy = record
+        .deployment
+        .as_ref()
+        .map(|d| d.0.as_slice())
+        .unwrap_or(&[]);
+
+    let service_type = opsml_types::contracts::ServiceType::from(record.service_type.as_str());
+
+    let agent_spec = record
+        .service_config
+        .as_ref()
+        .and_then(|c| c.0.agent.as_ref())
+        .and_then(|a| match a {
+            AgentConfig::Spec(spec) => Some(spec.as_ref()),
+            AgentConfig::Path(_) => None,
+        });
+
+    let mcp_config = record
+        .service_config
+        .as_ref()
+        .and_then(|c| c.0.mcp.as_ref());
+
+    let workflow = record
+        .service_config
+        .as_ref()
+        .and_then(|c| c.0.workflow.as_ref());
+
+    let tools = tools_from_service(
+        &name,
+        &service_type,
+        deploy,
+        agent_spec,
+        mcp_config,
+        workflow,
+        None, // OpenAPI doc could be fetched externally in a future enhancement
+    );
+
+    Ok(Json(super::schema::ServiceToolsResponse {
+        service_name: name,
+        service_type: service_type.to_string(),
+        tools,
+    }))
+}
+
 pub async fn get_agentic_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let router = Router::new()
         .route(
@@ -724,6 +828,10 @@ pub async fn get_agentic_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
         .route(
             &format!("{prefix}/v1/marketplace/stats"),
             get(get_marketplace_stats),
+        )
+        .route(
+            &format!("{prefix}/v1/service/{{space}}/{{name}}/tools"),
+            get(get_service_tools),
         );
 
     Ok(router)

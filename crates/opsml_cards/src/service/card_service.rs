@@ -6,10 +6,13 @@ use chrono::{DateTime, Utc};
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
 use opsml_service::OpsmlServiceSpec;
 use opsml_types::contracts::{AgentSpec, Card, CardEntry, ServiceConfig};
+use opsml_types::contracts::service::{AgentConfig, DeploymentConfig, ServiceType};
+use opsml_types::contracts::service_tool::tools_from_service;
+use opsml_types::contracts::tool::ToolSpec;
 use opsml_types::{
     RegistryType, SaveName, Suffix,
     contracts::{
-        CardRecord, DeploymentConfig, ServiceCardClientRecord, ServiceMetadata, ServiceType,
+        CardRecord, ServiceCardClientRecord, ServiceMetadata,
     },
 };
 use opsml_utils::PyHelperFuncs;
@@ -507,6 +510,30 @@ impl ServiceCard {
             version: self.version.clone(),
         }
     }
+
+    /// Generate callable tool definitions from this service's existing metadata.
+    ///
+    /// Inspects the service type and its config (agent spec, MCP config, workflow spec)
+    /// to produce tool specifications that can be registered as ToolCards, served via MCP,
+    /// or installed into agent CLI frameworks.
+    ///
+    /// For API services, pass an OpenAPI JSON document (fetched externally) to generate
+    /// tools from the spec. Without it, API services produce no tools.
+    ///
+    /// Returns a JSON string containing an array of ToolSpec objects.
+    ///
+    /// # Arguments
+    /// * `openapi_doc` - Optional OpenAPI 3.x spec as a JSON string for API services
+    #[pyo3(signature = (openapi_doc=None))]
+    pub fn to_tools(&self, openapi_doc: Option<String>) -> Result<String, CardError> {
+        let openapi_value: Option<serde_json::Value> = openapi_doc
+            .as_deref()
+            .map(serde_json::from_str)
+            .transpose()?;
+
+        let tools = self.to_tools_rs(openapi_value.as_ref());
+        Ok(serde_json::to_string(&tools)?)
+    }
 }
 
 impl ServiceCard {
@@ -715,6 +742,38 @@ impl ServiceCard {
             deploy: spec.deploy.clone(),
             service_config: spec.service.clone(),
         })
+    }
+
+    /// Pure-Rust tool generation from service metadata. Used by both the PyO3
+    /// `to_tools()` binding and server-side handlers.
+    pub fn to_tools_rs(&self, openapi_doc: Option<&serde_json::Value>) -> Vec<ToolSpec> {
+        let deploy = self.deploy.as_deref().unwrap_or(&[]);
+
+        let agent_spec = self
+            .service_config
+            .as_ref()
+            .and_then(|c| c.agent.as_ref())
+            .and_then(|a| match a {
+                AgentConfig::Spec(spec) => Some(spec.as_ref()),
+                AgentConfig::Path(_) => None,
+            });
+
+        let mcp_config = self.service_config.as_ref().and_then(|c| c.mcp.as_ref());
+
+        let workflow = self
+            .service_config
+            .as_ref()
+            .and_then(|c| c.workflow.as_ref());
+
+        tools_from_service(
+            &self.name,
+            &self.service_type,
+            deploy,
+            agent_spec,
+            mcp_config,
+            workflow,
+            openapi_doc,
+        )
     }
 
     /// Helper method for getting a card by alias
