@@ -43,6 +43,15 @@ impl OpsmlServerError {
         }
     }
 
+    pub fn bad_request(message: &str) -> Self {
+        OpsmlServerError {
+            error: message.to_string(),
+            code: Some("BAD_REQUEST"),
+            suggested_action: None,
+            retry: Some(false),
+        }
+    }
+
     pub fn sso_not_enabled() -> Self {
         OpsmlServerError {
             error: "SSO is not enabled".to_string(),
@@ -306,15 +315,14 @@ impl OpsmlServerError {
 }
 
 pub fn internal_server_error<E: std::fmt::Display>(
-    error: E,
+    _error: E,
     message: &str,
     status_code: Option<StatusCode>,
 ) -> (StatusCode, Json<OpsmlServerError>) {
-    let msg = format!("{message}: {error}");
     (
         status_code.unwrap_or(StatusCode::INTERNAL_SERVER_ERROR),
         Json(OpsmlServerError {
-            error: msg,
+            error: message.to_string(),
             code: Some("INTERNAL_ERROR"),
             suggested_action: None,
             retry: Some(true),

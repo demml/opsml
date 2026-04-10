@@ -25,6 +25,17 @@ use std::sync::Arc;
 use tracing::{error, instrument};
 
 /// Get paginated traces
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/trace/paginated",
+    request_body(content = inline(serde_json::Value), description = "Trace filter request"),
+    responses(
+        (status = 200, description = "Paginated traces", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn get_paginated_traces(
     State(state): State<Arc<AppState>>,
@@ -86,7 +97,20 @@ pub async fn get_paginated_traces(
     }
 }
 
-/// Get paginated traces
+/// Get trace spans
+#[utoipa::path(
+    get,
+    path = "/opsml/api/scouter/trace/spans",
+    params(
+        ("trace_id" = String, Query, description = "Trace ID to fetch spans for"),
+    ),
+    responses(
+        (status = 200, description = "Trace spans", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn get_trace_spans(
     State(state): State<Arc<AppState>>,
@@ -148,6 +172,17 @@ pub async fn get_trace_spans(
 }
 
 /// Get trace metrics
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/trace/metrics",
+    request_body(content = inline(serde_json::Value), description = "Trace metrics request"),
+    responses(
+        (status = 200, description = "Trace metrics response", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn trace_metrics(
     State(state): State<Arc<AppState>>,

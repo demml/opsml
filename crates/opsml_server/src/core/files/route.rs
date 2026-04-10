@@ -46,6 +46,21 @@ use tracing::{error, info, instrument};
 /// # Returns
 ///
 /// The session URL for the multipart upload
+#[utoipa::path(
+    get,
+    path = "/opsml/api/files/multipart",
+    params(
+        ("path" = String, Query, description = "Storage path for the file to upload"),
+    ),
+    responses(
+        (status = 200, description = "Multipart upload session created", body = MultiPartSession),
+        (status = 400, description = "Invalid path", body = OpsmlServerError),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 #[instrument(skip_all)]
 pub async fn create_multipart_upload(
     State(state): State<Arc<AppState>>,
@@ -117,6 +132,24 @@ pub async fn create_multipart_upload(
 /// # Returns
 ///
 /// The presigned URL for the file
+#[utoipa::path(
+    get,
+    path = "/opsml/api/files/presigned",
+    params(
+        ("path" = String, Query, description = "Storage path of the file"),
+        ("session_url" = Option<String>, Query, description = "Multipart session URL (required when for_multi_part=true)"),
+        ("part_number" = Option<i32>, Query, description = "Part number for multipart upload"),
+        ("for_multi_part" = Option<bool>, Query, description = "Whether to generate a presigned URL for a multipart upload part"),
+    ),
+    responses(
+        (status = 200, description = "Presigned URL", body = PresignedUrl),
+        (status = 400, description = "Invalid path or missing multipart params", body = OpsmlServerError),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 pub async fn generate_presigned_url(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -196,6 +229,18 @@ pub async fn generate_presigned_url(
     Ok(Json(PresignedUrl { url }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/files/multipart/complete",
+    request_body = CompleteMultipartUpload,
+    responses(
+        (status = 200, description = "Multipart upload completed", body = UploadResponse),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 #[instrument(skip_all)]
 pub async fn complete_multipart_upload(
     State(state): State<Arc<AppState>>,
@@ -225,6 +270,17 @@ pub async fn complete_multipart_upload(
 }
 
 // this is for local storage only
+#[utoipa::path(
+    post,
+    path = "/opsml/api/files/multipart",
+    request_body(content = inline(serde_json::Value), content_type = "multipart/form-data", description = "File part data"),
+    responses(
+        (status = 200, description = "File part uploaded", body = UploadResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 #[instrument(skip_all)]
 pub async fn upload_multipart(
     State(state): State<Arc<AppState>>,
@@ -265,6 +321,19 @@ pub async fn upload_multipart(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/files/list",
+    params(
+        ("path" = String, Query, description = "Storage path to list files under"),
+    ),
+    responses(
+        (status = 200, description = "List of file paths", body = ListFileResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 #[instrument(skip_all)]
 pub async fn list_files(
     State(state): State<Arc<AppState>>,
@@ -286,6 +355,21 @@ pub async fn list_files(
     Ok(Json(ListFileResponse { files }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/files/list/info",
+    params(
+        ("path" = String, Query, description = "Storage path to list file info under"),
+    ),
+    responses(
+        (status = 200, description = "List of file info records", body = ListFileInfoResponse),
+        (status = 400, description = "Invalid path", body = OpsmlServerError),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 #[instrument(skip_all)]
 pub async fn list_file_info(
     State(state): State<Arc<AppState>>,
@@ -320,6 +404,21 @@ pub async fn list_file_info(
     Ok(Json(ListFileInfoResponse { files }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/files/tree",
+    params(
+        ("path" = String, Query, description = "Storage path to build the file tree from"),
+    ),
+    responses(
+        (status = 200, description = "File tree", body = FileTreeResponse),
+        (status = 400, description = "Invalid path", body = OpsmlServerError),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 pub async fn file_tree(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -399,6 +498,20 @@ pub async fn file_tree(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/files/content",
+    request_body = RawFileRequest,
+    responses(
+        (status = 200, description = "Raw file content", body = RawFile),
+        (status = 400, description = "Invalid path", body = OpsmlServerError),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 404, description = "File not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 #[instrument(skip_all)]
 pub async fn get_file_for_ui(
     State(state): State<Arc<AppState>>,
@@ -442,6 +555,19 @@ pub async fn get_file_for_ui(
     Ok(Json(file))
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/files/content/batch",
+    request_body = RawFileRequest,
+    responses(
+        (status = 200, description = "Batch of raw file contents", body = Vec<RawFile>),
+        (status = 400, description = "Invalid path", body = OpsmlServerError),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 #[instrument(skip_all)]
 pub async fn get_files_for_ui(
     State(state): State<Arc<AppState>>,
@@ -488,6 +614,22 @@ pub async fn get_files_for_ui(
     Ok(Json(files))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/opsml/api/files/delete",
+    params(
+        ("path" = String, Query, description = "Storage path to delete"),
+        ("recursive" = bool, Query, description = "Whether to delete recursively"),
+    ),
+    responses(
+        (status = 200, description = "File deleted", body = DeleteFileResponse),
+        (status = 400, description = "Invalid path", body = OpsmlServerError),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 pub async fn delete_file(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -547,6 +689,20 @@ pub async fn delete_file(
 }
 
 // for use with local storage only
+#[utoipa::path(
+    get,
+    path = "/opsml/api/files",
+    params(
+        ("path" = String, Query, description = "Storage path of the file to download (local storage only)"),
+    ),
+    responses(
+        (status = 200, description = "File bytes", content_type = "application/octet-stream"),
+        (status = 400, description = "Not supported for non-local storage", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 pub async fn download_file(
     State(state): State<Arc<AppState>>,
     Query(params): Query<DownloadFileQuery>,
@@ -580,6 +736,20 @@ pub async fn download_file(
     (StatusCode::OK, body).into_response()
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/files/key",
+    params(
+        ("uid" = String, Query, description = "Card UID to retrieve the artifact key for"),
+        ("registry_type" = RegistryType, Query, description = "Registry type associated with the card"),
+    ),
+    responses(
+        (status = 200, description = "Artifact encryption key", body = ArtifactKey),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 #[instrument(skip_all)]
 pub async fn get_artifact_key(
     State(state): State<Arc<AppState>>,
@@ -599,6 +769,18 @@ pub async fn get_artifact_key(
 }
 
 /// Create artifact record
+#[utoipa::path(
+    post,
+    path = "/opsml/api/files/artifact",
+    request_body = CreateArtifactRequest,
+    responses(
+        (status = 200, description = "Artifact record created", body = CreateArtifactResponse),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 #[instrument(skip_all)]
 pub async fn create_artifact_record(
     State(state): State<Arc<AppState>>,
@@ -672,6 +854,25 @@ pub async fn create_artifact_record(
     Ok(response)
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/files/artifact",
+    params(
+        ("uid" = Option<String>, Query, description = "Filter by artifact UID"),
+        ("name" = Option<String>, Query, description = "Filter by artifact name"),
+        ("space" = Option<String>, Query, description = "Filter by space"),
+        ("version" = Option<String>, Query, description = "Filter by version"),
+        ("sort_by_timestamp" = Option<bool>, Query, description = "Sort results by timestamp"),
+        ("artifact_type" = Option<ArtifactType>, Query, description = "Filter by artifact type"),
+        ("limit" = Option<i32>, Query, description = "Maximum number of results to return"),
+    ),
+    responses(
+        (status = 200, description = "List of artifact records", body = Vec<ArtifactRecord>),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "files"
+)]
 #[instrument(skip_all)]
 pub async fn query_artifact_records(
     State(state): State<Arc<AppState>>,

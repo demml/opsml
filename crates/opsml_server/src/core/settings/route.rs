@@ -9,12 +9,28 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::error;
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/storage/settings",
+    responses(
+        (status = 200, description = "Storage backend configuration", body = StorageSettings),
+    ),
+    tag = "settings"
+)]
 pub async fn storage_settings(State(data): State<Arc<AppState>>) -> Json<StorageSettings> {
     Json(StorageSettings {
         storage_type: data.storage_client.storage_type(),
     })
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/ui/settings",
+    responses(
+        (status = 200, description = "UI feature flags", body = UiSettings),
+    ),
+    tag = "settings"
+)]
 pub async fn ui_settings(State(data): State<Arc<AppState>>) -> Json<UiSettings> {
     Json(UiSettings {
         scouter_enabled: data.scouter_client.is_enabled(),

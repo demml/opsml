@@ -3,6 +3,7 @@ use anyhow::Result;
 use axum::{Json, Router, extract::State, routing::get};
 use serde::Serialize;
 use std::sync::Arc;
+use tracing::instrument;
 use utoipa::ToSchema;
 
 const REGISTRY_TYPES: &[&str] = &[
@@ -34,8 +35,12 @@ pub struct DocumentationInfo {
 #[derive(Serialize, ToSchema)]
 pub struct AgenticInfo {
     pub marketplace_map: &'static str,
+    pub marketplace_featured: &'static str,
+    pub marketplace_tags: &'static str,
+    pub marketplace_stats: &'static str,
     pub agent_invoke: &'static str,
     pub skill_latest: &'static str,
+    pub subagent_latest: &'static str,
     pub tool_latest: &'static str,
 }
 
@@ -64,6 +69,7 @@ pub struct CapabilitiesResponse {
     ),
     tag = "capabilities"
 )]
+#[instrument(skip_all)]
 pub async fn capabilities(State(state): State<Arc<AppState>>) -> Json<CapabilitiesResponse> {
     Json(CapabilitiesResponse {
         api_version: "1.0.0",
@@ -82,8 +88,12 @@ pub async fn capabilities(State(state): State<Arc<AppState>>) -> Json<Capabiliti
         },
         agentic: AgenticInfo {
             marketplace_map: "/opsml/api/v1/map/{space}",
+            marketplace_featured: "/opsml/api/v1/marketplace/featured",
+            marketplace_tags: "/opsml/api/v1/marketplace/tags",
+            marketplace_stats: "/opsml/api/v1/marketplace/stats",
             agent_invoke: "/opsml/api/v1/agent/{id}/invoke",
             skill_latest: "/opsml/api/v1/skill/{space}/{name}",
+            subagent_latest: "/opsml/api/v1/subagent/{space}/{name}",
             tool_latest: "/opsml/api/v1/tool/{space}/{name}",
         },
         auth: AuthInfo {

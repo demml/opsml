@@ -12,11 +12,13 @@ use std::fmt::Display;
 use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MultiPartQuery {
     pub path: String,
 }
 
 #[derive(Serialize, Deserialize, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PresignedQuery {
     pub path: String,
     pub session_url: Option<String>,
@@ -28,22 +30,26 @@ pub struct PresignedQuery {
 pub struct UploadPartArgParser {}
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ListFileQuery {
     pub path: String,
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DeleteFileQuery {
     pub path: String,
     pub recursive: bool,
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DownloadFileQuery {
     pub path: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[pyclass]
 pub struct FileInfo {
     #[pyo3(get)]
@@ -69,6 +75,7 @@ impl FileInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct FileTreeNode {
     pub name: String,
     pub created_at: String,
@@ -79,21 +86,25 @@ pub struct FileTreeNode {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct FileTreeResponse {
     pub files: Vec<FileTreeNode>,
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct PresignedUrl {
     pub url: String,
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ListFileResponse {
     pub files: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum MultipartCompleteParts {
     Aws(CompletedUploadParts),
     Azure(Vec<String>),
@@ -102,6 +113,7 @@ pub enum MultipartCompleteParts {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CompleteMultipartUpload {
     pub path: String,
     pub session_url: String,
@@ -110,16 +122,19 @@ pub struct CompleteMultipartUpload {
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ListFileInfoResponse {
     pub files: Vec<FileInfo>,
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DeleteFileResponse {
     pub deleted: bool,
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MultiPartSession {
     pub session_url: String,
 
@@ -128,29 +143,34 @@ pub struct MultiPartSession {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct StorageSettings {
     pub storage_type: StorageType,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct UiSettings {
     pub scouter_enabled: bool,
     pub sso_enabled: bool,
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct UploadResponse {
     pub uploaded: bool,
     pub message: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CompletedUploadPart {
     pub part_number: i32,
     pub e_tag: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CompletedUploadParts {
     pub parts: Vec<CompletedUploadPart>,
 }
@@ -172,12 +192,14 @@ pub struct UploadPartArgs {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ArtifactKeyRequest {
     pub uid: String,
     pub registry_type: RegistryType,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ArtifactKey {
     pub uid: String,
     pub space: String,
@@ -211,6 +233,7 @@ impl Display for ArtifactKey {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CreateArtifactRequest {
     pub space: String,
     pub name: String,
@@ -220,6 +243,7 @@ pub struct CreateArtifactRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CreateArtifactResponse {
     pub uid: String,
     pub space: String,
@@ -305,6 +329,7 @@ impl Display for AuditStatus {
 /// * `file` - The file tree node
 /// * `registry_type` - The type of registry
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RawFileRequest {
     pub uid: String,
     pub path: String,
@@ -332,6 +357,7 @@ pub struct DriftProfileRequest {
 /// * `mime_type` - The mime type of the file
 ///
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RawFile {
     pub content: String,
     pub suffix: String,

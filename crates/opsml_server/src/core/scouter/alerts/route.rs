@@ -18,6 +18,17 @@ use std::sync::Arc;
 
 use tracing::error;
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/alerts",
+    request_body(content = inline(serde_json::Value), description = "Drift alert pagination request"),
+    responses(
+        (status = 200, description = "Drift alerts retrieved", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 /// Get drift alerts
 pub async fn drift_alerts(
     State(state): State<Arc<AppState>>,
@@ -81,6 +92,18 @@ pub async fn drift_alerts(
     }
 }
 
+#[utoipa::path(
+    put,
+    path = "/opsml/api/scouter/alerts",
+    request_body(content = inline(serde_json::Value), description = "Update alert status request"),
+    responses(
+        (status = 200, description = "Alert status updated", body = inline(serde_json::Value)),
+        (status = 403, description = "Permission denied", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 /// Acknowledge drift alerts
 pub async fn update_alert_status(
     State(state): State<Arc<AppState>>,

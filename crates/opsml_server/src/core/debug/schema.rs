@@ -3,7 +3,7 @@ use axum::response::IntoResponse;
 /// file containing schema for health module
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 pub struct DebugInfo {
     pub storage_client: String,
     pub opsml_storage_uri: String,

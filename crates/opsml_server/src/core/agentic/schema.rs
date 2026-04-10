@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct ArtifactMeta {
     pub name: String,
     pub latest_version: String,
@@ -10,7 +10,7 @@ pub struct ArtifactMeta {
     pub download_count: i64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct MapResponse {
     pub space: String,
     pub skills: Vec<ArtifactMeta>,

@@ -11,6 +11,7 @@ pub const MAX_FILE_SIZE: usize = 1024 * 1024 * 1024 * 50;
 
 #[pyclass(eq, eq_int)]
 #[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum RegistryType {
     #[default]
     Data,
@@ -157,6 +158,7 @@ pub enum PlotType {
 
 #[pyclass(eq, eq_int)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum StorageType {
     Google,
     Aws,

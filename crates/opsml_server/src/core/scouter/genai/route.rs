@@ -22,6 +22,18 @@ use std::sync::Arc;
 use tracing::debug;
 use tracing::{error, instrument};
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/genai/page/record",
+    request_body(content = inline(serde_json::Value), description = "Eval record pagination request"),
+    responses(
+        (status = 200, description = "Paginated GenAI eval records", body = inline(serde_json::Value)),
+        (status = 404, description = "Not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn query_genai_eval_records(
     State(data): State<Arc<AppState>>,
@@ -94,6 +106,18 @@ pub async fn query_genai_eval_records(
     Ok(Json(body))
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/genai/page/workflow",
+    request_body(content = inline(serde_json::Value), description = "Eval record pagination request for workflow"),
+    responses(
+        (status = 200, description = "Paginated GenAI eval workflow records", body = inline(serde_json::Value)),
+        (status = 404, description = "Not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn query_genai_eval_workflow(
     State(data): State<Arc<AppState>>,
@@ -166,6 +190,21 @@ pub async fn query_genai_eval_workflow(
     Ok(Json(body))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/scouter/genai/task",
+    params(
+        ("name" = String, Query, description = "Eval task name"),
+        ("space" = String, Query, description = "Space the task belongs to"),
+        ("version" = String, Query, description = "Task version"),
+    ),
+    responses(
+        (status = 200, description = "GenAI eval task response", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn get_genai_tasks(
     State(data): State<Arc<AppState>>,

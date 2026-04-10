@@ -25,6 +25,7 @@ use tabled::settings::{
 use tabled::{Table, Tabled};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct UidRequest {
     pub uid: String,
     pub registry_type: RegistryType,
@@ -50,6 +51,7 @@ impl AuditableRequest for UidRequest {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DeleteCardRequest {
     pub uid: String,
     pub space: String,
@@ -76,11 +78,13 @@ impl AuditableRequest for DeleteCardRequest {
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct UidResponse {
     pub exists: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RegistrySpaceRequest {
     pub registry_type: RegistryType,
 }
@@ -105,27 +109,32 @@ impl AuditableRequest for RegistrySpaceRequest {
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CardSpaceResponse {
     pub spaces: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CardTagsResponse {
     pub tags: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CrudSpaceRequest {
     pub space: String,
     pub description: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CrudSpaceResponse {
     pub success: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SpaceRecord {
     pub space: String,
     pub description: String,
@@ -139,11 +148,13 @@ pub struct SpaceNameRecord {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SpaceRecordResponse {
     pub spaces: Vec<SpaceRecord>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SpaceStats {
     pub space: String,
     pub model_count: i64,
@@ -153,11 +164,13 @@ pub struct SpaceStats {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct SpaceStatsResponse {
     pub stats: Vec<SpaceStats>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct RegistryStatsRequest {
     pub registry_type: RegistryType,
     pub search_term: Option<String>,
@@ -190,6 +203,7 @@ impl AuditableRequest for RegistryStatsRequest {
 
 /// Cursor for paginating through card results with search state
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CardCursor {
     pub offset: i32,
     pub limit: i32,
@@ -250,6 +264,7 @@ impl CardCursor {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct QueryPageRequest {
     pub registry_type: RegistryType,
     pub page: Option<i32>,
@@ -311,6 +326,7 @@ impl AuditableRequest for QueryPageRequest {
 
 /// Cursor for paginating through version results
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct VersionCursor {
     pub offset: i32,
     pub limit: i32,
@@ -354,6 +370,7 @@ impl VersionCursor {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CompareHashRequest {
     pub registry_type: RegistryType,
     pub content_hash: Vec<u8>,
@@ -364,11 +381,13 @@ pub struct CompareHashRequest {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CompareHashResponse {
     pub card: Option<CardArgs>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct VersionPageRequest {
     pub registry_type: RegistryType,
     pub space: String,
@@ -404,6 +423,7 @@ pub struct CardVersionRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ServiceQueryArgs {
     pub space: Option<String>,
     pub name: Option<String>,
@@ -433,6 +453,7 @@ impl ServiceQueryArgs {
 /// * `service_type` - The service type of the card (only for ServiceCards)
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CardQueryArgs {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub uid: Option<String>,
@@ -1569,6 +1590,7 @@ impl AuditableRequest for CreateCardRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CreateCardResponse {
     pub registered: bool,
     #[serde(default)]
@@ -1608,6 +1630,7 @@ impl AuditableRequest for UpdateCardRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct UpdateCardResponse {
     pub updated: bool,
 }
@@ -1622,6 +1645,7 @@ pub struct CardEntry {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[cfg_attr(feature = "server", derive(sqlx::FromRow))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct DashboardStats {
     pub nbr_models: i64,
     pub nbr_data: i64,
@@ -1631,6 +1655,7 @@ pub struct DashboardStats {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "server", derive(sqlx::FromRow))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CardArgs {
     pub space: String,
     pub name: String,

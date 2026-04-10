@@ -229,7 +229,7 @@ pub async fn run_skill_scan(
 
     let scan = SkillScanResult::from_response_value(result_value).map_err(|e| {
         error!("Failed to parse skill scan result: {e}");
-        internal_server_error(e, "Failed to parse scan result", None)
+        internal_server_error(e, "Skill scan agent returned an unexpected response format", None)
     })?;
 
     if !scan.passed() {

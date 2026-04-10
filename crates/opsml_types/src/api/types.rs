@@ -145,11 +145,13 @@ impl Display for Routes {
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct JwtToken {
     pub token: String,
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Alive {
     pub alive: bool,
 }

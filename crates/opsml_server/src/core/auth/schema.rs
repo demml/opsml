@@ -7,19 +7,19 @@ pub struct AuthError {
     pub message: String,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, utoipa::ToSchema)]
 pub struct Authenticated {
     pub is_authenticated: bool,
     pub user_response: UserResponse,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 pub struct LoginRequest {
     pub username: String,
     pub password: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 pub struct SsoAuthUrl {
     pub url: String,
     pub code_challenge: String,
@@ -28,13 +28,13 @@ pub struct SsoAuthUrl {
     pub state: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema, utoipa::IntoParams)]
 pub struct SsoCallbackParams {
     pub code: String,
     pub code_verifier: String,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, utoipa::ToSchema)]
 pub struct LoginResponse {
     pub authenticated: bool,
     pub message: String,
@@ -44,7 +44,7 @@ pub struct LoginResponse {
     pub group_permissions: Vec<String>,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, utoipa::ToSchema)]
 pub struct LogoutResponse {
     pub logged_out: bool,
 }

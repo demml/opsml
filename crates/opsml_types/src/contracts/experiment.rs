@@ -4,12 +4,14 @@ use crate::contracts::{ResourceType, traits::AuditableRequest};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MetricRequest {
     pub experiment_uid: String,
     pub metrics: Vec<Metric>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetMetricRequest {
     pub experiment_uid: String,
     pub names: Vec<String>,
@@ -47,12 +49,14 @@ impl AuditableRequest for GetMetricRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct Experiment {
     pub uid: String,
     pub version: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct UiMetricRequest {
     pub experiments: Vec<Experiment>,
     pub metric_names: Vec<String>,
@@ -61,27 +65,32 @@ pub struct UiMetricRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetMetricNamesRequest {
     pub experiment_uid: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetMetricNamesResponse {
     pub names: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MetricResponse {
     pub success: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ParameterRequest {
     pub experiment_uid: String,
     pub parameters: Vec<Parameter>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetParameterRequest {
     pub experiment_uid: String,
     pub names: Vec<String>,
@@ -97,22 +106,26 @@ impl GetParameterRequest {
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ParameterResponse {
     pub success: bool,
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct HardwareMetricRequest {
     pub experiment_uid: String,
     pub metrics: HardwareMetrics,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct GetHardwareMetricRequest {
     pub experiment_uid: String,
 }
 
 #[derive(Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct HardwareMetricResponse {
     pub success: bool,
 }

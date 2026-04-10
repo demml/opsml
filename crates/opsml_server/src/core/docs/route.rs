@@ -10,6 +10,15 @@ use utoipa::ToSchema;
 
 use crate::core::state::AppState;
 
+/// Returns the largest byte index ≤ `i` that lies on a UTF-8 character boundary in `s`.
+fn floor_char_boundary(s: &str, i: usize) -> usize {
+    let mut idx = i.min(s.len());
+    while idx > 0 && !s.is_char_boundary(idx) {
+        idx -= 1;
+    }
+    idx
+}
+
 #[derive(Serialize, ToSchema)]
 pub struct DocSummary {
     pub id: &'static str,
@@ -30,8 +39,9 @@ pub struct DocResponse {
     pub content: &'static str,
 }
 
-#[derive(Deserialize, ToSchema)]
+#[derive(Deserialize, utoipa::IntoParams)]
 pub struct SearchQuery {
+    /// Search term matched case-insensitively against doc titles and content. Max 200 characters.
     pub q: String,
 }
 
@@ -74,7 +84,7 @@ pub async fn list_docs() -> Json<DocListResponse> {
     get,
     path = "/opsml/api/v1/docs/{id}",
     params(
-        ("id" = String, Path, description = "Doc ID, e.g. 'cards/datacard' or 'setup/overview'. Call GET /v1/docs to list all IDs.")
+        ("id" = String, Path, description = "Slash-separated doc path, e.g. 'cards/datacard' or 'setup/overview'. Matches multiple path segments. Call GET /v1/docs to list all IDs.")
     ),
     responses(
         (status = 200, description = "Full documentation content", body = DocResponse),
@@ -106,15 +116,23 @@ pub async fn get_doc(
 #[utoipa::path(
     get,
     path = "/opsml/api/v1/docs/search",
-    params(
-        ("q" = String, Query, description = "Search query — matched case-insensitively against doc titles and content")
-    ),
+    params(SearchQuery),
     responses(
         (status = 200, description = "Matching docs with snippets", body = SearchResponse),
+        (status = 400, description = "Search query too long", body = OpsmlServerError),
     ),
     tag = "docs"
 )]
-pub async fn search_docs(Query(params): Query<SearchQuery>) -> Json<SearchResponse> {
+pub async fn search_docs(
+    Query(params): Query<SearchQuery>,
+) -> Result<Json<SearchResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if params.q.len() > 200 {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(OpsmlServerError::bad_request("Search query exceeds 200 character limit")),
+        ));
+    }
+
     let q = params.q.to_lowercase();
     let results = DOCS
         .iter()
@@ -125,9 +143,10 @@ pub async fn search_docs(Query(params): Query<SearchQuery>) -> Json<SearchRespon
                 return None;
             }
             let snippet = if let Some(pos) = content_lower.find(&q) {
-                let start = pos.saturating_sub(80);
-                let end = (pos + q.len() + 80).min(e.content.len());
-                format!("...{}...", &e.content[start..end])
+                // Compute char-boundary-aligned slice on content_lower (same byte domain as pos).
+                let start = floor_char_boundary(&content_lower, pos.saturating_sub(80));
+                let end = floor_char_boundary(&content_lower, (pos + q.len() + 80).min(content_lower.len()));
+                format!("...{}...", &content_lower[start..end])
             } else {
                 e.title.to_string()
             };
@@ -140,10 +159,10 @@ pub async fn search_docs(Query(params): Query<SearchQuery>) -> Json<SearchRespon
         })
         .collect();
 
-    Json(SearchResponse {
+    Ok(Json(SearchResponse {
         query: params.q,
         results,
-    })
+    }))
 }
 
 #[utoipa::path(
@@ -171,7 +190,7 @@ pub async fn list_examples() -> Json<DocListResponse> {
     get,
     path = "/opsml/api/v1/examples/{id}",
     params(
-        ("id" = String, Path, description = "Example path, e.g. 'data/pandas' or 'model/sklearn'. Call GET /v1/examples to list all IDs.")
+        ("id" = String, Path, description = "Slash-separated example path, e.g. 'data/pandas' or 'model/sklearn'. Matches multiple path segments. Call GET /v1/examples to list all IDs.")
     ),
     responses(
         (status = 200, description = "Python example source code", body = DocResponse),

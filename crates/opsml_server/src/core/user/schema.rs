@@ -1,7 +1,7 @@
 use opsml_sql::schemas::schema::User;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, utoipa::ToSchema)]
 pub struct CreateUserRequest {
     pub username: String,
     pub password: String,
@@ -12,7 +12,7 @@ pub struct CreateUserRequest {
     pub active: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 pub struct UpdateUserRequest {
     pub password: Option<String>,
     pub permissions: Option<Vec<String>>,
@@ -22,20 +22,20 @@ pub struct UpdateUserRequest {
     pub theme_preference: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct RecoveryResetRequest {
     pub username: String,
     pub recovery_code: String,
     pub new_password: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 pub struct ResetPasswordResponse {
     pub message: String,
     pub remaining_recovery_codes: usize,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, utoipa::ToSchema)]
 pub struct UserResponse {
     pub username: String,
     pub email: String,
@@ -47,7 +47,7 @@ pub struct UserResponse {
     pub theme_preference: String,
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default, utoipa::ToSchema)]
 pub struct CreateUserResponse {
     pub user: UserResponse,
     pub recovery_codes: Vec<String>,
@@ -64,14 +64,14 @@ impl CreateUserResponse {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 pub struct CreateUserUiResponse {
     pub registered: bool,
     pub response: Option<CreateUserResponse>,
     pub error: Option<String>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, utoipa::ToSchema)]
 pub struct UserListResponse {
     pub users: Vec<UserResponse>,
 }

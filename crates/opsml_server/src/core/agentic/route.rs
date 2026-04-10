@@ -34,6 +34,22 @@ fn bytes_to_hex(bytes: &[u8]) -> String {
 }
 
 /// Serve the latest version of a skill as markdown.
+#[utoipa::path(
+    get,
+    path = "/opsml/api/v1/skill/{space}/{name}",
+    params(
+        ("space" = String, Path, description = "Space name"),
+        ("name" = String, Path, description = "Skill name"),
+    ),
+    responses(
+        (status = 200, description = "Skill definition as markdown", content_type = "text/markdown"),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 404, description = "Skill not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "agentic"
+)]
 #[instrument(skip_all)]
 pub async fn get_skill_latest(
     State(state): State<Arc<AppState>>,
@@ -49,8 +65,12 @@ pub async fn get_skill_latest(
         .get_skill_card_by_name(&space, &name)
         .await
         .map_err(|e| {
-            error!("Failed to get skill card {space}/{name}: {e}");
-            internal_server_error(e, "Skill not found", None)
+            if e.is_row_not_found() || matches!(e, opsml_sql::error::SqlError::MissingField(_)) {
+                (StatusCode::NOT_FOUND, Json(OpsmlServerError::not_found(&format!("Skill '{space}/{name}'"))))
+            } else {
+                error!("Failed to get skill card {space}/{name}: {e}");
+                internal_server_error(e, "Failed to get skill card", None)
+            }
         })?;
 
     let markdown = load_skill_markdown(&state, &record.uid).await?;
@@ -83,6 +103,23 @@ pub async fn get_skill_latest(
 }
 
 /// Serve a pinned version of a skill as markdown.
+#[utoipa::path(
+    get,
+    path = "/opsml/api/v1/skill/{space}/{name}/{version}",
+    params(
+        ("space" = String, Path, description = "Space name"),
+        ("name" = String, Path, description = "Skill name"),
+        ("version" = String, Path, description = "Pinned version"),
+    ),
+    responses(
+        (status = 200, description = "Skill definition as markdown", content_type = "text/markdown"),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 404, description = "Skill not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "agentic"
+)]
 #[instrument(skip_all)]
 pub async fn get_skill_pinned(
     State(state): State<Arc<AppState>>,
@@ -98,8 +135,12 @@ pub async fn get_skill_pinned(
         .get_skill_card_by_version(&space, &name, &version)
         .await
         .map_err(|e| {
-            error!("Failed to get skill card {space}/{name}/{version}: {e}");
-            internal_server_error(e, "Skill not found", None)
+            if e.is_row_not_found() || matches!(e, opsml_sql::error::SqlError::MissingField(_)) {
+                (StatusCode::NOT_FOUND, Json(OpsmlServerError::not_found(&format!("Skill '{space}/{name}/{version}'"))))
+            } else {
+                error!("Failed to get skill card {space}/{name}/{version}: {e}");
+                internal_server_error(e, "Failed to get skill card", None)
+            }
         })?;
 
     let markdown = load_skill_markdown(&state, &record.uid).await?;
@@ -132,6 +173,20 @@ pub async fn get_skill_pinned(
 }
 
 /// List all skills in a space with metadata.
+#[utoipa::path(
+    get,
+    path = "/opsml/api/v1/map/{space}",
+    params(
+        ("space" = String, Path, description = "Space name"),
+    ),
+    responses(
+        (status = 200, description = "All artifacts in the space", body = MapResponse),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "agentic"
+)]
 #[instrument(skip_all)]
 pub async fn get_skill_map(
     State(state): State<Arc<AppState>>,
@@ -235,6 +290,16 @@ pub async fn get_skill_map(
 }
 
 /// Return top N skills by download count.
+#[utoipa::path(
+    get,
+    path = "/opsml/api/v1/marketplace/featured",
+    responses(
+        (status = 200, description = "Top skills by download count", body = Vec<ArtifactMeta>),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "agentic"
+)]
 #[instrument(skip_all)]
 pub async fn get_featured_skills(
     State(state): State<Arc<AppState>>,
@@ -261,6 +326,16 @@ pub async fn get_featured_skills(
 }
 
 /// Return all distinct tags across all skills.
+#[utoipa::path(
+    get,
+    path = "/opsml/api/v1/marketplace/tags",
+    responses(
+        (status = 200, description = "All distinct skill tags", body = Vec<String>),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "agentic"
+)]
 #[instrument(skip_all)]
 pub async fn get_all_tags(
     State(state): State<Arc<AppState>>,
@@ -275,6 +350,16 @@ pub async fn get_all_tags(
 }
 
 /// Return aggregate marketplace stats.
+#[utoipa::path(
+    get,
+    path = "/opsml/api/v1/marketplace/stats",
+    responses(
+        (status = 200, description = "Aggregate marketplace statistics", body = MarketplaceStats),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "agentic"
+)]
 #[instrument(skip_all)]
 pub async fn get_marketplace_stats(
     State(state): State<Arc<AppState>>,
@@ -362,6 +447,22 @@ async fn load_skill_markdown(
 }
 
 /// Serve the latest version of a subagent as markdown.
+#[utoipa::path(
+    get,
+    path = "/opsml/api/v1/subagent/{space}/{name}",
+    params(
+        ("space" = String, Path, description = "Space name"),
+        ("name" = String, Path, description = "SubAgent name"),
+    ),
+    responses(
+        (status = 200, description = "SubAgent definition as markdown", content_type = "text/markdown"),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 404, description = "SubAgent not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "agentic"
+)]
 #[instrument(skip_all)]
 pub async fn get_subagent_latest(
     State(state): State<Arc<AppState>>,
@@ -411,6 +512,23 @@ pub async fn get_subagent_latest(
 }
 
 /// Serve a pinned version of a subagent as markdown.
+#[utoipa::path(
+    get,
+    path = "/opsml/api/v1/subagent/{space}/{name}/{version}",
+    params(
+        ("space" = String, Path, description = "Space name"),
+        ("name" = String, Path, description = "SubAgent name"),
+        ("version" = String, Path, description = "Pinned version"),
+    ),
+    responses(
+        (status = 200, description = "SubAgent definition as markdown", content_type = "text/markdown"),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 404, description = "SubAgent not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "agentic"
+)]
 #[instrument(skip_all)]
 pub async fn get_subagent_pinned(
     State(state): State<Arc<AppState>>,
@@ -522,6 +640,22 @@ async fn load_subagent_markdown(
 }
 
 /// Serve the latest version of a tool as markdown.
+#[utoipa::path(
+    get,
+    path = "/opsml/api/v1/tool/{space}/{name}",
+    params(
+        ("space" = String, Path, description = "Space name"),
+        ("name" = String, Path, description = "Tool name"),
+    ),
+    responses(
+        (status = 200, description = "Tool definition as markdown", content_type = "text/markdown"),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 404, description = "Tool not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "agentic"
+)]
 #[instrument(skip_all)]
 pub async fn get_tool_latest(
     State(state): State<Arc<AppState>>,
@@ -571,6 +705,23 @@ pub async fn get_tool_latest(
 }
 
 /// Serve a pinned version of a tool as markdown.
+#[utoipa::path(
+    get,
+    path = "/opsml/api/v1/tool/{space}/{name}/{version}",
+    params(
+        ("space" = String, Path, description = "Space name"),
+        ("name" = String, Path, description = "Tool name"),
+        ("version" = String, Path, description = "Pinned version"),
+    ),
+    responses(
+        (status = 200, description = "Tool definition as markdown", content_type = "text/markdown"),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 404, description = "Tool not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "agentic"
+)]
 #[instrument(skip_all)]
 pub async fn get_tool_pinned(
     State(state): State<Arc<AppState>>,

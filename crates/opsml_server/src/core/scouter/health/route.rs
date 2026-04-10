@@ -13,6 +13,16 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::{error, instrument, warn};
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/scouter/healthcheck",
+    responses(
+        (status = 200, description = "Scouter health status", body = Alive),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn check_scouter_health(
     State(state): State<Arc<AppState>>,

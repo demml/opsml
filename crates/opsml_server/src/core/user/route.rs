@@ -24,6 +24,19 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::{error, info, instrument};
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/user",
+    request_body = CreateUserRequest,
+    responses(
+        (status = 200, description = "User created", body = CreateUserResponse),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 409, description = "User already exists", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "user"
+)]
 /// Create a new user via SDK.
 #[instrument(skip_all)]
 pub async fn create_user(
@@ -112,9 +125,24 @@ pub async fn create_user(
     )))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/user/{username}",
+    params(
+        ("username" = String, Path, description = "Username to retrieve"),
+    ),
+    responses(
+        (status = 200, description = "User details", body = UserResponse),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 404, description = "User not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "user"
+)]
 /// Get a user by username
 #[instrument(skip_all)]
-async fn get_user(
+pub(crate) async fn get_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Path(username): Path<String>,
@@ -138,11 +166,22 @@ async fn get_user(
     Ok(Json(UserResponse::from(user)))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/user",
+    responses(
+        (status = 200, description = "List of all users (admin only)", body = UserListResponse),
+        (status = 403, description = "Forbidden — requires admin", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "user"
+)]
 /// List all users
 ///
 /// Requires admin permissions
 #[instrument(skip_all)]
-async fn list_users(
+pub(crate) async fn list_users(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
 ) -> Result<Json<UserListResponse>, (StatusCode, Json<OpsmlServerError>)> {
@@ -167,9 +206,25 @@ async fn list_users(
     }))
 }
 
+#[utoipa::path(
+    put,
+    path = "/opsml/api/user/{username}",
+    params(
+        ("username" = String, Path, description = "Username to update"),
+    ),
+    request_body = UpdateUserRequest,
+    responses(
+        (status = 200, description = "Updated user", body = UserResponse),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 404, description = "User not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "user"
+)]
 /// Update a user
 #[instrument(skip_all)]
-async fn update_user(
+pub(crate) async fn update_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Path(username): Path<String>,
@@ -259,11 +314,25 @@ async fn update_user(
     Ok(Json(UserResponse::from(user)))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/opsml/api/user/{username}",
+    params(
+        ("username" = String, Path, description = "Username to delete"),
+    ),
+    responses(
+        (status = 200, description = "User deleted", body = inline(serde_json::Value)),
+        (status = 403, description = "Forbidden — requires admin", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "user"
+)]
 /// Delete a user
 ///
 /// Requires admin permissions
 #[instrument(skip_all)]
-async fn delete_user(
+pub(crate) async fn delete_user(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
 

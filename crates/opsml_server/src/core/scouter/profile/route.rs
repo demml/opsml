@@ -31,6 +31,17 @@ use std::sync::Arc;
 use tempfile::tempdir;
 use tracing::{error, info, instrument};
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/profile",
+    request_body(content = inline(serde_json::Value), description = "Drift profile registration request"),
+    responses(
+        (status = 200, description = "Drift profile registered", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 pub async fn insert_drift_profile(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
@@ -116,6 +127,18 @@ pub async fn insert_drift_profile(
 /// Update a drift profile. Two tasks are performed:
 /// 1. Dump updated profile to storage to ensure profiles are syncd (opsml)
 /// 2. Send the profile to scouter (scouter)
+#[utoipa::path(
+    put,
+    path = "/opsml/api/scouter/profile",
+    request_body(content = inline(serde_json::Value), description = "Update drift profile request"),
+    responses(
+        (status = 200, description = "Drift profile updated", body = inline(serde_json::Value)),
+        (status = 403, description = "Permission denied", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn update_drift_profile(
     State(state): State<Arc<AppState>>,
@@ -240,6 +263,18 @@ pub async fn update_drift_profile(
 ///
 /// # Returns
 /// * `Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)>` - Result of the request
+#[utoipa::path(
+    put,
+    path = "/opsml/api/scouter/profile/status",
+    request_body(content = inline(serde_json::Value), description = "Profile status update request"),
+    responses(
+        (status = 200, description = "Profile status updated", body = inline(serde_json::Value)),
+        (status = 403, description = "Permission denied", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn update_drift_profile_status(
     State(data): State<Arc<AppState>>,
@@ -309,6 +344,17 @@ pub async fn update_drift_profile_status(
     parse_scouter_response(response).await
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/profile/exists",
+    request_body(content = inline(serde_json::Value), description = "Get profile request to check existence"),
+    responses(
+        (status = 200, description = "Whether the profile exists", body = bool),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn profile_exists(
     State(state): State<Arc<AppState>>,
@@ -368,6 +414,19 @@ pub async fn profile_exists(
 /// UI will make a request to return all profiles for a given card
 /// The card is identified by parent drift path.
 /// All profiles will be downloaded, decrypted and returned to the UI in the DriftProfile enum
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/profile/ui",
+    request_body(content = inline(serde_json::Value), description = "Drift profile request for UI rendering"),
+    responses(
+        (status = 200, description = "Drift profiles for UI", body = inline(serde_json::Value)),
+        (status = 403, description = "Permission denied", body = OpsmlServerError),
+        (status = 404, description = "Not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn get_drift_profiles_for_ui(
     State(state): State<Arc<AppState>>,
