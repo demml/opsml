@@ -66,7 +66,12 @@ pub async fn get_skill_latest(
         .await
         .map_err(|e| {
             if e.is_row_not_found() || matches!(e, opsml_sql::error::SqlError::MissingField(_)) {
-                (StatusCode::NOT_FOUND, Json(OpsmlServerError::not_found(&format!("Skill '{space}/{name}'"))))
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(OpsmlServerError::not_found(&format!(
+                        "Skill '{space}/{name}'"
+                    ))),
+                )
             } else {
                 error!("Failed to get skill card {space}/{name}: {e}");
                 internal_server_error(e, "Failed to get skill card", None)
@@ -136,7 +141,12 @@ pub async fn get_skill_pinned(
         .await
         .map_err(|e| {
             if e.is_row_not_found() || matches!(e, opsml_sql::error::SqlError::MissingField(_)) {
-                (StatusCode::NOT_FOUND, Json(OpsmlServerError::not_found(&format!("Skill '{space}/{name}/{version}'"))))
+                (
+                    StatusCode::NOT_FOUND,
+                    Json(OpsmlServerError::not_found(&format!(
+                        "Skill '{space}/{name}/{version}'"
+                    ))),
+                )
             } else {
                 error!("Failed to get skill card {space}/{name}/{version}: {e}");
                 internal_server_error(e, "Failed to get skill card", None)

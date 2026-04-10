@@ -129,7 +129,9 @@ pub async fn search_docs(
     if params.q.len() > 200 {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(OpsmlServerError::bad_request("Search query exceeds 200 character limit")),
+            Json(OpsmlServerError::bad_request(
+                "Search query exceeds 200 character limit",
+            )),
         ));
     }
 
@@ -145,7 +147,10 @@ pub async fn search_docs(
             let snippet = if let Some(pos) = content_lower.find(&q) {
                 // Compute char-boundary-aligned slice on content_lower (same byte domain as pos).
                 let start = floor_char_boundary(&content_lower, pos.saturating_sub(80));
-                let end = floor_char_boundary(&content_lower, (pos + q.len() + 80).min(content_lower.len()));
+                let end = floor_char_boundary(
+                    &content_lower,
+                    (pos + q.len() + 80).min(content_lower.len()),
+                );
                 format!("...{}...", &content_lower[start..end])
             } else {
                 e.title.to_string()

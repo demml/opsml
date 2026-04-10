@@ -38,7 +38,9 @@ impl OpsmlServerError {
         OpsmlServerError {
             error: format!("{resource} not found"),
             code: Some("NOT_FOUND"),
-            suggested_action: Some("Call the corresponding list endpoint to see available resources"),
+            suggested_action: Some(
+                "Call the corresponding list endpoint to see available resources",
+            ),
             retry: Some(false),
         }
     }
@@ -56,7 +58,9 @@ impl OpsmlServerError {
         OpsmlServerError {
             error: "SSO is not enabled".to_string(),
             code: Some("SSO_NOT_ENABLED"),
-            suggested_action: Some("Configure an SSO provider or use username/password authentication"),
+            suggested_action: Some(
+                "Configure an SSO provider or use username/password authentication",
+            ),
             retry: Some(false),
         }
     }
@@ -65,7 +69,9 @@ impl OpsmlServerError {
         OpsmlServerError {
             error: "Permission denied".to_string(),
             code: Some("PERMISSION_DENIED"),
-            suggested_action: Some("Verify your space permissions or authenticate with a different user"),
+            suggested_action: Some(
+                "Verify your space permissions or authenticate with a different user",
+            ),
             retry: Some(false),
         }
     }

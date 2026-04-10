@@ -172,7 +172,10 @@ async fn test_v1_capabilities() {
         assert!(registry_types.iter().any(|v| v == "data"));
         assert!(registry_types.iter().any(|v| v == "skill"));
         assert!(caps["features"]["scouter_enabled"].is_boolean());
-        assert_eq!(caps["features"]["openapi_spec"], "/opsml/api/v1/openapi.json");
+        assert_eq!(
+            caps["features"]["openapi_spec"],
+            "/opsml/api/v1/openapi.json"
+        );
         assert_eq!(caps["auth"]["login_endpoint"], "/opsml/api/auth/login");
 
         helper.cleanup();
@@ -282,7 +285,7 @@ async fn test_v1_docs_search_query_too_long() {
         let long_query = "a".repeat(201);
 
         let request = Request::builder()
-            .uri(&format!("/opsml/api/v1/docs/search?q={long_query}"))
+            .uri(format!("/opsml/api/v1/docs/search?q={long_query}"))
             .method("GET")
             .body(Body::empty())
             .unwrap();
