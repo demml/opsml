@@ -62,6 +62,20 @@ fn parse_header(
 /// # Returns
 ///
 /// Returns a `Result` containing either the JWT token or an error
+#[utoipa::path(
+    get,
+    path = "/opsml/api/auth/login",
+    params(
+        ("Username" = String, Header, description = "OpsML username"),
+        ("Password" = String, Header, description = "OpsML password"),
+        ("Use-SSO" = Option<String>, Header, description = "Set to 'true' to authenticate via SSO"),
+    ),
+    responses(
+        (status = 200, description = "JWT access token", body = JwtToken),
+        (status = 400, description = "Invalid credentials", body = OpsmlServerError),
+    ),
+    tag = "auth"
+)]
 #[instrument(skip_all)]
 pub async fn api_login_handler(
     State(state): State<Arc<AppState>>,
@@ -162,6 +176,19 @@ pub async fn api_login_handler(
     Ok(Json(JwtToken { token: jwt_token }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/auth/ui/logout",
+    params(
+        ("Authorization" = String, Header, description = "Bearer JWT token"),
+    ),
+    responses(
+        (status = 200, description = "Logged out", body = LogoutResponse),
+        (status = 401, description = "Unauthorized", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "auth"
+)]
 #[instrument(skip_all)]
 pub async fn ui_logout_handler(
     State(state): State<Arc<AppState>>,
@@ -228,8 +255,18 @@ pub async fn ui_logout_handler(
 /// # Returns
 ///
 /// Returns a `Result` containing either the JWT token or an error
+#[utoipa::path(
+    post,
+    path = "/opsml/api/auth/ui/login",
+    request_body = LoginRequest,
+    responses(
+        (status = 200, description = "Authentication result", body = LoginResponse),
+        (status = 400, description = "Invalid credentials", body = OpsmlServerError),
+    ),
+    tag = "auth"
+)]
 #[instrument(skip_all)]
-async fn ui_login_handler(
+pub(crate) async fn ui_login_handler(
     State(state): State<Arc<AppState>>,
     Json(req): Json<LoginRequest>,
 ) -> Result<Json<LoginResponse>, (StatusCode, Json<OpsmlServerError>)> {
@@ -308,6 +345,18 @@ async fn ui_login_handler(
 /// # Returns
 ///
 /// Returns a `Result` containing either the JWT token or an error
+#[utoipa::path(
+    get,
+    path = "/opsml/api/auth/refresh",
+    params(
+        ("Authorization" = String, Header, description = "Bearer JWT refresh token"),
+    ),
+    responses(
+        (status = 200, description = "New JWT access token", body = JwtToken),
+        (status = 401, description = "Invalid or expired refresh token", body = OpsmlServerError),
+    ),
+    tag = "auth"
+)]
 #[instrument(skip_all)]
 pub async fn api_refresh_token_handler(
     State(state): State<Arc<AppState>>,
@@ -391,8 +440,20 @@ pub async fn api_refresh_token_handler(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/auth/validate",
+    params(
+        ("Authorization" = String, Header, description = "Bearer JWT token"),
+    ),
+    responses(
+        (status = 200, description = "Authentication state", body = Authenticated),
+        (status = 401, description = "Invalid token", body = OpsmlServerError),
+    ),
+    tag = "auth"
+)]
 #[instrument(skip_all)]
-async fn validate_jwt_token(
+pub(crate) async fn validate_jwt_token(
     State(state): State<Arc<AppState>>,
     headers: HeaderMap,
 ) -> Result<Json<Authenticated>, (StatusCode, Json<OpsmlServerError>)> {
@@ -441,8 +502,17 @@ async fn validate_jwt_token(
     }
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/auth/sso/authorization",
+    responses(
+        (status = 200, description = "SSO authorization URL and PKCE state", body = SsoAuthUrl),
+        (status = 501, description = "SSO not enabled", body = OpsmlServerError),
+    ),
+    tag = "auth"
+)]
 #[instrument(skip_all)]
-async fn get_sso_authorization_url(
+pub(crate) async fn get_sso_authorization_url(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<SsoAuthUrl>, (StatusCode, Json<OpsmlServerError>)> {
     if !state.auth_manager.is_sso_enabled() {
@@ -475,8 +545,18 @@ async fn get_sso_authorization_url(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/auth/sso/callback",
+    params(SsoCallbackParams),
+    responses(
+        (status = 200, description = "Authenticated session", body = LoginResponse),
+        (status = 400, description = "SSO callback error", body = OpsmlServerError),
+    ),
+    tag = "auth"
+)]
 #[instrument(skip_all)]
-async fn exchange_callback_token(
+pub(crate) async fn exchange_callback_token(
     State(state): State<Arc<AppState>>,
     Query(params): Query<SsoCallbackParams>,
 ) -> Result<Json<LoginResponse>, (StatusCode, Json<OpsmlServerError>)> {
@@ -526,8 +606,17 @@ async fn exchange_callback_token(
 
 /// Create a new user via UI. This will always return a response so that
 /// errors will be handled in the UI.
+#[utoipa::path(
+    post,
+    path = "/opsml/api/auth/register",
+    request_body = CreateUserRequest,
+    responses(
+        (status = 200, description = "Registration result — errors returned in body", body = CreateUserUiResponse),
+    ),
+    tag = "auth"
+)]
 #[instrument(skip_all)]
-async fn register_user_from_ui(
+pub(crate) async fn register_user_from_ui(
     State(state): State<Arc<AppState>>,
     Json(create_req): Json<CreateUserRequest>,
 ) -> Result<Json<CreateUserUiResponse>, (StatusCode, Json<OpsmlServerError>)> {
@@ -556,11 +645,21 @@ async fn register_user_from_ui(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/auth/reset-password/recovery",
+    request_body = RecoveryResetRequest,
+    responses(
+        (status = 200, description = "Password updated, returns remaining recovery code count", body = ResetPasswordResponse),
+        (status = 401, description = "Invalid recovery code", body = OpsmlServerError),
+    ),
+    tag = "auth"
+)]
 #[instrument(skip_all)]
-async fn reset_password_with_recovery(
+pub(crate) async fn reset_password_with_recovery(
     State(state): State<Arc<AppState>>,
     Json(req): Json<RecoveryResetRequest>,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Json<ResetPasswordResponse>, (StatusCode, Json<OpsmlServerError>)> {
     // Get user and their recovery codes
     let mut user = get_user_from_db(&state.sql_client, &req.username, Some("basic")).await?;
 
@@ -589,10 +688,10 @@ async fn reset_password_with_recovery(
         return Err(internal_server_error(e, "Failed to update password", None));
     }
 
-    Ok(Json(serde_json::json!(ResetPasswordResponse {
+    Ok(Json(ResetPasswordResponse {
         message: "Password updated successfully".to_string(),
         remaining_recovery_codes: user.hashed_recovery_codes.len(),
-    })))
+    }))
 }
 
 pub async fn get_auth_router(prefix: &str) -> Result<Router<Arc<AppState>>> {

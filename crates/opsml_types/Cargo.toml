@@ -29,8 +29,9 @@ tabled = { workspace = true, features = ["ansi"] }
 thiserror = { workspace = true }
 tracing = { workspace = true }
 sqlx = { workspace = true, optional = true }
+utoipa = { workspace = true, optional = true }
 
 
 [features]
 default = []
-server = ["sqlx"]
+server = ["sqlx", "utoipa"]

@@ -107,6 +107,7 @@ impl SkillDependency {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "server", derive(sqlx::FromRow))]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MarketplaceStats {
     pub total_skills: i64,
     pub total_spaces: i64,

@@ -16,6 +16,7 @@ use std::path::{Path, PathBuf};
 use tracing::error;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash, Default)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[pyclass(eq, eq_int)]
 pub enum ServiceType {
     #[default]

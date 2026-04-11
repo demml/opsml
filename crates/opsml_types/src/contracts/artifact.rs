@@ -4,6 +4,7 @@ use std::fmt;
 use std::str::FromStr;
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ArtifactQueryArgs {
     pub uid: Option<String>,
     pub name: Option<String>,
@@ -15,6 +16,7 @@ pub struct ArtifactQueryArgs {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct ArtifactRecord {
     pub uid: String,
     pub name: String,
@@ -26,6 +28,7 @@ pub struct ArtifactRecord {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone, PartialEq)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ArtifactType {
     #[default]
     Generic,

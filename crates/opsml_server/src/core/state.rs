@@ -4,7 +4,6 @@ use opsml_agent::AgentStore;
 use opsml_auth::auth::AuthManager;
 use opsml_auth::permission::UserPermissions;
 use opsml_events::EventBus;
-use opsml_mcp::handler::McpHandler;
 use opsml_settings::config::{OpsmlConfig, OpsmlStorageSettings};
 use opsml_sql::enums::client::SqlClientEnum;
 use opsml_sql::traits::UserLogicTrait;
@@ -20,7 +19,6 @@ pub struct AppState {
     pub storage_settings: OpsmlStorageSettings,
     pub scouter_client: ScouterApiClient,
     pub event_bus: EventBus,
-    pub mcp_handler: McpHandler,
     pub agent_store: Arc<AgentStore>,
 }
 

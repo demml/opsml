@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[pyclass(eq, eq_int)]
 pub enum McpTransport {
     #[serde(alias = "HTTP", alias = "http")]
@@ -23,6 +24,7 @@ impl Display for McpTransport {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[pyclass(eq, eq_int)]
 pub enum McpCapability {
     #[serde(alias = "RESOURCES", alias = "resources")]
@@ -44,6 +46,7 @@ impl Display for McpCapability {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[pyclass]
 pub struct McpConfig {
     #[pyo3(get)]
@@ -67,6 +70,7 @@ impl McpConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[pyclass]
 pub struct McpServer {
     #[pyo3(get)]
@@ -111,6 +115,7 @@ impl McpIter {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[pyclass]
 pub struct McpServers {
     pub servers: Vec<McpServer>,

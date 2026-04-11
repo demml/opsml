@@ -8,7 +8,6 @@ use axum::Router;
 use opsml_agent::AgentStore;
 use opsml_auth::auth::AuthManager;
 use opsml_events::EventBus;
-use opsml_mcp::handler::McpHandler;
 use std::sync::Arc;
 use tracing::{info, warn};
 
@@ -38,9 +37,6 @@ pub async fn create_app_with_state() -> Result<(Router, Arc<AppState>)> {
         storage_settings,
         scouter_client,
         event_bus: EventBus::new(100),
-        mcp_handler: McpHandler {
-            sql: Some(sql_client),
-        },
         agent_store,
     });
 

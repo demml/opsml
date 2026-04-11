@@ -9,8 +9,9 @@ use opsml_types::{
 };
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct QueryPageResponse {
+    #[schema(value_type = Vec<serde_json::Value>)]
     pub items: Vec<CardSummary>,
     pub has_next: bool,
     pub next_cursor: Option<CardCursor>,
@@ -19,14 +20,14 @@ pub struct QueryPageResponse {
     pub page_info: PageInfo,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct PageInfo {
     pub page_size: usize,
     pub offset: i32,
     pub filters: FilterSummary,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct FilterSummary {
     pub search_term: Option<String>,
     pub spaces: Vec<String>,
@@ -34,8 +35,9 @@ pub struct FilterSummary {
     pub sort_by: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct VersionPageResponse {
+    #[schema(value_type = Vec<serde_json::Value>)]
     pub items: Vec<VersionSummary>,
     pub has_next: bool,
     pub next_cursor: Option<VersionCursor>,
@@ -43,28 +45,29 @@ pub struct VersionPageResponse {
     pub previous_cursor: Option<VersionCursor>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct RegistryStatsResponse {
+    #[schema(value_type = serde_json::Value)]
     pub stats: QueryStats,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct DashboardStatsResponse {
     pub stats: DashboardStats,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct Card {
     metadata: serde_json::Value,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct ReadeMe {
     pub readme: String,
     pub exists: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct CreateReadeMe {
     pub space: String,
     pub name: String,

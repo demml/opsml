@@ -10,6 +10,7 @@ use sysinfo::{Networks, System};
 use core::fmt::Debug;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[pyclass(name = "ExperimentMetric")]
 #[pyo3(module = "opsml.experiment")]
 pub struct Metric {
@@ -171,6 +172,7 @@ impl Metrics {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum ParameterValue {
     Int(i64),
     Float(f64),
@@ -192,6 +194,7 @@ impl ParameterValue {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 #[pyclass]
 #[pyo3(module = "opsml.experiment")]
 pub struct Parameter {
@@ -280,6 +283,7 @@ pub trait GetMetrics {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct CPUMetrics {
     pub cpu_percent_utilization: f32,
     pub cpu_percent_per_core: Vec<f32>,
@@ -319,6 +323,7 @@ impl Default for CPUMetricLogger {
 }
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct MemoryMetrics {
     pub free_memory: i64,
     pub total_memory: i64,
@@ -370,6 +375,7 @@ impl Default for MemoryMetricLogger {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct NetworkRates {
     pub bytes_recv: i64,
     pub bytes_sent: i64,
@@ -410,6 +416,7 @@ impl Default for NetworkRateLogger {
 }
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
+#[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub struct HardwareMetrics {
     pub created_at: DateTime<Utc>,
     pub cpu: CPUMetrics,

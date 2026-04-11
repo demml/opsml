@@ -18,6 +18,22 @@ use tracing::{error, instrument};
 /// Synchronously invoke an agent by id.
 ///
 /// POST /opsml/api/v1/agent/{id}/invoke
+#[utoipa::path(
+    post,
+    path = "/opsml/api/v1/agent/{id}/invoke",
+    params(
+        ("id" = String, Path, description = "Agent ID to invoke"),
+    ),
+    request_body = InvokeRequest,
+    responses(
+        (status = 200, description = "Agent invocation result", body = InvokeResponse),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 404, description = "Agent not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "agentic"
+)]
 #[instrument(skip_all)]
 pub async fn invoke_agent(
     State(state): State<Arc<AppState>>,
@@ -28,9 +44,7 @@ pub async fn invoke_agent(
     if !state.agent_store.has(&id) {
         return Err((
             StatusCode::NOT_FOUND,
-            Json(OpsmlServerError {
-                error: format!("Agent not found: {id}"),
-            }),
+            Json(OpsmlServerError::not_found(&format!("Agent '{id}'"))),
         ));
     }
 
@@ -39,9 +53,7 @@ pub async fn invoke_agent(
     if !perms.has_write_permission("") {
         return Err((
             StatusCode::FORBIDDEN,
-            Json(OpsmlServerError {
-                error: "Insufficient permissions to invoke agent".to_string(),
-            }),
+            Json(OpsmlServerError::permission_denied()),
         ));
     }
 
@@ -70,6 +82,22 @@ pub async fn invoke_agent(
 /// Poll the status of an async agent job.
 ///
 /// GET /opsml/api/v1/agent/{id}/jobs/{job_id}
+#[utoipa::path(
+    get,
+    path = "/opsml/api/v1/agent/{id}/jobs/{job_id}",
+    params(
+        ("id" = String, Path, description = "Agent ID"),
+        ("job_id" = String, Path, description = "Job ID to poll"),
+    ),
+    responses(
+        (status = 200, description = "Job status and result", body = InvokeResponse),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 404, description = "Job not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "agentic"
+)]
 #[instrument(skip_all)]
 pub async fn get_agent_job(
     State(state): State<Arc<AppState>>,
@@ -79,11 +107,16 @@ pub async fn get_agent_job(
     let job = state.agent_store.get_job(&job_id).await.ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,
-            Json(OpsmlServerError {
-                error: format!("Job not found: {job_id}"),
-            }),
+            Json(OpsmlServerError::not_found(&format!("Job '{job_id}'"))),
         )
     })?;
+
+    if job.owner != perms.username && !perms.group_permissions.contains(&"admin".to_string()) {
+        return Err((
+            StatusCode::FORBIDDEN,
+            Json(OpsmlServerError::permission_denied()),
+        ));
+    }
 
     let invoke_response = InvokeResponse {
         job_id: job.id,

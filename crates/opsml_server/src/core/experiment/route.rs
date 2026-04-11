@@ -19,6 +19,17 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::error;
 
+#[utoipa::path(
+    put,
+    path = "/opsml/api/experiment/metrics",
+    request_body = MetricRequest,
+    responses(
+        (status = 200, description = "Metrics inserted", body = MetricResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "experiment"
+)]
 pub async fn insert_metrics(
     State(state): State<Arc<AppState>>,
     Json(req): Json<MetricRequest>,
@@ -50,6 +61,17 @@ pub async fn insert_metrics(
     Ok(Json(MetricResponse { success: true }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/experiment/metrics",
+    request_body = GetMetricRequest,
+    responses(
+        (status = 200, description = "List of metrics", body = Vec<Metric>),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "experiment"
+)]
 pub async fn get_metrics(
     State(state): State<Arc<AppState>>,
 
@@ -80,6 +102,17 @@ pub async fn get_metrics(
     Ok(Json(metrics))
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/experiment/metrics/grouped",
+    request_body = UiMetricRequest,
+    responses(
+        (status = 200, description = "Metrics grouped by experiment and name", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "experiment"
+)]
 pub async fn get_grouped_metrics(
     State(state): State<Arc<AppState>>,
     Json(req): Json<UiMetricRequest>,
@@ -138,6 +171,19 @@ pub async fn get_grouped_metrics(
     Ok(Json(metric_data))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/experiment/metrics/names",
+    params(
+        ("experiment_uid" = String, Query, description = "Experiment UID"),
+    ),
+    responses(
+        (status = 200, description = "List of metric names", body = Vec<String>),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "experiment"
+)]
 pub async fn get_metric_names(
     State(state): State<Arc<AppState>>,
 
@@ -155,6 +201,17 @@ pub async fn get_metric_names(
     Ok(Json(names))
 }
 
+#[utoipa::path(
+    put,
+    path = "/opsml/api/experiment/parameters",
+    request_body = ParameterRequest,
+    responses(
+        (status = 200, description = "Parameters inserted", body = ParameterResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "experiment"
+)]
 pub async fn insert_parameters(
     State(state): State<Arc<AppState>>,
 
@@ -178,6 +235,17 @@ pub async fn insert_parameters(
     Ok(Json(ParameterResponse { success: true }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/experiment/parameters",
+    request_body = GetParameterRequest,
+    responses(
+        (status = 200, description = "List of parameters", body = Vec<Parameter>),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "experiment"
+)]
 pub async fn get_parameter(
     State(state): State<Arc<AppState>>,
     Json(req): Json<GetParameterRequest>,
@@ -203,6 +271,17 @@ pub async fn get_parameter(
     Ok(Json(params))
 }
 
+#[utoipa::path(
+    put,
+    path = "/opsml/api/experiment/hardware/metrics",
+    request_body = HardwareMetricRequest,
+    responses(
+        (status = 200, description = "Hardware metrics inserted", body = HardwareMetricResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "experiment"
+)]
 pub async fn insert_hardware_metrics(
     State(state): State<Arc<AppState>>,
     Json(req): Json<HardwareMetricRequest>,
@@ -235,6 +314,19 @@ pub async fn insert_hardware_metrics(
     Ok(Json(HardwareMetricResponse { success: true }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/experiment/hardware/metrics",
+    params(
+        ("experiment_uid" = String, Query, description = "Experiment UID"),
+    ),
+    responses(
+        (status = 200, description = "List of hardware metric snapshots", body = Vec<HardwareMetrics>),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "experiment"
+)]
 pub async fn get_hardware_metrics(
     State(state): State<Arc<AppState>>,
     Query(req): Query<GetHardwareMetricRequest>,

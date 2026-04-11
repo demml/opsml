@@ -7,6 +7,14 @@ use opsml_types::Alive;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/healthcheck",
+    responses(
+        (status = 200, description = "Server is alive", body = Alive),
+    ),
+    tag = "health"
+)]
 pub async fn health_check() -> impl IntoResponse {
     Json(Alive::default())
 }

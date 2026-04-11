@@ -14,6 +14,17 @@ use std::sync::Arc;
 use tracing::{error, instrument};
 
 /// Get entity from tags
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/tags/entity",
+    request_body(content = inline(serde_json::Value), description = "Entity ID tags request"),
+    responses(
+        (status = 200, description = "Entity ID tags response", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn entity_from_tags(
     State(state): State<Arc<AppState>>,

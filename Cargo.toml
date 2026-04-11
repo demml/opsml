@@ -121,6 +121,8 @@ tracing = "0.*"
 tracing-appender = "0.*"
 tracing-core = "0.*"
 tracing-subscriber = {version = "0.*", features = ["json", "time"]}
+utoipa = { version = "5", features = ["axum_extras", "uuid", "chrono"] }
+utoipa-swagger-ui = { version = "9", features = ["axum"] }
 uuid = { version = "1.*", features = ["v7"] }
 walkdir = "2.*"
 zip = "7.*"

@@ -23,6 +23,22 @@ use std::sync::Arc;
 
 use tracing::{debug, error};
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/genai/mcp/servers",
+    params(
+        ("space" = Option<String>, Query, description = "Filter by space name"),
+        ("name" = Option<String>, Query, description = "Filter by service name"),
+        ("tags[]" = Option<Vec<String>>, Query, description = "Filter by tags (repeatable)"),
+        ("service_type" = Option<String>, Query, description = "Service type filter (e.g. Mcp, Api, Agent)"),
+    ),
+    responses(
+        (status = 200, description = "List of MCP servers", body = McpServers),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "genai"
+)]
 pub async fn list_mcp_servers(
     State(state): State<Arc<AppState>>,
     // ServiceQueryArgs contains a tags param array which needs to be parsed correctly

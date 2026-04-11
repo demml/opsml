@@ -8,6 +8,14 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::error;
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/debug",
+    responses(
+        (status = 200, description = "Runtime diagnostics", body = DebugInfo),
+    ),
+    tag = "debug"
+)]
 pub async fn debug_info(State(data): State<Arc<AppState>>) -> DebugInfo {
     DebugInfo::new(
         data.storage_client.name().to_string(),

@@ -6,6 +6,7 @@ use serde_json::Value;
 pub struct JobState {
     pub id: String,
     pub agent_id: String,
+    pub owner: String,
     pub status: JobStatus,
     pub result: Option<Value>,
     pub error: Option<String>,
@@ -14,10 +15,11 @@ pub struct JobState {
 }
 
 impl JobState {
-    pub fn new(id: String, agent_id: String) -> Self {
+    pub fn new(id: String, agent_id: String, owner: String) -> Self {
         Self {
             id,
             agent_id,
+            owner,
             status: JobStatus::Pending,
             result: None,
             error: None,

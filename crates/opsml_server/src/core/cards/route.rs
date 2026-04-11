@@ -49,6 +49,20 @@ pub fn parse_qs_query<T: DeserializeOwned>(
     })
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/card",
+    params(
+        ("uid" = String, Query, description = "Card UID to check"),
+        ("registry_type" = String, Query, description = "Registry type"),
+    ),
+    responses(
+        (status = 200, description = "UID existence check result", body = UidResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 /// Route for checking if a card UID exists
 #[axum::debug_handler]
 pub async fn check_card_uid(
@@ -68,6 +82,19 @@ pub async fn check_card_uid(
     Ok(Json(UidResponse { exists }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/card/spaces",
+    params(
+        ("registry_type" = String, Query, description = "Registry type"),
+    ),
+    responses(
+        (status = 200, description = "List of unique space names", body = CardSpaceResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 /// Get card spaces
 pub async fn get_registry_spaces(
     State(state): State<Arc<AppState>>,
@@ -87,6 +114,19 @@ pub async fn get_registry_spaces(
     Ok(Json(CardSpaceResponse { spaces }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/card/tags",
+    params(
+        ("registry_type" = String, Query, description = "Registry type"),
+    ),
+    responses(
+        (status = 200, description = "List of unique tags", body = CardTagsResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 pub async fn get_registry_tags(
     State(state): State<Arc<AppState>>,
     Query(params): Query<RegistrySpaceRequest>,
@@ -105,6 +145,16 @@ pub async fn get_registry_tags(
     Ok(Json(CardTagsResponse { tags }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/card/space/stats",
+    responses(
+        (status = 200, description = "Stats for all spaces", body = SpaceStatsResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 pub async fn get_all_space_stats(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<SpaceStatsResponse>, (StatusCode, Json<OpsmlServerError>)> {
@@ -116,6 +166,20 @@ pub async fn get_all_space_stats(
     Ok(Json(SpaceStatsResponse { stats }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/card/space",
+    params(
+        ("space" = String, Query, description = "Space name"),
+        ("description" = Option<String>, Query, description = "Space description"),
+    ),
+    responses(
+        (status = 200, description = "Space record", body = SpaceRecordResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 pub async fn get_space_record(
     State(state): State<Arc<AppState>>,
     Query(params): Query<CrudSpaceRequest>,
@@ -132,6 +196,17 @@ pub async fn get_space_record(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/card/space",
+    request_body(content = CrudSpaceRequest, description = "Space creation request"),
+    responses(
+        (status = 200, description = "Space created", body = CrudSpaceResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 #[instrument(skip_all)]
 pub async fn create_space_record(
     State(state): State<Arc<AppState>>,
@@ -152,6 +227,17 @@ pub async fn create_space_record(
     Ok(Json(CrudSpaceResponse { success: true }))
 }
 
+#[utoipa::path(
+    put,
+    path = "/opsml/api/card/space",
+    request_body(content = CrudSpaceRequest, description = "Space update request"),
+    responses(
+        (status = 200, description = "Space updated", body = CrudSpaceResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 #[instrument(skip_all)]
 pub async fn update_space_record(
     State(state): State<Arc<AppState>>,
@@ -172,6 +258,20 @@ pub async fn update_space_record(
     Ok(Json(CrudSpaceResponse { success: true }))
 }
 
+#[utoipa::path(
+    delete,
+    path = "/opsml/api/card/space",
+    params(
+        ("space" = String, Query, description = "Space name to delete"),
+        ("description" = Option<String>, Query, description = "Space description"),
+    ),
+    responses(
+        (status = 200, description = "Space deleted", body = CrudSpaceResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 #[instrument(skip_all)]
 pub async fn delete_space_record(
     State(state): State<Arc<AppState>>,
@@ -188,6 +288,17 @@ pub async fn delete_space_record(
     Ok(Json(CrudSpaceResponse { success: true }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/card/registry/stats",
+    request_body(content = RegistryStatsRequest, description = "Registry stats query"),
+    responses(
+        (status = 200, description = "Registry statistics", body = RegistryStatsResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 /// query stats page
 pub async fn retrieve_registry_stats(
     State(state): State<Arc<AppState>>,
@@ -212,6 +323,16 @@ pub async fn retrieve_registry_stats(
     Ok(Json(RegistryStatsResponse { stats }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/card/dashboard/stats",
+    responses(
+        (status = 200, description = "Dashboard statistics", body = DashboardStatsResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 /// Get dashboard stats for the homepage
 pub async fn retrieve_dashboard_stats(
     State(state): State<Arc<AppState>>,
@@ -228,6 +349,17 @@ pub async fn retrieve_dashboard_stats(
     Ok(Json(DashboardStatsResponse { stats }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/card/registry/page",
+    request_body(content = QueryPageRequest, description = "Paginated card query"),
+    responses(
+        (status = 200, description = "Paginated card results", body = QueryPageResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 // query page
 pub async fn retrieve_page(
     State(state): State<Arc<AppState>>,
@@ -302,6 +434,17 @@ pub async fn retrieve_page(
     }))
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/card/registry/version/page",
+    request_body(content = VersionPageRequest, description = "Paginated version query"),
+    responses(
+        (status = 200, description = "Paginated version results", body = VersionPageResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 pub async fn query_version_page(
     State(state): State<Arc<AppState>>,
     Json(params): Json<VersionPageRequest>,
@@ -354,6 +497,27 @@ pub async fn query_version_page(
     }))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/card/list",
+    params(
+        ("space" = Option<String>, Query, description = "Filter by space"),
+        ("name" = Option<String>, Query, description = "Filter by name"),
+        ("version" = Option<String>, Query, description = "Filter by version"),
+        ("uid" = Option<String>, Query, description = "Filter by UID"),
+        ("tags[]" = Option<Vec<String>>, Query, description = "Filter by tags (repeatable)"),
+        ("registry_type" = String, Query, description = "Registry type"),
+        ("limit" = Option<i64>, Query, description = "Max results"),
+        ("sort_by" = Option<String>, Query, description = "Sort field"),
+        ("max_date" = Option<String>, Query, description = "Max date filter"),
+    ),
+    responses(
+        (status = 200, description = "List of cards", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 pub async fn list_cards(
     State(state): State<Arc<AppState>>,
     // CardQueryArgs contains Vec<String> for tags, which serde_qs can parse correctly
@@ -429,6 +593,18 @@ pub async fn list_cards(
     Ok(response)
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/card/create",
+    request_body(content = inline(serde_json::Value), description = "Card creation request"),
+    responses(
+        (status = 200, description = "Card created", body = CreateCardResponse),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 #[instrument(skip_all)]
 pub async fn create_card(
     State(state): State<Arc<AppState>>,
@@ -457,9 +633,9 @@ pub async fn create_card(
     {
         return Err((
             StatusCode::BAD_REQUEST,
-            Json(OpsmlServerError {
-                error: "args_schema exceeds maximum size of 64KB".to_string(),
-            }),
+            Json(OpsmlServerError::new(
+                "args_schema exceeds maximum size of 64KB".to_string(),
+            )),
         ));
     }
 
@@ -730,6 +906,17 @@ pub async fn create_card(
     Ok(response)
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/card/update",
+    request_body(content = inline(serde_json::Value), description = "Card update request"),
+    responses(
+        (status = 200, description = "Card updated", body = UpdateCardResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 /// update card
 #[instrument(skip_all)]
 pub async fn update_card(
@@ -776,6 +963,22 @@ pub async fn update_card(
     Ok(response)
 }
 
+#[utoipa::path(
+    delete,
+    path = "/opsml/api/card/delete",
+    params(
+        ("uid" = String, Query, description = "Card UID to delete"),
+        ("space" = String, Query, description = "Card space"),
+        ("registry_type" = String, Query, description = "Registry type"),
+    ),
+    responses(
+        (status = 200, description = "Card deleted", body = UidResponse),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 #[instrument(skip_all)]
 pub async fn delete_card(
     State(state): State<Arc<AppState>>,
@@ -859,6 +1062,24 @@ pub async fn delete_card(
     Ok(response)
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/card/load",
+    params(
+        ("space" = Option<String>, Query, description = "Filter by space"),
+        ("name" = Option<String>, Query, description = "Filter by name"),
+        ("version" = Option<String>, Query, description = "Filter by version"),
+        ("uid" = Option<String>, Query, description = "Filter by UID"),
+        ("tags[]" = Option<Vec<String>>, Query, description = "Filter by tags (repeatable)"),
+        ("registry_type" = String, Query, description = "Registry type"),
+    ),
+    responses(
+        (status = 200, description = "Artifact key for card loading", body = ArtifactKey),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 #[instrument(skip_all)]
 pub async fn load_card(
     State(state): State<Arc<AppState>>,
@@ -885,6 +1106,25 @@ pub async fn load_card(
     Ok(Json(key))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/card/metadata",
+    params(
+        ("space" = Option<String>, Query, description = "Filter by space"),
+        ("name" = Option<String>, Query, description = "Filter by name"),
+        ("version" = Option<String>, Query, description = "Filter by version"),
+        ("uid" = Option<String>, Query, description = "Filter by UID"),
+        ("tags[]" = Option<Vec<String>>, Query, description = "Filter by tags (repeatable)"),
+        ("registry_type" = String, Query, description = "Registry type"),
+    ),
+    responses(
+        (status = 200, description = "Card metadata as JSON", body = inline(serde_json::Value)),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 #[instrument(skip_all)]
 pub async fn get_card(
     State(state): State<Arc<AppState>>,
@@ -954,6 +1194,24 @@ pub async fn get_card(
     Ok(Json(card))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/card/readme",
+    params(
+        ("space" = Option<String>, Query, description = "Card space"),
+        ("name" = Option<String>, Query, description = "Card name"),
+        ("version" = Option<String>, Query, description = "Card version"),
+        ("uid" = Option<String>, Query, description = "Card UID"),
+        ("registry_type" = String, Query, description = "Registry type"),
+    ),
+    responses(
+        (status = 200, description = "Card readme content", body = ReadeMe),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 #[instrument(skip_all)]
 pub async fn get_readme(
     State(state): State<Arc<AppState>>,
@@ -1017,6 +1275,18 @@ pub async fn get_readme(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/card/readme",
+    request_body(content = CreateReadeMe, description = "Readme creation request"),
+    responses(
+        (status = 200, description = "Readme uploaded", body = UploadResponse),
+        (status = 403, description = "Forbidden", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 #[instrument(skip_all)]
 pub async fn create_readme(
     State(state): State<Arc<AppState>>,
@@ -1071,6 +1341,17 @@ pub async fn create_readme(
     }
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/card/compare_hash",
+    request_body(content = CompareHashRequest, description = "Content hash comparison request"),
+    responses(
+        (status = 200, description = "Hash comparison result", body = CompareHashResponse),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "cards"
+)]
 #[instrument(skip_all)]
 pub async fn compare_content_hash(
     State(state): State<Arc<AppState>>,

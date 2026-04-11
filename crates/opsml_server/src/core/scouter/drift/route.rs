@@ -21,6 +21,23 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::{error, instrument};
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/scouter/drift/spc",
+    params(
+        ("name" = String, Query, description = "Model or profile name"),
+        ("space" = String, Query, description = "Space the profile belongs to"),
+        ("version" = String, Query, description = "Profile version"),
+        ("time_window" = Option<String>, Query, description = "Time window for drift aggregation"),
+        ("max_data_points" = Option<u32>, Query, description = "Maximum data points to return"),
+    ),
+    responses(
+        (status = 200, description = "SPC drift features", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip(data, params))]
 pub async fn get_spc_drift(
     State(data): State<Arc<AppState>>,
@@ -70,6 +87,23 @@ pub async fn get_spc_drift(
     Ok(Json(body))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/scouter/drift/psi",
+    params(
+        ("name" = String, Query, description = "Model or profile name"),
+        ("space" = String, Query, description = "Space the profile belongs to"),
+        ("version" = String, Query, description = "Profile version"),
+        ("time_window" = Option<String>, Query, description = "Time window for drift aggregation"),
+        ("max_data_points" = Option<u32>, Query, description = "Maximum data points to return"),
+    ),
+    responses(
+        (status = 200, description = "PSI drift feature metrics", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn get_psi_drift(
     State(data): State<Arc<AppState>>,
@@ -124,6 +158,23 @@ pub async fn get_psi_drift(
     Ok(Json(body))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/scouter/drift/custom",
+    params(
+        ("name" = String, Query, description = "Model or profile name"),
+        ("space" = String, Query, description = "Space the profile belongs to"),
+        ("version" = String, Query, description = "Profile version"),
+        ("time_window" = Option<String>, Query, description = "Time window for drift aggregation"),
+        ("max_data_points" = Option<u32>, Query, description = "Maximum data points to return"),
+    ),
+    responses(
+        (status = 200, description = "Custom drift binned metrics", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn get_custom_drift(
     State(data): State<Arc<AppState>>,
@@ -174,6 +225,24 @@ pub async fn get_custom_drift(
     Ok(Json(body))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/scouter/drift/genai/task",
+    params(
+        ("name" = String, Query, description = "Model or profile name"),
+        ("space" = String, Query, description = "Space the profile belongs to"),
+        ("version" = String, Query, description = "Profile version"),
+        ("time_window" = Option<String>, Query, description = "Time window for drift aggregation"),
+        ("max_data_points" = Option<u32>, Query, description = "Maximum data points to return"),
+    ),
+    responses(
+        (status = 200, description = "GenAI task binned metrics", body = inline(serde_json::Value)),
+        (status = 404, description = "Not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn get_genai_task_metrics(
     State(data): State<Arc<AppState>>,
@@ -244,6 +313,24 @@ pub async fn get_genai_task_metrics(
     Ok(Json(body))
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/scouter/drift/genai/workflow",
+    params(
+        ("name" = String, Query, description = "Model or profile name"),
+        ("space" = String, Query, description = "Space the profile belongs to"),
+        ("version" = String, Query, description = "Profile version"),
+        ("time_window" = Option<String>, Query, description = "Time window for drift aggregation"),
+        ("max_data_points" = Option<u32>, Query, description = "Maximum data points to return"),
+    ),
+    responses(
+        (status = 200, description = "GenAI workflow binned metrics", body = inline(serde_json::Value)),
+        (status = 404, description = "Not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn get_genai_workflow_metrics(
     State(data): State<Arc<AppState>>,
