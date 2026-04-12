@@ -11,9 +11,9 @@
 -->
 <script lang="ts">
   import type { RecordWithAgent } from './types';
-  import type { Status } from '$lib/components/scouter/genai/types';
+  import type { Status } from '$lib/components/scouter/agent/types';
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
-  import EvalRecordSideBar from '$lib/components/scouter/genai/record/EvalRecordSideBar.svelte';
+  import EvalRecordSideBar from '$lib/components/scouter/agent/record/EvalRecordSideBar.svelte';
 
   let {
     records,

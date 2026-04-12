@@ -1,5 +1,5 @@
 /**
- * Mock data for the GenAI evaluation dashboard.
+ * Mock data for the Agent evaluation dashboard.
  * Used in dev mode when no live Scouter instance is available.
  * Follows the same style as $lib/server/trace/mockData.ts.
  */
@@ -9,22 +9,22 @@ import type { TimeRange } from "$lib/components/trace/types";
 import type {
   AgentEvalProfile,
   AgentEvalConfig,
-  GenAIAlertConfig,
+  AgentAlertConfig,
   AssertionTasks,
   EvalRecord,
   EvalRecordPaginationResponse,
-  GenAIEvalWorkflowPaginationResponse,
-} from "$lib/components/scouter/genai/types";
-import { Status } from "$lib/components/scouter/genai/types";
+  AgentEvalWorkflowPaginationResponse,
+} from "$lib/components/scouter/agent/types";
+import { Status } from "$lib/components/scouter/agent/types";
 import type {
   AssertionTask,
   LLMJudgeTask,
   TraceAssertionTask,
-  GenAIEvalWorkflowResult,
+  AgentEvalWorkflowResult,
   ExecutionPlan,
   ExecutionNode,
   EvalTaskResult,
-} from "$lib/components/scouter/genai/task";
+} from "$lib/components/scouter/agent/task";
 import type {
   DriftAlertPaginationResponse,
   Alert,
@@ -39,8 +39,8 @@ import type {
   BinnedMetricStats,
 } from "$lib/components/scouter/custom/types";
 import type {
-  GenAIMonitoringPageData,
-  SelectedGenAIData,
+  AgentMonitoringPageData,
+  SelectedAgentData,
 } from "$lib/components/scouter/dashboard/utils";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -178,9 +178,9 @@ const assertionTasksObj: AssertionTasks = {
 
 // ── Eval profile ──────────────────────────────────────────────────────────────
 
-/** Builds a mock GenAI evaluation profile (also used by eval layout to inject mock eval_profile) */
+/** Builds a mock Agent evaluation profile (also used by eval layout to inject mock eval_profile) */
 export function buildMockAgentEvalProfile(): AgentEvalProfile {
-  const alertConfig: GenAIAlertConfig = {
+  const alertConfig: AgentAlertConfig = {
     dispatch_config: { Console: { enabled: true } },
     schedule: "0 * * * *",
     alert_condition: {
@@ -196,7 +196,7 @@ export function buildMockAgentEvalProfile(): AgentEvalProfile {
     version: "1.0.0",
     uid: "mock-eval-uid-0001",
     alert_config: alertConfig,
-    drift_type: DriftType.GenAI,
+    drift_type: DriftType.Agent,
   };
 
   return {
@@ -279,7 +279,7 @@ function buildEvalRecord(index: number): EvalRecord {
     entity_id: 42,
     entity_uid: "mock-eval-uid-0001",
     status,
-    entity_type: EntityType.GenAI,
+    entity_type: EntityType.Agent,
   };
 }
 
@@ -341,7 +341,7 @@ function buildExecutionPlan(): ExecutionPlan {
   };
 }
 
-function buildWorkflowResult(index: number): GenAIEvalWorkflowResult {
+function buildWorkflowResult(index: number): AgentEvalWorkflowResult {
   const totalTasks = 5;
   const failedVariants = [0, 0, 0, 1, 0, 2, 0, 1];
   const failedTasks = failedVariants[index % failedVariants.length];
@@ -363,7 +363,7 @@ function buildWorkflowResult(index: number): GenAIEvalWorkflowResult {
   };
 }
 
-function buildWorkflowResults(): GenAIEvalWorkflowResult[] {
+function buildWorkflowResults(): AgentEvalWorkflowResult[] {
   return Array.from({ length: 8 }, (_, i) => buildWorkflowResult(i));
 }
 
@@ -507,7 +507,7 @@ function buildDriftAlerts(): DriftAlertPaginationResponse {
     created_at: iso(-15 * 60_000),
     entity_name: "pass_rate",
     alert: {
-      [DriftType.GenAI]: {
+      [DriftType.Agent]: {
         metric_name: "pass_rate",
         baseline_value: 0.8,
         observed_value: 0.72,
@@ -529,13 +529,13 @@ function buildDriftAlerts(): DriftAlertPaginationResponse {
 // ── Page data ─────────────────────────────────────────────────────────────────
 
 /**
- * Returns a mock GenAIMonitoringPageData (success) for prompt evaluation.
+ * Returns a mock AgentMonitoringPageData (success) for prompt evaluation.
  */
-export function getMockGenAIMonitoringPageData(
+export function getMockAgentMonitoringPageData(
   uid: string,
   registryType: RegistryType,
   timeRange: TimeRange,
-): Extract<GenAIMonitoringPageData, { status: "success" }> {
+): Extract<AgentMonitoringPageData, { status: "success" }> {
   const profile = buildMockAgentEvalProfile();
   // Override uid in the profile config so it matches the caller's uid.
   profile.config.uid = uid;
@@ -546,13 +546,13 @@ export function getMockGenAIMonitoringPageData(
     has_previous: false,
   };
 
-  const workflows: GenAIEvalWorkflowPaginationResponse = {
+  const workflows: AgentEvalWorkflowPaginationResponse = {
     items: buildWorkflowResults(),
     has_next: false,
     has_previous: false,
   };
 
-  const selectedData: SelectedGenAIData = {
+  const selectedData: SelectedAgentData = {
     metrics: {
       task: buildTaskMetrics(),
       workflow: buildWorkflowMetrics(),

@@ -45,14 +45,14 @@
     { name: "Models", path: "/opsml/model", icon: Brain },
     { name: "Data", path: "/opsml/data", icon: Database },
     {
-      name: "GenAI",
-      path: "/opsml/genai",
+      name: "Agent",
+      path: "/opsml/agent",
       icon: Sparkles,
       subItems: [
-        { name: "Prompts", path: "/opsml/genai/prompt" },
-        { name: "Agents", path: "/opsml/genai/agent" },
-        { name: "MCPs", path: "/opsml/genai/mcp" },
-        { name: "Evaluations", path: "/opsml/genai/eval" }
+        { name: "Prompts", path: "/opsml/agent/prompt" },
+        { name: "Agents", path: "/opsml/agent/agent" },
+        { name: "MCPs", path: "/opsml/agent/mcp" },
+        { name: "Evaluations", path: "/opsml/agent/eval" }
       ]
     },
     { name: "Experiments", path: "/opsml/experiment", icon: FlaskConical },

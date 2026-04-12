@@ -28,13 +28,13 @@ export function getRegistryPath(type: RegistryType): string {
     case RegistryType.Experiment:
       return "experiment";
     case RegistryType.Prompt:
-      return "genai/prompt";
+      return "agent/prompt";
     case RegistryType.Service:
       return "service";
     case RegistryType.Mcp:
-      return "genai/mcp";
+      return "agent/mcp";
     case RegistryType.Agent:
-      return "genai/agent";
+      return "agent/agent";
     default:
       return "";
   }

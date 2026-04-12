@@ -1,9 +1,9 @@
+pub mod agent;
 pub mod app;
 pub mod card;
 pub mod cli;
 pub mod data;
 pub mod experiment;
-pub mod genai;
 pub mod logging;
 pub mod mocks;
 pub mod model;
@@ -24,7 +24,7 @@ fn _opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
 
     // integrations
     scouter::add_scouter_module(m)?;
-    genai::add_genai_module(m)?;
+    agent::add_agent_module(m)?;
 
     cli::add_cli_module(m)?;
     card::add_card_module(m)?;

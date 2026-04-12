@@ -8,7 +8,7 @@ from opsml.card import (
     PromptCard,
     RegistryType,
 )
-from opsml.genai import Prompt
+from opsml.agent import Prompt
 from opsml.model import SklearnModel, ModelLoadKwargs, ModelSaveKwargs
 from opsml.data import PandasData
 from opsml.types import DriftArgs

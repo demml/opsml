@@ -3,8 +3,8 @@ from typing import cast
 from opsml.card import CardRegistry, RegistryType, PromptCard
 from opsml.types import DriftArgs, PromptSaveKwargs
 from opsml.scouter.evaluate import AgentEvalConfig, LLMJudgeTask, ComparisonOperator
-from opsml.genai import Prompt, Provider
-from opsml.genai.google import GeminiSettings
+from opsml.agent import Prompt, Provider
+from opsml.agent.google import GeminiSettings
 from opsml.mock import OpsmlTestServer, LLMTestServer
 import pytest
 from tests.conftest import WINDOWS_EXCLUDE

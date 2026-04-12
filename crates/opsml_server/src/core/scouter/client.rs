@@ -18,14 +18,14 @@ const X_BOOTSTRAP_TOKEN: &str = "x-bootstrap-token";
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub enum Routes {
-    DriftGenAITask,
-    DriftGenAIWorkflow,
+    DriftAgentTask,
+    DriftAgentWorkflow,
     DriftCustom,
     DriftPsi,
     DriftSpc,
-    GenAIWorkflow,
-    GenAITask,
-    GenAIRecords,
+    AgentWorkflow,
+    AgentTask,
+    AgentRecords,
     Profile,
     ProfileStatus,
     Users,
@@ -44,13 +44,13 @@ impl Routes {
             Routes::DriftCustom => "scouter/drift/custom",
             Routes::DriftPsi => "scouter/drift/psi",
             Routes::DriftSpc => "scouter/drift/spc",
-            Routes::DriftGenAIWorkflow => "scouter/drift/genai/workflow",
-            Routes::DriftGenAITask => "scouter/drift/genai/task",
+            Routes::DriftAgentWorkflow => "scouter/drift/agent/workflow",
+            Routes::DriftAgentTask => "scouter/drift/agent/task",
 
-            // Scouter GenAI Routes
-            Routes::GenAIWorkflow => "scouter/genai/page/workflow",
-            Routes::GenAITask => "scouter/genai/task",
-            Routes::GenAIRecords => "scouter/genai/page/record",
+            // Scouter Agent Routes
+            Routes::AgentWorkflow => "scouter/agent/page/workflow",
+            Routes::AgentTask => "scouter/agent/task",
+            Routes::AgentRecords => "scouter/agent/page/record",
 
             // Scouter Profile Routes
             Routes::Profile => "scouter/profile",

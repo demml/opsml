@@ -1,4 +1,4 @@
-from opsml.genai import Prompt, Score
+from opsml.agent import Prompt, Score
 import pytest
 
 

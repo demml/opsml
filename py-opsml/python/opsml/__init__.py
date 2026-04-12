@@ -1,7 +1,7 @@
 # mypy: disable-error-code="attr-defined"
 # pylint: disable=no-name-in-module
 # python/opsml/__init__.py
-from . import app, card, data, experiment, genai, logging, mock, model, scouter, types
+from . import agent, app, card, data, experiment, logging, mock, model, scouter, types
 from ._opsml import _get_log_level  # type: ignore
 from ._opsml import _log_json  # type: ignore
 from ._opsml import get_opsml_version  # type: ignore
@@ -72,7 +72,7 @@ __all__ = [
     "logging",
     "mock",
     "scouter",
-    "genai",
+    "agent",
     ## App
     "AppState",
     "ReloadConfig",

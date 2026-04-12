@@ -1,21 +1,23 @@
 #### begin imports ####
 
+import builtins
 import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple, Union, overload
+from typing import Any, Dict, List, Literal, Optional, Sequence, Union, overload
 
-from ..common.logging import LogLevel
-from ..genai.potato import Embedder
-from ..header import Context
 from .evaluate import (
     AgentAssertionTask,
     AssertionTask,
     ComparisonOperator,
     EvaluationTaskType,
     LLMJudgeTask,
+    TasksFile,
     TraceAssertionTask,
 )
+from ..header import Context
+from ..common.logging import LogLevel
 from .mock import MockConfig
+from ..agent.potato import Embedder
 from .tracing import (
     TagRecord,
     TraceBaggageRecord,
@@ -35,7 +37,7 @@ class DriftType:
     Spc: "DriftType"
     Psi: "DriftType"
     Custom: "DriftType"
-    GenAI: "DriftType"
+    Agent: "DriftType"
 
     def value(self) -> str: ...
     @staticmethod
@@ -357,7 +359,7 @@ class SpcAlertConfig:
         """Set the features to monitor"""
 
 class SpcAlert:
-    def __init__(self, kind: SpcAlertType, zone: AlertZone):
+    def __init__(self, kind: Literal["SpcAlertType"], zone: AlertZone):
         """Initialize alert"""
 
     @property
@@ -470,7 +472,7 @@ class CustomMetricAlertConfig:
     def alert_conditions(self, alert_conditions: dict[str, AlertCondition]) -> None:
         """Update the alert_condition that were set during metric definition"""
 
-class GenAIAlertConfig:
+class AgentAlertConfig:
     def __init__(
         self,
         dispatch_config: Optional[SlackDispatchConfig | OpsGenieDispatchConfig] = None,
@@ -1004,8 +1006,8 @@ class ScouterClient:
             Drift map of type BinnedMetrics | BinnedPsiFeatureMetrics | BinnedSpcFeatureMetrics
         """
 
-    def get_genai_task_binned_drift(self, drift_request: DriftRequest) -> Any:
-        """Get GenAI task drift map from server
+    def get_agent_task_binned_drift(self, drift_request: DriftRequest) -> Any:
+        """Get agent task drift map from server
         Args:
             drift_request:
                 DriftRequest object
@@ -1087,20 +1089,14 @@ class ScouterClient:
             TraceSpansResponse
         """
 
-    def get_trace_spans_from_tags(
+    def get_trace_spans_from_filters(
         self,
-        tags: List[Tuple[str, str]],
-        match_all: bool = False,
-        service_name: Optional[str] = None,
+        filters: TraceFilters,
     ) -> TraceSpansResponse:
-        """Get trace spans from tags
+        """Get trace spans from filters
         Args:
-            tags:
-                List of tags to filter by
-            match_all:
-                Whether to match all tags or any tag
-            service_name:
-                Service name
+            filters:
+                TraceFilters object
 
         Returns:
             TraceSpansResponse
@@ -1188,7 +1184,7 @@ class BinnedSpcFeatureMetrics:
 class EntityType:
     Feature: "EntityType"
     Metric: "EntityType"
-    GenAI: "EntityType"
+    Agent: "EntityType"
 
 class RecordType:
     Spc: "RecordType"
@@ -1196,9 +1192,9 @@ class RecordType:
     Observability: "RecordType"
     Custom: "RecordType"
     Trace: "RecordType"
-    GenAIEval: "RecordType"
-    GenAITask: "RecordType"
-    GenAIWorkflow: "RecordType"
+    AgentEval: "RecordType"
+    AgentTask: "RecordType"
+    AgentWorkflow: "RecordType"
 
 class ServerRecord:
     def __init__(self, record: Any) -> None:
@@ -1393,7 +1389,7 @@ class QueueFeature:
         """
 
     @staticmethod
-    def int(name: str, value: int) -> "QueueFeature":
+    def int(name: str, value: builtins.int) -> "QueueFeature":
         """Create an integer feature
 
         Args:
@@ -1404,7 +1400,7 @@ class QueueFeature:
         """
 
     @staticmethod
-    def float(name: str, value: float) -> "QueueFeature":
+    def float(name: str, value: builtins.float) -> "QueueFeature":
         """Create a float feature
 
         Args:
@@ -1763,6 +1759,7 @@ class ScouterQueue:
             RedisConfig,
             HttpConfig,
             GrpcConfig,
+            MockConfig,
         ],
         wait_for_startup: bool = False,
     ) -> "ScouterQueue":
@@ -1817,7 +1814,7 @@ class ScouterQueue:
     def disable_capture(self) -> None:
         """Disable offline record capture across all queues and discard any buffered records."""
 
-    def drain_records(self, alias: str) -> List["EvalRecord"]:
+    def drain_records(self, alias: str) -> List[EvalRecord]:
         """Drain and return captured EvalRecords from the queue identified by *alias*.
 
         Returns an empty list if capture is disabled or no records have been inserted.
@@ -1829,14 +1826,14 @@ class ScouterQueue:
             KeyError: If *alias* does not match any registered queue.
         """
 
-    def drain_all_records(self) -> Dict[str, List["EvalRecord"]]:
+    def drain_all_records(self) -> Dict[str, List[EvalRecord]]:
         """Drain captured EvalRecords from all queues.
 
         Returns a mapping of alias → records. Queues with no buffered records are
         omitted from the result.
         """
 
-    def genai_profiles(self) -> Dict[str, "AgentEvalProfile"]:
+    def agent_profiles(self) -> Dict[str, AgentEvalProfile]:
         """Returns a mapping of alias → AgentEvalProfile for all AgentEvalProfiles registered in the queue."""
 
 class EvalRecord:
@@ -3101,7 +3098,7 @@ class AgentEvalConfig:
         name: str = "__missing__",
         version: str = "0.1.0",
         sample_ratio: float = 1.0,
-        alert_config: GenAIAlertConfig = GenAIAlertConfig(),
+        alert_config: AgentAlertConfig = AgentAlertConfig(),
     ):
         """Initialize drift config
         Args:
@@ -3155,11 +3152,11 @@ class AgentEvalConfig:
         """Drift type"""
 
     @property
-    def alert_config(self) -> GenAIAlertConfig:
+    def alert_config(self) -> AgentAlertConfig:
         """get alert_config"""
 
     @alert_config.setter
-    def alert_config(self, alert_config: GenAIAlertConfig) -> None:
+    def alert_config(self, alert_config: AgentAlertConfig) -> None:
         """Set alert_config"""
 
     @staticmethod
@@ -3181,7 +3178,7 @@ class AgentEvalConfig:
         space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
-        alert_config: Optional[GenAIAlertConfig] = None,
+        alert_config: Optional[AgentAlertConfig] = None,
     ) -> None:
         """Inplace operation that updates config args
         Args:
@@ -3194,6 +3191,8 @@ class AgentEvalConfig:
             alert_config:
                 LLM alert configuration
         """
+
+_TASK_TYPES = List[Union[AssertionTask, LLMJudgeTask, TraceAssertionTask]] | TasksFile
 
 class AgentEvalProfile:
     """Profile for LLM evaluation and drift detection.
@@ -3496,7 +3495,7 @@ class AgentEvalProfile:
 
     def __init__(
         self,
-        tasks: List[Union[AssertionTask, LLMJudgeTask, TraceAssertionTask]],
+        tasks: _TASK_TYPES,
         config: Optional[AgentEvalConfig] = None,
         alias: Optional[str] = None,
     ):
@@ -3508,10 +3507,11 @@ class AgentEvalProfile:
         Scouter server.
 
         Args:
-            tasks (List[Union[AssertionTask, LLMJudgeTask, TraceAssertionTask]]):
+            tasks (List[Union[AssertionTask, LLMJudgeTask, TraceAssertionTask]] | TasksFile):
                 List of evaluation tasks to include in the profile. Can contain
                 AssertionTask, LLMJudgeTask, and TraceAssertionTask instances.
                 At least one task (assertion, LLM judge, or trace assertion) is required.
+                Can also be provided as a TasksFile object.
             config (Optional[AgentEvalConfig]):
                 Configuration for the GenAI drift profile containing space, name,
                 version, sample rate, and alert settings. If not provided,
@@ -3801,7 +3801,7 @@ class AgentEvalProfile:
         name: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
-        alert_config: Optional[GenAIAlertConfig] = None,
+        alert_config: Optional[AgentAlertConfig] = None,
     ) -> None:
         """Update profile configuration in-place.
 
@@ -3818,13 +3818,13 @@ class AgentEvalProfile:
                 New model version. If None, keeps existing value.
             uid (Optional[str]):
                 New unique identifier. If None, keeps existing value.
-            alert_config (Optional[GenAIAlertConfig]):
+            alert_config (Optional[AgentAlertConfig]):
                 New alert configuration. If None, keeps existing value.
 
         Example:
             >>> profile.update_config_args(
             ...     space="production",
-            ...     alert_config=GenAIAlertConfig(schedule="0 */6 * * *")
+            ...     alert_config=AgentAlertConfig(schedule="0 */6 * * *")
             ... )
         """
 
@@ -3933,7 +3933,7 @@ class Drifter:
             CustomDriftProfile
         """
 
-    def create_drift_profile(  # type: ignore
+    def create_drift_profile(  # type: ignore[misc]
         self,
         data: Any,
         config: Optional[Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]] = None,
@@ -3958,7 +3958,7 @@ class Drifter:
             SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
 
-    def create_genai_drift_profile(
+    def create_agent_drift_profile(
         self,
         config: AgentEvalConfig,
         tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask],
@@ -3969,7 +3969,7 @@ class Drifter:
         LLM evaluations are run asynchronously on the scouter server.
 
         Overview:
-            GenAI evaluations are defined using assertion tasks and LLM judge tasks.
+            Agent evaluations are defined using assertion tasks and LLM judge tasks.
             Assertion tasks evaluate specific metrics based on model responses, and do not require
             the use of an LLM judge or extra call. It is recommended to use assertion tasks whenever possible
             to reduce cost and latency. LLM judge tasks leverage an additional LLM call to evaluate
@@ -4009,7 +4009,7 @@ class Drifter:
             ...         description="Ensure relevance score >= 7"
             ...     )
             ... ]
-            >>> profile = Drifter().create_genai_drift_profile(config, tasks)
+            >>> profile = Drifter().create_agent_drift_profile(config, tasks)
 
         """
 
@@ -4078,7 +4078,7 @@ class Drifter:
             EvalResultSet
         """
 
-    def compute_drift(  # type: ignore
+    def compute_drift(  # type: ignore[misc]
         self,
         data: Any,
         drift_profile: Union[SpcDriftProfile, PsiDriftProfile, AgentEvalProfile],
@@ -4173,7 +4173,7 @@ class EvalDataset:
         Args:
             records (List[EvalRecord]):
                 List of LLM evaluation records to be evaluated.
-            tasks (List[LLMJudgeTask | AssertionTask]):
+            tasks (List[LLMJudgeTask | AssertionTask | AgentAssertionTask]):
                 List of evaluation tasks to apply to the records.
         """
 
@@ -4796,7 +4796,7 @@ __all__ = [
     "PsiNormalThreshold",
     "PsiChiSquareThreshold",
     "PsiFixedThreshold",
-    "GenAIAlertConfig",
+    "AgentAlertConfig",
     "TimeInterval",
     "DriftRequest",
     "ScouterClient",
@@ -4880,7 +4880,6 @@ __all__ = [
     "Metrics",
     "EntityType",
     "EvalRecord",
-    "GrpcConfig",
     "HttpConfig",
     "KafkaConfig",
     "RabbitMQConfig",

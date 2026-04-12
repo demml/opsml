@@ -11,6 +11,11 @@ from .._opsml import (
     CustomMetricDriftConfig,
     DataProfile,
     DataProfiler,
+    DatasetClient,
+    DatasetProducer,
+    QueryResult,
+    TableConfig,
+    WriteConfig,
     Doane,
     Drifter,
     EqualWidthBinning,
@@ -122,7 +127,13 @@ __all__ = [
     "RabbitMQConfig",
     "RedisConfig",
     "AlertThreshold",
-    # genai
+    # bifrost
+    "DatasetClient",
+    "DatasetProducer",
+    "QueryResult",
+    "TableConfig",
+    "WriteConfig",
+    # agent
     "AgentEvalConfig",
     "AgentEvalProfile",
     "EvalRecord",

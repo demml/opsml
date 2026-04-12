@@ -15,7 +15,7 @@ from typing import (
     overload,
 )
 
-from .genai.potato import *
+from .agent.potato import *
 from .opsml import (
     Data,
     DataInterface,
@@ -1179,7 +1179,7 @@ class PromptCard:
             ...         description="Ensure relevance score >= 7"
             ...     )
             ... ]
-            >>> profile = Drifter().create_genai_drift_profile(config, tasks)
+            >>> profile = Drifter().create_agent_drift_profile(config, tasks)
 
         """
 

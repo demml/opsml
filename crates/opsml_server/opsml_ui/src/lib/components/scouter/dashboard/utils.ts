@@ -3,10 +3,10 @@ import { getPsiDriftMetrics } from "$lib/components/scouter/psi/utils";
 import { getCustomDriftMetrics } from "$lib/components/scouter/custom/utils";
 import {
   getServerEvalRecordPage,
-  getGenAIEvalTaskDriftMetrics,
-  getGenAIEvalWorkflowDriftMetrics,
-  getServerGenAIEvalWorkflowPage,
-} from "$lib/components/scouter/genai/utils";
+  getAgentEvalTaskDriftMetrics,
+  getAgentEvalWorkflowDriftMetrics,
+  getServerAgentEvalWorkflowPage,
+} from "$lib/components/scouter/agent/utils";
 import { DriftType } from "../types";
 import type { TimeRange } from "$lib/components/trace/types";
 import type { RecordCursor } from "$lib/components/scouter/types";
@@ -21,8 +21,8 @@ import {
 import type {
   AgentEvalProfile,
   EvalRecordPaginationResponse,
-  GenAIEvalWorkflowPaginationResponse,
-} from "../genai/types";
+  AgentEvalWorkflowPaginationResponse,
+} from "../agent/types";
 import { calculateTimeRange, getCookie } from "$lib/components/trace/utils";
 import { getMaxDataPoints, type RegistryType } from "$lib/utils";
 import type {
@@ -51,9 +51,9 @@ export interface DriftMetricMapping {
   [DriftType.Spc]: Awaited<ReturnType<typeof getSpcDriftMetrics>>;
   [DriftType.Psi]: Awaited<ReturnType<typeof getPsiDriftMetrics>>;
   [DriftType.Custom]: Awaited<ReturnType<typeof getCustomDriftMetrics>>;
-  [DriftType.GenAI]: {
-    task: Awaited<ReturnType<typeof getGenAIEvalTaskDriftMetrics>>;
-    workflow: Awaited<ReturnType<typeof getGenAIEvalWorkflowDriftMetrics>>;
+  [DriftType.Agent]: {
+    task: Awaited<ReturnType<typeof getAgentEvalTaskDriftMetrics>>;
+    workflow: Awaited<ReturnType<typeof getAgentEvalWorkflowDriftMetrics>>;
   };
 }
 
@@ -68,22 +68,22 @@ export type SelectedData = {
   profileUri: string;
 };
 
-/** Selected data for the GenAI evaluation dashboard */
-export type SelectedGenAIData = {
-  metrics: DriftMetricMapping[DriftType.GenAI];
+/** Selected data for the Agent evaluation dashboard */
+export type SelectedAgentData = {
+  metrics: DriftMetricMapping[DriftType.Agent];
   driftAlerts: DriftAlertPaginationResponse;
   records: EvalRecordPaginationResponse;
-  workflows: GenAIEvalWorkflowPaginationResponse;
+  workflows: AgentEvalWorkflowPaginationResponse;
 };
 
 // ─── Page Data Types ──────────────────────────────────────────────────────────
 
-export type GenAIMonitoringPageData =
+export type AgentMonitoringPageData =
   | {
       status: "success";
       profile: AgentEvalProfile;
       profileUri: string;
-      selectedData: SelectedGenAIData;
+      selectedData: SelectedAgentData;
       uid: string;
       registryType: RegistryType;
       selectedTimeRange: TimeRange;
@@ -161,7 +161,7 @@ export function getSortedDriftTypes(
 
 // ─── Metric Loaders ───────────────────────────────────────────────────────────
 
-/** Loads binned metrics for any drift type. For GenAI, fetches task and workflow metrics in parallel. */
+/** Loads binned metrics for any drift type. For Agent, fetches task and workflow metrics in parallel. */
 export async function loadMetricsForDriftType<T extends DriftType>(
   fetch: typeof globalThis.fetch,
   space: string,
@@ -195,16 +195,16 @@ export async function loadMetricsForDriftType<T extends DriftType>(
         timeRange,
         maxDataPoints,
       ) as Promise<DriftMetricMapping[T]>;
-    case DriftType.GenAI: {
+    case DriftType.Agent: {
       const [task, workflow] = await Promise.all([
-        getGenAIEvalTaskDriftMetrics(
+        getAgentEvalTaskDriftMetrics(
           fetch,
           space,
           uid,
           timeRange,
           maxDataPoints,
         ),
-        getGenAIEvalWorkflowDriftMetrics(
+        getAgentEvalWorkflowDriftMetrics(
           fetch,
           space,
           uid,
@@ -221,9 +221,9 @@ export async function loadMetricsForDriftType<T extends DriftType>(
   }
 }
 
-// ─── GenAI Data Loaders ───────────────────────────────────────────────────────
+// ─── Agent Data Loaders ───────────────────────────────────────────────────────
 
-async function loadGenAIRecordsAndWorkflows(
+async function loadAgentRecordsAndWorkflows(
   fetch: typeof globalThis.fetch,
   uid: string,
   space: string,
@@ -232,7 +232,7 @@ async function loadGenAIRecordsAndWorkflows(
   workflowCursor?: { cursor: RecordCursor; direction: string },
 ): Promise<{
   records: EvalRecordPaginationResponse;
-  workflows: GenAIEvalWorkflowPaginationResponse;
+  workflows: AgentEvalWorkflowPaginationResponse;
 }> {
   const [records, workflows] = await Promise.all([
     getServerEvalRecordPage(fetch, {
@@ -247,7 +247,7 @@ async function loadGenAIRecordsAndWorkflows(
       start_datetime: timeRange.startTime,
       end_datetime: timeRange.endTime,
     }),
-    getServerGenAIEvalWorkflowPage(fetch, {
+    getServerAgentEvalWorkflowPage(fetch, {
       service_info: { uid, space },
       ...(workflowCursor
         ? {
@@ -263,12 +263,12 @@ async function loadGenAIRecordsAndWorkflows(
   return { records, workflows };
 }
 
-/** Loads all data for the GenAI evaluation dashboard (metrics, alerts, records, workflows) */
-export async function loadGenAIData(
+/** Loads all data for the agent evaluation dashboard (metrics, alerts, records, workflows) */
+export async function loadAgentData(
   fetch: typeof globalThis.fetch,
   eval_profile: AgentEvalProfile,
   timeRange: TimeRange,
-): Promise<SelectedGenAIData> {
+): Promise<SelectedAgentData> {
   const { uid, space } = eval_profile.config;
   const maxDataPoints = getMaxDataPoints();
 
@@ -277,7 +277,7 @@ export async function loadGenAIData(
       fetch,
       space,
       uid,
-      DriftType.GenAI,
+      DriftType.Agent,
       timeRange,
       maxDataPoints,
     ),
@@ -287,7 +287,7 @@ export async function loadGenAIData(
       start_datetime: timeRange.startTime,
       end_datetime: timeRange.endTime,
     }),
-    loadGenAIRecordsAndWorkflows(fetch, uid, space, timeRange),
+    loadAgentRecordsAndWorkflows(fetch, uid, space, timeRange),
   ]);
 
   return { metrics, driftAlerts, records, workflows };
@@ -330,18 +330,18 @@ export async function loadInitialData(
 
 // ─── Page Data Orchestrators ──────────────────────────────────────────────────
 
-/** Builds the full GenAI monitoring page data from a single eval profile */
-export async function getGenAIMonitoringPageData(
+/** Builds the full agent monitoring page data from a single eval profile */
+export async function getAgentMonitoringPageData(
   fetch: typeof globalThis.fetch,
   metadata: { uid: string; [key: string]: any },
   eval_profile: AgentEvalProfile,
   registryType: RegistryType,
   profileUri: string = "",
-): Promise<GenAIMonitoringPageData> {
+): Promise<AgentMonitoringPageData> {
   const timeRange = getTimeRange();
 
   try {
-    const selectedData = await loadGenAIData(fetch, eval_profile, timeRange);
+    const selectedData = await loadAgentData(fetch, eval_profile, timeRange);
 
     return {
       status: "success",
@@ -355,7 +355,7 @@ export async function getGenAIMonitoringPageData(
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Unknown monitoring error";
-    console.error(`[GenAI Monitoring Load Error]: ${message}`, err);
+    console.error(`[Agent Monitoring Load Error]: ${message}`, err);
 
     return {
       status: "error",
@@ -425,16 +425,16 @@ export async function getMonitoringPageData(
 
 // ─── Refresh Functions ────────────────────────────────────────────────────────
 
-export interface GenAIRefreshOptions {
+export interface AgentRefreshOptions {
   recordCursor?: { cursor: RecordCursor; direction: string };
   workflowCursor?: { cursor: RecordCursor; direction: string };
 }
 
-/** Refreshes GenAI dashboard data. Supports full refresh (time change) and paginated refresh (cursor navigation). */
-export async function refreshGenAIMonitoringData(
+/** Refreshes agent dashboard data. Supports full refresh (time change) and paginated refresh (cursor navigation). */
+export async function refreshAgentMonitoringData(
   fetch: typeof globalThis.fetch,
-  monitoringData: Extract<GenAIMonitoringPageData, { status: "success" }>,
-  options: GenAIRefreshOptions = {},
+  monitoringData: Extract<AgentMonitoringPageData, { status: "success" }>,
+  options: AgentRefreshOptions = {},
 ): Promise<void> {
   const { uid, space } = monitoringData.profile.config;
   const timeRange = monitoringData.selectedTimeRange;
@@ -447,7 +447,7 @@ export async function refreshGenAIMonitoringData(
         fetch,
         space,
         uid,
-        DriftType.GenAI,
+        DriftType.Agent,
         timeRange,
         maxPoints,
       );
@@ -464,7 +464,7 @@ export async function refreshGenAIMonitoringData(
   const [metrics, driftAlerts, { records, workflows }] = await Promise.all([
     metricsPromise,
     alertsPromise,
-    loadGenAIRecordsAndWorkflows(
+    loadAgentRecordsAndWorkflows(
       fetch,
       uid,
       space,

@@ -1,7 +1,7 @@
 import { RegistryType } from "$lib/utils";
 import type { Prompt } from "$lib/components/genai/types";
 import type { DriftProfileUri } from "$lib/components/scouter/types";
-import type { AgentEvalProfile } from "$lib/components/scouter/genai/types";
+import type { AgentEvalProfile } from "$lib/components/scouter/agent/types";
 
 export interface PromptCardMetadata {
   experimentcard_uid?: string;

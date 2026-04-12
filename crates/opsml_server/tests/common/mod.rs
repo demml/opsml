@@ -25,8 +25,8 @@ use opsml_types::contracts::agent::{
 use opsml_types::contracts::*;
 use opsml_types::*;
 use scouter_client::{
-    BinnedMetrics, BinnedPsiFeatureMetrics, EvalRecordPaginationResponse, EvalTaskResult,
-    GenAIEvalTaskResponse, GenAIEvalWorkflowPaginationResponse, SpcDriftFeatures,
+    AgentEvalTaskResponse, AgentEvalWorkflowPaginationResponse, BinnedMetrics,
+    BinnedPsiFeatureMetrics, EvalRecordPaginationResponse, EvalTaskResult, SpcDriftFeatures,
 };
 use std::sync::Arc;
 use std::time::SystemTime;

@@ -54,7 +54,7 @@ export type AlertMap = {
   [DriftType.Spc]: SpcAlertEntry;
   [DriftType.Psi]: PsiFeatureAlert;
   [DriftType.Custom]: ComparisonMetricAlert;
-  [DriftType.GenAI]: ComparisonMetricAlert;
+  [DriftType.Agent]: ComparisonMetricAlert;
 };
 
 export interface Alert {

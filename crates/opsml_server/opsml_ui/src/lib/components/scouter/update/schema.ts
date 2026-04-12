@@ -4,7 +4,7 @@ import { type AlertDispatchConfig } from "$lib/components/scouter/types";
 import { type PsiThreshold } from "$lib/components/scouter/psi/types";
 import {
   isCustomConfig,
-  isGenAIConfig,
+  isAgentEvalConfig,
   isPsiConfig,
   isSpcConfig,
   type DriftConfigType,
@@ -20,7 +20,7 @@ export const customConfigSchema = z.object({
   sample_size: z.coerce.number().default(25),
 });
 
-export const GenAIConfigSchema = z.object({
+export const AgentConfigSchema = z.object({
   schedule: z.string().default("0 0 0 * * *"),
   sample_ratio: z.coerce
     .number()
@@ -78,7 +78,7 @@ export type SlackConfigSchema = z.infer<typeof slackSchema>;
 export type OpsGenieConfigSchema = z.infer<typeof opsGenieSchema>;
 export type ConsoleConfigSchema = z.infer<typeof consoleSchema>;
 export type CustomConfigSchema = z.infer<typeof customConfigSchema>;
-export type GenAIConfigSchema = z.infer<typeof GenAIConfigSchema>;
+export type AgentConfigSchema = z.infer<typeof AgentConfigSchema>;
 export type PsiConfigSchema = z.infer<typeof psiConfigSchema>;
 export type SpcConfigSchema = z.infer<typeof spcConfigSchema>;
 
@@ -89,7 +89,7 @@ export type CustomConfigParams = {
   dispatch_config: AlertDispatchConfig;
 };
 
-export type GenAIConfigParams = {
+export type AgentConfigParams = {
   schedule: string;
   sample_ratio: number;
   dispatch_config: AlertDispatchConfig;
@@ -115,7 +115,7 @@ export type ConfigParams =
   | CustomConfigParams
   | PsiConfigParams
   | SpcConfigParams
-  | GenAIConfigParams;
+  | AgentConfigParams;
 
 // Function to get appropriate params based on config type
 export function getConfigParams(config: DriftConfigType): ConfigParams {
@@ -128,7 +128,7 @@ export function getConfigParams(config: DriftConfigType): ConfigParams {
     };
   }
 
-  if (isGenAIConfig(config)) {
+  if (isAgentEvalConfig(config)) {
     return {
       schedule: config.alert_config.schedule,
       sample_ratio: config.sample_ratio,
@@ -300,10 +300,10 @@ export function validateCustomConfig(
   }
 }
 
-export function validateGenAIConfig(
+export function validateAgentConfig(
   schedule: string,
   sample_ratio: number
-): ValidationResult<GenAIConfigSchema> {
+): ValidationResult<AgentConfigSchema> {
   try {
     const validData = z
       .object({
@@ -327,12 +327,12 @@ export function validateGenAIConfig(
   } catch (error) {
     if (error instanceof z.ZodError) {
       const errors = error.errors.reduce<
-        Record<keyof GenAIConfigSchema, string>
+        Record<keyof AgentConfigSchema, string>
       >((acc, curr) => {
-        const path = curr.path[0] as keyof GenAIConfigSchema;
+        const path = curr.path[0] as keyof AgentConfigSchema;
         acc[path] = curr.message;
         return acc;
-      }, {} as Record<keyof GenAIConfigSchema, string>);
+      }, {} as Record<keyof AgentConfigSchema, string>);
 
       return {
         success: false,

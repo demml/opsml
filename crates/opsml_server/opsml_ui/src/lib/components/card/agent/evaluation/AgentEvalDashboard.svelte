@@ -16,11 +16,11 @@
 <script lang="ts">
   import type { AgentPromptEvalData, AgentRecordPage, AgentWorkflowPage } from './types';
   import type { RecordWithAgent, WorkflowWithAgent } from './types';
-  import type { AgentEvalProfile } from '$lib/components/scouter/genai/types';
+  import type { AgentEvalProfile } from '$lib/components/scouter/agent/types';
   import AgentEvalOverview from '$lib/components/card/agent/evaluation/AgentEvalOverview.svelte';
   import AgentEvalRecordTable from '$lib/components/card/agent/evaluation/AgentEvalRecordTable.svelte';
   import AgentEvalWorkflowTable from '$lib/components/card/agent/evaluation/AgentEvalWorkflowTable.svelte';
-  import { refreshGenAIMonitoringData } from '$lib/components/scouter/dashboard/utils';
+  import { refreshAgentMonitoringData } from '$lib/components/scouter/dashboard/utils';
   import { timeRangeState } from '$lib/components/utils/timeState.svelte';
   import { getRegistryPath, RegistryType,  getMaxDataPoints  } from '$lib/utils';
   import { generateColors, getChartTheme, getPlugins } from '$lib/components/viz/utils';
@@ -84,7 +84,7 @@
       await Promise.all(
         evalData.map(async (e) => {
           if (e.monitoringData.status !== 'success') return;
-          await refreshGenAIMonitoringData(fetch, e.monitoringData);
+          await refreshAgentMonitoringData(fetch, e.monitoringData);
         })
       );
     } catch (err) {
@@ -105,7 +105,7 @@
           const canPage = direction === 'next' ? page?.has_next : page?.has_previous;
           const cursor = direction === 'next' ? page?.next_cursor : page?.previous_cursor;
           if (!canPage || !cursor) return;
-          await refreshGenAIMonitoringData(fetch, e.monitoringData, {
+          await refreshAgentMonitoringData(fetch, e.monitoringData, {
             recordCursor: { cursor, direction },
           });
         })
@@ -128,7 +128,7 @@
           const canPage = direction === 'next' ? page?.has_next : page?.has_previous;
           const cursor = direction === 'next' ? page?.next_cursor : page?.previous_cursor;
           if (!canPage || !cursor) return;
-          await refreshGenAIMonitoringData(fetch, e.monitoringData, {
+          await refreshAgentMonitoringData(fetch, e.monitoringData, {
             workflowCursor: { cursor, direction },
           });
         })

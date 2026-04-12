@@ -195,7 +195,7 @@ impl ParameterValue {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(skip_from_py_object)]
+#[pyclass(from_py_object)]
 #[pyo3(module = "opsml.experiment")]
 pub struct Parameter {
     #[pyo3(get)]

@@ -11,7 +11,7 @@ import { DriftType, type MetricData } from "./types";
 import type {
   AgentEvalConfig,
   AgentEvalProfile,
-} from "$lib/components/scouter/genai/types";
+} from "$lib/components/scouter/agent/types";
 import { ServerPaths } from "$lib/components/api/routes";
 import type { DriftProfileUri } from "./types";
 import { RegistryType } from "$lib/utils";
@@ -45,7 +45,7 @@ export type DriftProfile = {
   [DriftType.Spc]: SpcDriftProfile;
   [DriftType.Psi]: PsiDriftProfile;
   [DriftType.Custom]: CustomDriftProfile;
-  [DriftType.GenAI]: AgentEvalProfile;
+  [DriftType.Agent]: AgentEvalProfile;
 };
 
 export interface UiProfile {
@@ -68,8 +68,8 @@ export function getProfileFeatures(
   const variables: string[] =
     drift_type === DriftType.Custom
       ? Object.keys(profile.Custom.metrics)
-      : drift_type === DriftType.GenAI
-        ? profile.GenAI.task_ids
+      : drift_type === DriftType.Agent
+        ? profile.Agent.task_ids
         : drift_type === DriftType.Psi
           ? profile.Psi.config.alert_config.features_to_monitor
           : profile.Spc.config.alert_config.features_to_monitor;
@@ -84,8 +84,8 @@ export function getProfileConfig(
   const variables =
     drift_type === DriftType.Custom
       ? profile.Custom.config
-      : drift_type === DriftType.GenAI
-        ? profile.GenAI.config
+      : drift_type === DriftType.Agent
+        ? profile.Agent.config
         : drift_type === DriftType.Psi
           ? profile.Psi.config
           : profile.Spc.config;
@@ -113,7 +113,7 @@ const PROFILE_EXTRACTOR: {
   [DriftType.Spc]: (p) => p[DriftType.Spc],
   [DriftType.Psi]: (p) => p[DriftType.Psi],
   [DriftType.Custom]: (p) => p[DriftType.Custom],
-  [DriftType.GenAI]: (p) => p[DriftType.GenAI],
+  [DriftType.Agent]: (p) => p[DriftType.Agent],
 };
 
 /**
@@ -156,10 +156,10 @@ export function isCustomConfig(
   return config.drift_type === DriftType.Custom;
 }
 
-export function isGenAIConfig(
+export function isAgentEvalConfig(
   config: DriftConfigType,
 ): config is AgentEvalConfig {
-  return config.drift_type === DriftType.GenAI;
+  return config.drift_type === DriftType.Agent;
 }
 
 export function isPsiConfig(config: DriftConfigType): config is PsiDriftConfig {

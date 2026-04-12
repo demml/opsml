@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
-  import type { AgentEvalProfile } from '$lib/components/scouter/genai/types';
-  import GenAITaskAccordion from '$lib/components/scouter/genai/task/GenAITaskAccordion.svelte';
+  import type { AgentEvalProfile } from '$lib/components/scouter/agent/types';
+  import AgentTaskAccordion from '$lib/components/scouter/agent/task/AgentTaskAccordion.svelte';
   import { ListChecks, X, AlertCircle } from 'lucide-svelte';
 
   let { evalProfile } = $props<{ evalProfile: AgentEvalProfile }>();
@@ -74,7 +74,7 @@
             {/if}
           </div>
 
-          <GenAITaskAccordion tasks={evalProfile.tasks} />
+          <AgentTaskAccordion tasks={evalProfile.tasks} />
         </div>
       {/if}
     </div>

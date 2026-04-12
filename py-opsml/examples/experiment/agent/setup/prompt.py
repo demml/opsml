@@ -1,5 +1,5 @@
 from opsml.card import PromptCard, RegistryType
-from opsml.genai import Prompt
+from opsml.agent import Prompt
 from opsml.scouter.drift import AgentEvalProfile
 from .models import Recipe
 from .tasks import recipe_tasks, recipe_response_tasks

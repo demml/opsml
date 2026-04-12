@@ -227,7 +227,7 @@ pub async fn get_custom_drift(
 
 #[utoipa::path(
     get,
-    path = "/opsml/api/scouter/drift/genai/task",
+    path = "/opsml/api/scouter/drift/agent/task",
     params(
         ("name" = String, Query, description = "Model or profile name"),
         ("space" = String, Query, description = "Space the profile belongs to"),
@@ -236,7 +236,7 @@ pub async fn get_custom_drift(
         ("max_data_points" = Option<u32>, Query, description = "Maximum data points to return"),
     ),
     responses(
-        (status = 200, description = "GenAI task binned metrics", body = inline(serde_json::Value)),
+        (status = 200, description = "Agent task binned metrics", body = inline(serde_json::Value)),
         (status = 404, description = "Not found", body = OpsmlServerError),
         (status = 500, description = "Internal error", body = OpsmlServerError),
     ),
@@ -244,7 +244,7 @@ pub async fn get_custom_drift(
     tag = "scouter"
 )]
 #[instrument(skip_all)]
-pub async fn get_genai_task_metrics(
+pub async fn get_agent_task_metrics(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
@@ -259,7 +259,7 @@ pub async fn get_genai_task_metrics(
     }
 
     // validate time window
-    debug!("Getting genai task metrics with params: {:?}", &params);
+    debug!("Getting agent task metrics with params: {:?}", &params);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter", None)
@@ -273,7 +273,7 @@ pub async fn get_genai_task_metrics(
     let response = data
         .scouter_client
         .request(
-            scouter::Routes::DriftGenAITask,
+            scouter::Routes::DriftAgentTask,
             RequestType::Get,
             None,
             Some(query_string),
@@ -288,26 +288,26 @@ pub async fn get_genai_task_metrics(
             if let ApiClientError::RequestError(ref req_err) = e
                 && req_err.status() == Some(StatusCode::NOT_FOUND)
             {
-                error!("GenAI task metrics not found: {e}");
+                error!("Agent task metrics not found: {e}");
                 return Err(internal_server_error(
                     e,
-                    "GenAI task metrics not found",
+                    "Agent task metrics not found",
                     Some(StatusCode::NOT_FOUND),
                 ));
             }
 
-            error!("Failed to get genai task metrics: {e}");
+            error!("Failed to get agent task metrics: {e}");
             return Err(internal_server_error(
                 e,
-                "Failed to get genai task metrics",
+                "Failed to get agent task metrics",
                 None,
             ));
         }
     };
 
     let body = response.json::<BinnedMetrics>().await.map_err(|e| {
-        error!("Failed to parse genai task metrics: {e}");
-        internal_server_error(e, "Failed to parse genai task metrics", None)
+        error!("Failed to parse agent task metrics: {e}");
+        internal_server_error(e, "Failed to parse agent task metrics", None)
     })?;
 
     Ok(Json(body))
@@ -315,7 +315,7 @@ pub async fn get_genai_task_metrics(
 
 #[utoipa::path(
     get,
-    path = "/opsml/api/scouter/drift/genai/workflow",
+    path = "/opsml/api/scouter/drift/agent/workflow",
     params(
         ("name" = String, Query, description = "Model or profile name"),
         ("space" = String, Query, description = "Space the profile belongs to"),
@@ -324,7 +324,7 @@ pub async fn get_genai_task_metrics(
         ("max_data_points" = Option<u32>, Query, description = "Maximum data points to return"),
     ),
     responses(
-        (status = 200, description = "GenAI workflow binned metrics", body = inline(serde_json::Value)),
+        (status = 200, description = "Agent workflow binned metrics", body = inline(serde_json::Value)),
         (status = 404, description = "Not found", body = OpsmlServerError),
         (status = 500, description = "Internal error", body = OpsmlServerError),
     ),
@@ -332,7 +332,7 @@ pub async fn get_genai_task_metrics(
     tag = "scouter"
 )]
 #[instrument(skip_all)]
-pub async fn get_genai_workflow_metrics(
+pub async fn get_agent_workflow_metrics(
     State(data): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<DriftRequest>,
@@ -347,7 +347,7 @@ pub async fn get_genai_workflow_metrics(
     }
 
     // validate time window
-    debug!("Getting genai task metrics with params: {:?}", &params);
+    debug!("Getting agent workflow metrics with params: {:?}", &params);
     let exchange_token = data.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter", None)
@@ -361,7 +361,7 @@ pub async fn get_genai_workflow_metrics(
     let response = data
         .scouter_client
         .request(
-            scouter::Routes::DriftGenAIWorkflow,
+            scouter::Routes::DriftAgentWorkflow,
             RequestType::Get,
             None,
             Some(query_string),
@@ -376,28 +376,26 @@ pub async fn get_genai_workflow_metrics(
             if let ApiClientError::RequestError(ref req_err) = e
                 && req_err.status() == Some(StatusCode::NOT_FOUND)
             {
-                error!("GenAI workflow metrics not found: {e}");
+                error!("Agent workflow metrics not found: {e}");
                 return Err(internal_server_error(
                     e,
-                    "GenAI workflow metrics not found",
+                    "Agent workflow metrics not found",
                     Some(StatusCode::NOT_FOUND),
                 ));
             }
 
-            error!("Failed to get genai workflow metrics: {e}");
+            error!("Failed to get agent workflow metrics: {e}");
             return Err(internal_server_error(
                 e,
-                "Failed to get genai workflow metrics",
+                "Failed to get agent workflow metrics",
                 None,
             ));
         }
     };
 
-    // extract body into SpcDriftFeatures
-
     let body = response.json::<BinnedMetrics>().await.map_err(|e| {
-        error!("Failed to parse genai workflow metrics: {e}");
-        internal_server_error(e, "Failed to parse genai workflow metrics", None)
+        error!("Failed to parse agent workflow metrics: {e}");
+        internal_server_error(e, "Failed to parse agent workflow metrics", None)
     })?;
 
     Ok(Json(body))
@@ -413,12 +411,12 @@ pub async fn get_scouter_drift_router(prefix: &str) -> Result<Router<Arc<AppStat
                 get(get_custom_drift),
             )
             .route(
-                &format!("{prefix}/scouter/drift/genai/task"),
-                get(get_genai_task_metrics),
+                &format!("{prefix}/scouter/drift/agent/task"),
+                get(get_agent_task_metrics),
             )
             .route(
-                &format!("{prefix}/scouter/drift/genai/workflow"),
-                get(get_genai_workflow_metrics),
+                &format!("{prefix}/scouter/drift/agent/workflow"),
+                get(get_agent_workflow_metrics),
             )
     }));
 

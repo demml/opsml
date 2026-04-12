@@ -50,7 +50,7 @@
    * Base path for navigation links
    */
   let basePath = $derived(
-    `/opsml/genai/${registryType.toLowerCase()}/card/${metadata.space}/${metadata.name}/${metadata.version}`
+    `/opsml/agent/${registryType.toLowerCase()}/card/${metadata.space}/${metadata.name}/${metadata.version}`
   );
 
   const iconColor = 'var(--color-primary-500)';

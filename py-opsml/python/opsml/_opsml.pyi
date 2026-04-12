@@ -225,7 +225,7 @@ class RustyLogger:
                 Additional arguments to log.
         """
 
-### genai/potato.pyi ###
+### agent/potato.pyi ###
 class Provider:
     """Provider enumeration for LLM services.
 
@@ -14990,7 +14990,7 @@ class ScouterClient:
             Drift map of type BinnedMetrics | BinnedPsiFeatureMetrics | BinnedSpcFeatureMetrics
         """
 
-    def get_genai_task_binned_drift(self, drift_request: DriftRequest) -> Any:
+    def get_agent_task_binned_drift(self, drift_request: DriftRequest) -> Any:
         """Get GenAI task drift map from server
         Args:
             drift_request:
@@ -15833,7 +15833,7 @@ class ScouterQueue:
         omitted from the result.
         """
 
-    def genai_profiles(self) -> Dict[str, "AgentEvalProfile"]:
+    def agent_profiles(self) -> Dict[str, "AgentEvalProfile"]:
         """Returns a mapping of alias → AgentEvalProfile for all AgentEvalProfiles registered in the queue."""
 
 class EvalRecord:
@@ -17970,7 +17970,7 @@ class Drifter:
             SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
 
-    def create_genai_drift_profile(
+    def create_agent_drift_profile(
         self,
         config: AgentEvalConfig,
         tasks: Sequence[
@@ -18023,7 +18023,7 @@ class Drifter:
             ...         description="Ensure relevance score >= 7"
             ...     )
             ... ]
-            >>> profile = Drifter().create_genai_drift_profile(config, tasks)
+            >>> profile = Drifter().create_agent_drift_profile(config, tasks)
 
         """
 
@@ -20880,7 +20880,7 @@ class PromptCard:
             ...         description="Ensure relevance score >= 7"
             ...     )
             ... ]
-            >>> profile = Drifter().create_genai_drift_profile(config, tasks)
+            >>> profile = Drifter().create_agent_drift_profile(config, tasks)
 
         """
 

@@ -1,4 +1,5 @@
 pub mod alert;
+pub mod bifrost;
 pub mod client;
 pub mod drift;
 pub mod evaluate;
@@ -22,6 +23,7 @@ pub fn add_scouter_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     transport::add_transport_module(m)?;
     tracing::add_tracing_module(m)?;
     evaluate::add_evaluate_module(m)?;
+    bifrost::add_dataset_module(m)?;
 
     Ok(())
 }

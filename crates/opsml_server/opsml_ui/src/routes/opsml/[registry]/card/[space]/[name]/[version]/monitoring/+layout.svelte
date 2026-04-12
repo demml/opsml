@@ -19,7 +19,7 @@
 
   const driftTypeConfig = {
     [DriftType.Custom]: { title: 'Custom Metrics', icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-    [DriftType.GenAI]: { title: 'GenAI', icon: Brain, color: 'text-purple-600', bg: 'bg-purple-100' },
+    [DriftType.Agent]: { title: 'Agent', icon: Brain, color: 'text-purple-600', bg: 'bg-purple-100' },
     [DriftType.Psi]: { title: 'PSI Distribution', icon: Waves, color: 'text-blue-600', bg: 'bg-blue-100' },
     [DriftType.Spc]: { title: 'SPC Charts', icon: LineChart, color: 'text-orange-600', bg: 'bg-orange-100' },
   };
@@ -30,7 +30,7 @@
     
     switch (lastSegment.toLowerCase()) {
       case 'custom': return DriftType.Custom;
-      case 'genai': return DriftType.GenAI;
+      case 'agent': return DriftType.Agent;
       case 'psi': return DriftType.Psi;
       case 'spc': return DriftType.Spc;
       default: return DriftType.Custom; // Fallback (shouldn't happen due to redirect)

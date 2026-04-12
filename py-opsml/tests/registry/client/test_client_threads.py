@@ -13,7 +13,7 @@ from opsml.card import (
     DataCard,
     PromptCard,
 )
-from opsml.genai import Prompt
+from opsml.agent import Prompt
 from opsml.model import SklearnModel, ModelLoadKwargs, ModelSaveKwargs
 from opsml.data import PandasData
 from pathlib import Path

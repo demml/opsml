@@ -1,5 +1,5 @@
 from opsml.card import PromptCard
-from opsml.genai import Prompt
+from opsml.agent import Prompt
 from opsml.scouter.drift import GenAIAlertConfig, AgentEvalConfig
 from opsml.scouter import CommonCrons
 from app.models import Recipe  # type: ignore

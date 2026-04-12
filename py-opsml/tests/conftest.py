@@ -2,7 +2,7 @@ import pytest
 from opsml.types import Feature
 from opsml.logging import RustyLogger, LoggingConfig, LogLevel
 from opsml.mock import RegistryTestHelper
-from opsml.genai import Prompt
+from opsml.agent import Prompt
 from typing import Tuple, Dict
 from pydantic import BaseModel
 import sys
