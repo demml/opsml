@@ -2,8 +2,8 @@ use opsml_registry::registries::agent::OpsmlAgentRegistry;
 
 use opsml_types::contracts::McpServers;
 use opsml_types::contracts::{ServiceQueryArgs, ServiceType};
-use pyo3::prelude::*;
 use pyo3::exceptions::PyRuntimeError;
+use pyo3::prelude::*;
 use tracing::error;
 
 #[pyfunction]

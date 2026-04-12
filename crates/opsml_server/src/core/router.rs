@@ -1,3 +1,4 @@
+use crate::core::agent::route::get_agent_router;
 use crate::core::agentic::route::get_agentic_router;
 use crate::core::auth::middleware::auth_api_middleware;
 use crate::core::auth::route::get_auth_router;
@@ -7,7 +8,6 @@ use crate::core::debug::route::get_debug_router;
 use crate::core::docs::route::get_docs_router;
 use crate::core::experiment::route::get_experiment_router;
 use crate::core::files::route::get_file_router;
-use crate::core::agent::route::get_agent_router;
 use crate::core::health::route::get_health_router;
 use crate::core::middleware::event::event_middleware;
 use crate::core::middleware::metrics::track_metrics;
