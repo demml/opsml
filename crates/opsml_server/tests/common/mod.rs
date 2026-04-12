@@ -84,7 +84,7 @@ pub struct ScouterServer {
 impl ScouterServer {
     fn create_genai_eval_task_response() -> String {
         let task = EvalTaskResult::default();
-        let response = GenAIEvalTaskResponse { tasks: vec![task] };
+        let response = AgentEvalTaskResponse { tasks: vec![task] };
 
         serde_json::to_string(&response).unwrap()
     }
@@ -222,7 +222,7 @@ impl ScouterServer {
             .await;
 
         let workflow_page =
-            serde_json::to_string(&GenAIEvalWorkflowPaginationResponse::default()).unwrap();
+            serde_json::to_string(&AgentEvalWorkflowPaginationResponse::default()).unwrap();
         server
             .mock("POST", "/scouter/genai/page/workflow")
             .match_header("content-type", mockito::Matcher::Any)

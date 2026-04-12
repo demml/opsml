@@ -108,7 +108,7 @@ For more information on GenAI Evaluations, refer to [LLM Monitoring documentatio
 
 ```python
 from opsml.scouter.evaluate import (
-    GenAIAlertConfig,
+    AgentAlertConfig,
     AgentEvalConfig,
     AgentEvalProfile,
     LLMJudgeTask,
@@ -216,7 +216,7 @@ reformulation = LLMJudgeTask(
 profile = AgentEvalProfile(
     config=AgentEvalConfig( # name, space, version are auto-set when registering the card
         sample_ratio=1,
-        alert_config=GenAIAlertConfig(
+        alert_config=AgentAlertConfig(
             alert_condition=AlertCondition(
                 baseline_value=0.80,
                 alert_threshold=AlertThreshold.Below,
@@ -246,7 +246,7 @@ card.create_drift_profile(
     alias="genai_eval",
     config=AgentEvalConfig(
         sample_ratio=1,
-        alert_config=GenAIAlertConfig(
+        alert_config=AgentAlertConfig(
             alert_condition=AlertCondition(
                 baseline_value=0.80, # (2)
                 alert_threshold=AlertThreshold.Below,  # (3)

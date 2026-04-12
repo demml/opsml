@@ -13903,6 +13903,75 @@ class EvalOrchestrator:
             ScenarioEvalResults with metrics across all scenarios.
         """
 
+### scouter/bifrost.pyi ###
+from typing import Any, Dict, List, Optional, Type
+
+class TableConfig:
+    catalog: str
+    schema_name: str
+    table: str
+    partition_columns: List[str]
+
+    def __init__(
+        self,
+        model: Type[Any],
+        catalog: str,
+        schema_name: str,
+        table: str,
+        partition_columns: Optional[List[str]] = None,
+    ) -> None: ...
+    @property
+    def fingerprint_str(self) -> str: ...
+    @property
+    def fqn(self) -> str: ...
+    @staticmethod
+    def parse_schema(schema: Any) -> Dict[str, Dict[str, Any]]: ...
+    @staticmethod
+    def compute_fingerprint(schema: Any) -> str: ...
+
+class WriteConfig:
+    batch_size: int
+    scheduled_delay_secs: int
+
+    def __init__(
+        self,
+        batch_size: int = 1000,
+        scheduled_delay_secs: int = 30,
+    ) -> None: ...
+
+class QueryResult:
+    def to_arrow(self) -> Any: ...
+    def to_polars(self) -> Any: ...
+    def to_pandas(self) -> Any: ...
+    def to_bytes(self) -> bytes: ...
+    def __len__(self) -> int: ...
+    def __repr__(self) -> str: ...
+
+class DatasetClient:
+    def __init__(self, transport: Any, table_config: Optional[TableConfig] = None) -> None: ...
+    def read(self, limit: Optional[int] = None) -> List[Any]: ...
+    def sql(self, query: str) -> QueryResult: ...
+    def list_datasets(self) -> List[Dict[str, Any]]: ...
+    def describe_dataset(self, catalog: str, schema_name: str, table: str) -> Dict[str, Any]: ...
+
+class DatasetProducer:
+    def __init__(
+        self,
+        table_config: TableConfig,
+        transport: Any,
+        write_config: Optional[WriteConfig] = None,
+    ) -> None: ...
+    def insert(self, record: Any) -> None: ...
+    def flush(self) -> None: ...
+    def shutdown(self) -> None: ...
+    def register(self) -> str: ...
+    @property
+    def fingerprint(self) -> str: ...
+    @property
+    def namespace(self) -> str: ...
+    @property
+    def is_registered(self) -> bool: ...
+
 ### scouter/mock.pyi ###
 class ScouterTestServer:
     def __init__(
@@ -14015,7 +14084,7 @@ class DriftType:
     Spc: "DriftType"
     Psi: "DriftType"
     Custom: "DriftType"
-    GenAI: "DriftType"
+    Agent: "DriftType"
 
     def value(self) -> str: ...
     @staticmethod
@@ -14452,7 +14521,7 @@ class CustomMetricAlertConfig:
     def alert_conditions(self, alert_conditions: dict[str, AlertCondition]) -> None:
         """Update the alert_condition that were set during metric definition"""
 
-class GenAIAlertConfig:
+class AgentAlertConfig:
     def __init__(
         self,
         dispatch_config: Optional[SlackDispatchConfig | OpsGenieDispatchConfig] = None,
@@ -14467,7 +14536,7 @@ class GenAIAlertConfig:
             schedule:
                 Schedule to run monitor. Defaults to daily at midnight
             alert_condition:
-                Alert condition for a GenAI drift profile
+                Alert condition for an Agent drift profile
 
         """
 
@@ -14991,7 +15060,7 @@ class ScouterClient:
         """
 
     def get_agent_task_binned_drift(self, drift_request: DriftRequest) -> Any:
-        """Get GenAI task drift map from server
+        """Get Agent task drift map from server
         Args:
             drift_request:
                 DriftRequest object
@@ -15178,7 +15247,7 @@ class BinnedSpcFeatureMetrics:
 class EntityType:
     Feature: "EntityType"
     Metric: "EntityType"
-    GenAI: "EntityType"
+    Agent: "EntityType"
 
 class RecordType:
     Spc: "RecordType"
@@ -15186,9 +15255,9 @@ class RecordType:
     Observability: "RecordType"
     Custom: "RecordType"
     Trace: "RecordType"
-    GenAIEval: "RecordType"
-    GenAITask: "RecordType"
-    GenAIWorkflow: "RecordType"
+    AgentEval: "RecordType"
+    AgentTask: "RecordType"
+    AgentWorkflow: "RecordType"
 
 class ServerRecord:
     def __init__(self, record: Any) -> None:
@@ -17111,7 +17180,7 @@ class AgentEvalConfig:
         name: str = "__missing__",
         version: str = "0.1.0",
         sample_ratio: float = 1.0,
-        alert_config: GenAIAlertConfig = GenAIAlertConfig(),
+        alert_config: AgentAlertConfig = AgentAlertConfig(),
     ):
         """Initialize drift config
         Args:
@@ -17165,11 +17234,11 @@ class AgentEvalConfig:
         """Drift type"""
 
     @property
-    def alert_config(self) -> GenAIAlertConfig:
+    def alert_config(self) -> AgentAlertConfig:
         """get alert_config"""
 
     @alert_config.setter
-    def alert_config(self, alert_config: GenAIAlertConfig) -> None:
+    def alert_config(self, alert_config: AgentAlertConfig) -> None:
         """Set alert_config"""
 
     @staticmethod
@@ -17191,7 +17260,7 @@ class AgentEvalConfig:
         space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
-        alert_config: Optional[GenAIAlertConfig] = None,
+        alert_config: Optional[AgentAlertConfig] = None,
     ) -> None:
         """Inplace operation that updates config args
         Args:
@@ -17811,7 +17880,7 @@ class AgentEvalProfile:
         name: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
-        alert_config: Optional[GenAIAlertConfig] = None,
+        alert_config: Optional[AgentAlertConfig] = None,
     ) -> None:
         """Update profile configuration in-place.
 
@@ -17828,13 +17897,13 @@ class AgentEvalProfile:
                 New model version. If None, keeps existing value.
             uid (Optional[str]):
                 New unique identifier. If None, keeps existing value.
-            alert_config (Optional[GenAIAlertConfig]):
+            alert_config (Optional[AgentAlertConfig]):
                 New alert configuration. If None, keeps existing value.
 
         Example:
             >>> profile.update_config_args(
             ...     space="production",
-            ...     alert_config=GenAIAlertConfig(schedule="0 */6 * * *")
+            ...     alert_config=AgentAlertConfig(schedule="0 */6 * * *")
             ... )
         """
 
@@ -17983,7 +18052,7 @@ class Drifter:
         LLM evaluations are run asynchronously on the scouter server.
 
         Overview:
-            GenAI evaluations are defined using assertion tasks and LLM judge tasks.
+            Agent evaluations are defined using assertion tasks and LLM judge tasks.
             Assertion tasks evaluate specific metrics based on model responses, and do not require
             the use of an LLM judge or extra call. It is recommended to use assertion tasks whenever possible
             to reduce cost and latency. LLM judge tasks leverage an additional LLM call to evaluate
@@ -20839,7 +20908,7 @@ class PromptCard:
         LLM evaluations are run asynchronously on the scouter server.
 
         Overview:
-            GenAI evaluations are defined using assertion tasks and LLM judge tasks.
+            Agent evaluations are defined using assertion tasks and LLM judge tasks.
             Assertion tasks evaluate specific metrics based on model responses, and do not require
             the use of an LLM judge or extra call. It is recommended to use assertion tasks whenever possible
             to reduce cost and latency. LLM judge tasks leverage an additional LLM call to evaluate
@@ -25919,7 +25988,7 @@ __all__ = [
     "GeminiSettings",
     "GeminiThinkingConfig",
     "GeminiTool",
-    "GenAIAlertConfig",
+    "AgentAlertConfig",
     "AgentEvalConfig",
     "AgentEvalProfile",
     "GenerateContentResponse",
@@ -26227,6 +26296,11 @@ __all__ = [
     "XGBoostModel",
     "download_artifact",
     "download_service",
+    "DatasetClient",
+    "DatasetProducer",
+    "QueryResult",
+    "TableConfig",
+    "WriteConfig",
     "execute_agent_assertion_tasks",
     "flush_tracer",
     "generate_feature_schema",

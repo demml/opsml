@@ -6,7 +6,7 @@ from ..._opsml import (
     AlertZone,
     ConsoleDispatchConfig,
     CustomMetricAlertConfig,
-    GenAIAlertConfig,
+    AgentAlertConfig,
     OpsGenieDispatchConfig,
     PsiAlertConfig,
     PsiChiSquareThreshold,
@@ -37,5 +37,5 @@ __all__ = [
     "PsiNormalThreshold",
     "PsiChiSquareThreshold",
     "PsiFixedThreshold",
-    "GenAIAlertConfig",
+    "AgentAlertConfig",
 ]
