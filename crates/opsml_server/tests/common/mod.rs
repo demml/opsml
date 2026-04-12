@@ -196,7 +196,7 @@ impl ScouterServer {
 
         let binned_metrics_json = serde_json::to_string(&binned_metrics).unwrap();
         server
-            .mock("GET", "/scouter/drift/genai/task")
+            .mock("GET", "/scouter/drift/agent/task")
             .match_query(mockito::Matcher::Any)
             .with_status(200)
             .with_body(binned_metrics_json)
@@ -205,7 +205,7 @@ impl ScouterServer {
 
         let binned_metrics_json = serde_json::to_string(&binned_metrics).unwrap();
         server
-            .mock("GET", "/scouter/drift/genai/workflow")
+            .mock("GET", "/scouter/drift/agent/workflow")
             .match_query(mockito::Matcher::Any)
             .with_status(200)
             .with_body(binned_metrics_json)
@@ -214,7 +214,7 @@ impl ScouterServer {
 
         let task_records = Self::create_genai_eval_task_response();
         server
-            .mock("GET", "/scouter/genai/task")
+            .mock("GET", "/scouter/agent/task")
             .match_query(mockito::Matcher::Any)
             .with_status(200)
             .with_body(task_records)
@@ -224,7 +224,7 @@ impl ScouterServer {
         let workflow_page =
             serde_json::to_string(&AgentEvalWorkflowPaginationResponse::default()).unwrap();
         server
-            .mock("POST", "/scouter/genai/page/workflow")
+            .mock("POST", "/scouter/agent/page/workflow")
             .match_header("content-type", mockito::Matcher::Any)
             .match_header("authorization", mockito::Matcher::Any)
             .match_body(mockito::Matcher::Any)
@@ -235,7 +235,7 @@ impl ScouterServer {
 
         let record_page = serde_json::to_string(&EvalRecordPaginationResponse::default()).unwrap();
         server
-            .mock("POST", "/scouter/genai/page/record")
+            .mock("POST", "/scouter/agent/page/record")
             .match_header("content-type", mockito::Matcher::Any)
             .match_header("authorization", mockito::Matcher::Any)
             .match_body(mockito::Matcher::Any)

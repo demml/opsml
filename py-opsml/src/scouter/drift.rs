@@ -29,10 +29,9 @@ pub fn add_drift_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TerrellScott>()?;
     m.add_class::<FreedmanDiaconis>()?;
 
-    // GenAI Evals
+    // Agent Evals
     m.add_class::<AgentEvalConfig>()?;
     m.add_class::<AgentEvalProfile>()?;
-    m.add_class::<EvalRecord>()?;
     m.add_class::<LLMJudgeTask>()?;
     m.add_class::<AssertionTask>()?;
     m.add_class::<ComparisonOperator>()?;

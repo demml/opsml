@@ -43,7 +43,7 @@
   <div class="justify-items-start mb-8 w-11/12 mx-auto">
     <h1 class="text-4xl md:text-5xl font-black text-black leading-tight mb-8">
       Get Started with
-      <span class="genai-accent inline-block px-3 py-1 md:px-4 md:py-2 bg-primary-500 text-white border-4 border-black shadow-brutal -rotate-2 text-4xl md:text-5xl align-top">Agent</span>
+      <span class="agent-accent inline-block px-3 py-1 md:px-4 md:py-2 bg-primary-500 text-white border-4 border-black shadow-brutal -rotate-2 text-4xl md:text-5xl align-top">Agent</span>
     </h1>
     <p class="text-xl text-gray-600 max-w-3xl mb-8">
       To get started with Agent, check out our tutorials. To explore prompts, MCPs, and agents,
@@ -115,7 +115,7 @@
     background-attachment: fixed;
   }
 
-  :global([data-theme='opsml'].theme-dark) .genai-accent {
+  :global([data-theme='opsml'].theme-dark) .agent-accent {
     background-color: oklch(35% 0.15 295) !important;
     border-color: oklch(50% 0.18 295 / 0.7) !important;
     color: oklch(85% 0.12 295) !important;

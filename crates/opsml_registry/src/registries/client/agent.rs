@@ -7,17 +7,17 @@ use std::sync::Arc;
 use tracing::error;
 
 #[derive(Debug, Clone)]
-pub struct ClientGenAIRegistry {
+pub struct ClientAgentRegistry {
     pub api_client: Arc<OpsmlApiClient>,
 }
 
-impl ClientGenAIRegistry {
+impl ClientAgentRegistry {
     pub fn new(api_client: Arc<OpsmlApiClient>) -> Result<Self, RegistryError> {
         Ok(Self { api_client })
     }
 }
 
-impl Registry for ClientGenAIRegistry {
+impl Registry for ClientAgentRegistry {
     fn client(&self) -> &Arc<OpsmlApiClient> {
         &self.api_client
     }
@@ -30,7 +30,7 @@ impl Registry for ClientGenAIRegistry {
     }
 }
 
-pub trait GenAIRegistry: Registry {
+pub trait AgentRegistry: Registry {
     fn list_mcp_servers(&self, args: &ServiceQueryArgs) -> Result<McpServers, RegistryError> {
         // Query artifacts from the registry
         let params = serde_qs::to_string(args)?;
@@ -38,7 +38,7 @@ pub trait GenAIRegistry: Registry {
         let response = self
             .client()
             .request(
-                Routes::GenAiMcpServers,
+                Routes::AgentMcpServers,
                 RequestType::Get,
                 None,
                 Some(params),
@@ -59,4 +59,4 @@ pub trait GenAIRegistry: Registry {
     }
 }
 
-impl GenAIRegistry for ClientGenAIRegistry {}
+impl AgentRegistry for ClientAgentRegistry {}

@@ -148,10 +148,10 @@ pub static DOCS: &[DocEntry] = &[
     },
     // ---- Evaluation ----
     DocEntry {
-        id: "evaluation/genai",
-        title: "GenAI Evaluation",
+        id: "evaluation/agent",
+        title: "Agent Evaluation",
         category: "evaluation",
-        content: include_str!("../../../py-opsml/docs/docs/evaluation/genai.md"),
+        content: include_str!("../../../py-opsml/docs/docs/evaluation/agent.md"),
     },
     // ---- Benchmark ----
     DocEntry {

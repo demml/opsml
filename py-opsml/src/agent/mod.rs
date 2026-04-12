@@ -6,6 +6,7 @@ use potato_head::{
 };
 pub mod anthropic;
 pub mod google;
+pub mod mcp;
 pub mod openai;
 use pyo3::prelude::*;
 
@@ -32,6 +33,7 @@ pub fn add_agent_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TaskStatus>()?;
     m.add_class::<PyAgentResponse>()?;
     m.add_class::<PyEmbedder>()?;
+    m.add_function(wrap_pyfunction!(mcp::list_mcp_servers, m)?)?;
     anthropic::add_anthropic_module(m)?;
     google::add_google_module(m)?;
     openai::add_openai_module(m)?;

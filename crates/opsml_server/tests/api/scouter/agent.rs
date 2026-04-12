@@ -63,7 +63,7 @@ async fn test_scouter_routes_workflow_task() {
         record_uid: "test-record-uid".to_string(),
     };
 
-    let query_string = serde_json::to_string(&record_request).unwrap();
+    let query_string = serde_qs::to_string(&record_request).unwrap();
     let request = Request::builder()
         .uri(format!("/opsml/api/scouter/agent/task?{query_string}"))
         .method("GET")

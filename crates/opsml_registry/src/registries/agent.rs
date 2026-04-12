@@ -1,4 +1,4 @@
-use crate::registries::client::genai::{ClientGenAIRegistry, GenAIRegistry};
+use crate::registries::client::agent::{AgentRegistry, ClientAgentRegistry};
 
 use crate::error::RegistryError;
 use crate::registries::client::base::Registry;
@@ -10,17 +10,17 @@ use opsml_types::*;
 use tracing::{error, instrument};
 
 #[cfg(feature = "server")]
-use crate::registries::server::genai::ServerGenAIRegistry;
+use crate::registries::server::agent::ServerAgentRegistry;
 
 #[derive(Debug)]
-pub enum OpsmlGenAIRegistry {
-    Client(ClientGenAIRegistry),
+pub enum OpsmlAgentRegistry {
+    Client(ClientAgentRegistry),
 
     #[cfg(feature = "server")]
-    Server(ServerGenAIRegistry),
+    Server(ServerAgentRegistry),
 }
 
-impl OpsmlGenAIRegistry {
+impl OpsmlAgentRegistry {
     #[instrument(skip_all)]
     pub fn new() -> Result<Self, RegistryError> {
         let state = &app_state();
@@ -29,7 +29,7 @@ impl OpsmlGenAIRegistry {
         match mode {
             OpsmlMode::Client => {
                 let api_client = get_api_client().clone();
-                let client_registry = ClientGenAIRegistry::new(api_client)?;
+                let client_registry = ClientAgentRegistry::new(api_client)?;
                 Ok(Self::Client(client_registry))
             }
             OpsmlMode::Server => {
@@ -42,9 +42,8 @@ impl OpsmlGenAIRegistry {
 
                     let db_settings = config.database_settings.clone();
 
-                    // TODO (steven): Why clone config when we could use app state directly in server registry?
                     let server_registry = state.block_on(async {
-                        ServerGenAIRegistry::new(settings, db_settings).await
+                        ServerAgentRegistry::new(settings, db_settings).await
                     })?;
 
                     Ok(Self::Server(server_registry))

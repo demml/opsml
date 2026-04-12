@@ -48,4 +48,4 @@ evaluation:
       condition: false
       depends_on: []
       prompt:
-        path: "tests/genai/assets/evaluation.yaml"
+        path: "tests/agent/assets/evaluation.yaml"

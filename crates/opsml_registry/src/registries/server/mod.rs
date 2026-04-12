@@ -7,4 +7,4 @@ pub mod card;
 #[cfg(feature = "server")]
 pub mod experiment;
 #[cfg(feature = "server")]
-pub mod genai;
+pub mod agent;

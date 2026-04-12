@@ -1,3 +1,4 @@
+// shared LLM provider lib — intentionally kept as 'genai'
 import type { Prompt } from "$lib/components/genai/types";
 import type { JsonValue } from "$lib/types";
 

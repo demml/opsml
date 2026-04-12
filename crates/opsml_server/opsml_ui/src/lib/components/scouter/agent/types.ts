@@ -15,6 +15,7 @@ import type {
   EntityType,
 } from "../types";
 import type { DateTime, JsonValue } from "$lib/types";
+// shared LLM provider lib — intentionally kept as 'genai'
 import type { Prompt, Provider } from "$lib/components/genai/types";
 import type { MessageNum } from "$lib/components/genai/provider/types";
 

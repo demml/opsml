@@ -4787,19 +4787,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "opsml-genai"
-version = "3.0.0"
-dependencies = [
- "opsml-registry",
- "opsml-types",
- "opsml-version",
- "pyo3",
- "tempfile",
- "thiserror 2.0.18",
- "tracing",
-]
-
-[[package]]
 name = "opsml-interfaces"
 version = "3.0.0"
 dependencies = [
@@ -6110,7 +6097,6 @@ dependencies = [
  "opsml-cards",
  "opsml-cli",
  "opsml-experiment",
- "opsml-genai",
  "opsml-interfaces",
  "opsml-mocks",
  "opsml-registry",

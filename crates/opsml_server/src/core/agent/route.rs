@@ -25,7 +25,7 @@ use tracing::{debug, error};
 
 #[utoipa::path(
     get,
-    path = "/opsml/api/genai/mcp/servers",
+    path = "/opsml/api/agent/mcp/servers",
     params(
         ("space" = Option<String>, Query, description = "Filter by space name"),
         ("name" = Option<String>, Query, description = "Filter by service name"),
@@ -37,7 +37,7 @@ use tracing::{debug, error};
         (status = 500, description = "Internal error", body = OpsmlServerError),
     ),
     security(("bearer_token" = [])),
-    tag = "genai"
+    tag = "agent"
 )]
 pub async fn list_mcp_servers(
     State(state): State<Arc<AppState>>,
@@ -100,10 +100,10 @@ pub async fn list_mcp_servers(
     }
 }
 
-pub async fn get_genai_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
+pub async fn get_agent_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new().route(
-            &format!("{prefix}/genai/mcp/servers"),
+            &format!("{prefix}/agent/mcp/servers"),
             get(list_mcp_servers),
         )
     }));
@@ -111,9 +111,8 @@ pub async fn get_genai_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     match result {
         Ok(router) => Ok(router),
         Err(_) => {
-            error!("Failed to create mcp router");
-            // panic
-            Err(anyhow::anyhow!("Failed to create mcp router"))
+            error!("Failed to create agent mcp router");
+            Err(anyhow::anyhow!("Failed to create agent mcp router"))
                 .context("Panic occurred while creating the router")
         }
     }

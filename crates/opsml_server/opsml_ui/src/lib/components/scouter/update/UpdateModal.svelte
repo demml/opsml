@@ -287,7 +287,7 @@ function validateDispatchForm(): boolean {
   onOpenChange={(e) => (openState = e.open)}
   triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 text-sm"
   contentBase="card p-2 bg-surface-50 border-2 border-black shadow max-w-screen-xl w-[700px] overflow-visible"
-  backdropClasses="backdrop-blur-sm"
+  backdropClasses="bg-black/40"
   >
   {#snippet trigger()}Update Config{/snippet}
   {#snippet content()}

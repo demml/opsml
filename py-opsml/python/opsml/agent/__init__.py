@@ -20,6 +20,7 @@ from .._opsml import (  # Prompt interface types; Workflow types; Agent types; P
     WorkflowResult,
     WorkflowTask,
 )
+from .._opsml import list_mcp_servers
 from . import anthropic, google, openai
 
 __all__ = [
@@ -48,4 +49,6 @@ __all__ = [
     "AgentResponse",
     # Embeddings
     "Embedder",
+    # MCP
+    "list_mcp_servers",
 ]

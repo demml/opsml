@@ -100,7 +100,7 @@ For more information on GenAI Evaluations, refer to [LLM Monitoring documentatio
 | Name | Required | Description |
 | --- | --- | --- |
 | **alias** | Yes | The alias for the evaluation profile |
-| **config** | Yes | The GenAI drift config to use |
+| **config** | Yes | The Agent drift config to use |
 | **tasks** | Yes | The tasks to use for the evaluation profile. Must be a combination of `LLMJudgeTask` and `AssertionTask`. See [docs](https://docs.demml.io/scouter/docs/monitoring/genai/tasks/) |
 
 
@@ -114,7 +114,7 @@ from opsml.scouter.evaluate import (
     LLMJudgeTask,
 )
 from opsml.scouter.alert import AlertThreshold
-from opsml.genai import Score, Agent, Task, Workflow, Prompt
+from opsml.agent import Score, Agent, Task, Workflow, Prompt
 
 
 def create_reformulation_evaluation_prompt():

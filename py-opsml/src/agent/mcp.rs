@@ -1,9 +1,9 @@
-use opsml_registry::registries::genai::OpsmlGenAIRegistry;
+use opsml_registry::registries::agent::OpsmlAgentRegistry;
 
-use crate::error::LLMError;
 use opsml_types::contracts::McpServers;
 use opsml_types::contracts::{ServiceQueryArgs, ServiceType};
 use pyo3::prelude::*;
+use pyo3::exceptions::PyRuntimeError;
 use tracing::error;
 
 #[pyfunction]
@@ -12,9 +12,12 @@ pub fn list_mcp_servers(
     space: Option<String>,
     name: Option<String>,
     tags: Option<Vec<String>>,
-) -> Result<McpServers, LLMError> {
-    // need to a separate method to get the latest MCP services
-    let registry = OpsmlGenAIRegistry::new()?;
+) -> PyResult<McpServers> {
+    let registry = OpsmlAgentRegistry::new().map_err(|e| {
+        let msg = e.to_string();
+        error!("{}", msg);
+        PyRuntimeError::new_err(msg)
+    })?;
     let args = ServiceQueryArgs {
         space: space.clone(),
         name: name.clone(),
@@ -22,9 +25,9 @@ pub fn list_mcp_servers(
         service_type: ServiceType::Mcp,
     };
 
-    let servers = registry
-        .list_mcp_servers(&args)
-        .inspect_err(|e| error!("Failed to list MCP servers: {e}"))?;
-
-    Ok(servers)
+    registry.list_mcp_servers(&args).map_err(|e| {
+        let msg = e.to_string();
+        error!("{msg}");
+        PyRuntimeError::new_err(msg)
+    })
 }

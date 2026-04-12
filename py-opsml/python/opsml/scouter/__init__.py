@@ -58,8 +58,10 @@ from .._opsml import (
     Sturges,
     TerrellScott,
 )
+from .bifrost import Bifrost
 from . import (
     alert,
+    bifrost,
     client,
     drift,
     evaluate,
@@ -74,6 +76,7 @@ from . import (
 
 __all__ = [
     "alert",
+    "bifrost",
     "client",
     "drift",
     "evaluate",
@@ -128,6 +131,7 @@ __all__ = [
     "RedisConfig",
     "AlertThreshold",
     # bifrost
+    "Bifrost",
     "DatasetClient",
     "DatasetProducer",
     "QueryResult",

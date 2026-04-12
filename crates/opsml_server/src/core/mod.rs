@@ -1,3 +1,4 @@
+pub mod agent;
 pub mod agentic;
 pub mod app;
 pub mod audit;
@@ -9,7 +10,6 @@ pub mod docs;
 pub mod error;
 pub mod experiment;
 pub mod files;
-pub mod genai;
 pub mod health;
 pub mod middleware;
 pub mod openapi;

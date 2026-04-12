@@ -8,13 +8,13 @@ use opsml_types::{cards::CardTable, contracts::*, *};
 use std::sync::Arc;
 
 #[derive(Debug)]
-pub struct ServerGenAIRegistry {
+pub struct ServerAgentRegistry {
     sql_client: Arc<SqlClientEnum>,
     pub table_name: CardTable,
     pub storage_settings: OpsmlStorageSettings,
 }
 
-impl ServerGenAIRegistry {
+impl ServerAgentRegistry {
     pub fn mode(&self) -> RegistryMode {
         RegistryMode::Server
     }

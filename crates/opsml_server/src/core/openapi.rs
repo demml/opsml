@@ -61,8 +61,8 @@ use utoipa::OpenApi;
         // settings
         crate::core::settings::route::storage_settings,
         crate::core::settings::route::ui_settings,
-        // genai
-        crate::core::genai::route::list_mcp_servers,
+        // agent
+        crate::core::agent::route::list_mcp_servers,
         // auth
         crate::core::auth::route::api_login_handler,
         crate::core::auth::route::ui_logout_handler,

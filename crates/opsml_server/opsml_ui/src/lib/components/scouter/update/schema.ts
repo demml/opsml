@@ -317,7 +317,7 @@ export function validateAgentConfig(
       })
       .parse({
         schedule,
-        sample_rate: Number(sample_ratio),
+        sample_ratio: Number(sample_ratio),
       });
 
     return {
