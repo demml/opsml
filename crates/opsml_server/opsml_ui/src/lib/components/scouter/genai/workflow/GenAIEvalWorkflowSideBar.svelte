@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import type { GenAIEvalWorkflowResult } from '../task';
   import GenAIEvalWorkflowContent from './GenAIEvalWorkflowContent.svelte';
-  import type { GenAIEvalProfile } from '../types';
+  import type { AgentEvalProfile } from '../types';
 
   let {
     selectedWorkflow,
@@ -11,7 +11,7 @@
   }: {
     selectedWorkflow: GenAIEvalWorkflowResult;
     onClose: () => void;
-    profile: GenAIEvalProfile;
+    profile: AgentEvalProfile;
   } = $props();
 
   let isClosing = $state(false);

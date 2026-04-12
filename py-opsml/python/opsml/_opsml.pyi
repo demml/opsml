@@ -44,7 +44,9 @@ Attributes = Optional[Mapping[str, AttributeValue]]
 
 SerializedType: TypeAlias = Union[str, int, float, dict, list]
 CardInterfaceType: TypeAlias = Union["DataInterface", "ModelInterface"]  # type: ignore[name-defined]
-ServiceCardInterfaceType: TypeAlias = Dict[str, Union["DataInterface", "ModelInterface"]]  # type: ignore[name-defined]
+ServiceCardInterfaceType: TypeAlias = Dict[
+    str, Union["DataInterface", "ModelInterface"]
+]  # type: ignore[name-defined]
 LoadInterfaceType: TypeAlias = Union[ServiceCardInterfaceType, ServiceCardInterfaceType]
 Context: TypeAlias = Union[Dict[str, Any], "BaseModel"]
 
@@ -465,7 +467,9 @@ class Prompt(Generic[OutputType]):
         model: str,
         provider: Provider | str,
         system_instructions: Optional[PromptMessage] = ...,
-        model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = ...,
+        model_settings: Optional[
+            ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings
+        ] = ...,
         *,
         output_type: Type[OutputType],
     ) -> "Prompt[OutputType]": ...
@@ -476,7 +480,9 @@ class Prompt(Generic[OutputType]):
         model: str,
         provider: Provider | str,
         system_instructions: Optional[PromptMessage] = ...,
-        model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = ...,
+        model_settings: Optional[
+            ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings
+        ] = ...,
         output_type: None = ...,
     ) -> "Prompt[None]": ...
     @property
@@ -2777,7 +2783,9 @@ class ChatMessage:
     @property
     def content(
         self,
-    ) -> List[Union[TextContentPart, ImageContentPart, InputAudioContentPart, FileContentPart]]:
+    ) -> List[
+        Union[TextContentPart, ImageContentPart, InputAudioContentPart, FileContentPart]
+    ]:
         """The message content parts."""
 
     @property
@@ -7913,7 +7921,9 @@ class AdkLlmResponse:
         """Interaction identifier."""
 
     @property
-    def live_session_resumption_update(self) -> Optional[AdkLiveSessionResumptionUpdate]:
+    def live_session_resumption_update(
+        self,
+    ) -> Optional[AdkLiveSessionResumptionUpdate]:
         """Live session resumption update."""
 
     @property
@@ -10243,9 +10253,16 @@ def init_tracer(
     service_name: str = "scouter_service",
     scope: str = "scouter.tracer.{version}",
     transport_config: Optional[
-        HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig | GrpcConfig | MockConfig
+        HttpConfig
+        | KafkaConfig
+        | RabbitMQConfig
+        | RedisConfig
+        | GrpcConfig
+        | MockConfig
     ] = None,
-    exporter: Optional[HttpSpanExporter | GrpcSpanExporter | StdoutSpanExporter | TestSpanExporter] = None,
+    exporter: Optional[
+        HttpSpanExporter | GrpcSpanExporter | StdoutSpanExporter | TestSpanExporter
+    ] = None,
     batch_config: Optional[BatchConfig] = None,
     sample_ratio: Optional[float] = None,
     scouter_queue: Optional[ScouterQueue] = None,
@@ -10786,7 +10803,9 @@ class BaseTracer:
     def drain_local_spans(self) -> List[TraceSpanRecord]:
         """Drain and return all locally captured spans, clearing the buffer."""
 
-    def get_local_spans_by_trace_ids(self, trace_ids: List[str]) -> List[TraceSpanRecord]:
+    def get_local_spans_by_trace_ids(
+        self, trace_ids: List[str]
+    ) -> List[TraceSpanRecord]:
         """Return spans matching the given trace_ids without draining the buffer."""
 
 def get_current_active_span(self) -> ActiveSpan:
@@ -11908,7 +11927,9 @@ class SpanFilter:
         """
 
     @staticmethod
-    def with_duration(min_ms: Optional[float] = None, max_ms: Optional[float] = None) -> "SpanFilter":
+    def with_duration(
+        min_ms: Optional[float] = None, max_ms: Optional[float] = None
+    ) -> "SpanFilter":
         """Filter spans by duration constraints.
 
         Args:
@@ -12188,7 +12209,9 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_aggregation(filter: SpanFilter, attribute_key: str, aggregation: AggregationType) -> "TraceAssertion":
+    def span_aggregation(
+        filter: SpanFilter, attribute_key: str, aggregation: AggregationType
+    ) -> "TraceAssertion":
         """Aggregate numeric attribute across filtered spans.
 
         Args:
@@ -13077,7 +13100,9 @@ class AssertionResults:
     def __str__(self): ...
     def __getitem__(self, key: str) -> AssertionResult: ...
 
-def execute_agent_assertion_tasks(tasks: List[AgentAssertionTask], context: Any) -> AssertionResults:
+def execute_agent_assertion_tasks(
+    tasks: List[AgentAssertionTask], context: Any
+) -> AssertionResults:
     """Execute agent assertion tasks against a provided request context.
 
     Args:
@@ -13094,7 +13119,9 @@ def execute_agent_assertion_tasks(tasks: List[AgentAssertionTask], context: Any)
         ValueError: If tasks list is empty or context cannot be deserialized.
     """
 
-def execute_trace_assertion_tasks(tasks: List[TraceAssertionTask], spans: List[TraceSpan]) -> AssertionResults:
+def execute_trace_assertion_tasks(
+    tasks: List[TraceAssertionTask], spans: List[TraceSpan]
+) -> AssertionResults:
     """Execute trace assertion tasks against provided spans.
 
     Args:
@@ -13715,7 +13742,12 @@ class TasksFile:
 
     def __getitem__(
         self, index: int | slice
-    ) -> AssertionTask | LLMJudgeTask | TraceAssertionTask | List[AssertionTask | LLMJudgeTask | TraceAssertionTask]:
+    ) -> (
+        AssertionTask
+        | LLMJudgeTask
+        | TraceAssertionTask
+        | List[AssertionTask | LLMJudgeTask | TraceAssertionTask]
+    ):
         """Get task(s) by index or slice."""
 
     def __len__(self) -> int:
@@ -13782,7 +13814,7 @@ class EvalRunner:
 
     Args:
         scenarios: List of ``EvalScenario`` instances to evaluate.
-        profiles: Map of alias → ``GenAIEvalProfile`` for sub-agent evaluation.
+        profiles: Map of alias → ``AgentEvalProfile`` for sub-agent evaluation.
     """
 
     @property
@@ -13792,7 +13824,7 @@ class EvalRunner:
     def __init__(
         self,
         scenarios: "EvalScenarios",
-        profiles: Dict[str, "GenAIEvalProfile"],
+        profiles: Dict[str, "AgentEvalProfile"],
     ) -> None: ...
     def collect_scenario_data(
         self,
@@ -13856,7 +13888,9 @@ class EvalOrchestrator:
     def on_scenario_complete(self, scenario: EvalScenario, response: str) -> None:
         """Hook called after a scenario is executed."""
 
-    def on_evaluation_complete(self, results: ScenarioEvalResults) -> ScenarioEvalResults:
+    def on_evaluation_complete(
+        self, results: ScenarioEvalResults
+    ) -> ScenarioEvalResults:
         """Hook called after evaluation completes. Override to post-process results."""
 
     def run(self, config: Optional[EvaluationConfig] = None) -> ScenarioEvalResults:
@@ -14070,7 +14104,9 @@ class AlertDispatchType:
     def to_string() -> str:
         """Return the string representation of the alert dispatch type"""
 
-DispatchConfigType = ConsoleDispatchConfig | SlackDispatchConfig | OpsGenieDispatchConfig
+DispatchConfigType = (
+    ConsoleDispatchConfig | SlackDispatchConfig | OpsGenieDispatchConfig
+)
 
 class AlertZone:
     Zone1: "AlertZone"
@@ -14839,7 +14875,9 @@ class DriftRequest:
         """
 
 class ProfileStatusRequest:
-    def __init__(self, name: str, space: str, version: str, drift_type: DriftType, active: bool) -> None:
+    def __init__(
+        self, name: str, space: str, version: str, drift_type: DriftType, active: bool
+    ) -> None:
         """Initialize profile status request
 
         Args:
@@ -14856,7 +14894,9 @@ class ProfileStatusRequest:
         """
 
 class GetProfileRequest:
-    def __init__(self, name: str, space: str, version: str, drift_type: DriftType) -> None:
+    def __init__(
+        self, name: str, space: str, version: str, drift_type: DriftType
+    ) -> None:
         """Initialize get profile request
 
         Args:
@@ -14957,7 +14997,9 @@ class ScouterClient:
                 DriftRequest object
         """
 
-    def register_profile(self, profile: Any, set_active: bool = False, deactivate_others: bool = False) -> bool:
+    def register_profile(
+        self, profile: Any, set_active: bool = False, deactivate_others: bool = False
+    ) -> bool:
         """Registers a drift profile with the server
 
         Args:
@@ -14983,7 +15025,9 @@ class ScouterClient:
             boolean
         """
 
-    def get_alerts(self, request: DriftAlertPaginationRequest) -> DriftAlertPaginationResponse:
+    def get_alerts(
+        self, request: DriftAlertPaginationRequest
+    ) -> DriftAlertPaginationResponse:
         """Get alerts
 
         Args:
@@ -15637,7 +15681,7 @@ class ScouterQueue:
                     • SpcDriftProfile    - Statistical Process Control monitoring
                     • PsiDriftProfile    - Population Stability Index monitoring
                     • CustomDriftProfile - Custom metric monitoring
-                    • GenAIEvalProfile    - LLM evaluation monitoring
+                    • AgentEvalProfile    - LLM evaluation monitoring
 
             transport_config (Union[KafkaConfig, RabbitMQConfig, RedisConfig, HttpConfig, GrpcConfig]):
                 Transport configuration for the queue publisher.
@@ -15702,7 +15746,14 @@ class ScouterQueue:
 
     @staticmethod
     def from_profile(
-        profile: Union[dict, list, SpcDriftProfile, PsiDriftProfile, CustomDriftProfile, GenAIEvalProfile],
+        profile: Union[
+            dict,
+            list,
+            SpcDriftProfile,
+            PsiDriftProfile,
+            CustomDriftProfile,
+            AgentEvalProfile,
+        ],
         transport_config: Union[
             KafkaConfig,
             RabbitMQConfig,
@@ -15716,7 +15767,7 @@ class ScouterQueue:
         list of drift profiles, or a single drift profile.
 
         Args:
-            profile (Union[dict, list, SpcDriftProfile, PsiDriftProfile, CustomDriftProfile, GenAIEvalProfile]):
+            profile (Union[dict, list, SpcDriftProfile, PsiDriftProfile, CustomDriftProfile, AgentEvalProfile]):
                 Drift profile(s) to initialize the queue with. Can be a single profile,
                 a list of profiles, or a dictionary of profiles.
 
@@ -15782,8 +15833,8 @@ class ScouterQueue:
         omitted from the result.
         """
 
-    def genai_profiles(self) -> Dict[str, "GenAIEvalProfile"]:
-        """Returns a mapping of alias → GenAIEvalProfile for all GenAIEvalProfiles registered in the queue."""
+    def genai_profiles(self) -> Dict[str, "AgentEvalProfile"]:
+        """Returns a mapping of alias → AgentEvalProfile for all AgentEvalProfiles registered in the queue."""
 
 class EvalRecord:
     """LLM record containing context tied to a Large Language Model interaction
@@ -15808,7 +15859,7 @@ class EvalRecord:
         session_id: Optional[str] = None,
         trace_id: Optional[str] = None,
     ) -> None:
-        """Creates a new LLM record to associate with an `GenAIEvalProfile`.
+        """Creates a new LLM record to associate with an `AgentEvalProfile`.
         The record is sent to the `Scouter` server via the `ScouterQueue` and is
         then used to inject context into the evaluation prompts.
 
@@ -16389,7 +16440,16 @@ class FreedmanDiaconis:
         For more information, please see: https://en.wikipedia.org/wiki/Histogram
         """
 
-EqualWidthMethods = Manual | SquareRoot | Sturges | Rice | Doane | Scott | TerrellScott | FreedmanDiaconis
+EqualWidthMethods = (
+    Manual
+    | SquareRoot
+    | Sturges
+    | Rice
+    | Doane
+    | Scott
+    | TerrellScott
+    | FreedmanDiaconis
+)
 
 class EqualWidthBinning:
     def __init__(self, method: EqualWidthMethods = Doane()):
@@ -16463,7 +16523,9 @@ class PsiDriftConfig:
         alert_config: PsiAlertConfig = PsiAlertConfig(),
         config_path: Optional[Path] = None,
         categorical_features: Optional[list[str]] = None,
-        binning_strategy: QuantileBinning | EqualWidthBinning = QuantileBinning(num_bins=10),
+        binning_strategy: QuantileBinning | EqualWidthBinning = QuantileBinning(
+            num_bins=10
+        ),
     ):
         """Initialize monitor config
 
@@ -16541,7 +16603,9 @@ class PsiDriftConfig:
         """binning_strategy"""
 
     @binning_strategy.setter
-    def binning_strategy(self, binning_strategy: QuantileBinning | EqualWidthBinning) -> None:
+    def binning_strategy(
+        self, binning_strategy: QuantileBinning | EqualWidthBinning
+    ) -> None:
         """Set binning_strategy"""
 
     @property
@@ -17040,7 +17104,7 @@ class CustomDriftProfile:
             None
         """
 
-class GenAIEvalConfig:
+class AgentEvalConfig:
     def __init__(
         self,
         space: str = "__missing__",
@@ -17109,7 +17173,7 @@ class GenAIEvalConfig:
         """Set alert_config"""
 
     @staticmethod
-    def load_from_json_file(path: Path) -> "GenAIEvalConfig":
+    def load_from_json_file(path: Path) -> "AgentEvalConfig":
         """Load config from json file
         Args:
             path:
@@ -17141,10 +17205,10 @@ class GenAIEvalConfig:
                 LLM alert configuration
         """
 
-class GenAIEvalProfile:
+class AgentEvalProfile:
     """Profile for LLM evaluation and drift detection.
 
-    GenAIEvalProfile combines assertion tasks, LLM judge tasks, and trace assertion
+    AgentEvalProfile combines assertion tasks, LLM judge tasks, and trace assertion
     tasks into a unified evaluation framework for monitoring LLM performance. Evaluations
     run asynchronously on the Scouter server, enabling scalable drift detection without
     blocking your application.
@@ -17220,7 +17284,7 @@ class GenAIEvalProfile:
     Examples:
         Pure assertion-based monitoring (no LLM calls):
 
-        >>> config = GenAIEvalConfig(
+        >>> config = AgentEvalConfig(
         ...     space="production",
         ...     name="chatbot",
         ...     version="1.0",
@@ -17244,7 +17308,7 @@ class GenAIEvalProfile:
         ...     )
         ... ]
         >>>
-        >>> profile = GenAIEvalProfile(
+        >>> profile = AgentEvalProfile(
         ...     config=config,
         ...     tasks=tasks
         ... )
@@ -17270,7 +17334,7 @@ class GenAIEvalProfile:
         ...     )
         ... ]
         >>>
-        >>> profile = GenAIEvalProfile(
+        >>> profile = AgentEvalProfile(
         ...     config=config,
         ...     tasks=judge_tasks
         ... )
@@ -17309,7 +17373,7 @@ class GenAIEvalProfile:
         ...     )
         ... ]
         >>>
-        >>> profile = GenAIEvalProfile(
+        >>> profile = AgentEvalProfile(
         ...     config=config,
         ...     tasks=assertion_tasks + judge_tasks
         ... )
@@ -17346,7 +17410,7 @@ class GenAIEvalProfile:
         ...     depends_on=["relevance", "toxicity"]  # Multiple deps
         ... )
         >>>
-        >>> profile = GenAIEvalProfile(
+        >>> profile = AgentEvalProfile(
         ...     config=config,
         ...     tasks=[relevance_task, toxicity_task, quality_task]
         ... )
@@ -17384,7 +17448,7 @@ class GenAIEvalProfile:
         ...     description="Ensure error-free execution"
         ... )
         >>>
-        >>> profile = GenAIEvalProfile(
+        >>> profile = AgentEvalProfile(
         ...     config=config,
         ...     tasks=[workflow_task, perf_task, error_task]
         ... )
@@ -17425,7 +17489,7 @@ class GenAIEvalProfile:
         ...     description="Quality assessment after validation"
         ... )
         >>>
-        >>> profile = GenAIEvalProfile(
+        >>> profile = AgentEvalProfile(
         ...     config=config,
         ...     tasks=[response_check, trace_check, quality_judge]
         ... )
@@ -17443,10 +17507,10 @@ class GenAIEvalProfile:
     def __init__(
         self,
         tasks: List[Union[AssertionTask, LLMJudgeTask, TraceAssertionTask]],
-        config: Optional[GenAIEvalConfig] = None,
+        config: Optional[AgentEvalConfig] = None,
         alias: Optional[str] = None,
     ):
-        """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
+        """Initialize a AgentEvalProfile for LLM evaluation and drift detection.
 
         Creates a profile that combines assertion tasks, LLM judge tasks, and
         trace assertion tasks into a unified evaluation framework. LLM judge tasks
@@ -17458,7 +17522,7 @@ class GenAIEvalProfile:
                 List of evaluation tasks to include in the profile. Can contain
                 AssertionTask, LLMJudgeTask, and TraceAssertionTask instances.
                 At least one task (assertion, LLM judge, or trace assertion) is required.
-            config (Optional[GenAIEvalConfig]):
+            config (Optional[AgentEvalConfig]):
                 Configuration for the GenAI drift profile containing space, name,
                 version, sample rate, and alert settings. If not provided,
                 defaults will be used.
@@ -17466,7 +17530,7 @@ class GenAIEvalProfile:
                 Optional alias for the profile.
 
         Returns:
-            GenAIEvalProfile: Configured profile ready for GenAI drift monitoring.
+            AgentEvalProfile: Configured profile ready for GenAI drift monitoring.
 
         Raises:
             ProfileError: If validation fails due to:
@@ -17477,12 +17541,12 @@ class GenAIEvalProfile:
         Examples:
             Assertion-only profile:
 
-            >>> config = GenAIEvalConfig(space="prod", name="bot", version="1.0")
+            >>> config = AgentEvalConfig(space="prod", name="bot", version="1.0")
             >>> assertions = [
             ...     AssertionTask(id="length_check", ...),
             ...     AssertionTask(id="confidence_check", ...)
             ... ]
-            >>> profile = GenAIEvalProfile(config, tasks=assertions)
+            >>> profile = AgentEvalProfile(config, tasks=assertions)
 
             LLM judge-only profile:
 
@@ -17490,7 +17554,7 @@ class GenAIEvalProfile:
             ...     LLMJudgeTask(id="relevance", prompt=..., ...),
             ...     LLMJudgeTask(id="quality", prompt=..., depends_on=["relevance"])
             ... ]
-            >>> profile = GenAIEvalProfile(config, tasks=judges)
+            >>> profile = AgentEvalProfile(config, tasks=judges)
 
             Trace assertion-only profile:
 
@@ -17508,11 +17572,11 @@ class GenAIEvalProfile:
             ...         expected_value=5000.0
             ...     )
             ... ]
-            >>> profile = GenAIEvalProfile(config, tasks=trace_tasks)
+            >>> profile = AgentEvalProfile(config, tasks=trace_tasks)
 
             Hybrid profile:
 
-            >>> profile = GenAIEvalProfile(
+            >>> profile = AgentEvalProfile(
             ...     config=config,
             ...     tasks=assertions + judges + trace_tasks
             ... )
@@ -17531,7 +17595,7 @@ class GenAIEvalProfile:
         """Set unique identifier for the drift profile."""
 
     @property
-    def config(self) -> GenAIEvalConfig:
+    def config(self) -> AgentEvalConfig:
         """Configuration for the drift profile.
 
         Contains space, name, version, sample rate, and alert settings.
@@ -17639,7 +17703,7 @@ class GenAIEvalProfile:
         """Print the execution plan for all tasks."""
 
     def __str__(self) -> str:
-        """String representation of GenAIEvalProfile.
+        """String representation of AgentEvalProfile.
 
         Returns:
             str: Human-readable string showing config and task counts.
@@ -17686,7 +17750,7 @@ class GenAIEvalProfile:
         """
 
     @staticmethod
-    def model_validate(data: Dict[str, Any]) -> "GenAIEvalProfile":
+    def model_validate(data: Dict[str, Any]) -> "AgentEvalProfile":
         """Load profile from dictionary.
 
         Args:
@@ -17694,18 +17758,18 @@ class GenAIEvalProfile:
                 Dictionary representation of the profile.
 
         Returns:
-            GenAIEvalProfile: Reconstructed profile instance.
+            AgentEvalProfile: Reconstructed profile instance.
 
         Raises:
             ProfileError: If dictionary structure is invalid or missing required fields.
 
         Example:
             >>> data = {"config": {...}, "assertion_tasks": [...]}
-            >>> profile = GenAIEvalProfile.model_validate(data)
+            >>> profile = AgentEvalProfile.model_validate(data)
         """
 
     @staticmethod
-    def model_validate_json(json_string: str) -> "GenAIEvalProfile":
+    def model_validate_json(json_string: str) -> "AgentEvalProfile":
         """Load profile from JSON string.
 
         Args:
@@ -17713,18 +17777,18 @@ class GenAIEvalProfile:
                 JSON string representation of the profile.
 
         Returns:
-            GenAIEvalProfile: Reconstructed profile instance.
+            AgentEvalProfile: Reconstructed profile instance.
 
         Raises:
             ProfileError: If JSON is malformed or invalid.
 
         Example:
             >>> json_str = '{"config": {...}, "assertion_tasks": [...]}'
-            >>> profile = GenAIEvalProfile.model_validate_json(json_str)
+            >>> profile = AgentEvalProfile.model_validate_json(json_str)
         """
 
     @staticmethod
-    def from_file(path: Path) -> "GenAIEvalProfile":
+    def from_file(path: Path) -> "AgentEvalProfile":
         """Load profile from JSON file.
 
         Args:
@@ -17732,13 +17796,13 @@ class GenAIEvalProfile:
                 Path to the JSON file containing the profile.
 
         Returns:
-            GenAIEvalProfile: Loaded profile instance.
+            AgentEvalProfile: Loaded profile instance.
 
         Raises:
             ProfileError: If file doesn't exist, is malformed, or invalid.
 
         Example:
-            >>> profile = GenAIEvalProfile.from_file(Path("my_profile.json"))
+            >>> profile = AgentEvalProfile.from_file(Path("my_profile.json"))
         """
 
     def update_config_args(
@@ -17882,7 +17946,9 @@ class Drifter:
     def create_drift_profile(  # type: ignore
         self,
         data: Any,
-        config: Optional[Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]] = None,
+        config: Optional[
+            Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]
+        ] = None,
         data_type: Optional[ScouterDataType] = None,
     ) -> Union[SpcDriftProfile, PsiDriftProfile, CustomDriftProfile]:
         """Create a drift profile from data.
@@ -17906,11 +17972,13 @@ class Drifter:
 
     def create_genai_drift_profile(
         self,
-        config: GenAIEvalConfig,
-        tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask],
+        config: AgentEvalConfig,
+        tasks: Sequence[
+            LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask
+        ],
         alias: Optional[str] = None,
-    ) -> GenAIEvalProfile:
-        """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
+    ) -> AgentEvalProfile:
+        """Initialize a AgentEvalProfile for LLM evaluation and drift detection.
 
         LLM evaluations are run asynchronously on the scouter server.
 
@@ -17924,7 +17992,7 @@ class Drifter:
 
 
         Args:
-            config (GenAIEvalConfig):
+            config (AgentEvalConfig):
                 The configuration for the GenAI drift profile containing space, name,
                 version, and alert settings.
             tasks (List[LLMJudgeTask | AssertionTask]):
@@ -17935,7 +18003,7 @@ class Drifter:
                 Optional alias for the profile.
 
         Returns:
-            GenAIEvalProfile: Configured profile ready for GenAI drift monitoring.
+            AgentEvalProfile: Configured profile ready for GenAI drift monitoring.
 
         Raises:
             ProfileError: If workflow validation fails, metrics are empty when no
@@ -17944,7 +18012,7 @@ class Drifter:
         Examples:
             Basic usage with metrics only:
 
-            >>> config = GenAIEvalConfig("my_space", "my_model", "1.0")
+            >>> config = AgentEvalConfig("my_space", "my_model", "1.0")
             >>>  tasks = [
             ...     LLMJudgeTask(
             ...         id="response_relevance",
@@ -18007,7 +18075,7 @@ class Drifter:
     def compute_drift(
         self,
         data: List[EvalRecord],
-        drift_profile: GenAIEvalProfile,
+        drift_profile: AgentEvalProfile,
         data_type: Optional[ScouterDataType] = None,
     ) -> "EvalResultSet":
         """Create a drift map from data.
@@ -18015,7 +18083,7 @@ class Drifter:
         Args:
             data (List[EvalRecord]):
                 Data to create a data profile from. Data can be a list of EvalRecord.
-            profile (GenAIEvalProfile):
+            profile (AgentEvalProfile):
                 Drift profile to use to compute drift map
             data_type:
                 Optional data type. Inferred from data if not provided.
@@ -18027,7 +18095,7 @@ class Drifter:
     def compute_drift(  # type: ignore
         self,
         data: Any,
-        drift_profile: Union[SpcDriftProfile, PsiDriftProfile, GenAIEvalProfile],
+        drift_profile: Union[SpcDriftProfile, PsiDriftProfile, AgentEvalProfile],
         data_type: Optional[ScouterDataType] = None,
     ) -> Union[SpcDriftMap, PsiDriftMap, EvalResultSet]:
         """Create a drift map from data.
@@ -18112,7 +18180,9 @@ class EvalDataset:
     def __init__(
         self,
         records: Sequence[EvalRecord],
-        tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask],
+        tasks: Sequence[
+            LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask
+        ],
     ):
         """Initialize the EvalDataset with records and tasks.
 
@@ -18464,7 +18534,9 @@ class EvalResults:
 
         """
 
-    def compare_to(self, baseline: "EvalResults", regression_threshold: float) -> ComparisonResults:
+    def compare_to(
+        self, baseline: "EvalResults", regression_threshold: float
+    ) -> ComparisonResults:
         """Compare the current evaluation results to a baseline with a regression threshold.
 
         Args:
@@ -19020,7 +19092,9 @@ class AgentSkill:
         """Security requirements for accessing the skill."""
 
     @security_requirements.setter
-    def security_requirements(self, security_requirements: Optional[List[SecurityRequirement]]) -> None: ...
+    def security_requirements(
+        self, security_requirements: Optional[List[SecurityRequirement]]
+    ) -> None: ...
     @property
     def tags(self) -> List[str]:
         """Categorization tags for the skill."""
@@ -19162,7 +19236,11 @@ class OpenIdConnectSecurityScheme:
     identity verification and user profile information.
     """
 
-    def __init__(self, description: Optional[str] = None, open_id_connect_url: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        description: Optional[str] = None,
+        open_id_connect_url: Optional[str] = None,
+    ) -> None:
         """Initialize an OpenIdConnectSecurityScheme.
 
         Args:
@@ -19482,7 +19560,12 @@ class AgentCardSignature:
     authenticity and integrity of agent card metadata.
     """
 
-    def __init__(self, protected: str = "", signature: str = "", header: Optional[Dict[str, str]] = None) -> None:
+    def __init__(
+        self,
+        protected: str = "",
+        signature: str = "",
+        header: Optional[Dict[str, str]] = None,
+    ) -> None:
         """Initialize an AgentCardSignature.
 
         Args:
@@ -19617,13 +19700,17 @@ class AgentSpec:
         """Security requirements for accessing the agent."""
 
     @security_requirements.setter
-    def security_requirements(self, security_requirements: Optional[List[SecurityRequirement]]) -> None: ...
+    def security_requirements(
+        self, security_requirements: Optional[List[SecurityRequirement]]
+    ) -> None: ...
     @property
     def security_schemes(self) -> Optional[Dict[str, SecurityScheme]]:
         """Named security scheme definitions for authentication."""
 
     @security_schemes.setter
-    def security_schemes(self, security_schemes: Optional[Dict[str, SecurityScheme]]) -> None: ...
+    def security_schemes(
+        self, security_schemes: Optional[Dict[str, SecurityScheme]]
+    ) -> None: ...
     @property
     def signatures(self) -> Optional[List[AgentCardSignature]]:
         """Cryptographic signatures verifying agent card authenticity."""
@@ -19641,7 +19728,9 @@ class AgentSpec:
         """Protocol interfaces the agent supports for communication."""
 
     @supported_interfaces.setter
-    def supported_interfaces(self, supported_interfaces: List[AgentInterface]) -> None: ...
+    def supported_interfaces(
+        self, supported_interfaces: List[AgentInterface]
+    ) -> None: ...
     @property
     def version(self) -> str:
         """Semantic version of the agent specification."""
@@ -19662,7 +19751,9 @@ class VersionType:
     def __eq__(self, other: object) -> bool: ...
 
 ### card.pyi ###
-AnyCard: TypeAlias = Union["DataCard", "ModelCard", "PromptCard", "ExperimentCard", "ServiceCard", "SkillCard"]
+AnyCard: TypeAlias = Union[
+    "DataCard", "ModelCard", "PromptCard", "ExperimentCard", "ServiceCard", "SkillCard"
+]
 
 class _DataRegistryType: ...
 class _ModelRegistryType: ...
@@ -19944,7 +20035,9 @@ class DataCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[DataInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[DataInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -20289,7 +20382,9 @@ class ModelCard:
         """Return the model dump as a json string"""
 
     @staticmethod
-    def model_validate_json(json_string: str, interface: Optional[ModelInterface] = None) -> "ModelCard":
+    def model_validate_json(
+        json_string: str, interface: Optional[ModelInterface] = None
+    ) -> "ModelCard":
         """Validate the model json string
 
         Args:
@@ -20591,7 +20686,7 @@ class PromptCard:
         version: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
-        eval_profile: Optional[GenAIEvalProfile] = None,
+        eval_profile: Optional[AgentEvalProfile] = None,
     ) -> None:
         """Creates a `PromptCard`.
 
@@ -20614,7 +20709,7 @@ class PromptCard:
             tags (List[str]):
                 Tags to associate with `PromptCard`. Can be a dictionary of strings or
                 a `Tags` object.
-            eval_profile (GenAIEvalProfile | None):
+            eval_profile (AgentEvalProfile | None):
                 Evaluation profile to associate with the prompt.
         Example:
         ```python
@@ -20734,10 +20829,12 @@ class PromptCard:
     def create_eval_profile(
         self,
         alias: str,
-        tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask],
-        config: Optional[GenAIEvalConfig] = None,
+        tasks: Sequence[
+            LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask
+        ],
+        config: Optional[AgentEvalConfig] = None,
     ) -> None:
-        """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
+        """Initialize a AgentEvalProfile for LLM evaluation and drift detection.
 
         LLM evaluations are run asynchronously on the scouter server.
 
@@ -20758,12 +20855,12 @@ class PromptCard:
                 List of evaluation tasks to include in the profile. Can contain
                 a mix of LLM judge tasks, assertion tasks, trace assertion tasks, and agent assertion tasks.
 
-            config (GenAIEvalConfig | None):
+            config (AgentEvalConfig | None):
                 The configuration for the GenAI drift profile containing space, name,
                 version, and alert settings.
 
         Returns:
-            GenAIEvalProfile: Configured profile ready for GenAI drift monitoring.
+            AgentEvalProfile: Configured profile ready for GenAI drift monitoring.
 
         Raises:
             ProfileError: If workflow validation fails, metrics are empty when no
@@ -20772,7 +20869,7 @@ class PromptCard:
         Examples:
             Basic usage with metrics only:
 
-            >>> config = GenAIEvalConfig("my_space", "my_model", "1.0")
+            >>> config = AgentEvalConfig("my_space", "my_model", "1.0")
             >>>  tasks = [
             ...     LLMJudgeTask(
             ...         id="response_relevance",
@@ -20788,20 +20885,20 @@ class PromptCard:
         """
 
     @property
-    def eval_profile(self) -> "Optional[GenAIEvalProfile]":
-        """Returns the GenAIEvalProfile associated with this prompt card, if it exists.
+    def eval_profile(self) -> "Optional[AgentEvalProfile]":
+        """Returns the AgentEvalProfile associated with this prompt card, if it exists.
 
         Returns:
-            Optional[GenAIEvalProfile]
+            Optional[AgentEvalProfile]
         """
 
     @eval_profile.setter
-    def eval_profile(self, eval_profile: "GenAIEvalProfile") -> None:
+    def eval_profile(self, eval_profile: "AgentEvalProfile") -> None:
         """Set the drift profile map for the prompt card.
 
         Args:
-            eval_profile (GenAIEvalProfile):
-                The GenAIEvalProfile to set for the prompt card.
+            eval_profile (AgentEvalProfile):
+                The AgentEvalProfile to set for the prompt card.
         """
 
     @staticmethod
@@ -21206,7 +21303,9 @@ class ServiceCard:
             ```
         """
 
-    def __getitem__(self, alias: str) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard]:
+    def __getitem__(
+        self, alias: str
+    ) -> Union[DataCard, ModelCard, PromptCard, ExperimentCard]:
         """Get a card from the service card by alias
 
         Args:
@@ -21260,12 +21359,19 @@ class ServiceCard:
 
 class CardRegistry:
     @overload
-    def __new__(cls, registry_type: Union[_ModelRegistryType, Literal["model", "Model"]]) -> "ModelCardRegistry": ...
-    @overload
-    def __new__(cls, registry_type: Union[_DataRegistryType, Literal["data", "Data"]]) -> "DataCardRegistry": ...
+    def __new__(
+        cls, registry_type: Union[_ModelRegistryType, Literal["model", "Model"]]
+    ) -> "ModelCardRegistry": ...
     @overload
     def __new__(
-        cls, registry_type: Union[_ExperimentRegistryType, Literal["experiment", "Experiment"]]
+        cls, registry_type: Union[_DataRegistryType, Literal["data", "Data"]]
+    ) -> "DataCardRegistry": ...
+    @overload
+    def __new__(
+        cls,
+        registry_type: Union[
+            _ExperimentRegistryType, Literal["experiment", "Experiment"]
+        ],
     ) -> "ExperimentCardRegistry": ...
     @overload
     def __new__(
@@ -21276,7 +21382,9 @@ class CardRegistry:
         cls, registry_type: Union[_ServiceRegistryType, Literal["service", "Service"]]
     ) -> "ServiceCardRegistry": ...
     @overload
-    def __new__(cls, registry_type: Union[_SkillRegistryType, Literal["skill", "Skill"]]) -> "SkillCardRegistry": ...
+    def __new__(
+        cls, registry_type: Union[_SkillRegistryType, Literal["skill", "Skill"]]
+    ) -> "SkillCardRegistry": ...
     @overload
     def __new__(cls, registry_type: Union[RegistryType, str]) -> "CardRegistry":
         """Interface for connecting to any of the Card registries
@@ -21356,7 +21464,9 @@ class CardRegistry:
         version_type: VersionType = VersionType.Minor,
         pre_tag: Optional[str] = None,
         build_tag: Optional[str] = None,
-        save_kwargs: Optional[Union[ModelSaveKwargs, DataSaveKwargs, PromptSaveKwargs]] = None,
+        save_kwargs: Optional[
+            Union[ModelSaveKwargs, DataSaveKwargs, PromptSaveKwargs]
+        ] = None,
     ) -> None:
         """Register a Card
 
@@ -22098,7 +22208,9 @@ class Experiment:
                 Value of the parameter
         """
 
-    def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
+    def log_parameters(
+        self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]
+    ) -> None:
         """
         Log multiple parameters
 
@@ -22143,7 +22255,9 @@ class Experiment:
 
         """
 
-    def log_figure(self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None) -> None:
+    def log_figure(
+        self, name: str, figure: Any, kwargs: Optional[Dict[str, Any]] = None
+    ) -> None:
         """
         Log a figure. This method will log a matplotlib Figure object to the experiment artifacts.
 
@@ -23253,7 +23367,9 @@ class PolarsData(DataInterface):
 
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves polars dataframe to parquet dataset via write_parquet
 
         Args:
@@ -23381,7 +23497,9 @@ class PandasData(DataInterface):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves pandas dataframe as parquet file via to_parquet
 
         Args:
@@ -23502,7 +23620,9 @@ class ArrowData(DataInterface):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves pyarrow table to parquet via write_table
 
         Args:
@@ -23659,7 +23779,9 @@ class TorchData(DataInterface):
                 Data profile
         """
 
-    def save(self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None) -> DataInterfaceMetadata:
+    def save(
+        self, path: Path, save_kwargs: Optional[DataSaveKwargs] = None
+    ) -> DataInterfaceMetadata:
         """Saves torch tensor to a file
 
         Args:
@@ -23766,7 +23888,9 @@ def generate_feature_schema(data: Any, data_type: DataType) -> FeatureSchema:
 #  This section contains the type definitions for opsml.model module
 # __opsml.model__
 # ######################################################################################
-DriftProfileType = Dict[str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]]
+DriftProfileType = Dict[
+    str, Union[SpcDriftProfile | PsiDriftProfile | CustomDriftProfile]
+]
 
 class ProcessorType:
     Preprocessor: "ProcessorType"
@@ -25796,8 +25920,8 @@ __all__ = [
     "GeminiThinkingConfig",
     "GeminiTool",
     "GenAIAlertConfig",
-    "GenAIEvalConfig",
-    "GenAIEvalProfile",
+    "AgentEvalConfig",
+    "AgentEvalProfile",
     "GenerateContentResponse",
     "GenerationConfig",
     "GetProfileRequest",

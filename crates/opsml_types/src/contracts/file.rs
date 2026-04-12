@@ -50,7 +50,7 @@ pub struct DownloadFileQuery {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct FileInfo {
     #[pyo3(get)]
     pub name: String,

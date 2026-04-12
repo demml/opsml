@@ -1,6 +1,6 @@
 from opsml.card import PromptCard, RegistryType
 from opsml.genai import Prompt
-from opsml.scouter.drift import GenAIEvalProfile
+from opsml.scouter.drift import AgentEvalProfile
 from .models import Recipe
 from .tasks import recipe_tasks, recipe_response_tasks
 from opsml.card import CardRegistry
@@ -62,7 +62,9 @@ def create_recipe_response_prompt() -> Prompt:
     )
 
 
-def create_recipe_prompt_card() -> tuple[PromptCard, PromptCard, GenAIEvalProfile, GenAIEvalProfile]:
+def create_recipe_prompt_card() -> tuple[
+    PromptCard, PromptCard, AgentEvalProfile, AgentEvalProfile
+]:
     """
     Creates a response prompt card for generating recipes.
 
@@ -70,7 +72,7 @@ def create_recipe_prompt_card() -> tuple[PromptCard, PromptCard, GenAIEvalProfil
         PromptCard: A prompt card for generating recipes.
     """
 
-    recipe_generation_eval_profile = GenAIEvalProfile(
+    recipe_generation_eval_profile = AgentEvalProfile(
         tasks=recipe_tasks,
         alias="recipe_generation",
     )
@@ -81,7 +83,7 @@ def create_recipe_prompt_card() -> tuple[PromptCard, PromptCard, GenAIEvalProfil
         eval_profile=recipe_generation_eval_profile,
     )
 
-    recipe_response_eval_profile = GenAIEvalProfile(
+    recipe_response_eval_profile = AgentEvalProfile(
         tasks=recipe_response_tasks,
         alias="recipe_response",
     )

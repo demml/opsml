@@ -15,7 +15,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DependentVars {
     #[pyo3(get, set)]
@@ -64,7 +64,7 @@ impl DependentVars {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct SqlLogic {
     #[pyo3(get, set)]
@@ -159,7 +159,7 @@ impl SqlLogic {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DataInterfaceSaveMetadata {
     #[pyo3(get)]
@@ -207,7 +207,7 @@ impl DataInterfaceSaveMetadata {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Default)]
 pub struct DataSaveKwargs {
     pub data: Option<Py<PyDict>>,
@@ -324,7 +324,7 @@ impl Clone for DataSaveKwargs {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Default)]
 pub struct DataLoadKwargs {
     #[pyo3(get, set)]

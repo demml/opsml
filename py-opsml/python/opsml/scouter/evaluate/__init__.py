@@ -19,7 +19,7 @@ from ..._opsml import (
     EvalTaskResult,
     EvaluationConfig,
     EvaluationTaskType,
-    GenAIEvalConfig,
+    AgentEvalConfig,
     LLMJudgeTask,
     ScenarioComparisonResults,
     ScenarioDelta,
@@ -38,7 +38,7 @@ from .runner import EvalOrchestrator
 
 __all__ = [
     "EvalOrchestrator",
-    "GenAIEvalConfig",
+    "AgentEvalConfig",
     "EvalResults",
     "EvaluationConfig",
     "EvalDataset",

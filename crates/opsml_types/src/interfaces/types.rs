@@ -7,7 +7,7 @@ use std::fmt::Formatter;
 use std::path::PathBuf;
 use tracing::debug;
 
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub enum TaskType {
     Classification,
@@ -81,7 +81,7 @@ impl Display for TaskType {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum ModelInterfaceType {
     #[default]
@@ -119,7 +119,7 @@ impl Display for ModelInterfaceType {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum DataInterfaceType {
     #[default]
@@ -149,7 +149,7 @@ impl Display for DataInterfaceType {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum ModelType {
     Transformers,
@@ -323,7 +323,7 @@ impl ModelType {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DriftProfileUri {
     #[pyo3(get)]

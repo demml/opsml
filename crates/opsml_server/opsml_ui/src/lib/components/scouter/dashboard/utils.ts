@@ -19,7 +19,7 @@ import {
   type DriftProfileResponse,
 } from "../utils";
 import type {
-  GenAIEvalProfile,
+  AgentEvalProfile,
   EvalRecordPaginationResponse,
   GenAIEvalWorkflowPaginationResponse,
 } from "../genai/types";
@@ -81,7 +81,7 @@ export type SelectedGenAIData = {
 export type GenAIMonitoringPageData =
   | {
       status: "success";
-      profile: GenAIEvalProfile;
+      profile: AgentEvalProfile;
       profileUri: string;
       selectedData: SelectedGenAIData;
       uid: string;
@@ -95,7 +95,7 @@ export type GenAIMonitoringPageData =
       selectedTimeRange: TimeRange;
       errorMsg: string;
       errorKind: MonitoringErrorKind;
-      profile: GenAIEvalProfile;
+      profile: AgentEvalProfile;
     };
 
 export type MonitoringPageData =
@@ -266,7 +266,7 @@ async function loadGenAIRecordsAndWorkflows(
 /** Loads all data for the GenAI evaluation dashboard (metrics, alerts, records, workflows) */
 export async function loadGenAIData(
   fetch: typeof globalThis.fetch,
-  eval_profile: GenAIEvalProfile,
+  eval_profile: AgentEvalProfile,
   timeRange: TimeRange,
 ): Promise<SelectedGenAIData> {
   const { uid, space } = eval_profile.config;
@@ -334,7 +334,7 @@ export async function loadInitialData(
 export async function getGenAIMonitoringPageData(
   fetch: typeof globalThis.fetch,
   metadata: { uid: string; [key: string]: any },
-  eval_profile: GenAIEvalProfile,
+  eval_profile: AgentEvalProfile,
   registryType: RegistryType,
   profileUri: string = "",
 ): Promise<GenAIMonitoringPageData> {

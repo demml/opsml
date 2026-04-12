@@ -4,7 +4,7 @@
   import WorkflowStageList from './WorkflowStageList.svelte';
   import TaskDetailView from '../task/TaskDetailView.svelte';
   import { getServerGenAIEvalTask } from '../utils';
-  import type { GenAIEvalProfile, GenAIEvalTaskRequest } from '../types';
+  import type { AgentEvalProfile, GenAIEvalTaskRequest } from '../types';
   import { dev } from '$app/environment';
 
   let {
@@ -16,7 +16,7 @@
     workflow: GenAIEvalWorkflowResult;
     onClose?: () => void;
     showCloseButton?: boolean;
-    profile: GenAIEvalProfile;
+    profile: AgentEvalProfile;
   } = $props();
 
   let selectedTask = $state<EvalTaskResult | null>(null);

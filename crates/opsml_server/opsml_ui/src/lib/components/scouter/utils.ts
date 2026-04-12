@@ -9,8 +9,8 @@ import type {
 } from "./custom/types";
 import { DriftType, type MetricData } from "./types";
 import type {
-  GenAIEvalConfig,
-  GenAIEvalProfile,
+  AgentEvalConfig,
+  AgentEvalProfile,
 } from "$lib/components/scouter/genai/types";
 import { ServerPaths } from "$lib/components/api/routes";
 import type { DriftProfileUri } from "./types";
@@ -45,7 +45,7 @@ export type DriftProfile = {
   [DriftType.Spc]: SpcDriftProfile;
   [DriftType.Psi]: PsiDriftProfile;
   [DriftType.Custom]: CustomDriftProfile;
-  [DriftType.GenAI]: GenAIEvalProfile;
+  [DriftType.GenAI]: AgentEvalProfile;
 };
 
 export interface UiProfile {
@@ -57,7 +57,7 @@ export type DriftConfigType =
   | CustomMetricDriftConfig
   | PsiDriftConfig
   | SpcDriftConfig
-  | GenAIEvalConfig;
+  | AgentEvalConfig;
 
 export type DriftProfileResponse = Record<DriftType, UiProfile>;
 
@@ -158,7 +158,7 @@ export function isCustomConfig(
 
 export function isGenAIConfig(
   config: DriftConfigType,
-): config is GenAIEvalConfig {
+): config is AgentEvalConfig {
   return config.drift_type === DriftType.GenAI;
 }
 

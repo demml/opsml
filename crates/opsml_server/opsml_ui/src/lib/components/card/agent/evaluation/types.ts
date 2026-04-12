@@ -6,7 +6,7 @@
 import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
 import type { GenAIMonitoringPageData } from "$lib/components/scouter/dashboard/utils";
 import type {
-  GenAIEvalProfile,
+  AgentEvalProfile,
   EvalRecord,
 } from "$lib/components/scouter/genai/types";
 import type { GenAIEvalWorkflowResult } from "$lib/components/scouter/genai/task";
@@ -28,7 +28,7 @@ export type RecordWithAgent = EvalRecord & {
 export type WorkflowWithAgent = GenAIEvalWorkflowResult & {
   _agentName: string;
   _evalPath: string;
-  _profile: GenAIEvalProfile;
+  _profile: AgentEvalProfile;
 };
 
 /** Merged pagination state for the agent eval record table. */

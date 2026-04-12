@@ -12,7 +12,7 @@
   import type { CustomMetricDriftConfig } from '../custom/types';
   import { getCustomAlertCondition } from '../custom/utils';
   import type { AlertCondition } from '../types';
-  import type { GenAIEvalConfig, GenAIEvalProfile } from '../genai/types';
+  import type { AgentEvalConfig, AgentEvalProfile } from '../genai/types';
 
   let {
     metricData,
@@ -56,7 +56,7 @@
     }
 
     if (currentDriftType === DriftType.GenAI) {
-      const alertConfig = (currentProfile as GenAIEvalProfile).config.alert_config.alert_condition;
+      const alertConfig = (currentProfile as AgentEvalProfile).config.alert_config.alert_condition;
       return alertConfig?.baseline_value;
     }
 
@@ -94,7 +94,7 @@
           <CustomAlertPill value={metricValue} {alertInfo} />
         {/if}
       {:else if currentDriftType === DriftType.GenAI}
-        {@const alertInfo = (currentConfig as GenAIEvalConfig).alert_config.alert_condition as AlertCondition}
+        {@const alertInfo = (currentConfig as AgentEvalConfig).alert_config.alert_condition as AlertCondition}
         {#if alertInfo}
           <GenAIAlertPill {alertInfo} />
         {/if}

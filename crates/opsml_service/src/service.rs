@@ -12,7 +12,7 @@ use tracing::{error, instrument};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub enum SpaceConfig {
     Team { team: String },
     Space { space: String },
@@ -45,7 +45,7 @@ impl SpaceConfig {
 }
 /// Top level specification for OpML
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct OpsmlServiceSpec {
     // change this to OpsmlSpec
     #[pyo3(get)]

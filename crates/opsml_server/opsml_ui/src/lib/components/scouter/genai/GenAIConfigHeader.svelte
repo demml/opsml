@@ -1,6 +1,6 @@
 <script lang="ts">
   import { hasConsoleConfig, hasOpsGenieConfig, hasSlackConfig } from "../utils";
-  import type { GenAIEvalConfig, GenAIAlertConfig, GenAIEvalProfile } from "./types";
+  import type { AgentEvalConfig, GenAIAlertConfig, AgentEvalProfile } from "./types";
   import Pill from "$lib/components/utils/Pill.svelte";
   import UpdateModal from "../update/UpdateModal.svelte";
   import type { UiProfile } from "../utils";
@@ -14,10 +14,10 @@
     profileUri,
     registry,
   } = $props<{
-    config: GenAIEvalConfig;
+    config: AgentEvalConfig;
     alertConfig: GenAIAlertConfig;
     uid: string;
-    profile: GenAIEvalProfile;
+    profile: AgentEvalProfile;
     profileUri: String
     registry: RegistryType;
   }>();

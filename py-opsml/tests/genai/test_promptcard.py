@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import cast
 from opsml.card import CardRegistry, RegistryType, PromptCard
 from opsml.types import DriftArgs, PromptSaveKwargs
-from opsml.scouter.evaluate import GenAIEvalConfig, LLMJudgeTask, ComparisonOperator
+from opsml.scouter.evaluate import AgentEvalConfig, LLMJudgeTask, ComparisonOperator
 from opsml.genai import Prompt, Provider
 from opsml.genai.google import GeminiSettings
 from opsml.mock import OpsmlTestServer, LLMTestServer
@@ -30,7 +30,7 @@ def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
 
             card.create_eval_profile(
                 alias="genai_eval",
-                config=GenAIEvalConfig(),
+                config=AgentEvalConfig(),
                 tasks=[
                     LLMJudgeTask(
                         id="score_assertion",

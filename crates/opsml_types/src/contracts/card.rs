@@ -494,7 +494,7 @@ impl AuditableRequest for CardQueryArgs {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct DataCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -532,7 +532,7 @@ impl Default for DataCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct ModelCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -577,7 +577,7 @@ impl Default for ModelCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct ExperimentCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -619,7 +619,7 @@ impl Default for ExperimentCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct AuditCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -657,7 +657,7 @@ impl Default for AuditCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct PromptCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -693,7 +693,7 @@ impl Default for PromptCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct ServiceCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -760,7 +760,7 @@ impl Default for ServiceCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct SkillCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -808,7 +808,7 @@ impl Default for SkillCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct SubAgentCardClientRecord {
     #[pyo3(get, set)]
     pub uid: String,
@@ -859,7 +859,7 @@ impl Default for SubAgentCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct ToolCardClientRecord {
     #[pyo3(get, set)]
     pub uid: String,
@@ -914,7 +914,7 @@ impl Default for ToolCardClientRecord {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub enum CardRecord {
     Data(DataCardClientRecord),
     Model(ModelCardClientRecord),
@@ -1361,7 +1361,7 @@ struct ToolCardTableEntry {
     uid: String,
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 struct CardListIter {
     inner: std::vec::IntoIter<CardRecord>,
 }
@@ -1378,7 +1378,7 @@ impl CardListIter {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct CardList {
     #[pyo3(get)]
     pub cards: Vec<CardRecord>,

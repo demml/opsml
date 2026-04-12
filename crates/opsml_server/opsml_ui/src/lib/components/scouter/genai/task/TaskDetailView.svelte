@@ -5,13 +5,13 @@
   import ComparisonView from './ComparisonView.svelte';
   import type { TraceAssertion } from '../task';
   import TraceAssertionPill from './TraceAssertionPill.svelte';
-  import type { GenAIEvalProfile } from '../types';
-  import { GenAIEvalProfileHelper } from '../utils';
+  import type { AgentEvalProfile } from '../types';
+  import { AgentEvalProfileHelper } from '../utils';
   import PromptModal from '$lib/components/card/prompt/common/PromptModal.svelte';
 
   let { task, profile } = $props<{
     task: EvalTaskResult;
-    profile: GenAIEvalProfile;
+    profile: AgentEvalProfile;
   }>();
 
   const active_task: EvalTaskResult = $derived(task);
@@ -29,7 +29,7 @@
 
   const judgeTask = $derived(
     active_task.task_type === 'LLMJudge'
-      ? GenAIEvalProfileHelper.getLLMJudgeById(profile, active_task.task_id)
+      ? AgentEvalProfileHelper.getLLMJudgeById(profile, active_task.task_id)
       : null
   );
 

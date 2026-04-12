@@ -16,7 +16,7 @@
 <script lang="ts">
   import type { AgentPromptEvalData, AgentRecordPage, AgentWorkflowPage } from './types';
   import type { RecordWithAgent, WorkflowWithAgent } from './types';
-  import type { GenAIEvalProfile } from '$lib/components/scouter/genai/types';
+  import type { AgentEvalProfile } from '$lib/components/scouter/genai/types';
   import AgentEvalOverview from '$lib/components/card/agent/evaluation/AgentEvalOverview.svelte';
   import AgentEvalRecordTable from '$lib/components/card/agent/evaluation/AgentEvalRecordTable.svelte';
   import AgentEvalWorkflowTable from '$lib/components/card/agent/evaluation/AgentEvalWorkflowTable.svelte';
@@ -289,7 +289,7 @@
       evalData.forEach(e => {
         if (e.monitoringData.status !== 'success') return;
         const path = promptEvalPath(e);
-        const profile = e.monitoringData.profile as GenAIEvalProfile;
+        const profile = e.monitoringData.profile as AgentEvalProfile;
         e.monitoringData.selectedData.workflows?.items?.forEach(w =>
           items.push({ ...w, _agentName: e.promptCard.name, _evalPath: path, _profile: profile })
         );

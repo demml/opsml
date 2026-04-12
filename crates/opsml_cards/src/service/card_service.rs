@@ -32,7 +32,7 @@ type OptionalPyBound<'py> = Option<PyBoundAny<'py>>;
 type ExtractedKwargs<'py> = (OptionalPyBound<'py>, OptionalPyBound<'py>);
 
 #[derive(PartialEq, Debug, Clone)]
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 pub struct ServiceInfo {
     pub space: String,
     pub name: String,
@@ -53,7 +53,7 @@ impl ServiceInfo {
     }
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 struct CardListIter {
     inner: std::vec::IntoIter<Card>,
 }
@@ -76,7 +76,7 @@ impl CardListIter {
 ///
 /// # Attributes
 /// * `cards`: A vector of `Card` objects
-#[pyclass(eq)]
+#[pyclass(eq, skip_from_py_object)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CardList {
     #[pyo3(get)]
@@ -142,7 +142,7 @@ impl CardList {
 
 /// ServiceCard is a collection of cards that can be associated and loaded in one call
 /// aka a ServiceCard. We use ServiceCard for consistency with developing "Applications".
-#[pyclass(subclass)]
+#[pyclass(subclass, skip_from_py_object)]
 #[derive(Debug)]
 pub struct ServiceCard {
     #[pyo3(get, set)]

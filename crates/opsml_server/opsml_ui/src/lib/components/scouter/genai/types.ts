@@ -32,7 +32,7 @@ export interface GenAIAlertConfig {
   alert_condition: AlertCondition | null;
 }
 
-export interface GenAIEvalConfig {
+export interface AgentEvalConfig {
   sample_ratio: number; // Rust f64 -> TS number
   space: string;
   name: string;
@@ -101,8 +101,8 @@ export interface AssertionTasks {
   trace: TraceAssertionTask[];
 }
 
-export interface GenAIEvalProfile {
-  config: GenAIEvalConfig;
+export interface AgentEvalProfile {
+  config: AgentEvalConfig;
   tasks: AssertionTasks;
   task_ids: string[];
   scouter_version: string;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { GenAIEvalConfig, GenAIEvalProfile, EvalRecordPaginationResponse, GenAIEvalWorkflowPaginationResponse } from '../types';
+  import type { AgentEvalConfig, AgentEvalProfile, EvalRecordPaginationResponse, GenAIEvalWorkflowPaginationResponse } from '../types';
   import type { GenAIMonitoringPageData } from '../../dashboard/utils';
   import type { RecordCursor } from '../../types';
   import type { BinnedMetrics } from '../../custom/types';
@@ -28,8 +28,8 @@
   } = $props();
 
   // -- Derived Data from Parent --
-  const profile = $derived(monitoringData.profile as GenAIEvalProfile);
-  const config = $derived(profile.config as GenAIEvalConfig);
+  const profile = $derived(monitoringData.profile as AgentEvalProfile);
+  const config = $derived(profile.config as AgentEvalConfig);
 
   const records = $derived(monitoringData.selectedData.records ?? { items: [], has_next: false, has_prev: false });
   const workflows = $derived(monitoringData.selectedData.workflows ?? { items: [], has_next: false, has_prev: false });

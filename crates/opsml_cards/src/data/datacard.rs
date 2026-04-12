@@ -41,7 +41,7 @@ fn interface_from_metadata<'py>(
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DataCardMetadata {
     #[pyo3(get, set)]
@@ -56,7 +56,7 @@ pub struct DataCardMetadata {
     pub interface_metadata: DataInterfaceMetadata,
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct DataCard {
     #[pyo3(get, set)]
     pub interface: Option<Py<PyAny>>,

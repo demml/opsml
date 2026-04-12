@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Display;
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 #[derive(Debug)]
 pub struct HuggingFaceOnnxArgs {
     #[pyo3(get)]
@@ -99,7 +99,7 @@ impl HuggingFaceOnnxArgs {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum HuggingFaceTask {
     AudioClassification,
@@ -256,7 +256,7 @@ impl Display for HuggingFaceTask {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum HuggingFaceORTModel {
     OrtAudioClassification,

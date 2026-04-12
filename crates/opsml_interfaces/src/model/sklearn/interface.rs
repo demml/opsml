@@ -19,7 +19,7 @@ use std::path::{Path, PathBuf};
 use tracing::debug;
 use tracing::{error, instrument};
 
-#[pyclass(extends=ModelInterface, subclass)]
+#[pyclass(extends=ModelInterface, subclass, skip_from_py_object)]
 #[derive(Debug)]
 pub struct SklearnModel {
     #[pyo3(get)]

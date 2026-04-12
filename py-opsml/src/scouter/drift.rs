@@ -30,8 +30,8 @@ pub fn add_drift_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<FreedmanDiaconis>()?;
 
     // GenAI Evals
-    m.add_class::<GenAIEvalConfig>()?;
-    m.add_class::<GenAIEvalProfile>()?;
+    m.add_class::<AgentEvalConfig>()?;
+    m.add_class::<AgentEvalProfile>()?;
     m.add_class::<EvalRecord>()?;
     m.add_class::<LLMJudgeTask>()?;
     m.add_class::<AssertionTask>()?;

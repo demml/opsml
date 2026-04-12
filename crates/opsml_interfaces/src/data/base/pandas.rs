@@ -15,7 +15,7 @@ use std::path::Path;
 use std::path::PathBuf;
 use tracing::instrument;
 
-#[pyclass(extends=DataInterface, subclass)]
+#[pyclass(extends=DataInterface, subclass, skip_from_py_object)]
 #[derive(Debug)]
 pub struct PandasData {
     #[pyo3(get)]

@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { GenAIEvalWorkflowResult } from '../task';
-  import type { GenAIEvalProfile, GenAIEvalWorkflowPaginationResponse } from '../types';
+  import type { AgentEvalProfile, GenAIEvalWorkflowPaginationResponse } from '../types';
   import type { RecordCursor } from '$lib/components/scouter/types';
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
   import GenAIEvalWorkflowSideBar from './GenAIEvalWorkflowSideBar.svelte';
@@ -12,7 +12,7 @@
   } = $props<{
     currentPage: GenAIEvalWorkflowPaginationResponse;
     onPageChange: (cursor: RecordCursor, direction: string) => void;
-    profile: GenAIEvalProfile;
+    profile: AgentEvalProfile;
   }>();
 
   let workflows = $state<GenAIEvalWorkflowResult[]>(currentPage.items || []);

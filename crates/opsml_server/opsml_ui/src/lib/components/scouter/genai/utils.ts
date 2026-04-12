@@ -1,7 +1,7 @@
 import { createInternalApiClient } from "$lib/api/internalClient";
 import { ServerPaths } from "$lib/components/api/routes";
 import type {
-  GenAIEvalProfile,
+  AgentEvalProfile,
   EvalRecordPaginationRequest,
   EvalRecordPaginationResponse,
   GenAIEvalTaskRequest,
@@ -138,12 +138,12 @@ export async function getGenAIEvalWorkflowDriftMetrics(
   return response;
 }
 
-export class GenAIEvalProfileHelper {
+export class AgentEvalProfileHelper {
   /**
    * Get LLMJudgeTask by task ID from the profile.
    */
   static getLLMJudgeById(
-    profile: GenAIEvalProfile,
+    profile: AgentEvalProfile,
     id: string,
   ): LLMJudgeTask | null {
     return profile.tasks.judge.find((task) => task.id === id) ?? null;
@@ -153,7 +153,7 @@ export class GenAIEvalProfileHelper {
    * Get AssertionTask by task ID from the profile.
    */
   static getAssertionById(
-    profile: GenAIEvalProfile,
+    profile: AgentEvalProfile,
     id: string,
   ): AssertionTask | null {
     return profile.tasks.assertion.find((task) => task.id === id) ?? null;
@@ -163,7 +163,7 @@ export class GenAIEvalProfileHelper {
    * Get TraceAssertionTask by task ID from the profile.
    */
   static getTraceAssertionById(
-    profile: GenAIEvalProfile,
+    profile: AgentEvalProfile,
     id: string,
   ): TraceAssertionTask | null {
     return profile.tasks.trace.find((task) => task.id === id) ?? null;

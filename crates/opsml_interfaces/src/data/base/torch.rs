@@ -12,7 +12,7 @@ use scouter_client::DataProfile;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-#[pyclass(extends=DataInterface, subclass)]
+#[pyclass(extends=DataInterface, subclass, skip_from_py_object)]
 pub struct TorchData {
     #[pyo3(get)]
     pub data: Option<Py<PyAny>>,

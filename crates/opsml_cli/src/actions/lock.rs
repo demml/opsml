@@ -2,9 +2,9 @@ use crate::actions::utils::{create_service_card_local, register_service_card};
 use crate::cli::arg::{DownloadCard, IntoQueryArgs};
 use crate::download_service;
 use crate::error::CliError;
-use opsml_registry::download::download_card_from_registry;
 use opsml_cards::ServiceCard;
 use opsml_colors::Colorize;
+use opsml_registry::download::download_card_from_registry;
 use opsml_registry::download::download_service_sub_cards;
 use opsml_registry::error::RegistryError;
 use opsml_registry::{CardRegistries, CardRegistry};
@@ -290,10 +290,10 @@ fn download_service_artifacts(
 ) -> Result<(), CliError> {
     for artifact in lockfile.artifact {
         let write_path = if let Some(path) = write_path.as_ref() {
-                path.to_path_buf()
-            } else {
-                std::env::current_dir()?
-            };
+            path.to_path_buf()
+        } else {
+            std::env::current_dir()?
+        };
         let args = DownloadCard {
             space: Some(artifact.space),
             name: Some(artifact.name),

@@ -27,7 +27,7 @@ from .opsml import (
     DriftConfig,
     DriftProfileMap,
     FeatureSchema,
-    GenAIEvalProfile,
+    AgentEvalProfile,
     ModelInterface,
     ModelLoadKwargs,
     ModelSaveKwargs,
@@ -987,7 +987,7 @@ class PromptCard:
         version: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
-        eval_profile: Optional[GenAIEvalProfile] = None,
+        eval_profile: Optional[AgentEvalProfile] = None,
     ) -> None:
         """Creates a `PromptCard`.
 
@@ -1010,7 +1010,7 @@ class PromptCard:
             tags (List[str]):
                 Tags to associate with `PromptCard`. Can be a dictionary of strings or
                 a `Tags` object.
-            eval_profile (GenAIEvalProfile | None):
+            eval_profile (AgentEvalProfile | None):
                 Evaluation profile to associate with the prompt.
         Example:
         ```python
@@ -1131,9 +1131,9 @@ class PromptCard:
         self,
         alias: str,
         tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask],
-        config: Optional[GenAIEvalConfig] = None,
+        config: Optional[AgentEvalConfig] = None,
     ) -> None:
-        """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
+        """Initialize a AgentEvalProfile for LLM evaluation and drift detection.
 
         LLM evaluations are run asynchronously on the scouter server.
 
@@ -1154,12 +1154,12 @@ class PromptCard:
                 List of evaluation tasks to include in the profile. Can contain
                 a mix of LLM judge tasks, assertion tasks, trace assertion tasks, and agent assertion tasks.
 
-            config (GenAIEvalConfig | None):
+            config (AgentEvalConfig | None):
                 The configuration for the GenAI drift profile containing space, name,
                 version, and alert settings.
 
         Returns:
-            GenAIEvalProfile: Configured profile ready for GenAI drift monitoring.
+            AgentEvalProfile: Configured profile ready for GenAI drift monitoring.
 
         Raises:
             ProfileError: If workflow validation fails, metrics are empty when no
@@ -1168,7 +1168,7 @@ class PromptCard:
         Examples:
             Basic usage with metrics only:
 
-            >>> config = GenAIEvalConfig("my_space", "my_model", "1.0")
+            >>> config = AgentEvalConfig("my_space", "my_model", "1.0")
             >>>  tasks = [
             ...     LLMJudgeTask(
             ...         id="response_relevance",
@@ -1184,20 +1184,20 @@ class PromptCard:
         """
 
     @property
-    def eval_profile(self) -> "Optional[GenAIEvalProfile]":
-        """Returns the GenAIEvalProfile associated with this prompt card, if it exists.
+    def eval_profile(self) -> "Optional[AgentEvalProfile]":
+        """Returns the AgentEvalProfile associated with this prompt card, if it exists.
 
         Returns:
-            Optional[GenAIEvalProfile]
+            Optional[AgentEvalProfile]
         """
 
     @eval_profile.setter
-    def eval_profile(self, eval_profile: "GenAIEvalProfile") -> None:
+    def eval_profile(self, eval_profile: "AgentEvalProfile") -> None:
         """Set the drift profile map for the prompt card.
 
         Args:
-            eval_profile (GenAIEvalProfile):
-                The GenAIEvalProfile to set for the prompt card.
+            eval_profile (AgentEvalProfile):
+                The AgentEvalProfile to set for the prompt card.
         """
 
     @staticmethod

@@ -20,7 +20,7 @@ from .scouter import (
     EvalRecord,
     EvalResults,
     EvaluationConfig,
-    GenAIEvalProfile,
+    AgentEvalProfile,
     ScouterQueue,
 )
 from .tracing import BaseTracer, TraceSpan
@@ -2764,7 +2764,7 @@ class EvalRunner:
 
     Args:
         scenarios: List of ``EvalScenario`` instances to evaluate.
-        profiles: Map of alias → ``GenAIEvalProfile`` for sub-agent evaluation.
+        profiles: Map of alias → ``AgentEvalProfile`` for sub-agent evaluation.
     """
 
     @property
@@ -2774,7 +2774,7 @@ class EvalRunner:
     def __init__(
         self,
         scenarios: "EvalScenarios",
-        profiles: Dict[str, "GenAIEvalProfile"],
+        profiles: Dict[str, "AgentEvalProfile"],
     ) -> None: ...
     def collect_scenario_data(
         self,

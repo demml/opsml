@@ -7,8 +7,8 @@
 import type { RegistryType } from "$lib/utils";
 import type { TimeRange } from "$lib/components/trace/types";
 import type {
-  GenAIEvalProfile,
-  GenAIEvalConfig,
+  AgentEvalProfile,
+  AgentEvalConfig,
   GenAIAlertConfig,
   AssertionTasks,
   EvalRecord,
@@ -69,7 +69,11 @@ function buildStats(base: number, jitter: number): BinnedMetricStats[] {
   });
 }
 
-function buildBinnedMetric(name: string, base: number, jitter: number): BinnedMetric {
+function buildBinnedMetric(
+  name: string,
+  base: number,
+  jitter: number,
+): BinnedMetric {
   return {
     metric: name,
     created_at: buildTimestamps(),
@@ -126,11 +130,13 @@ const mockJudgePrompt: Prompt = {
     messages: [
       {
         role: "developer",
-        content: "You are an expert LLM judge. Evaluate the quality and relevance of the assistant's response on a scale of 1 to 5, where 1 is very poor and 5 is excellent. Return only the numeric score.",
+        content:
+          "You are an expert LLM judge. Evaluate the quality and relevance of the assistant's response on a scale of 1 to 5, where 1 is very poor and 5 is excellent. Return only the numeric score.",
       } as any,
       {
         role: "user",
-        content: "Context: {{context}}\n\nAssistant response: {{response.text}}\n\nRate the response quality (1–5):",
+        content:
+          "Context: {{context}}\n\nAssistant response: {{response.text}}\n\nRate the response quality (1–5):",
       } as any,
     ],
   } as any,
@@ -173,7 +179,7 @@ const assertionTasksObj: AssertionTasks = {
 // ── Eval profile ──────────────────────────────────────────────────────────────
 
 /** Builds a mock GenAI evaluation profile (also used by eval layout to inject mock eval_profile) */
-export function buildMockGenAIEvalProfile(): GenAIEvalProfile {
+export function buildMockAgentEvalProfile(): AgentEvalProfile {
   const alertConfig: GenAIAlertConfig = {
     dispatch_config: { Console: { enabled: true } },
     schedule: "0 * * * *",
@@ -183,7 +189,7 @@ export function buildMockGenAIEvalProfile(): GenAIEvalProfile {
     },
   };
 
-  const config: GenAIEvalConfig = {
+  const config: AgentEvalConfig = {
     sample_ratio: 1.0,
     space: "mock-space",
     name: "intent-classifier",
@@ -256,14 +262,19 @@ function buildEvalRecord(index: number): EvalRecord {
       input: `User query #${index + 1}: What is your return policy for electronics?`,
       response: {
         text: `Our return policy allows returns within 30 days of purchase.`,
-        intent: index % 3 === 0 ? "faq" : index % 3 === 1 ? "support" : "purchase",
+        intent:
+          index % 3 === 0 ? "faq" : index % 3 === 1 ? "support" : "purchase",
         confidence: parseFloat((0.65 + (index % 5) * 0.07).toFixed(2)),
       },
     },
     id: 1000 + index,
     updated_at: isProcessed ? iso(-(index + 1) * 3 * 60_000 + 2_000) : null,
-    processing_started_at: isProcessed ? iso(-(index + 1) * 3 * 60_000 + 500) : null,
-    processing_ended_at: isProcessed ? iso(-(index + 1) * 3 * 60_000 + 2_000) : null,
+    processing_started_at: isProcessed
+      ? iso(-(index + 1) * 3 * 60_000 + 500)
+      : null,
+    processing_ended_at: isProcessed
+      ? iso(-(index + 1) * 3 * 60_000 + 2_000)
+      : null,
     processing_duration: isProcessed ? 1500 + index * 100 : null,
     entity_id: 42,
     entity_uid: "mock-eval-uid-0001",
@@ -284,7 +295,11 @@ function buildExecutionPlan(): ExecutionPlan {
       id: "check_response_format",
       stage: 0,
       parents: [],
-      children: ["check_intent_label", "check_confidence_score", "judge_response_quality"],
+      children: [
+        "check_intent_label",
+        "check_confidence_score",
+        "judge_response_quality",
+      ],
     },
     check_intent_label: {
       id: "check_intent_label",
@@ -315,7 +330,11 @@ function buildExecutionPlan(): ExecutionPlan {
   return {
     stages: [
       ["check_response_format"],
-      ["check_intent_label", "check_confidence_score", "judge_response_quality"],
+      [
+        "check_intent_label",
+        "check_confidence_score",
+        "judge_response_quality",
+      ],
       ["check_trace_latency"],
     ],
     nodes,
@@ -358,7 +377,7 @@ function recordIndex(record_uid: string): number {
 
 /**
  * Builds a realistic EvalTaskResult[] for a given workflow's record_uid.
- * Mirrors the 5 tasks defined in buildMockGenAIEvalProfile() / buildExecutionPlan().
+ * Mirrors the 5 tasks defined in buildMockAgentEvalProfile() / buildExecutionPlan().
  */
 export function buildMockEvalTasks(record_uid: string): EvalTaskResult[] {
   const idx = recordIndex(record_uid);
@@ -517,7 +536,7 @@ export function getMockGenAIMonitoringPageData(
   registryType: RegistryType,
   timeRange: TimeRange,
 ): Extract<GenAIMonitoringPageData, { status: "success" }> {
-  const profile = buildMockGenAIEvalProfile();
+  const profile = buildMockAgentEvalProfile();
   // Override uid in the profile config so it matches the caller's uid.
   profile.config.uid = uid;
 

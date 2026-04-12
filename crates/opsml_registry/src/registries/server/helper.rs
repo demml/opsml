@@ -12,7 +12,7 @@ use opsml_types::{SqlType, cards::CardTable, contracts::*};
 
 use pyo3::prelude::*;
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 #[derive(Debug)]
 pub struct RegistryTestHelper {}
 

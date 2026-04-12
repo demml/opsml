@@ -45,9 +45,9 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
   if (registryType === RegistryType.Agent) {
     if (promptCardsWithEval.length === 0) {
       if (dev) {
-        const { buildMockGenAIEvalProfile } =
+        const { buildMockAgentEvalProfile } =
           await import("$lib/components/scouter/evaluation/mockData");
-        const mockProfile = buildMockGenAIEvalProfile();
+        const mockProfile = buildMockAgentEvalProfile();
         const mockPromptCard = {
           name: "mock-intent-classifier",
           space: metadata.space,
@@ -99,12 +99,12 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
 
   if (!eval_profile) {
     if (dev) {
-      const { buildMockGenAIEvalProfile } =
+      const { buildMockAgentEvalProfile } =
         await import("$lib/components/scouter/evaluation/mockData");
       return {
         registryType,
         metadata,
-        eval_profile: buildMockGenAIEvalProfile(),
+        eval_profile: buildMockAgentEvalProfile(),
         promptCardsWithEval,
         mockMode: true,
       };

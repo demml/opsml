@@ -49,7 +49,7 @@ fn interface_from_metadata<'py>(
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ModelCardMetadata {
     #[pyo3(get, set)]
@@ -86,7 +86,7 @@ impl ModelCardMetadata {
     }
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct ModelCard {
     #[pyo3(get, set)]
     pub interface: Option<Py<PyAny>>,
