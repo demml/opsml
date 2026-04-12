@@ -1,6 +1,8 @@
 # mypy: disable-error-code="attr-defined"
 # pylint: disable=no-name-in-module
 from .._opsml import (
+    AgentEvalConfig,
+    AgentEvalProfile,
     AlertThreshold,
     AssertionTask,
     CommonCrons,
@@ -13,9 +15,6 @@ from .._opsml import (
     DataProfiler,
     DatasetClient,
     DatasetProducer,
-    QueryResult,
-    TableConfig,
-    WriteConfig,
     Doane,
     Drifter,
     EqualWidthBinning,
@@ -24,8 +23,6 @@ from .._opsml import (
     FeatureMap,
     Features,
     FreedmanDiaconis,
-    AgentEvalConfig,
-    AgentEvalProfile,
     GrpcConfig,
     HttpConfig,
     KafkaConfig,
@@ -38,6 +35,7 @@ from .._opsml import (
     PsiDriftMap,
     PsiDriftProfile,
     QuantileBinning,
+    QueryResult,
     Queue,
 )
 from .._opsml import QueueFeature as Feature
@@ -56,9 +54,10 @@ from .._opsml import (
     SpcFeatureDriftProfile,
     SquareRoot,
     Sturges,
+    TableConfig,
     TerrellScott,
+    WriteConfig,
 )
-from .bifrost import Bifrost
 from . import (
     alert,
     bifrost,
@@ -73,6 +72,7 @@ from . import (
     types,
     util,
 )
+from .bifrost import Bifrost
 
 __all__ = [
     "alert",

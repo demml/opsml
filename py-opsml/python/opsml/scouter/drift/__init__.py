@@ -1,5 +1,8 @@
 # mypy: disable-error-code="attr-defined"
 from ..._opsml import (
+    AgentAlertConfig,
+    AgentEvalConfig,
+    AgentEvalProfile,
     AssertionTask,
     ComparisonOperator,
     CustomDriftProfile,
@@ -12,9 +15,6 @@ from ..._opsml import (
     EvalRecord,
     FeatureMap,
     FreedmanDiaconis,
-    AgentAlertConfig,
-    AgentEvalConfig,
-    AgentEvalProfile,
     LLMJudgeTask,
     Manual,
     PsiAlertConfig,

@@ -62,9 +62,7 @@ def create_recipe_response_prompt() -> Prompt:
     )
 
 
-def create_recipe_prompt_card() -> tuple[
-    PromptCard, PromptCard, AgentEvalProfile, AgentEvalProfile
-]:
+def create_recipe_prompt_card() -> tuple[PromptCard, PromptCard, AgentEvalProfile, AgentEvalProfile]:
     """
     Creates a response prompt card for generating recipes.
 

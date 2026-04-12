@@ -5,6 +5,9 @@ import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Sequence, Union, overload
 
+from ..agent.potato import Embedder
+from ..common.logging import LogLevel
+from ..header import Context
 from .evaluate import (
     AgentAssertionTask,
     AssertionTask,
@@ -14,10 +17,7 @@ from .evaluate import (
     TasksFile,
     TraceAssertionTask,
 )
-from ..header import Context
-from ..common.logging import LogLevel
 from .mock import MockConfig
-from ..agent.potato import Embedder
 from .tracing import (
     TagRecord,
     TraceBaggageRecord,

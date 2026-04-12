@@ -3,6 +3,8 @@
 from ..._opsml import (
     AgentAssertion,
     AgentAssertionTask,
+    AgentEvalConfig,
+    AgentEvalProfile,
     AggregationType,
     AlignedEvalResult,
     AssertionTask,
@@ -19,8 +21,6 @@ from ..._opsml import (
     EvalTaskResult,
     EvaluationConfig,
     EvaluationTaskType,
-    AgentEvalConfig,
-    AgentEvalProfile,
     LLMJudgeTask,
     ScenarioComparisonResults,
     ScenarioDelta,

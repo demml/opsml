@@ -17,6 +17,7 @@ from typing import (
 
 from .agent.potato import *
 from .opsml import (
+    AgentEvalProfile,
     Data,
     DataInterface,
     DataLoadKwargs,
@@ -27,7 +28,6 @@ from .opsml import (
     DriftConfig,
     DriftProfileMap,
     FeatureSchema,
-    AgentEvalProfile,
     ModelInterface,
     ModelLoadKwargs,
     ModelSaveKwargs,

@@ -15,8 +15,8 @@ from typing import (
     overload,
 )
 
-from ..header import SerializedType
 from ..agent.potato import Prompt
+from ..header import SerializedType
 from .scouter import (
     AgentEvalProfile,
     ComparisonResults,

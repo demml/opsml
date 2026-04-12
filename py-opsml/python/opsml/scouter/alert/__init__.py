@@ -1,12 +1,12 @@
 # mypy: disable-error-code="attr-defined"
 from ..._opsml import (
+    AgentAlertConfig,
     AlertCondition,
     AlertDispatchType,
     AlertThreshold,
     AlertZone,
     ConsoleDispatchConfig,
     CustomMetricAlertConfig,
-    AgentAlertConfig,
     OpsGenieDispatchConfig,
     PsiAlertConfig,
     PsiChiSquareThreshold,
