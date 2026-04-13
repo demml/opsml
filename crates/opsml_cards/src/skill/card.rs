@@ -103,7 +103,7 @@ pub fn parse_skill_markdown(
     )
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct SkillCard {
     pub skill: AgentSkillStandard,

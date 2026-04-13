@@ -86,7 +86,7 @@ fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> Result<RegistryTyp
     }
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 #[pyo3(module = "opsml.card")]
 #[derive(Clone)]
 pub struct CardRegistry {
@@ -948,7 +948,7 @@ impl CardRegistry {
     }
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 #[pyo3(module = "opsml.card")]
 #[derive(Clone)]
 pub struct CardRegistries {

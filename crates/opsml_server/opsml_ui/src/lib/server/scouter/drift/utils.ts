@@ -197,7 +197,7 @@ export async function getSpcDriftMetrics<T extends DriftType.Spc>(
   )) as BinnedSpcFeatureMetrics;
 }
 
-export async function getGenAIEvalTaskDriftMetrics(
+export async function getAgentEvalTaskDriftMetrics(
   fetch: typeof globalThis.fetch,
   space: string,
   uid: string,
@@ -208,14 +208,14 @@ export async function getGenAIEvalTaskDriftMetrics(
     fetch,
     space,
     uid,
-    DriftType.GenAI,
+    DriftType.Agent,
     time_range,
     max_data_points,
-    RoutePaths.GENAI_EVAL_TASK_DRIFT,
+    RoutePaths.AGENT_EVAL_TASK_DRIFT,
   )) as BinnedMetrics;
 }
 
-export async function getGenAIEvalWorkflowDriftMetrics(
+export async function getAgentEvalWorkflowDriftMetrics(
   fetch: typeof globalThis.fetch,
   space: string,
   uid: string,
@@ -226,10 +226,10 @@ export async function getGenAIEvalWorkflowDriftMetrics(
     fetch,
     space,
     uid,
-    DriftType.GenAI,
+    DriftType.Agent,
     time_range,
     max_data_points,
-    RoutePaths.GENAI_EVAL_WORKFLOW_DRIFT,
+    RoutePaths.AGENT_EVAL_WORKFLOW_DRIFT,
   )) as BinnedMetrics;
 }
 

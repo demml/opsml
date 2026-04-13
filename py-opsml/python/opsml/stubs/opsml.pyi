@@ -17,8 +17,8 @@ from typing import (
 )
 
 from ..scouter.tracing import BatchConfig
+from .agent.potato import *
 from .card import *
-from .genai.potato import *
 from .scouter.evaluate import *
 from .scouter.scouter import *
 from .service.agent import AgentSpec

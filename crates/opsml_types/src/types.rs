@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 
 pub const MAX_FILE_SIZE: usize = 1024 * 1024 * 1024 * 50;
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 #[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize, Default)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum RegistryType {
@@ -156,7 +156,7 @@ pub enum PlotType {
     Bar,
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, skip_from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum StorageType {
@@ -166,7 +166,7 @@ pub enum StorageType {
     Azure,
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, skip_from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum SqlType {
     Postgres,
@@ -174,7 +174,7 @@ pub enum SqlType {
     MySql,
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, skip_from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum RegistryMode {
     #[default]
@@ -191,7 +191,7 @@ impl Display for RegistryMode {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, skip_from_py_object)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum UriNames {
     TrainedModelUri,
@@ -259,7 +259,7 @@ impl UriNames {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, skip_from_py_object)]
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 pub enum CommonKwargs {
     IsPipeline,
@@ -360,7 +360,7 @@ impl Display for CommonKwargs {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum SaveName {
     Card,
@@ -524,7 +524,7 @@ impl From<SaveName> for PathBuf {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum Suffix {
     Onnx,
@@ -617,7 +617,7 @@ impl AsRef<OsStr> for Suffix {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, skip_from_py_object)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum ArtifactClass {
     Data,
@@ -643,7 +643,7 @@ impl ArtifactClass {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, skip_from_py_object)]
 #[derive(Debug, PartialEq, Clone)]
 pub enum PresignableTypes {
     Jpeg,
@@ -705,7 +705,7 @@ impl PresignableTypes {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum DataType {
     Pandas,
@@ -767,14 +767,14 @@ impl Display for DataType {
 
 pub type BaseArgsType = (String, String, String, String);
 
-#[pyclass(eq)]
+#[pyclass(eq, skip_from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum InterfaceType {
     Data,
     Model,
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct SaverPath {
     #[pyo3(get)]
     path: PathBuf,

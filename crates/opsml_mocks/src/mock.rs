@@ -174,7 +174,7 @@ impl ScouterServer {
     }
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 #[allow(dead_code)]
 pub struct OpsmlTestServer {
     #[cfg(feature = "server")]
@@ -432,7 +432,7 @@ impl OpsmlTestServer {
 
 // create context manager that can be use in server test to cleanup resources
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct OpsmlServerContext {
     #[cfg(feature = "server")]
     scouter_server: Option<ScouterServer>,

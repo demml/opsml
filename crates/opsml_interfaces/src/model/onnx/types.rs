@@ -67,7 +67,7 @@ fn parse_session_schema(
     Ok((input_schema, output_schema))
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug)]
 pub struct OnnxSession {
     #[pyo3(get)]

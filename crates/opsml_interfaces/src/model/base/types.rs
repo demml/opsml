@@ -16,7 +16,7 @@ use serde_json::json;
 use std::collections::HashMap;
 use tracing::{debug, instrument};
 
-#[pyclass(eq)]
+#[pyclass(eq, skip_from_py_object)]
 #[derive(PartialEq, Debug)]
 pub enum InterfaceDataType {
     Pandas,
@@ -41,7 +41,7 @@ impl InterfaceDataType {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Default, Clone, Deserialize, Serialize, PartialEq)]
 pub struct DriftArgs {
     #[pyo3(get, set)]
@@ -63,7 +63,7 @@ impl DriftArgs {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Default)]
 pub struct ModelSaveKwargs {
     pub onnx: Option<Py<PyDict>>,
@@ -320,7 +320,7 @@ impl Clone for ModelSaveKwargs {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Default)]
 pub struct ModelLoadKwargs {
     #[pyo3(get, set)]
@@ -424,7 +424,7 @@ impl Clone for ModelLoadKwargs {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug)]
 pub struct ExtraMetadata {
     metadata: Py<PyDict>,
@@ -526,7 +526,7 @@ impl Clone for ExtraMetadata {
     }
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 #[derive(Debug)]
 pub struct DriftProfileMap {
     pub profiles: HashMap<String, Py<PyAny>>,

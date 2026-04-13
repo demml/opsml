@@ -452,7 +452,7 @@ export function getMockMonitoringProfiles(): DriftProfileResponse {
     [DriftType.Spc]: spcUiProfile,
     [DriftType.Psi]: psiUiProfile,
     [DriftType.Custom]: customUiProfile,
-    // GenAI is not included in standard monitoring mock — cast satisfies the Record type.
+    // Agent is not included in standard monitoring mock — cast satisfies the Record type.
   } as unknown as DriftProfileResponse;
 }
 

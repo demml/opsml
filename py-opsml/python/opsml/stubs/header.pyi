@@ -1,5 +1,6 @@
 # pylint: disable=redefined-builtin, invalid-name, dangerous-default-value, missing-final-newline, arguments-differ
 
+import builtins
 import datetime
 from pathlib import Path
 from types import TracebackType
@@ -18,7 +19,6 @@ from typing import (
     ParamSpec,
     Protocol,
     Sequence,
-    Tuple,
     Type,
     TypeAlias,
     Union,

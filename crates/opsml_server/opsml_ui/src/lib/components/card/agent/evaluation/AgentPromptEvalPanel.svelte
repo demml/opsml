@@ -1,32 +1,32 @@
 <!--
   AgentPromptEvalPanel.svelte
   ───────────────────────────
-  Reusable panel that shows the full GenAI evaluation dashboard for a single
+  Reusable panel that shows the full Agent evaluation dashboard for a single
   prompt card associated with an agent. This mirrors the prompt evaluation page
   but is designed to be embedded inside the agent evaluation route.
 -->
 <script lang="ts">
 
   import type { PromptCard } from '$lib/components/card/card_interfaces/promptcard';
-  import type { GenAIMonitoringPageData } from '$lib/components/scouter/dashboard/utils';
-  import { refreshGenAIMonitoringData } from '$lib/components/scouter/dashboard/utils';
+  import type { AgentMonitoringPageData } from '$lib/components/scouter/dashboard/utils';
+  import { refreshAgentMonitoringData } from '$lib/components/scouter/dashboard/utils';
   import type { RecordCursor } from '$lib/components/scouter/types';
   import { getRegistryPath, RegistryType } from '$lib/utils';
   import { Loader2, MessageSquareText, ExternalLink, AlertCircle } from 'lucide-svelte';
-  import GenAIDashboard from '$lib/components/scouter/genai/dashboard/GenAIDashboard.svelte';
-  import GenAITaskAccordion from '$lib/components/scouter/genai/task/GenAITaskAccordion.svelte';
+  import AgentDashboard from '$lib/components/scouter/agent/dashboard/AgentDashboard.svelte';
+  import AgentTaskAccordion from '$lib/components/scouter/agent/task/AgentTaskAccordion.svelte';
   import { timeRangeState } from '$lib/components/utils/timeState.svelte';
 
   interface Props {
     promptCard: PromptCard;
-    monitoringData: GenAIMonitoringPageData;
+    monitoringData: AgentMonitoringPageData;
     /** Whether the panel starts expanded (default: true for first panel, false for rest) */
     expanded?: boolean;
   }
 
   let { promptCard, monitoringData: initialData, expanded = false }: Props = $props();
 
-  let monitoringData = $state<GenAIMonitoringPageData>(initialData);
+  let monitoringData = $state<AgentMonitoringPageData>(initialData);
   let isRefreshing = $state(false);
   let isExpanded = $state(expanded);
   let lastSeenSignal = $state(timeRangeState.refreshSignal);
@@ -62,7 +62,7 @@
     if (monitoringData.status !== 'success') return;
     isRefreshing = true;
     try {
-      await refreshGenAIMonitoringData(fetch, monitoringData, {
+      await refreshAgentMonitoringData(fetch, monitoringData, {
         recordCursor: rCursor,
         workflowCursor: wCursor,
       });
@@ -170,14 +170,14 @@
             </p>
             <p class="text-sm text-slate-600 mb-3">{monitoringData.errorMsg}</p>
             {#if monitoringData.profile?.tasks}
-              <GenAITaskAccordion tasks={monitoringData.profile.tasks} />
+              <AgentTaskAccordion tasks={monitoringData.profile.tasks} />
             {/if}
           </div>
         </div>
       {:else}
         <!-- Full dashboard for this prompt -->
         <div class="pt-4">
-          <GenAIDashboard
+          <AgentDashboard
             bind:monitoringData
             onRecordPageChange={handleRecordPageChange}
             onWorkflowPageChange={handleWorkflowPageChange}

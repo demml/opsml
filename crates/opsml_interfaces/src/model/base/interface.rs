@@ -10,7 +10,7 @@ use crate::types::{FeatureSchema, ProcessorType};
 use opsml_types::CommonKwargs;
 use opsml_utils::PyHelperFuncs;
 use scouter_client::{
-    CustomDriftProfile, DriftType, GenAIEvalProfile, PsiDriftProfile, SpcDriftProfile,
+    AgentEvalProfile, CustomDriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile,
 };
 
 use crate::error::ModelInterfaceError;
@@ -34,7 +34,7 @@ use pyo3::gc::PyVisit;
 use serde_json::Value;
 use tracing::{debug, error, instrument, warn};
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct DataProcessor {
     #[pyo3(get)]
@@ -58,7 +58,7 @@ impl DataProcessor {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ModelInterfaceSaveMetadata {
     #[pyo3(get)]
@@ -123,7 +123,7 @@ impl ModelInterfaceSaveMetadata {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ModelInterfaceMetadata {
     #[pyo3(get)]
@@ -211,7 +211,7 @@ impl ModelInterfaceMetadata {
     }
 }
 
-#[pyclass(subclass)]
+#[pyclass(subclass, skip_from_py_object)]
 #[derive(Debug)]
 pub struct ModelInterface {
     #[pyo3(get)]
@@ -724,8 +724,8 @@ impl ModelInterface {
                         profile.into_bound_py_any(py)?,
                     )?;
                 }
-                DriftType::GenAI => {
-                    let profile = GenAIEvalProfile::model_validate_json(file);
+                DriftType::Agent => {
+                    let profile = AgentEvalProfile::model_validate_json(file);
                     self.drift_profile.add_profile(
                         py,
                         alias.to_string(),

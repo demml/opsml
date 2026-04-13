@@ -11,7 +11,7 @@ use core::fmt::Debug;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(name = "ExperimentMetric")]
+#[pyclass(name = "ExperimentMetric", from_py_object)]
 #[pyo3(module = "opsml.experiment")]
 pub struct Metric {
     #[pyo3(get)]
@@ -74,7 +74,7 @@ impl Default for Metric {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct ExperimentEvalMetrics {
     #[pyo3(get)]
     pub metrics: HashMap<String, Metric>,
@@ -126,14 +126,14 @@ impl ExperimentEvalMetrics {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass(name = "ExperimentMetrics")]
+#[pyclass(name = "ExperimentMetrics", from_py_object)]
 #[pyo3(module = "opsml.experiment")]
 pub struct Metrics {
     #[pyo3(get)]
     pub metrics: Vec<Metric>,
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 struct MetricIter {
     inner: std::vec::IntoIter<Metric>,
 }
@@ -195,7 +195,7 @@ impl ParameterValue {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass]
+#[pyclass(from_py_object)]
 #[pyo3(module = "opsml.experiment")]
 pub struct Parameter {
     #[pyo3(get)]
@@ -232,7 +232,7 @@ impl Default for Parameter {
     }
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 struct ParamIter {
     inner: std::vec::IntoIter<Parameter>,
 }
@@ -249,7 +249,7 @@ impl ParamIter {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(from_py_object)]
 #[pyo3(module = "opsml.experiment")]
 pub struct Parameters {
     #[pyo3(get)]
@@ -456,7 +456,7 @@ impl Default for HardwareMetricLogger {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct ComputeEnvironment {
     cpu_count: usize,
     total_memory: u64,

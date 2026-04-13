@@ -8,11 +8,11 @@
   import Pill from '$lib/components/utils/Pill.svelte';
   import type { DriftConfigType, DriftProfile } from '../utils';
   import CustomAlertPill from '../custom/CustomAlertPill.svelte';
-  import GenAIAlertPill from '../genai/AlertPill.svelte';
+  import AgentAlertPill from '../agent/AlertPill.svelte';
   import type { CustomMetricDriftConfig } from '../custom/types';
   import { getCustomAlertCondition } from '../custom/utils';
   import type { AlertCondition } from '../types';
-  import type { GenAIEvalConfig, GenAIEvalProfile } from '../genai/types';
+  import type { AgentEvalConfig, AgentEvalProfile } from '../agent/types';
 
   let {
     metricData,
@@ -43,7 +43,7 @@
       case DriftType.Psi:
         return [...(data as BinnedPsiMetric).psi];
       case DriftType.Custom:
-      case DriftType.GenAI:
+      case DriftType.Agent:
         return [...(data as BinnedMetric).stats.map((stat: BinnedMetricStats) => stat.avg)];
       default:
         return [];
@@ -55,8 +55,8 @@
       return (currentProfile as CustomDriftProfile).metrics[currentName];
     }
 
-    if (currentDriftType === DriftType.GenAI) {
-      const alertConfig = (currentProfile as GenAIEvalProfile).config.alert_config.alert_condition;
+    if (currentDriftType === DriftType.Agent) {
+      const alertConfig = (currentProfile as AgentEvalProfile).config.alert_config.alert_condition;
       return alertConfig?.baseline_value;
     }
 
@@ -74,7 +74,7 @@
 
   const yLabel = $derived(() => {
     if (currentDriftType === DriftType.Psi) return 'PSI Value';
-    if (currentDriftType === DriftType.GenAI) return 'Task/Workflow Metric';
+    if (currentDriftType === DriftType.Agent) return 'Task/Workflow Metric';
     return 'Value';
   });
 </script>
@@ -93,10 +93,10 @@
         {#if alertInfo}
           <CustomAlertPill value={metricValue} {alertInfo} />
         {/if}
-      {:else if currentDriftType === DriftType.GenAI}
-        {@const alertInfo = (currentConfig as GenAIEvalConfig).alert_config.alert_condition as AlertCondition}
+      {:else if currentDriftType === DriftType.Agent}
+        {@const alertInfo = (currentConfig as AgentEvalConfig).alert_config.alert_condition as AlertCondition}
         {#if alertInfo}
-          <GenAIAlertPill {alertInfo} />
+          <AgentAlertPill {alertInfo} />
         {/if}
       {/if}
     </div>

@@ -6,7 +6,7 @@
 -->
 <script lang="ts">
   import type { PromptCard } from '$lib/components/card/card_interfaces/promptcard';
-  import type { GenAIMonitoringPageData } from '$lib/components/scouter/dashboard/utils';
+  import type { AgentMonitoringPageData } from '$lib/components/scouter/dashboard/utils';
   import type { AgentPromptEvalData } from './types';
   import { CheckCircle, XCircle, AlertCircle, MessageSquareText, ListChecks } from 'lucide-svelte';
 

@@ -8,7 +8,7 @@ use pyo3::{IntoPyObjectExt, prelude::*};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum Inequality {
     Equal,
@@ -38,7 +38,7 @@ impl From<&str> for Inequality {
     }
 }
 
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum ColValType {
     String(String),
@@ -58,7 +58,7 @@ impl ColValType {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum ColType {
     #[default]
@@ -66,7 +66,7 @@ pub enum ColType {
     Timestamp,
 }
 
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct ColumnSplit {
     #[pyo3(get, set)]
@@ -137,7 +137,7 @@ impl ColumnSplit {
     }
 }
 
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct StartStopSplit {
     #[pyo3(get, set)]
@@ -158,7 +158,7 @@ impl StartStopSplit {
     }
 }
 
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct IndiceSplit {
     #[pyo3(get, set)]
@@ -177,7 +177,7 @@ impl IndiceSplit {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct DataSplit {
     #[pyo3(get, set)]
@@ -234,7 +234,7 @@ impl DataSplit {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub struct DataSplits {
     #[pyo3(get, set)]
@@ -275,7 +275,7 @@ impl DataSplits {
     }
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 #[derive(Debug)]
 pub struct Data {
     #[pyo3(get)]
@@ -668,7 +668,7 @@ impl NumpyStartStopSplitter {
     }
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct DataSplitter {}
 
 #[pymethods]

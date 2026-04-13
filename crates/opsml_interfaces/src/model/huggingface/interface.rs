@@ -203,7 +203,7 @@ impl HFBaseArgs {
     }
 }
 
-#[pyclass(extends=ModelInterface, subclass)]
+#[pyclass(extends=ModelInterface, subclass, skip_from_py_object)]
 #[derive(Debug)]
 pub struct HuggingFaceModel {
     #[pyo3(get)]

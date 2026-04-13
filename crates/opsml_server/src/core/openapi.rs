@@ -61,8 +61,8 @@ use utoipa::OpenApi;
         // settings
         crate::core::settings::route::storage_settings,
         crate::core::settings::route::ui_settings,
-        // genai
-        crate::core::genai::route::list_mcp_servers,
+        // agent
+        crate::core::agent::route::list_mcp_servers,
         // auth
         crate::core::auth::route::api_login_handler,
         crate::core::auth::route::ui_logout_handler,
@@ -144,11 +144,11 @@ use utoipa::OpenApi;
         crate::core::scouter::drift::get_spc_drift,
         crate::core::scouter::drift::get_psi_drift,
         crate::core::scouter::drift::get_custom_drift,
-        crate::core::scouter::drift::get_genai_task_metrics,
-        crate::core::scouter::drift::get_genai_workflow_metrics,
-        crate::core::scouter::genai::query_genai_eval_records,
-        crate::core::scouter::genai::query_genai_eval_workflow,
-        crate::core::scouter::genai::get_genai_tasks,
+        crate::core::scouter::drift::get_agent_task_metrics,
+        crate::core::scouter::drift::get_agent_workflow_metrics,
+        crate::core::scouter::agent::query_agent_eval_records,
+        crate::core::scouter::agent::query_agent_eval_workflow,
+        crate::core::scouter::agent::get_agent_tasks,
         crate::core::scouter::health::check_scouter_health,
         crate::core::scouter::profile::insert_drift_profile,
         crate::core::scouter::profile::update_drift_profile,

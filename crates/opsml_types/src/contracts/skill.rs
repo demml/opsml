@@ -49,7 +49,7 @@ impl From<&str> for CompatibleTool {
     }
 }
 
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum DependencyKind {
     Skill,
@@ -57,7 +57,7 @@ pub enum DependencyKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct SkillDependency {
     #[pyo3(get, set)]
     pub name: String,

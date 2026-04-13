@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Display;
 
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct Feature {
     #[pyo3(get, set)]
@@ -44,7 +44,7 @@ impl Feature {
     }
 }
 
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct FeatureSchema {
     #[pyo3(get, set)]
@@ -109,7 +109,7 @@ where
     }
 }
 
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub struct OnnxSchema {
     #[pyo3(get, set)]
@@ -157,7 +157,7 @@ pub enum HuggingFaceModuleType {
     TransformerPipeline,
 }
 
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub enum ProcessorType {
     Preprocessor,
@@ -177,7 +177,7 @@ impl Display for ProcessorType {
     }
 }
 
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct PromptSaveKwargs {
     pub drift: DriftArgs,

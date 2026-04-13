@@ -54,7 +54,7 @@ test.unit.tensorflow: setup.project
 
 test.unit:
 	uv run pytest \
-		--ignore="tests/genai/integration/*" \
+		--ignore="tests/agent/integration/*" \
 		--ignore="tests/interfaces/model/test_tensorflow.py" \
 		--ignore="tests/service" \
 		-m "not tensorflow" \

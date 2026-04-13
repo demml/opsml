@@ -25,7 +25,7 @@
     system: 'System theme',
   } as const;
 
-  const names = ["Spaces", "Models", "Data", "GenAI", "Experiments", "Services", "Observability"];
+  const names = ["Spaces", "Models", "Data", "Agent", "Experiments", "Services", "Observability"];
 
 </script>
 

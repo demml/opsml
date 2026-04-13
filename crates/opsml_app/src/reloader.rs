@@ -55,7 +55,7 @@ pub fn is_past_scheduled_reload(scheduled_reload: &DateTime<Utc>) -> bool {
     *scheduled_reload <= now
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Clone, Debug)]
 pub struct ReloadConfig {
     #[pyo3(get, set)]

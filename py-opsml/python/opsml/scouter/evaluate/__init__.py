@@ -3,6 +3,8 @@
 from ..._opsml import (
     AgentAssertion,
     AgentAssertionTask,
+    AgentEvalConfig,
+    AgentEvalProfile,
     AggregationType,
     AlignedEvalResult,
     AssertionTask,
@@ -19,7 +21,6 @@ from ..._opsml import (
     EvalTaskResult,
     EvaluationConfig,
     EvaluationTaskType,
-    GenAIEvalConfig,
     LLMJudgeTask,
     ScenarioComparisonResults,
     ScenarioDelta,
@@ -38,7 +39,8 @@ from .runner import EvalOrchestrator
 
 __all__ = [
     "EvalOrchestrator",
-    "GenAIEvalConfig",
+    "AgentEvalConfig",
+    "AgentEvalProfile",
     "EvalResults",
     "EvaluationConfig",
     "EvalDataset",

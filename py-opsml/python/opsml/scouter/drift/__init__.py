@@ -1,5 +1,8 @@
 # mypy: disable-error-code="attr-defined"
 from ..._opsml import (
+    AgentAlertConfig,
+    AgentEvalConfig,
+    AgentEvalProfile,
     AssertionTask,
     ComparisonOperator,
     CustomDriftProfile,
@@ -12,9 +15,6 @@ from ..._opsml import (
     EvalRecord,
     FeatureMap,
     FreedmanDiaconis,
-    GenAIAlertConfig,
-    GenAIEvalConfig,
-    GenAIEvalProfile,
     LLMJudgeTask,
     Manual,
     PsiAlertConfig,
@@ -59,14 +59,14 @@ __all__ = [
     "Scott",
     "TerrellScott",
     "FreedmanDiaconis",
-    # genai
-    "GenAIEvalConfig",
-    "GenAIEvalProfile",
+    # agent
+    "AgentEvalConfig",
+    "AgentEvalProfile",
     "EvalRecord",
     "LLMJudgeTask",
     "AssertionTask",
     "ComparisonOperator",
-    "GenAIAlertConfig",
+    "AgentAlertConfig",
     "CustomMetricAlertConfig",
     "SpcAlertConfig",
     "PsiAlertConfig",

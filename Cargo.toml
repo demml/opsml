@@ -28,7 +28,6 @@ opsml-client = { path = "crates/opsml_client" }
 opsml-colors = { path = "crates/opsml_colors" }
 opsml-events = { path = "crates/opsml_events" }
 opsml-interfaces = { path = "crates/opsml_interfaces" }
-opsml-genai = { path = "crates/opsml_genai" }
 opsml-registry = { path = "crates/opsml_registry" }
 opsml-experiment = { path = "crates/opsml_experiment" }
 opsml-mcp = { path = "crates/opsml_mcp" }
@@ -74,7 +73,7 @@ futures-util = "0.*"
 gcloud-storage = { version = "1.*", features = ["auth"] }
 gcloud-auth = { version = "1.*" }
 headers = { version = "0.*" }
-hkdf = "0.*"
+hkdf = "0.12.*"
 jsonwebtoken = "9.*"
 metrics = { version = "0.*", default-features = false }
 metrics-exporter-prometheus = { version = "0.*", default-features = false }
@@ -88,7 +87,7 @@ owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = { version = "0.*", features = ["hmac"] }
 potato-head = "0.*"
-pyo3 = { version = "0.27.2", features = ["abi3-py310", "extension-module", "anyhow", "serde", "chrono"] }
+pyo3 = { version = "0.28.*", features = ["abi3-py310", "extension-module", "anyhow", "serde", "chrono"] }
 rand = { version = "0.9.1"}
 rayon = "1.*"
 regex = "1.*"
@@ -98,7 +97,7 @@ rusty-logging = "0.*"
 pythonize = { version = "0.*" }
 # we cant use crates.io because scouter relies on a fork of linfa at the moment
 scouter-client = { git = "https://github.com/demml/scouter", branch = "main" }
-sha2 = "0.10"
+sha2 = "0.10.*"
 semver = "1.*"
 serde = { version = "1.*", features = ["derive"] }
 serde_json = "1.*"

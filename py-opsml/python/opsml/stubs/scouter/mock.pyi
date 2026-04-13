@@ -1,12 +1,19 @@
 #### begin imports ####
+# ty:ignore[unresolved-import]
 
-import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from .tracing import TraceSpan
 
 #### end of imports ####
+
+class BifrostTestServer:
+    def __init__(self, cleanup: bool = True) -> None: ...
+    def start_server(self) -> None: ...
+    def stop_server(self) -> None: ...
+    def __enter__(self) -> "BifrostTestServer": ...
+    def __exit__(self, exc_type, exc_value, traceback) -> None: ...
 
 class ScouterTestServer:
     def __init__(

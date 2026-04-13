@@ -16,7 +16,7 @@ from opsml import (
     RegistryType,
 )
 from opsml.app import AppState
-from opsml.scouter.evaluate import GenAIEvalConfig
+from opsml.scouter.evaluate import AgentEvalConfig
 from opsml.model import ModelCardMetadata, ModelSaveKwargs
 from opsml.experiment import Experiment
 from opsml.types import DriftArgs
@@ -111,7 +111,7 @@ class PopulateHelper:
 
         prompt_card.create_eval_profile(
             alias="genai",
-            config=GenAIEvalConfig(),
+            config=AgentEvalConfig(),
             tasks=create_genai_tasks(),
         )
 

@@ -1,10 +1,10 @@
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
-  import type { GenAIEvalProfile } from '$lib/components/scouter/genai/types';
-  import GenAITaskAccordion from '$lib/components/scouter/genai/task/GenAITaskAccordion.svelte';
+  import type { AgentEvalProfile } from '$lib/components/scouter/agent/types';
+  import AgentTaskAccordion from '$lib/components/scouter/agent/task/AgentTaskAccordion.svelte';
   import { ListChecks, X, AlertCircle } from 'lucide-svelte';
 
-  let { evalProfile } = $props<{ evalProfile: GenAIEvalProfile }>();
+  let { evalProfile } = $props<{ evalProfile: AgentEvalProfile }>();
   let openState = $state(false);
 
   function modalClose() {
@@ -74,7 +74,7 @@
             {/if}
           </div>
 
-          <GenAITaskAccordion tasks={evalProfile.tasks} />
+          <AgentTaskAccordion tasks={evalProfile.tasks} />
         </div>
       {/if}
     </div>

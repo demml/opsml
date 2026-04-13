@@ -130,7 +130,7 @@ impl IntoQueryArgs for ListCards {
 }
 
 #[derive(Args, Clone)]
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct DownloadCard {
     /// Card space
     #[arg(long = "space")]
@@ -230,7 +230,7 @@ pub struct KeyArgs {
 }
 
 #[derive(Args, Clone)]
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct ScouterArgs {
     /// Space name
     #[arg(long = "space")]

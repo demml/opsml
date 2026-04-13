@@ -17,7 +17,7 @@ use tracing::error;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 pub enum ServiceType {
     #[default]
     #[serde(alias = "API", alias = "api")]
@@ -64,7 +64,7 @@ impl From<&str> for ServiceType {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct ServiceMetadata {
     #[pyo3(get)]
     pub description: String,
@@ -88,7 +88,7 @@ impl ServiceMetadata {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct GpuConfig {
     #[serde(rename = "type")]
     #[pyo3(get)]
@@ -112,7 +112,7 @@ impl GpuConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct Resources {
     #[pyo3(get)]
     pub cpu: u32,
@@ -139,7 +139,7 @@ impl Resources {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct DeploymentConfig {
     /// The environment this deployment config applies to (e.g. "production", "staging", "dev")
     #[pyo3(get)]
@@ -198,7 +198,7 @@ impl DeploymentConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 pub struct DriftConfig {
     #[serde(default)]
     #[pyo3(get)]
@@ -222,7 +222,7 @@ impl DriftConfig {
     }
 }
 
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CardPath {
     #[pyo3(get)]
@@ -293,7 +293,7 @@ mod version_deserializer {
 }
 
 /// Lock a service card by registering it if it doesn't have a uid, or validating it if it does
-#[pyclass(eq)]
+#[pyclass(eq, from_py_object)]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Card {
     #[pyo3(get)]
@@ -563,7 +563,7 @@ impl AgentConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct ServiceConfig {
     #[pyo3(get)]
     #[serde(skip_serializing_if = "Option::is_none")]

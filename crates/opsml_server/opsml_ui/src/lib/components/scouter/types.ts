@@ -8,7 +8,7 @@ export enum DriftType {
   Spc = "Spc",
   Psi = "Psi",
   Custom = "Custom",
-  GenAI = "GenAI",
+  Agent = "Agent",
 }
 
 export function driftTypeFromString(type: string): DriftType | null {
@@ -19,8 +19,8 @@ export function driftTypeFromString(type: string): DriftType | null {
       return DriftType.Psi;
     case "custom":
       return DriftType.Custom;
-    case "genai":
-      return DriftType.GenAI;
+    case "agent":
+      return DriftType.Agent;
     default:
       return null;
   }
@@ -104,12 +104,12 @@ export enum AlertDispatchType {
 }
 
 /**
- * Matches: Feature, Metric, GenAI
+ * Matches: Feature, Metric, Agent
  */
 export enum EntityType {
   Feature = "Feature",
   Metric = "Metric",
-  GenAI = "GenAI",
+  Agent = "Agent",
 }
 
 export enum TimeInterval {

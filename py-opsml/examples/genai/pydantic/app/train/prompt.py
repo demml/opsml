@@ -1,5 +1,5 @@
 from opsml.card import PromptCard
-from opsml.genai import Prompt
+from opsml.agent import Prompt
 from opsml.scouter.alert import LLMAlertConfig
 from opsml.scouter.drift import LLMDriftConfig
 from opsml.scouter import CommonCrons

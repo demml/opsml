@@ -1,7 +1,7 @@
 # The following code defines the prompt metrics that will run in opsml and scouter
 
 
-from opsml.genai import Prompt, Score
+from opsml.agent import Prompt, Score
 from opsml.scouter.alert import AlertThreshold
 from opsml.scouter.drift import LLMDriftMetric
 

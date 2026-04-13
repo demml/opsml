@@ -15,7 +15,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, instrument};
 
-#[pyclass(extends=ModelInterface, subclass)]
+#[pyclass(extends=ModelInterface, subclass, skip_from_py_object)]
 #[derive(Debug)]
 pub struct LightGBMModel {
     #[pyo3(get)]

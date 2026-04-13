@@ -41,7 +41,7 @@ with start_experiment(space="opsml", log_hardware=True) as exp: # (2)
 4. The `log_metric` method is used to log a metric to the experiment card. This will automatically register the metric in it's associated registry as well as associate it with the experiment card. Metrics are logged in real-time.
 5. The `log_parameter` method is used to log a parameter to the experiment card. This will automatically register the parameter in it's associated registry as well as associate it with the experiment card. Parameters are logged in real-time.
 
-### GenAI Example
+### Agent Example
 
 ```python
 from opsml import start_experiment, PromptCard, Prompt

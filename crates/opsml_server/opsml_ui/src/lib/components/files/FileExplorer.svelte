@@ -30,7 +30,7 @@
     version,
   }: Props = $props();
 
-  // Tree endpoint is always at <current-files-page>/tree — works for both genai and non-genai routes
+  // Tree endpoint is always at <current-files-page>/tree — works for both agent and non-agent routes
   const treePath = $derived(page.url.pathname.replace(/\/$/, '') + '/tree');
 
   let expandedDirs: Set<string> = $state(new Set());

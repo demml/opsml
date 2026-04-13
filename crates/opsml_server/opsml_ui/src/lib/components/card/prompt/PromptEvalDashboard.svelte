@@ -2,18 +2,18 @@
   PromptEvalDashboard.svelte
   ──────────────────────────
   Evaluation dashboard for a single prompt card. Handles time-range refresh,
-  record/workflow page navigation, and renders GenAIDashboard or the error view.
+  record/workflow page navigation, and renders AgentDashboard or the error view.
 -->
 <script lang="ts">
   import { onMount } from 'svelte';
   import MonitoringErrorView from '$lib/components/scouter/dashboard/MonitoringErrorView.svelte';
-  import type { GenAIMonitoringPageData } from '$lib/components/scouter/dashboard/utils';
-  import { refreshGenAIMonitoringData } from '$lib/components/scouter/dashboard/utils';
+  import type { AgentMonitoringPageData } from '$lib/components/scouter/dashboard/utils';
+  import { refreshAgentMonitoringData } from '$lib/components/scouter/dashboard/utils';
   import type { RecordCursor } from '$lib/components/scouter/types';
   import { getMaxDataPoints, type RegistryType } from '$lib/utils';
   import { Loader2 } from 'lucide-svelte';
-  import GenAIDashboard from '$lib/components/scouter/genai/dashboard/GenAIDashboard.svelte';
-  import GenAITaskAccordion from '$lib/components/scouter/genai/task/GenAITaskAccordion.svelte';
+  import AgentDashboard from '$lib/components/scouter/agent/dashboard/AgentDashboard.svelte';
+  import AgentTaskAccordion from '$lib/components/scouter/agent/task/AgentTaskAccordion.svelte';
   import { timeRangeState } from '$lib/components/utils/timeState.svelte';
 
   let {
@@ -21,12 +21,12 @@
     metadata,
     registryType,
   }: {
-    initialMonitoringData: GenAIMonitoringPageData;
+    initialMonitoringData: AgentMonitoringPageData;
     metadata: { name: string; space: string; version: string };
     registryType: RegistryType;
   } = $props();
 
-  let monitoringData = $state<GenAIMonitoringPageData>(initialMonitoringData);
+  let monitoringData = $state<AgentMonitoringPageData>(initialMonitoringData);
   let isRefreshing = $state(false);
   let currentMaxPoints = $state(typeof window !== 'undefined' ? getMaxDataPoints() : 0);
   let lastSeenSignal = $state(timeRangeState.refreshSignal);
@@ -73,12 +73,12 @@
     if (!monitoringData || monitoringData.status !== 'success') return;
     isRefreshing = true;
     try {
-      await refreshGenAIMonitoringData(fetch, monitoringData, {
+      await refreshAgentMonitoringData(fetch, monitoringData, {
         recordCursor: rCursor,
         workflowCursor: wCursor,
       });
     } catch (e) {
-      console.error('GenAI Dashboard Refresh Failed', e);
+      console.error('Agent Dashboard Refresh Failed', e);
     } finally {
       isRefreshing = false;
     }
@@ -102,7 +102,7 @@
 {/if}
 
 {#if monitoringData.status === 'error'}
-  <GenAITaskAccordion tasks={monitoringData.profile.tasks} />
+  <AgentTaskAccordion tasks={monitoringData.profile.tasks} />
   <MonitoringErrorView
     message={monitoringData.errorMsg}
     errorKind={monitoringData.errorKind}
@@ -113,7 +113,7 @@
   />
 {:else if monitoringData.status === 'success'}
   <div class="transition-opacity duration-200 {isRefreshing ? 'opacity-60 pointer-events-none grayscale-[0.5]' : ''}">
-    <GenAIDashboard
+    <AgentDashboard
       bind:monitoringData
       onRecordPageChange={handleRecordPageChange}
       onWorkflowPageChange={handleWorkflowPageChange}

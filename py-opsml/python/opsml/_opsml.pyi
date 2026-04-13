@@ -3,6 +3,7 @@
 ### header.pyi ###
 # pylint: disable=redefined-builtin, invalid-name, dangerous-default-value, missing-final-newline, arguments-differ
 
+import builtins
 import datetime
 from pathlib import Path
 from types import TracebackType
@@ -21,7 +22,6 @@ from typing import (
     ParamSpec,
     Protocol,
     Sequence,
-    Tuple,
     Type,
     TypeAlias,
     Union,
@@ -223,7 +223,7 @@ class RustyLogger:
                 Additional arguments to log.
         """
 
-### genai/potato.pyi ###
+### agent/potato.pyi ###
 class Provider:
     """Provider enumeration for LLM services.
 
@@ -437,48 +437,47 @@ class Prompt(Generic[OutputType]):
 
     The Prompt class handles message parsing, provider-specific formatting, and
     structured output configuration for LLM interactions.
-
-    Args:
-        messages (PromptMessage):
-            The user message(s) to use in the prompt.
-        model (str):
-            The model identifier to use (e.g., "gpt-4o", "claude-3-5-sonnet-20241022").
-        provider (Provider | str):
-            The provider to use for the prompt (e.g., "openai", "anthropic", "google").
-        system_instructions (Optional[PromptMessage]):
-            Optional system instruction(s).
-        model_settings (Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings]):
-            Optional model-specific settings (temperature, max_tokens, etc.).
-            If None, provider default settings will be used.
-        output_type (Optional[Type[OutputType]]):
-            Optional structured output type. The provided format will be parsed into a
-            JSON schema for structured outputs. This is typically a pydantic BaseModel.
-
-    Raises:
-        TypeError: If message types are invalid or incompatible with the provider.
     """
 
-    @overload
-    def __new__(
-        cls,
+    def __init__(
+        self,
         messages: PromptMessage,
         model: str,
         provider: Provider | str,
-        system_instructions: Optional[PromptMessage] = ...,
-        model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = ...,
-        *,
-        output_type: Type[OutputType],
-    ) -> "Prompt[OutputType]": ...
-    @overload
-    def __new__(
-        cls,
-        messages: PromptMessage,
-        model: str,
-        provider: Provider | str,
-        system_instructions: Optional[PromptMessage] = ...,
-        model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = ...,
-        output_type: None = ...,
-    ) -> "Prompt[None]": ...
+        system_instructions: Optional[PromptMessage] = None,
+        model_settings: Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings] = None,
+        output_type: Optional[Type[OutputType]] = None,
+    ) -> None:
+        """Initialize a Prompt object.
+
+        Main parsing logic:
+        1. Extract model settings if provided, otherwise use provider default settings
+        2. Messages and system instructions are parsed into provider-specific formats
+           (OpenAIChatMessage, AnthropicMessage, or GeminiContent)
+        3. String messages are automatically converted to appropriate message types based on provider
+        4. Lists of messages are parsed with each item checked and converted accordingly
+        5. After parsing, a complete provider request structure is built
+
+        Args:
+            message (PromptMessage):
+                The user message(s) to use in the prompt
+            model (str):
+                The model identifier to use (e.g., "gpt-4o", "claude-3-5-sonnet-20241022")
+            provider (Provider | str):
+                The provider to use for the prompt (e.g., "openai", "anthropic", "google")
+            system_instruction (Optional[PromptMessage]):
+                Optional system instruction(s). Can be:
+            model_settings (Optional[ModelSettings | OpenAIChatSettings | GeminiSettings | AnthropicSettings]):
+                Optional model-specific settings (temperature, max_tokens, etc.)
+                If None, provider default settings will be used
+            output_type (Optional[OutputT]):
+                Optional structured output type.The provided format will be parsed into a JSON schema for structured outputs.
+                This is typically a pydantic BaseModel.
+
+        Raises:
+            TypeError: If message types are invalid or incompatible with the provider
+        """
+
     @property
     def model(self) -> str:
         """The model identifier to use for the prompt (e.g., "gpt-4o")."""
@@ -1261,7 +1260,7 @@ class Workflow:
 class Embedder:
     """Class for creating embeddings."""
 
-    def __init__(  # type: ignore
+    def __init__(
         self,
         provider: Provider | str,
         config: Optional[OpenAIEmbeddingConfig | GeminiEmbeddingConfig] = None,
@@ -10024,6 +10023,284 @@ class LLMTestServer:
         Stop the mock server.
         """
 
+### scouter/bifrost.pyi ###
+class TableConfig:
+    """Configuration for a dataset table, derived from a Pydantic model.
+
+    Eagerly computes Arrow schema, fingerprint, and namespace from the model class.
+
+    Args:
+        model: Pydantic model class (not an instance).
+        catalog: Catalog name.
+        schema_name: Schema name.
+        table: Table name.
+        partition_columns: Optional list of partition column names.
+    """
+
+    catalog: str
+    schema_name: str
+    table: str
+    partition_columns: List[str]
+
+    def __init__(
+        self,
+        model: Type[Any],
+        catalog: str,
+        schema_name: str,
+        table: str,
+        partition_columns: Optional[List[str]] = None,
+    ) -> None: ...
+    @property
+    def fingerprint_str(self) -> str: ...
+    @property
+    def fqn(self) -> str: ...
+    @staticmethod
+    def parse_schema(schema: Any) -> Dict[str, Dict[str, Any]]:
+        """Parse a Pydantic model's JSON Schema dict into a field map.
+
+        Accepts the dict returned directly by ``Model.model_json_schema()``.
+
+        System columns (``scouter_created_at``, ``scouter_partition_date``,
+        ``scouter_batch_id``) are included automatically.
+
+        Args:
+            schema: Dict returned by ``Model.model_json_schema()``.
+
+        Returns:
+            Mapping of field name to Arrow type descriptor
+            with ``arrow_type`` (str) and ``nullable`` (bool) keys.
+        """
+
+    @staticmethod
+    def compute_fingerprint(schema: Any) -> str:
+        """Compute a stable 32-character SHA-256 fingerprint from a JSON Schema dict.
+
+        The fingerprint is deterministic — the same schema always yields the same value.
+        Any field addition, removal, or type change yields a different value.
+
+        Args:
+            schema: Dict returned by ``Model.model_json_schema()``.
+
+        Returns:
+            32-character hexadecimal fingerprint string.
+        """
+
+class WriteConfig:
+    """Configuration for dataset write behavior.
+
+    Args:
+        batch_size: Number of rows per batch (default: 1000).
+        scheduled_delay_secs: Seconds between scheduled flushes (default: 30).
+    """
+
+    batch_size: int
+    scheduled_delay_secs: int
+
+    def __init__(
+        self,
+        batch_size: int = 1000,
+        scheduled_delay_secs: int = 30,
+    ) -> None: ...
+
+class QueryResult:
+    """Wrapper around Arrow IPC stream bytes returned by a SQL query.
+
+    Provides zero-copy conversion to ``pyarrow.Table``, ``polars.DataFrame``,
+    and ``pandas.DataFrame``. The IPC bytes are stored once; each conversion
+    reads from the same buffer.
+    """
+
+    def to_arrow(self) -> Any:
+        """Convert to a ``pyarrow.Table``. Requires ``pyarrow``."""
+
+    def to_polars(self) -> Any:
+        """Convert to a ``polars.DataFrame`` (zero-copy from Arrow).
+
+        Requires ``polars`` and ``pyarrow``.
+        """
+
+    def to_pandas(self) -> Any:
+        """Convert to a ``pandas.DataFrame``. Requires ``pyarrow``."""
+
+    def to_bytes(self) -> bytes:
+        """Get the raw Arrow IPC stream bytes."""
+
+    def __len__(self) -> int: ...
+    def __repr__(self) -> str: ...
+
+class DatasetClient:
+    """Dataset client for reading and querying datasets.
+
+    When ``table_config`` is provided, validates the schema fingerprint on
+    construction and enables ``read()`` for Pydantic model deserialization.
+    When omitted, works as a general-purpose query client: ``sql()``,
+    ``list_datasets()``, and ``describe_dataset()`` all work without a table
+    binding.
+
+    Args:
+        transport: gRPC transport configuration (``GrpcConfig`` instance).
+        table_config: Optional table configuration. Required for ``read()``.
+    """
+
+    def __init__(self, transport: Any, table_config: Optional[TableConfig] = None) -> None: ...
+    def read(self, limit: Optional[int] = None) -> List[Any]:
+        """Read all rows from the bound table as Pydantic model instances.
+
+        Uses the model class from ``TableConfig`` for validation via
+        ``model.model_validate()``.
+
+        Args:
+            limit: Optional maximum number of rows to return.
+
+        Returns:
+            List of validated Pydantic model instances.
+        """
+
+    def sql(self, query: str) -> QueryResult:
+        """Execute a SQL SELECT query and return a ``QueryResult``.
+
+        The ``QueryResult`` wraps Arrow IPC stream bytes and provides
+        zero-copy conversion methods.
+
+        Args:
+            query: SQL SELECT statement. Supports three-level table names
+                (``catalog.schema.table``), CTEs, window functions, subqueries.
+
+        Returns:
+            A ``QueryResult`` with ``.to_arrow()``, ``.to_polars()``,
+            ``.to_pandas()``, and ``.to_bytes()`` methods.
+        """
+
+    def list_datasets(self) -> List[Dict[str, Any]]:
+        """List all registered datasets.
+
+        Returns:
+            List of dicts with keys: ``catalog``, ``schema_name``, ``table``,
+            ``fingerprint``, ``partition_columns``, ``status``,
+            ``created_at``, ``updated_at``.
+        """
+
+    def describe_dataset(
+        self,
+        catalog: str,
+        schema_name: str,
+        table: str,
+    ) -> Dict[str, Any]:
+        """Get metadata and schema for a specific dataset.
+
+        Args:
+            catalog: Catalog name.
+            schema_name: Schema name.
+            table: Table name.
+
+        Returns:
+            Dict with dataset info fields and ``arrow_schema_json``.
+        """
+
+class DatasetProducer:
+    """Real-time streaming producer for the Scouter dataset engine.
+
+    Pushes Pydantic model instances through a Rust queue to Delta Lake via gRPC.
+    Always has an active background queue.
+
+    Args:
+        table_config: Table configuration derived from a Pydantic model.
+        transport: Transport configuration (e.g., GrpcConfig).
+        write_config: Optional write configuration.
+    """
+
+    def __init__(
+        self,
+        table_config: TableConfig,
+        transport: Any,
+        write_config: Optional[WriteConfig] = None,
+    ) -> None: ...
+    def insert(self, record: Any) -> None:
+        """Insert a Pydantic model instance into the queue.
+
+        Calls ``record.model_dump_json()`` and sends via channel. Non-blocking.
+        """
+
+    def flush(self) -> None:
+        """Signal the background queue to flush immediately."""
+
+    def shutdown(self) -> None:
+        """Gracefully shut down the producer, flushing remaining items."""
+
+    def register(self) -> str:
+        """Register the dataset table with the server.
+
+        Optional — auto-registers on first flush if not called explicitly.
+
+        Returns:
+            Registration status from the server.
+        """
+
+    @property
+    def fingerprint(self) -> str: ...
+    @property
+    def namespace(self) -> str: ...
+    @property
+    def is_registered(self) -> bool: ...
+
+class Bifrost:
+    """Unified read/write client for the Bifrost dataset engine.
+
+    Wraps both ``DatasetProducer`` and ``DatasetClient`` into a single object.
+    Use this when you need both write and read access to the same table.
+    Access the underlying clients directly via ``.producer`` and ``.client``
+    for the full API.
+
+    Args:
+        table_config: Table configuration derived from a Pydantic model.
+        transport: gRPC transport configuration (``GrpcConfig`` instance).
+        write_config: Optional write configuration for batching behavior.
+    """
+
+    def __init__(
+        self,
+        table_config: TableConfig,
+        transport: Any,
+        write_config: Optional[WriteConfig] = None,
+    ) -> None: ...
+    def insert(self, record: Any) -> None:
+        """Insert a Pydantic model instance into the queue. Non-blocking."""
+
+    def flush(self) -> None:
+        """Signal the background queue to flush immediately."""
+
+    def shutdown(self) -> None:
+        """Gracefully shut down the producer, flushing remaining items."""
+
+    def register(self) -> str:
+        """Register the dataset table with the server."""
+
+    @property
+    def fingerprint(self) -> str: ...
+    @property
+    def namespace(self) -> str: ...
+    @property
+    def is_registered(self) -> bool: ...
+    def read(self, limit: Optional[int] = None) -> List[Any]:
+        """Read rows from the bound table as validated Pydantic model instances."""
+
+    def sql(self, query: str) -> QueryResult:
+        """Execute a SQL SELECT query and return a ``QueryResult``."""
+
+    def list_datasets(self) -> List[Dict[str, Any]]:
+        """List all registered datasets on the server."""
+
+    def describe_dataset(self, catalog: str, schema_name: str, table: str) -> Dict[str, Any]:
+        """Get metadata and schema for a specific dataset."""
+
+    @property
+    def producer(self) -> DatasetProducer:
+        """The underlying ``DatasetProducer`` for full write API access."""
+
+    @property
+    def client(self) -> DatasetClient:
+        """The underlying ``DatasetClient`` for full read API access."""
+
 ### scouter/tracing.pyi ###
 class TagRecord:
     """Represents a single tag record associated with an entity."""
@@ -10676,21 +10953,29 @@ class BaseTracer:
     def start_as_current_span(
         self,
         name: str,
+        context: Optional[Any] = None,
         kind: Optional[SpanKind] = SpanKind.Internal,
-        label: Optional[str] = None,
-        attributes: Optional[List[dict[str, str]]] = None,
+        attributes: Optional[Any] = None,
         baggage: Optional[List[dict[str, str]]] = None,
         tags: Optional[List[dict[str, str]]] = None,
+        label: Optional[str] = None,
         parent_context_id: Optional[str] = None,
         trace_id: Optional[str] = None,
         span_id: Optional[str] = None,
         remote_sampled: Optional[bool] = None,
+        headers: Optional[dict[str, str]] = None,
+        links: Optional[Any] = None,
+        start_time: Optional[int] = None,
+        record_exception: Optional[bool] = None,
+        set_status_on_exception: Optional[bool] = None,
     ) -> ActiveSpan:
         """Context manager to start a new span as the current span.
 
         Args:
             name (str):
                 The name of the span.
+            context (Optional[Any]):
+                OTel Python Context object from auto-instrumentors (StarletteInstrumentor, etc.).
             kind (Optional[SpanKind]):
                 The kind of span (e.g., "SERVER", "CLIENT").
             label (Optional[str]):
@@ -10710,6 +10995,17 @@ class BaseTracer:
                 Optional span ID to associate with the span. This will be the parent span ID.
             remote_sampled (Optional[bool]):
                 Optional flag indicating if the span was sampled remotely.
+            headers (Optional[dict[str, str]]):
+                W3C traceparent/tracestate headers from an upstream service.
+                Takes priority over explicit trace_id/span_id params.
+            links (Optional[Any]):
+                Accepted for OTel compatibility; not yet used.
+            start_time (Optional[int]):
+                Accepted for OTel compatibility; not yet used.
+            record_exception (Optional[bool]):
+                Accepted for OTel compatibility; not yet used.
+            set_status_on_exception (Optional[bool]):
+                Accepted for OTel compatibility; not yet used.
         Returns:
             ActiveSpan:
         """
@@ -11044,6 +11340,14 @@ def disable_local_span_capture() -> None:
 def drain_local_span_capture() -> List[TraceSpanRecord]:
     """Drain and return all locally captured spans, clearing the buffer."""
 
+def extract_span_context_from_headers(
+    headers: Dict[str, str],
+) -> Optional[Dict[str, str]]:
+    """Extract span context from W3C traceparent headers (or legacy trace_id/span_id keys).
+
+    Returns a dict with 'trace_id', 'span_id', 'is_sampled' keys, or None if no valid context found.
+    """
+
 ### scouter/evaluate.pyi ###
 class EvaluationTaskType:
     """Types of evaluation tasks for LLM assessments."""
@@ -11168,6 +11472,9 @@ class ComparisonOperator:
     """Is a negative number"""
     IsZero: "ComparisonOperator"
     """Is zero"""
+
+    SequenceMatches: "ComparisonOperator"
+    """Check that span sequence matches the expected ordered list."""
 
     ContainsAll: "ComparisonOperator"
     """Contains all specified elements"""
@@ -11780,73 +12087,66 @@ class SpanFilter:
         - Attribute values are internally wrapped for type safety
     """
 
-    class ByName:
+    class ByName(SpanFilter):
         """Filter spans by exact name match."""
 
         name: str
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        def __new__(cls, name: str) -> "SpanFilter.ByName": ...
 
-    class ByNamePattern:
+    class ByNamePattern(SpanFilter):
         """Filter spans by regex name pattern."""
 
         pattern: str
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        def __new__(cls, pattern: str) -> "SpanFilter.ByNamePattern": ...
 
-    class WithAttribute:
+    class WithAttribute(SpanFilter):
         """Filter spans with specific attribute key."""
 
         key: str
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        def __new__(cls, key: str) -> "SpanFilter.WithAttribute": ...
 
-    class WithAttributeValue:
+    class WithAttributeValue(SpanFilter):
         """Filter spans with specific attribute key-value pair."""
 
         key: str
-        value: object  # PyValueWrapper is internal, expose as object
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        value: Any
+        def __new__(cls, key: str, value: Any) -> "SpanFilter.WithAttributeValue": ...
 
-    class WithStatus:
+    class WithStatus(SpanFilter):
         """Filter spans by status code."""
 
         status: SpanStatus
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        def __new__(cls, status: SpanStatus) -> "SpanFilter.WithStatus": ...
 
-    class WithDuration:
+    class WithDuration(SpanFilter):
         """Filter spans with duration constraints."""
 
         min_ms: Optional[float]
         max_ms: Optional[float]
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        def __new__(
+            cls, min_ms: Optional[float] = None, max_ms: Optional[float] = None
+        ) -> "SpanFilter.WithDuration": ...
 
-    class Sequence:
+    class Sequence(SpanFilter):
         """Match a sequence of span names in order."""
 
         names: List[str]
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        def __new__(cls, names: List[str]) -> "SpanFilter.Sequence": ...
 
-    class And:
+    class And(SpanFilter):
         """Combine multiple filters with AND logic."""
 
-        filters: List[SpanFilter]
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        filters: List["SpanFilter"]
+        def __new__(cls, filters: List["SpanFilter"]) -> "SpanFilter.And": ...
 
-    class Or:
+    class Or(SpanFilter):
         """Combine multiple filters with OR logic."""
 
-        filters: List[SpanFilter]
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        filters: List["SpanFilter"]
+        def __new__(cls, filters: List["SpanFilter"]) -> "SpanFilter.Or": ...
 
     @staticmethod
-    def by_name(name: str) -> "SpanFilter":
+    def by_name(name: str) -> "SpanFilter.ByName":
         """Filter spans by exact name match.
 
         Args:
@@ -11858,7 +12158,7 @@ class SpanFilter:
         """
 
     @staticmethod
-    def by_name_pattern(pattern: str) -> "SpanFilter":
+    def by_name_pattern(pattern: str) -> "SpanFilter.ByNamePattern":
         """Filter spans by regex name pattern.
 
         Args:
@@ -11870,7 +12170,7 @@ class SpanFilter:
         """
 
     @staticmethod
-    def with_attribute(key: str) -> "SpanFilter":
+    def with_attribute(key: str) -> "SpanFilter.WithAttribute":
         """Filter spans that have a specific attribute key.
 
         Args:
@@ -11882,7 +12182,7 @@ class SpanFilter:
         """
 
     @staticmethod
-    def with_attribute_value(key: str, value: "SerializedType") -> "SpanFilter":
+    def with_attribute_value(key: str, value: "SerializedType") -> "SpanFilter.WithAttributeValue":
         """Filter spans that have a specific attribute key-value pair.
 
         Args:
@@ -11896,7 +12196,7 @@ class SpanFilter:
         """
 
     @staticmethod
-    def with_status(status: SpanStatus) -> "SpanFilter":
+    def with_status(status: SpanStatus) -> "SpanFilter.WithStatus":
         """Filter spans by execution status.
 
         Args:
@@ -11908,7 +12208,7 @@ class SpanFilter:
         """
 
     @staticmethod
-    def with_duration(min_ms: Optional[float] = None, max_ms: Optional[float] = None) -> "SpanFilter":
+    def with_duration(min_ms: Optional[float] = None, max_ms: Optional[float] = None) -> "SpanFilter.WithDuration":
         """Filter spans by duration constraints.
 
         Args:
@@ -11923,7 +12223,7 @@ class SpanFilter:
         """
 
     @staticmethod
-    def sequence(names: List[str]) -> "SpanFilter":
+    def sequence(names: List[str]) -> "SpanFilter.Sequence":
         """Filter for spans appearing in specific order.
 
         Args:
@@ -12064,51 +12364,86 @@ class TraceAssertion:
         - Trace-level assertions evaluate the entire trace without filtering
     """
 
-    class SpanSequence:
+    class SpanSequence(TraceAssertion):
         """Extracts a sequence of span names in order."""
 
         span_names: List[str]
+        def __new__(cls, span_names: List[str]) -> "TraceAssertion.SpanSequence": ...
 
-    class SpanSet:
+    class SpanSet(TraceAssertion):
         """Checks for existence of all specified span names."""
 
         span_names: List[str]
+        def __new__(cls, span_names: List[str]) -> "TraceAssertion.SpanSet": ...
 
-    class SpanCount:
+    class SpanCount(TraceAssertion):
         """Counts spans matching a filter."""
 
         filter: SpanFilter
+        def __new__(cls, filter: SpanFilter) -> "TraceAssertion.SpanCount": ...
 
-    class SpanExists:
+    class SpanExists(TraceAssertion):
         """Checks if any span matches a filter."""
 
         filter: SpanFilter
+        def __new__(cls, filter: SpanFilter) -> "TraceAssertion.SpanExists": ...
 
-    class SpanAttribute:
+    class SpanAttribute(TraceAssertion):
         """Extracts attribute value from span matching filter."""
 
         filter: SpanFilter
         attribute_key: str
+        def __new__(cls, filter: SpanFilter, attribute_key: str) -> "TraceAssertion.SpanAttribute": ...
 
-    class SpanDuration:
+    class SpanDuration(TraceAssertion):
         """Extracts duration of span matching filter."""
 
         filter: SpanFilter
+        def __new__(cls, filter: SpanFilter) -> "TraceAssertion.SpanDuration": ...
 
-    class SpanAggregation:
+    class SpanAggregation(TraceAssertion):
         """Aggregates numeric attribute across filtered spans."""
 
         filter: SpanFilter
         attribute_key: str
         aggregation: AggregationType
+        def __new__(
+            cls, filter: SpanFilter, attribute_key: str, aggregation: AggregationType
+        ) -> "TraceAssertion.SpanAggregation": ...
 
-    class TraceAttribute:
+    class TraceAttribute(TraceAssertion):
         """Extracts trace-level attribute value."""
 
         attribute_key: str
+        def __new__(cls, attribute_key: str) -> "TraceAssertion.TraceAttribute": ...
+
+    class TraceDuration(TraceAssertion):
+        """Get total duration of the entire trace."""
+
+        def __new__(cls) -> "TraceAssertion.TraceDuration": ...
+
+    class TraceSpanCount(TraceAssertion):
+        """Count total spans in the trace."""
+
+        def __new__(cls) -> "TraceAssertion.TraceSpanCount": ...
+
+    class TraceErrorCount(TraceAssertion):
+        """Count spans with errors in the trace."""
+
+        def __new__(cls) -> "TraceAssertion.TraceErrorCount": ...
+
+    class TraceServiceCount(TraceAssertion):
+        """Count unique services in the trace."""
+
+        def __new__(cls) -> "TraceAssertion.TraceServiceCount": ...
+
+    class TraceMaxDepth(TraceAssertion):
+        """Get maximum span depth in the trace."""
+
+        def __new__(cls) -> "TraceAssertion.TraceMaxDepth": ...
 
     @staticmethod
-    def span_sequence(span_names: List[str]) -> "TraceAssertion":
+    def span_sequence(span_names: List[str]) -> "TraceAssertion.SpanSequence":
         """Assert spans appear in specific order.
 
         Args:
@@ -12121,7 +12456,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_set(span_names: List[str]) -> "TraceAssertion":
+    def span_set(span_names: List[str]) -> "TraceAssertion.SpanSet":
         """Assert all specified spans exist (order independent).
 
         Args:
@@ -12134,7 +12469,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_count(filter: SpanFilter) -> "TraceAssertion":
+    def span_count(filter: SpanFilter) -> "TraceAssertion.SpanCount":
         """Count spans matching the filter.
 
         Args:
@@ -12147,7 +12482,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_exists(filter: SpanFilter) -> "TraceAssertion":
+    def span_exists(filter: SpanFilter) -> "TraceAssertion.SpanExists":
         """Check if any span matches the filter.
 
         Args:
@@ -12160,7 +12495,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_attribute(filter: SpanFilter, attribute_key: str) -> "TraceAssertion":
+    def span_attribute(filter: SpanFilter, attribute_key: str) -> "TraceAssertion.SpanAttribute":
         """Get attribute value from span matching filter.
 
         Args:
@@ -12175,7 +12510,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_duration(filter: SpanFilter) -> "TraceAssertion":
+    def span_duration(filter: SpanFilter) -> "TraceAssertion.SpanDuration":
         """Get duration of span matching filter.
 
         Args:
@@ -12188,7 +12523,9 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_aggregation(filter: SpanFilter, attribute_key: str, aggregation: AggregationType) -> "TraceAssertion":
+    def span_aggregation(
+        filter: SpanFilter, attribute_key: str, aggregation: AggregationType
+    ) -> "TraceAssertion.SpanAggregation":
         """Aggregate numeric attribute across filtered spans.
 
         Args:
@@ -12205,7 +12542,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def trace_duration() -> "TraceAssertion":
+    def trace_duration() -> "TraceAssertion.TraceDuration":
         """Get total duration of the entire trace.
 
         Returns:
@@ -12214,7 +12551,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def trace_span_count() -> "TraceAssertion":
+    def trace_span_count() -> "TraceAssertion.TraceSpanCount":
         """Count total spans in the trace.
 
         Returns:
@@ -12223,7 +12560,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def trace_error_count() -> "TraceAssertion":
+    def trace_error_count() -> "TraceAssertion.TraceErrorCount":
         """Count spans with error status in the trace.
 
         Returns:
@@ -12232,7 +12569,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def trace_service_count() -> "TraceAssertion":
+    def trace_service_count() -> "TraceAssertion.TraceServiceCount":
         """Count unique services involved in the trace.
 
         Returns:
@@ -12241,7 +12578,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def trace_max_depth() -> "TraceAssertion":
+    def trace_max_depth() -> "TraceAssertion.TraceMaxDepth":
         """Get maximum nesting depth of span tree.
 
         Returns:
@@ -12250,7 +12587,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def trace_attribute(attribute_key: str) -> "TraceAssertion":
+    def trace_attribute(attribute_key: str) -> "TraceAssertion.TraceAttribute":
         """Get trace-level attribute value.
 
         Args:
@@ -12260,6 +12597,19 @@ class TraceAssertion:
         Returns:
             TraceAssertion that extracts the trace attribute.
             Use with appropriate operators for the value type.
+        """
+
+    @staticmethod
+    def attribute_filter(key: str, task: "AttributeFilterTask", mode: "MultiResponseMode") -> "TraceAssertion":
+        """Filter spans by attribute and apply assertion to collected spans.
+
+        Args:
+            key (str):
+                Attribute key to filter spans.
+            task (AttributeFilterTask):
+                Assertion task to apply to the filtered spans.
+            mode (MultiResponseMode):
+                Mode to handle multiple spans matching the filter (e.g., apply to all, any).
         """
 
 class TraceAssertionTask:
@@ -12852,6 +13202,7 @@ class AgentAssertionTask:
         depends_on: Optional[List[str]] = None,
         condition: Optional[bool] = None,
         provider: Optional[Any] = None,
+        context_path: Optional[str] = None,
     ) -> None:
         """Create an AgentAssertionTask.
 
@@ -12873,6 +13224,9 @@ class AgentAssertionTask:
             provider (Optional[Provider]):
                 Optional LLM provider hint (e.g. Provider.GoogleAdk) for
                 accurate response parsing.
+            context_path (Optional[str]):
+                Dot-notation path to extract a sub-field from the context
+                before evaluation (e.g. ``"response"``).
 
         Raises:
             TypeError: If expected_value is not JSON-serializable or if
@@ -13143,30 +13497,37 @@ class EvalMetrics:
 
     Attributes:
         overall_pass_rate (float):
-            Weighted pass rate across all datasets and scenarios (0–1).
+            Average of output quality and internal workflow pass rates (0–1).
         dataset_pass_rates (Dict[str, float]):
-            Per-alias (sub-agent) pass rate (0–1), keyed by alias name.
+            Per-alias workflow pass rate (0–1), keyed by alias name.
         scenario_pass_rate (float):
-            Fraction of scenarios that fully passed (all tasks passed) (0–1).
+            Agent output matched expected results (0–1).
+        workflow_pass_rate (float):
+            Internal agent checks passed, averaged across aliases (0–1).
+            Only present when at least one alias has workflow data.
         total_scenarios (int):
             Total number of scenarios evaluated.
         passed_scenarios (int):
-            Number of scenarios where every task passed.
+            Number of scenarios where output matched expectations.
         scenario_task_pass_rates (Dict[str, Dict[str, float]]):
             Per-scenario, per-task pass rates. Maps scenario_id → task_id → pass_rate.
     """
 
     @property
     def overall_pass_rate(self) -> float:
-        """Weighted pass rate across all datasets and scenarios (0–1)."""
+        """Average of output quality and internal workflow pass rates (0–1)."""
 
     @property
     def dataset_pass_rates(self) -> Dict[str, float]:
-        """Per-alias pass rate (0–1), keyed by alias name."""
+        """Per-alias workflow pass rate (0–1), keyed by alias name."""
 
     @property
     def scenario_pass_rate(self) -> float:
-        """Fraction of scenarios that fully passed (0–1)."""
+        """Agent output matched expected results (0–1)."""
+
+    @property
+    def workflow_pass_rate(self) -> float:
+        """Internal agent checks passed, averaged across aliases (0–1)."""
 
     @property
     def total_scenarios(self) -> int:
@@ -13174,7 +13535,7 @@ class EvalMetrics:
 
     @property
     def passed_scenarios(self) -> int:
-        """Number of scenarios where every task passed."""
+        """Number of scenarios where output matched expectations."""
 
     @property
     def scenario_task_pass_rates(self) -> Dict[str, Dict[str, float]]:
@@ -13531,11 +13892,11 @@ class ScenarioEvalResults:
             RuntimeError: If comparison computation fails.
         """
 
-    def as_table(self, show_datasets: bool = False) -> None:
+    def as_table(self, show_workflow: bool = False) -> None:
         """Print a full evaluation summary (metrics + scenario table) to stdout.
 
         Args:
-            show_datasets: If True, also print per-dataset EvalResults tables.
+            show_workflow: If True, also print per-dataset workflow summary tables.
         """
 
 class EvalScenario:
@@ -13713,7 +14074,11 @@ class TasksFile:
     def __next__(self) -> AssertionTask | LLMJudgeTask | TraceAssertionTask:
         """Return the next task in the file, or raise StopIteration when done."""
 
-    def __getitem__(
+    @overload
+    def __getitem__(self, index: int) -> AssertionTask | LLMJudgeTask | TraceAssertionTask: ...
+    @overload
+    def __getitem__(self, index: slice) -> List[AssertionTask | LLMJudgeTask | TraceAssertionTask]: ...
+    def __getitem__(  # type: ignore[misc]
         self, index: int | slice
     ) -> AssertionTask | LLMJudgeTask | TraceAssertionTask | List[AssertionTask | LLMJudgeTask | TraceAssertionTask]:
         """Get task(s) by index or slice."""
@@ -13772,6 +14137,23 @@ class EvalScenarios:
     def model_validate_json(json_string: str) -> "EvalScenarios":
         """Deserialize from a JSON string."""
 
+    @staticmethod
+    def from_path(path: Path) -> "EvalScenarios":
+        """Load eval scenarios from a file.
+
+        Supports ``.jsonl`` (one scenario per line with flat task list),
+        ``.json`` (array or ``{"collection_id": "...", "scenarios": [...]}``
+        wrapper), and ``.yaml``/``.yml``.
+
+        Tasks in the file use a flat list with a ``task_type`` discriminator
+        (``"Assertion"``, ``"LLMJudge"``, ``"TraceAssertion"``,
+        ``"AgentAssertion"``). If no ``collection_id`` is present a new UUID7
+        is generated automatically.
+
+        Args:
+            path: Path to the scenarios file.
+        """
+
 class EvalRunner:
     """Stateful evaluation engine that orchestrates scenario evaluation.
 
@@ -13782,7 +14164,7 @@ class EvalRunner:
 
     Args:
         scenarios: List of ``EvalScenario`` instances to evaluate.
-        profiles: Map of alias → ``GenAIEvalProfile`` for sub-agent evaluation.
+        profiles: Map of alias → ``AgentEvalProfile`` for sub-agent evaluation.
     """
 
     @property
@@ -13792,12 +14174,12 @@ class EvalRunner:
     def __init__(
         self,
         scenarios: "EvalScenarios",
-        profiles: Dict[str, "GenAIEvalProfile"],
+        profiles: Dict[str, "AgentEvalProfile"],
     ) -> None: ...
     def collect_scenario_data(
         self,
         records: Dict[str, List["EvalRecord"]],
-        response: str,
+        response: Any,
         scenario: "EvalScenario",
     ) -> None:
         """Populate scenario data for evaluation."""
@@ -13870,6 +14252,13 @@ class EvalOrchestrator:
         """
 
 ### scouter/mock.pyi ###
+class BifrostTestServer:
+    def __init__(self, cleanup: bool = True) -> None: ...
+    def start_server(self) -> None: ...
+    def stop_server(self) -> None: ...
+    def __enter__(self) -> "BifrostTestServer": ...
+    def __exit__(self, exc_type, exc_value, traceback) -> None: ...
+
 class ScouterTestServer:
     def __init__(
         self,
@@ -13981,7 +14370,7 @@ class DriftType:
     Spc: "DriftType"
     Psi: "DriftType"
     Custom: "DriftType"
-    GenAI: "DriftType"
+    Agent: "DriftType"
 
     def value(self) -> str: ...
     @staticmethod
@@ -14303,7 +14692,7 @@ class SpcAlertConfig:
         """Set the features to monitor"""
 
 class SpcAlert:
-    def __init__(self, kind: SpcAlertType, zone: AlertZone):
+    def __init__(self, kind: Literal["SpcAlertType"], zone: AlertZone):
         """Initialize alert"""
 
     @property
@@ -14416,7 +14805,7 @@ class CustomMetricAlertConfig:
     def alert_conditions(self, alert_conditions: dict[str, AlertCondition]) -> None:
         """Update the alert_condition that were set during metric definition"""
 
-class GenAIAlertConfig:
+class AgentAlertConfig:
     def __init__(
         self,
         dispatch_config: Optional[SlackDispatchConfig | OpsGenieDispatchConfig] = None,
@@ -14950,8 +15339,8 @@ class ScouterClient:
             Drift map of type BinnedMetrics | BinnedPsiFeatureMetrics | BinnedSpcFeatureMetrics
         """
 
-    def get_genai_task_binned_drift(self, drift_request: DriftRequest) -> Any:
-        """Get GenAI task drift map from server
+    def get_agent_task_binned_drift(self, drift_request: DriftRequest) -> Any:
+        """Get agent task drift map from server
         Args:
             drift_request:
                 DriftRequest object
@@ -15033,20 +15422,14 @@ class ScouterClient:
             TraceSpansResponse
         """
 
-    def get_trace_spans_from_tags(
+    def get_trace_spans_from_filters(
         self,
-        tags: List[Tuple[str, str]],
-        match_all: bool = False,
-        service_name: Optional[str] = None,
+        filters: TraceFilters,
     ) -> TraceSpansResponse:
-        """Get trace spans from tags
+        """Get trace spans from filters
         Args:
-            tags:
-                List of tags to filter by
-            match_all:
-                Whether to match all tags or any tag
-            service_name:
-                Service name
+            filters:
+                TraceFilters object
 
         Returns:
             TraceSpansResponse
@@ -15134,7 +15517,7 @@ class BinnedSpcFeatureMetrics:
 class EntityType:
     Feature: "EntityType"
     Metric: "EntityType"
-    GenAI: "EntityType"
+    Agent: "EntityType"
 
 class RecordType:
     Spc: "RecordType"
@@ -15142,9 +15525,9 @@ class RecordType:
     Observability: "RecordType"
     Custom: "RecordType"
     Trace: "RecordType"
-    GenAIEval: "RecordType"
-    GenAITask: "RecordType"
-    GenAIWorkflow: "RecordType"
+    AgentEval: "RecordType"
+    AgentTask: "RecordType"
+    AgentWorkflow: "RecordType"
 
 class ServerRecord:
     def __init__(self, record: Any) -> None:
@@ -15339,7 +15722,7 @@ class QueueFeature:
         """
 
     @staticmethod
-    def int(name: str, value: int) -> "QueueFeature":
+    def int(name: str, value: builtins.int) -> "QueueFeature":
         """Create an integer feature
 
         Args:
@@ -15350,7 +15733,7 @@ class QueueFeature:
         """
 
     @staticmethod
-    def float(name: str, value: float) -> "QueueFeature":
+    def float(name: str, value: builtins.float) -> "QueueFeature":
         """Create a float feature
 
         Args:
@@ -15637,7 +16020,7 @@ class ScouterQueue:
                     • SpcDriftProfile    - Statistical Process Control monitoring
                     • PsiDriftProfile    - Population Stability Index monitoring
                     • CustomDriftProfile - Custom metric monitoring
-                    • GenAIEvalProfile    - LLM evaluation monitoring
+                    • AgentEvalProfile    - LLM evaluation monitoring
 
             transport_config (Union[KafkaConfig, RabbitMQConfig, RedisConfig, HttpConfig, GrpcConfig]):
                 Transport configuration for the queue publisher.
@@ -15702,13 +16085,14 @@ class ScouterQueue:
 
     @staticmethod
     def from_profile(
-        profile: Union[dict, list, SpcDriftProfile, PsiDriftProfile, CustomDriftProfile, GenAIEvalProfile],
+        profile: Union[dict, list, SpcDriftProfile, PsiDriftProfile, CustomDriftProfile, AgentEvalProfile],
         transport_config: Union[
             KafkaConfig,
             RabbitMQConfig,
             RedisConfig,
             HttpConfig,
             GrpcConfig,
+            MockConfig,
         ],
         wait_for_startup: bool = False,
     ) -> "ScouterQueue":
@@ -15716,7 +16100,7 @@ class ScouterQueue:
         list of drift profiles, or a single drift profile.
 
         Args:
-            profile (Union[dict, list, SpcDriftProfile, PsiDriftProfile, CustomDriftProfile, GenAIEvalProfile]):
+            profile (Union[dict, list, SpcDriftProfile, PsiDriftProfile, CustomDriftProfile, AgentEvalProfile]):
                 Drift profile(s) to initialize the queue with. Can be a single profile,
                 a list of profiles, or a dictionary of profiles.
 
@@ -15763,7 +16147,7 @@ class ScouterQueue:
     def disable_capture(self) -> None:
         """Disable offline record capture across all queues and discard any buffered records."""
 
-    def drain_records(self, alias: str) -> List["EvalRecord"]:
+    def drain_records(self, alias: str) -> List[EvalRecord]:
         """Drain and return captured EvalRecords from the queue identified by *alias*.
 
         Returns an empty list if capture is disabled or no records have been inserted.
@@ -15775,15 +16159,15 @@ class ScouterQueue:
             KeyError: If *alias* does not match any registered queue.
         """
 
-    def drain_all_records(self) -> Dict[str, List["EvalRecord"]]:
+    def drain_all_records(self) -> Dict[str, List[EvalRecord]]:
         """Drain captured EvalRecords from all queues.
 
         Returns a mapping of alias → records. Queues with no buffered records are
         omitted from the result.
         """
 
-    def genai_profiles(self) -> Dict[str, "GenAIEvalProfile"]:
-        """Returns a mapping of alias → GenAIEvalProfile for all GenAIEvalProfiles registered in the queue."""
+    def agent_profiles(self) -> Dict[str, AgentEvalProfile]:
+        """Returns a mapping of alias → AgentEvalProfile for all AgentEvalProfiles registered in the queue."""
 
 class EvalRecord:
     """LLM record containing context tied to a Large Language Model interaction
@@ -15808,7 +16192,7 @@ class EvalRecord:
         session_id: Optional[str] = None,
         trace_id: Optional[str] = None,
     ) -> None:
-        """Creates a new LLM record to associate with an `GenAIEvalProfile`.
+        """Creates a new LLM record to associate with an `AgentEvalProfile`.
         The record is sent to the `Scouter` server via the `ScouterQueue` and is
         then used to inject context into the evaluation prompts.
 
@@ -17040,14 +17424,14 @@ class CustomDriftProfile:
             None
         """
 
-class GenAIEvalConfig:
+class AgentEvalConfig:
     def __init__(
         self,
         space: str = "__missing__",
         name: str = "__missing__",
         version: str = "0.1.0",
         sample_ratio: float = 1.0,
-        alert_config: GenAIAlertConfig = GenAIAlertConfig(),
+        alert_config: AgentAlertConfig = AgentAlertConfig(),
     ):
         """Initialize drift config
         Args:
@@ -17101,15 +17485,15 @@ class GenAIEvalConfig:
         """Drift type"""
 
     @property
-    def alert_config(self) -> GenAIAlertConfig:
+    def alert_config(self) -> AgentAlertConfig:
         """get alert_config"""
 
     @alert_config.setter
-    def alert_config(self, alert_config: GenAIAlertConfig) -> None:
+    def alert_config(self, alert_config: AgentAlertConfig) -> None:
         """Set alert_config"""
 
     @staticmethod
-    def load_from_json_file(path: Path) -> "GenAIEvalConfig":
+    def load_from_json_file(path: Path) -> "AgentEvalConfig":
         """Load config from json file
         Args:
             path:
@@ -17127,7 +17511,7 @@ class GenAIEvalConfig:
         space: Optional[str] = None,
         name: Optional[str] = None,
         version: Optional[str] = None,
-        alert_config: Optional[GenAIAlertConfig] = None,
+        alert_config: Optional[AgentAlertConfig] = None,
     ) -> None:
         """Inplace operation that updates config args
         Args:
@@ -17141,10 +17525,12 @@ class GenAIEvalConfig:
                 LLM alert configuration
         """
 
-class GenAIEvalProfile:
+_TASK_TYPES = List[Union[AssertionTask, LLMJudgeTask, TraceAssertionTask]] | TasksFile
+
+class AgentEvalProfile:
     """Profile for LLM evaluation and drift detection.
 
-    GenAIEvalProfile combines assertion tasks, LLM judge tasks, and trace assertion
+    AgentEvalProfile combines assertion tasks, LLM judge tasks, and trace assertion
     tasks into a unified evaluation framework for monitoring LLM performance. Evaluations
     run asynchronously on the Scouter server, enabling scalable drift detection without
     blocking your application.
@@ -17220,7 +17606,7 @@ class GenAIEvalProfile:
     Examples:
         Pure assertion-based monitoring (no LLM calls):
 
-        >>> config = GenAIEvalConfig(
+        >>> config = AgentEvalConfig(
         ...     space="production",
         ...     name="chatbot",
         ...     version="1.0",
@@ -17244,7 +17630,7 @@ class GenAIEvalProfile:
         ...     )
         ... ]
         >>>
-        >>> profile = GenAIEvalProfile(
+        >>> profile = AgentEvalProfile(
         ...     config=config,
         ...     tasks=tasks
         ... )
@@ -17270,7 +17656,7 @@ class GenAIEvalProfile:
         ...     )
         ... ]
         >>>
-        >>> profile = GenAIEvalProfile(
+        >>> profile = AgentEvalProfile(
         ...     config=config,
         ...     tasks=judge_tasks
         ... )
@@ -17309,7 +17695,7 @@ class GenAIEvalProfile:
         ...     )
         ... ]
         >>>
-        >>> profile = GenAIEvalProfile(
+        >>> profile = AgentEvalProfile(
         ...     config=config,
         ...     tasks=assertion_tasks + judge_tasks
         ... )
@@ -17346,7 +17732,7 @@ class GenAIEvalProfile:
         ...     depends_on=["relevance", "toxicity"]  # Multiple deps
         ... )
         >>>
-        >>> profile = GenAIEvalProfile(
+        >>> profile = AgentEvalProfile(
         ...     config=config,
         ...     tasks=[relevance_task, toxicity_task, quality_task]
         ... )
@@ -17384,7 +17770,7 @@ class GenAIEvalProfile:
         ...     description="Ensure error-free execution"
         ... )
         >>>
-        >>> profile = GenAIEvalProfile(
+        >>> profile = AgentEvalProfile(
         ...     config=config,
         ...     tasks=[workflow_task, perf_task, error_task]
         ... )
@@ -17425,7 +17811,7 @@ class GenAIEvalProfile:
         ...     description="Quality assessment after validation"
         ... )
         >>>
-        >>> profile = GenAIEvalProfile(
+        >>> profile = AgentEvalProfile(
         ...     config=config,
         ...     tasks=[response_check, trace_check, quality_judge]
         ... )
@@ -17442,11 +17828,11 @@ class GenAIEvalProfile:
 
     def __init__(
         self,
-        tasks: List[Union[AssertionTask, LLMJudgeTask, TraceAssertionTask]],
-        config: Optional[GenAIEvalConfig] = None,
+        tasks: _TASK_TYPES,
+        config: Optional[AgentEvalConfig] = None,
         alias: Optional[str] = None,
     ):
-        """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
+        """Initialize a AgentEvalProfile for LLM evaluation and drift detection.
 
         Creates a profile that combines assertion tasks, LLM judge tasks, and
         trace assertion tasks into a unified evaluation framework. LLM judge tasks
@@ -17454,11 +17840,12 @@ class GenAIEvalProfile:
         Scouter server.
 
         Args:
-            tasks (List[Union[AssertionTask, LLMJudgeTask, TraceAssertionTask]]):
+            tasks (List[Union[AssertionTask, LLMJudgeTask, TraceAssertionTask]] | TasksFile):
                 List of evaluation tasks to include in the profile. Can contain
                 AssertionTask, LLMJudgeTask, and TraceAssertionTask instances.
                 At least one task (assertion, LLM judge, or trace assertion) is required.
-            config (Optional[GenAIEvalConfig]):
+                Can also be provided as a TasksFile object.
+            config (Optional[AgentEvalConfig]):
                 Configuration for the GenAI drift profile containing space, name,
                 version, sample rate, and alert settings. If not provided,
                 defaults will be used.
@@ -17466,7 +17853,7 @@ class GenAIEvalProfile:
                 Optional alias for the profile.
 
         Returns:
-            GenAIEvalProfile: Configured profile ready for GenAI drift monitoring.
+            AgentEvalProfile: Configured profile ready for GenAI drift monitoring.
 
         Raises:
             ProfileError: If validation fails due to:
@@ -17477,12 +17864,12 @@ class GenAIEvalProfile:
         Examples:
             Assertion-only profile:
 
-            >>> config = GenAIEvalConfig(space="prod", name="bot", version="1.0")
+            >>> config = AgentEvalConfig(space="prod", name="bot", version="1.0")
             >>> assertions = [
             ...     AssertionTask(id="length_check", ...),
             ...     AssertionTask(id="confidence_check", ...)
             ... ]
-            >>> profile = GenAIEvalProfile(config, tasks=assertions)
+            >>> profile = AgentEvalProfile(config, tasks=assertions)
 
             LLM judge-only profile:
 
@@ -17490,7 +17877,7 @@ class GenAIEvalProfile:
             ...     LLMJudgeTask(id="relevance", prompt=..., ...),
             ...     LLMJudgeTask(id="quality", prompt=..., depends_on=["relevance"])
             ... ]
-            >>> profile = GenAIEvalProfile(config, tasks=judges)
+            >>> profile = AgentEvalProfile(config, tasks=judges)
 
             Trace assertion-only profile:
 
@@ -17508,11 +17895,11 @@ class GenAIEvalProfile:
             ...         expected_value=5000.0
             ...     )
             ... ]
-            >>> profile = GenAIEvalProfile(config, tasks=trace_tasks)
+            >>> profile = AgentEvalProfile(config, tasks=trace_tasks)
 
             Hybrid profile:
 
-            >>> profile = GenAIEvalProfile(
+            >>> profile = AgentEvalProfile(
             ...     config=config,
             ...     tasks=assertions + judges + trace_tasks
             ... )
@@ -17531,7 +17918,7 @@ class GenAIEvalProfile:
         """Set unique identifier for the drift profile."""
 
     @property
-    def config(self) -> GenAIEvalConfig:
+    def config(self) -> AgentEvalConfig:
         """Configuration for the drift profile.
 
         Contains space, name, version, sample rate, and alert settings.
@@ -17639,7 +18026,7 @@ class GenAIEvalProfile:
         """Print the execution plan for all tasks."""
 
     def __str__(self) -> str:
-        """String representation of GenAIEvalProfile.
+        """String representation of AgentEvalProfile.
 
         Returns:
             str: Human-readable string showing config and task counts.
@@ -17686,7 +18073,7 @@ class GenAIEvalProfile:
         """
 
     @staticmethod
-    def model_validate(data: Dict[str, Any]) -> "GenAIEvalProfile":
+    def model_validate(data: Dict[str, Any]) -> "AgentEvalProfile":
         """Load profile from dictionary.
 
         Args:
@@ -17694,18 +18081,18 @@ class GenAIEvalProfile:
                 Dictionary representation of the profile.
 
         Returns:
-            GenAIEvalProfile: Reconstructed profile instance.
+            AgentEvalProfile: Reconstructed profile instance.
 
         Raises:
             ProfileError: If dictionary structure is invalid or missing required fields.
 
         Example:
             >>> data = {"config": {...}, "assertion_tasks": [...]}
-            >>> profile = GenAIEvalProfile.model_validate(data)
+            >>> profile = AgentEvalProfile.model_validate(data)
         """
 
     @staticmethod
-    def model_validate_json(json_string: str) -> "GenAIEvalProfile":
+    def model_validate_json(json_string: str) -> "AgentEvalProfile":
         """Load profile from JSON string.
 
         Args:
@@ -17713,18 +18100,18 @@ class GenAIEvalProfile:
                 JSON string representation of the profile.
 
         Returns:
-            GenAIEvalProfile: Reconstructed profile instance.
+            AgentEvalProfile: Reconstructed profile instance.
 
         Raises:
             ProfileError: If JSON is malformed or invalid.
 
         Example:
             >>> json_str = '{"config": {...}, "assertion_tasks": [...]}'
-            >>> profile = GenAIEvalProfile.model_validate_json(json_str)
+            >>> profile = AgentEvalProfile.model_validate_json(json_str)
         """
 
     @staticmethod
-    def from_file(path: Path) -> "GenAIEvalProfile":
+    def from_file(path: Path) -> "AgentEvalProfile":
         """Load profile from JSON file.
 
         Args:
@@ -17732,13 +18119,13 @@ class GenAIEvalProfile:
                 Path to the JSON file containing the profile.
 
         Returns:
-            GenAIEvalProfile: Loaded profile instance.
+            AgentEvalProfile: Loaded profile instance.
 
         Raises:
             ProfileError: If file doesn't exist, is malformed, or invalid.
 
         Example:
-            >>> profile = GenAIEvalProfile.from_file(Path("my_profile.json"))
+            >>> profile = AgentEvalProfile.from_file(Path("my_profile.json"))
         """
 
     def update_config_args(
@@ -17747,7 +18134,7 @@ class GenAIEvalProfile:
         name: Optional[str] = None,
         version: Optional[str] = None,
         uid: Optional[str] = None,
-        alert_config: Optional[GenAIAlertConfig] = None,
+        alert_config: Optional[AgentAlertConfig] = None,
     ) -> None:
         """Update profile configuration in-place.
 
@@ -17764,13 +18151,13 @@ class GenAIEvalProfile:
                 New model version. If None, keeps existing value.
             uid (Optional[str]):
                 New unique identifier. If None, keeps existing value.
-            alert_config (Optional[GenAIAlertConfig]):
+            alert_config (Optional[AgentAlertConfig]):
                 New alert configuration. If None, keeps existing value.
 
         Example:
             >>> profile.update_config_args(
             ...     space="production",
-            ...     alert_config=GenAIAlertConfig(schedule="0 */6 * * *")
+            ...     alert_config=AgentAlertConfig(schedule="0 */6 * * *")
             ... )
         """
 
@@ -17879,7 +18266,7 @@ class Drifter:
             CustomDriftProfile
         """
 
-    def create_drift_profile(  # type: ignore
+    def create_drift_profile(  # type: ignore[misc]
         self,
         data: Any,
         config: Optional[Union[SpcDriftConfig, PsiDriftConfig, CustomMetricDriftConfig]] = None,
@@ -17904,18 +18291,18 @@ class Drifter:
             SpcDriftProfile, PsiDriftProfile or CustomDriftProfile
         """
 
-    def create_genai_drift_profile(
+    def create_agent_drift_profile(
         self,
-        config: GenAIEvalConfig,
+        config: AgentEvalConfig,
         tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask],
         alias: Optional[str] = None,
-    ) -> GenAIEvalProfile:
-        """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
+    ) -> AgentEvalProfile:
+        """Initialize a AgentEvalProfile for LLM evaluation and drift detection.
 
         LLM evaluations are run asynchronously on the scouter server.
 
         Overview:
-            GenAI evaluations are defined using assertion tasks and LLM judge tasks.
+            Agent evaluations are defined using assertion tasks and LLM judge tasks.
             Assertion tasks evaluate specific metrics based on model responses, and do not require
             the use of an LLM judge or extra call. It is recommended to use assertion tasks whenever possible
             to reduce cost and latency. LLM judge tasks leverage an additional LLM call to evaluate
@@ -17924,7 +18311,7 @@ class Drifter:
 
 
         Args:
-            config (GenAIEvalConfig):
+            config (AgentEvalConfig):
                 The configuration for the GenAI drift profile containing space, name,
                 version, and alert settings.
             tasks (List[LLMJudgeTask | AssertionTask]):
@@ -17935,7 +18322,7 @@ class Drifter:
                 Optional alias for the profile.
 
         Returns:
-            GenAIEvalProfile: Configured profile ready for GenAI drift monitoring.
+            AgentEvalProfile: Configured profile ready for GenAI drift monitoring.
 
         Raises:
             ProfileError: If workflow validation fails, metrics are empty when no
@@ -17944,7 +18331,7 @@ class Drifter:
         Examples:
             Basic usage with metrics only:
 
-            >>> config = GenAIEvalConfig("my_space", "my_model", "1.0")
+            >>> config = AgentEvalConfig("my_space", "my_model", "1.0")
             >>>  tasks = [
             ...     LLMJudgeTask(
             ...         id="response_relevance",
@@ -17955,7 +18342,7 @@ class Drifter:
             ...         description="Ensure relevance score >= 7"
             ...     )
             ... ]
-            >>> profile = Drifter().create_genai_drift_profile(config, tasks)
+            >>> profile = Drifter().create_agent_drift_profile(config, tasks)
 
         """
 
@@ -18007,7 +18394,7 @@ class Drifter:
     def compute_drift(
         self,
         data: List[EvalRecord],
-        drift_profile: GenAIEvalProfile,
+        drift_profile: AgentEvalProfile,
         data_type: Optional[ScouterDataType] = None,
     ) -> "EvalResultSet":
         """Create a drift map from data.
@@ -18015,7 +18402,7 @@ class Drifter:
         Args:
             data (List[EvalRecord]):
                 Data to create a data profile from. Data can be a list of EvalRecord.
-            profile (GenAIEvalProfile):
+            profile (AgentEvalProfile):
                 Drift profile to use to compute drift map
             data_type:
                 Optional data type. Inferred from data if not provided.
@@ -18024,10 +18411,10 @@ class Drifter:
             EvalResultSet
         """
 
-    def compute_drift(  # type: ignore
+    def compute_drift(  # type: ignore[misc]
         self,
         data: Any,
-        drift_profile: Union[SpcDriftProfile, PsiDriftProfile, GenAIEvalProfile],
+        drift_profile: Union[SpcDriftProfile, PsiDriftProfile, AgentEvalProfile],
         data_type: Optional[ScouterDataType] = None,
     ) -> Union[SpcDriftMap, PsiDriftMap, EvalResultSet]:
         """Create a drift map from data.
@@ -18119,7 +18506,7 @@ class EvalDataset:
         Args:
             records (List[EvalRecord]):
                 List of LLM evaluation records to be evaluated.
-            tasks (List[LLMJudgeTask | AssertionTask]):
+            tasks (List[LLMJudgeTask | AssertionTask | AgentAssertionTask]):
                 List of evaluation tasks to apply to the records.
         """
 
@@ -19697,7 +20084,6 @@ class ServiceType:
     Api: "ServiceType"
     Mcp: "ServiceType"
     Agent: "ServiceType"
-    Workflow: "ServiceType"
 
 class CardRecord:
     uid: Optional[str]
@@ -20591,7 +20977,7 @@ class PromptCard:
         version: Optional[str] = None,
         uid: Optional[str] = None,
         tags: List[str] = [],
-        eval_profile: Optional[GenAIEvalProfile] = None,
+        eval_profile: Optional[AgentEvalProfile] = None,
     ) -> None:
         """Creates a `PromptCard`.
 
@@ -20614,7 +21000,7 @@ class PromptCard:
             tags (List[str]):
                 Tags to associate with `PromptCard`. Can be a dictionary of strings or
                 a `Tags` object.
-            eval_profile (GenAIEvalProfile | None):
+            eval_profile (AgentEvalProfile | None):
                 Evaluation profile to associate with the prompt.
         Example:
         ```python
@@ -20735,9 +21121,9 @@ class PromptCard:
         self,
         alias: str,
         tasks: Sequence[LLMJudgeTask | AssertionTask | TraceAssertionTask | AgentAssertionTask],
-        config: Optional[GenAIEvalConfig] = None,
+        config: Optional[AgentEvalConfig] = None,
     ) -> None:
-        """Initialize a GenAIEvalProfile for LLM evaluation and drift detection.
+        """Initialize a AgentEvalProfile for LLM evaluation and drift detection.
 
         LLM evaluations are run asynchronously on the scouter server.
 
@@ -20758,12 +21144,12 @@ class PromptCard:
                 List of evaluation tasks to include in the profile. Can contain
                 a mix of LLM judge tasks, assertion tasks, trace assertion tasks, and agent assertion tasks.
 
-            config (GenAIEvalConfig | None):
+            config (AgentEvalConfig | None):
                 The configuration for the GenAI drift profile containing space, name,
                 version, and alert settings.
 
         Returns:
-            GenAIEvalProfile: Configured profile ready for GenAI drift monitoring.
+            AgentEvalProfile: Configured profile ready for GenAI drift monitoring.
 
         Raises:
             ProfileError: If workflow validation fails, metrics are empty when no
@@ -20772,7 +21158,7 @@ class PromptCard:
         Examples:
             Basic usage with metrics only:
 
-            >>> config = GenAIEvalConfig("my_space", "my_model", "1.0")
+            >>> config = AgentEvalConfig("my_space", "my_model", "1.0")
             >>>  tasks = [
             ...     LLMJudgeTask(
             ...         id="response_relevance",
@@ -20783,25 +21169,25 @@ class PromptCard:
             ...         description="Ensure relevance score >= 7"
             ...     )
             ... ]
-            >>> profile = Drifter().create_genai_drift_profile(config, tasks)
+            >>> profile = Drifter().create_agent_drift_profile(config, tasks)
 
         """
 
     @property
-    def eval_profile(self) -> "Optional[GenAIEvalProfile]":
-        """Returns the GenAIEvalProfile associated with this prompt card, if it exists.
+    def eval_profile(self) -> "Optional[AgentEvalProfile]":
+        """Returns the AgentEvalProfile associated with this prompt card, if it exists.
 
         Returns:
-            Optional[GenAIEvalProfile]
+            Optional[AgentEvalProfile]
         """
 
     @eval_profile.setter
-    def eval_profile(self, eval_profile: "GenAIEvalProfile") -> None:
+    def eval_profile(self, eval_profile: "AgentEvalProfile") -> None:
         """Set the drift profile map for the prompt card.
 
         Args:
-            eval_profile (GenAIEvalProfile):
-                The GenAIEvalProfile to set for the prompt card.
+            eval_profile (AgentEvalProfile):
+                The AgentEvalProfile to set for the prompt card.
         """
 
     @staticmethod
@@ -25600,10 +25986,13 @@ __all__ = [
     "AdkTranscription",
     "AdkUsageMetadata",
     "Agent",
+    "AgentAlertConfig",
     "AgentAssertion",
     "AgentAssertionTask",
     "AgentCapabilities",
     "AgentCardSignature",
+    "AgentEvalConfig",
+    "AgentEvalProfile",
     "AgentExtension",
     "AgentInterface",
     "AgentProvider",
@@ -25646,6 +26035,7 @@ __all__ = [
     "Base64PDFSource",
     "BatchConfig",
     "Behavior",
+    "Bifrost",
     "BinnedMetric",
     "BinnedMetricStats",
     "BinnedMetrics",
@@ -25722,6 +26112,8 @@ __all__ = [
     "DataSplitter",
     "DataStoreSpec",
     "DataType",
+    "DatasetClient",
+    "DatasetProducer",
     "DependencyKind",
     "DependentVars",
     "DeviceCodeFlow",
@@ -25795,9 +26187,6 @@ __all__ = [
     "GeminiSettings",
     "GeminiThinkingConfig",
     "GeminiTool",
-    "GenAIAlertConfig",
-    "GenAIEvalConfig",
-    "GenAIEvalProfile",
     "GenerateContentResponse",
     "GenerationConfig",
     "GetProfileRequest",
@@ -25941,6 +26330,7 @@ __all__ = [
     "PsiRecord",
     "QuantileBinning",
     "Quantiles",
+    "QueryResult",
     "Queue",
     "QueueFeature",
     "RabbitMQConfig",
@@ -26027,6 +26417,7 @@ __all__ = [
     "Sturges",
     "Suffix",
     "SystemPrompt",
+    "TableConfig",
     "TagRecord",
     "TagsResponse",
     "Task",
@@ -26099,11 +26490,13 @@ __all__ = [
     "Workflow",
     "WorkflowResult",
     "WorkflowTask",
+    "WriteConfig",
     "WriteLevel",
     "XGBoostModel",
     "download_artifact",
     "download_service",
     "execute_agent_assertion_tasks",
+    "extract_span_context_from_headers",
     "flush_tracer",
     "generate_feature_schema",
     "get_experiment_metrics",

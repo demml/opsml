@@ -1,4 +1,5 @@
 #### begin imports ####
+# ty:ignore[unresolved-import]
 
 from pathlib import Path
 from typing import (
@@ -11,16 +12,17 @@ from typing import (
     Sequence,
     TypeVar,
     Union,
+    overload,
 )
 
-from ..genai.potato import Prompt
+from ..agent.potato import Prompt
 from ..header import SerializedType
 from .scouter import (
+    AgentEvalProfile,
     ComparisonResults,
     EvalRecord,
     EvalResults,
     EvaluationConfig,
-    GenAIEvalProfile,
     ScouterQueue,
 )
 from .tracing import BaseTracer, TraceSpan
@@ -150,6 +152,9 @@ class ComparisonOperator:
     """Is a negative number"""
     IsZero: "ComparisonOperator"
     """Is zero"""
+
+    SequenceMatches: "ComparisonOperator"
+    """Check that span sequence matches the expected ordered list."""
 
     ContainsAll: "ComparisonOperator"
     """Contains all specified elements"""
@@ -762,73 +767,66 @@ class SpanFilter:
         - Attribute values are internally wrapped for type safety
     """
 
-    class ByName:
+    class ByName(SpanFilter):
         """Filter spans by exact name match."""
 
         name: str
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        def __new__(cls, name: str) -> "SpanFilter.ByName": ...
 
-    class ByNamePattern:
+    class ByNamePattern(SpanFilter):
         """Filter spans by regex name pattern."""
 
         pattern: str
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        def __new__(cls, pattern: str) -> "SpanFilter.ByNamePattern": ...
 
-    class WithAttribute:
+    class WithAttribute(SpanFilter):
         """Filter spans with specific attribute key."""
 
         key: str
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        def __new__(cls, key: str) -> "SpanFilter.WithAttribute": ...
 
-    class WithAttributeValue:
+    class WithAttributeValue(SpanFilter):
         """Filter spans with specific attribute key-value pair."""
 
         key: str
-        value: object  # PyValueWrapper is internal, expose as object
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        value: Any
+        def __new__(cls, key: str, value: Any) -> "SpanFilter.WithAttributeValue": ...
 
-    class WithStatus:
+    class WithStatus(SpanFilter):
         """Filter spans by status code."""
 
         status: SpanStatus
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        def __new__(cls, status: SpanStatus) -> "SpanFilter.WithStatus": ...
 
-    class WithDuration:
+    class WithDuration(SpanFilter):
         """Filter spans with duration constraints."""
 
         min_ms: Optional[float]
         max_ms: Optional[float]
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        def __new__(
+            cls, min_ms: Optional[float] = None, max_ms: Optional[float] = None
+        ) -> "SpanFilter.WithDuration": ...
 
-    class Sequence:
+    class Sequence(SpanFilter):
         """Match a sequence of span names in order."""
 
         names: List[str]
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        def __new__(cls, names: List[str]) -> "SpanFilter.Sequence": ...
 
-    class And:
+    class And(SpanFilter):
         """Combine multiple filters with AND logic."""
 
-        filters: List[SpanFilter]
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        filters: List["SpanFilter"]
+        def __new__(cls, filters: List["SpanFilter"]) -> "SpanFilter.And": ...
 
-    class Or:
+    class Or(SpanFilter):
         """Combine multiple filters with OR logic."""
 
-        filters: List[SpanFilter]
-        def and_(self, other: SpanFilter) -> SpanFilter: ...
-        def or_(self, other: SpanFilter) -> SpanFilter: ...
+        filters: List["SpanFilter"]
+        def __new__(cls, filters: List["SpanFilter"]) -> "SpanFilter.Or": ...
 
     @staticmethod
-    def by_name(name: str) -> "SpanFilter":
+    def by_name(name: str) -> "SpanFilter.ByName":
         """Filter spans by exact name match.
 
         Args:
@@ -840,7 +838,7 @@ class SpanFilter:
         """
 
     @staticmethod
-    def by_name_pattern(pattern: str) -> "SpanFilter":
+    def by_name_pattern(pattern: str) -> "SpanFilter.ByNamePattern":
         """Filter spans by regex name pattern.
 
         Args:
@@ -852,7 +850,7 @@ class SpanFilter:
         """
 
     @staticmethod
-    def with_attribute(key: str) -> "SpanFilter":
+    def with_attribute(key: str) -> "SpanFilter.WithAttribute":
         """Filter spans that have a specific attribute key.
 
         Args:
@@ -864,7 +862,7 @@ class SpanFilter:
         """
 
     @staticmethod
-    def with_attribute_value(key: str, value: "SerializedType") -> "SpanFilter":
+    def with_attribute_value(key: str, value: "SerializedType") -> "SpanFilter.WithAttributeValue":
         """Filter spans that have a specific attribute key-value pair.
 
         Args:
@@ -878,7 +876,7 @@ class SpanFilter:
         """
 
     @staticmethod
-    def with_status(status: SpanStatus) -> "SpanFilter":
+    def with_status(status: SpanStatus) -> "SpanFilter.WithStatus":
         """Filter spans by execution status.
 
         Args:
@@ -890,7 +888,7 @@ class SpanFilter:
         """
 
     @staticmethod
-    def with_duration(min_ms: Optional[float] = None, max_ms: Optional[float] = None) -> "SpanFilter":
+    def with_duration(min_ms: Optional[float] = None, max_ms: Optional[float] = None) -> "SpanFilter.WithDuration":
         """Filter spans by duration constraints.
 
         Args:
@@ -905,7 +903,7 @@ class SpanFilter:
         """
 
     @staticmethod
-    def sequence(names: List[str]) -> "SpanFilter":
+    def sequence(names: List[str]) -> "SpanFilter.Sequence":
         """Filter for spans appearing in specific order.
 
         Args:
@@ -1046,51 +1044,86 @@ class TraceAssertion:
         - Trace-level assertions evaluate the entire trace without filtering
     """
 
-    class SpanSequence:
+    class SpanSequence(TraceAssertion):
         """Extracts a sequence of span names in order."""
 
         span_names: List[str]
+        def __new__(cls, span_names: List[str]) -> "TraceAssertion.SpanSequence": ...
 
-    class SpanSet:
+    class SpanSet(TraceAssertion):
         """Checks for existence of all specified span names."""
 
         span_names: List[str]
+        def __new__(cls, span_names: List[str]) -> "TraceAssertion.SpanSet": ...
 
-    class SpanCount:
+    class SpanCount(TraceAssertion):
         """Counts spans matching a filter."""
 
         filter: SpanFilter
+        def __new__(cls, filter: SpanFilter) -> "TraceAssertion.SpanCount": ...
 
-    class SpanExists:
+    class SpanExists(TraceAssertion):
         """Checks if any span matches a filter."""
 
         filter: SpanFilter
+        def __new__(cls, filter: SpanFilter) -> "TraceAssertion.SpanExists": ...
 
-    class SpanAttribute:
+    class SpanAttribute(TraceAssertion):
         """Extracts attribute value from span matching filter."""
 
         filter: SpanFilter
         attribute_key: str
+        def __new__(cls, filter: SpanFilter, attribute_key: str) -> "TraceAssertion.SpanAttribute": ...
 
-    class SpanDuration:
+    class SpanDuration(TraceAssertion):
         """Extracts duration of span matching filter."""
 
         filter: SpanFilter
+        def __new__(cls, filter: SpanFilter) -> "TraceAssertion.SpanDuration": ...
 
-    class SpanAggregation:
+    class SpanAggregation(TraceAssertion):
         """Aggregates numeric attribute across filtered spans."""
 
         filter: SpanFilter
         attribute_key: str
         aggregation: AggregationType
+        def __new__(
+            cls, filter: SpanFilter, attribute_key: str, aggregation: AggregationType
+        ) -> "TraceAssertion.SpanAggregation": ...
 
-    class TraceAttribute:
+    class TraceAttribute(TraceAssertion):
         """Extracts trace-level attribute value."""
 
         attribute_key: str
+        def __new__(cls, attribute_key: str) -> "TraceAssertion.TraceAttribute": ...
+
+    class TraceDuration(TraceAssertion):
+        """Get total duration of the entire trace."""
+
+        def __new__(cls) -> "TraceAssertion.TraceDuration": ...
+
+    class TraceSpanCount(TraceAssertion):
+        """Count total spans in the trace."""
+
+        def __new__(cls) -> "TraceAssertion.TraceSpanCount": ...
+
+    class TraceErrorCount(TraceAssertion):
+        """Count spans with errors in the trace."""
+
+        def __new__(cls) -> "TraceAssertion.TraceErrorCount": ...
+
+    class TraceServiceCount(TraceAssertion):
+        """Count unique services in the trace."""
+
+        def __new__(cls) -> "TraceAssertion.TraceServiceCount": ...
+
+    class TraceMaxDepth(TraceAssertion):
+        """Get maximum span depth in the trace."""
+
+        def __new__(cls) -> "TraceAssertion.TraceMaxDepth": ...
 
     @staticmethod
-    def span_sequence(span_names: List[str]) -> "TraceAssertion":
+    def span_sequence(span_names: List[str]) -> "TraceAssertion.SpanSequence":
         """Assert spans appear in specific order.
 
         Args:
@@ -1103,7 +1136,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_set(span_names: List[str]) -> "TraceAssertion":
+    def span_set(span_names: List[str]) -> "TraceAssertion.SpanSet":
         """Assert all specified spans exist (order independent).
 
         Args:
@@ -1116,7 +1149,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_count(filter: SpanFilter) -> "TraceAssertion":
+    def span_count(filter: SpanFilter) -> "TraceAssertion.SpanCount":
         """Count spans matching the filter.
 
         Args:
@@ -1129,7 +1162,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_exists(filter: SpanFilter) -> "TraceAssertion":
+    def span_exists(filter: SpanFilter) -> "TraceAssertion.SpanExists":
         """Check if any span matches the filter.
 
         Args:
@@ -1142,7 +1175,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_attribute(filter: SpanFilter, attribute_key: str) -> "TraceAssertion":
+    def span_attribute(filter: SpanFilter, attribute_key: str) -> "TraceAssertion.SpanAttribute":
         """Get attribute value from span matching filter.
 
         Args:
@@ -1157,7 +1190,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_duration(filter: SpanFilter) -> "TraceAssertion":
+    def span_duration(filter: SpanFilter) -> "TraceAssertion.SpanDuration":
         """Get duration of span matching filter.
 
         Args:
@@ -1170,7 +1203,9 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def span_aggregation(filter: SpanFilter, attribute_key: str, aggregation: AggregationType) -> "TraceAssertion":
+    def span_aggregation(
+        filter: SpanFilter, attribute_key: str, aggregation: AggregationType
+    ) -> "TraceAssertion.SpanAggregation":
         """Aggregate numeric attribute across filtered spans.
 
         Args:
@@ -1187,7 +1222,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def trace_duration() -> "TraceAssertion":
+    def trace_duration() -> "TraceAssertion.TraceDuration":
         """Get total duration of the entire trace.
 
         Returns:
@@ -1196,7 +1231,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def trace_span_count() -> "TraceAssertion":
+    def trace_span_count() -> "TraceAssertion.TraceSpanCount":
         """Count total spans in the trace.
 
         Returns:
@@ -1205,7 +1240,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def trace_error_count() -> "TraceAssertion":
+    def trace_error_count() -> "TraceAssertion.TraceErrorCount":
         """Count spans with error status in the trace.
 
         Returns:
@@ -1214,7 +1249,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def trace_service_count() -> "TraceAssertion":
+    def trace_service_count() -> "TraceAssertion.TraceServiceCount":
         """Count unique services involved in the trace.
 
         Returns:
@@ -1223,7 +1258,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def trace_max_depth() -> "TraceAssertion":
+    def trace_max_depth() -> "TraceAssertion.TraceMaxDepth":
         """Get maximum nesting depth of span tree.
 
         Returns:
@@ -1232,7 +1267,7 @@ class TraceAssertion:
         """
 
     @staticmethod
-    def trace_attribute(attribute_key: str) -> "TraceAssertion":
+    def trace_attribute(attribute_key: str) -> "TraceAssertion.TraceAttribute":
         """Get trace-level attribute value.
 
         Args:
@@ -1242,6 +1277,19 @@ class TraceAssertion:
         Returns:
             TraceAssertion that extracts the trace attribute.
             Use with appropriate operators for the value type.
+        """
+
+    @staticmethod
+    def attribute_filter(key: str, task: "AttributeFilterTask", mode: "MultiResponseMode") -> "TraceAssertion":
+        """Filter spans by attribute and apply assertion to collected spans.
+
+        Args:
+            key (str):
+                Attribute key to filter spans.
+            task (AttributeFilterTask):
+                Assertion task to apply to the filtered spans.
+            mode (MultiResponseMode):
+                Mode to handle multiple spans matching the filter (e.g., apply to all, any).
         """
 
 class TraceAssertionTask:
@@ -1834,6 +1882,7 @@ class AgentAssertionTask:
         depends_on: Optional[List[str]] = None,
         condition: Optional[bool] = None,
         provider: Optional[Any] = None,
+        context_path: Optional[str] = None,
     ) -> None:
         """Create an AgentAssertionTask.
 
@@ -1855,6 +1904,9 @@ class AgentAssertionTask:
             provider (Optional[Provider]):
                 Optional LLM provider hint (e.g. Provider.GoogleAdk) for
                 accurate response parsing.
+            context_path (Optional[str]):
+                Dot-notation path to extract a sub-field from the context
+                before evaluation (e.g. ``"response"``).
 
         Raises:
             TypeError: If expected_value is not JSON-serializable or if
@@ -2125,30 +2177,37 @@ class EvalMetrics:
 
     Attributes:
         overall_pass_rate (float):
-            Weighted pass rate across all datasets and scenarios (0–1).
+            Average of output quality and internal workflow pass rates (0–1).
         dataset_pass_rates (Dict[str, float]):
-            Per-alias (sub-agent) pass rate (0–1), keyed by alias name.
+            Per-alias workflow pass rate (0–1), keyed by alias name.
         scenario_pass_rate (float):
-            Fraction of scenarios that fully passed (all tasks passed) (0–1).
+            Agent output matched expected results (0–1).
+        workflow_pass_rate (float):
+            Internal agent checks passed, averaged across aliases (0–1).
+            Only present when at least one alias has workflow data.
         total_scenarios (int):
             Total number of scenarios evaluated.
         passed_scenarios (int):
-            Number of scenarios where every task passed.
+            Number of scenarios where output matched expectations.
         scenario_task_pass_rates (Dict[str, Dict[str, float]]):
             Per-scenario, per-task pass rates. Maps scenario_id → task_id → pass_rate.
     """
 
     @property
     def overall_pass_rate(self) -> float:
-        """Weighted pass rate across all datasets and scenarios (0–1)."""
+        """Average of output quality and internal workflow pass rates (0–1)."""
 
     @property
     def dataset_pass_rates(self) -> Dict[str, float]:
-        """Per-alias pass rate (0–1), keyed by alias name."""
+        """Per-alias workflow pass rate (0–1), keyed by alias name."""
 
     @property
     def scenario_pass_rate(self) -> float:
-        """Fraction of scenarios that fully passed (0–1)."""
+        """Agent output matched expected results (0–1)."""
+
+    @property
+    def workflow_pass_rate(self) -> float:
+        """Internal agent checks passed, averaged across aliases (0–1)."""
 
     @property
     def total_scenarios(self) -> int:
@@ -2156,7 +2215,7 @@ class EvalMetrics:
 
     @property
     def passed_scenarios(self) -> int:
-        """Number of scenarios where every task passed."""
+        """Number of scenarios where output matched expectations."""
 
     @property
     def scenario_task_pass_rates(self) -> Dict[str, Dict[str, float]]:
@@ -2513,11 +2572,11 @@ class ScenarioEvalResults:
             RuntimeError: If comparison computation fails.
         """
 
-    def as_table(self, show_datasets: bool = False) -> None:
+    def as_table(self, show_workflow: bool = False) -> None:
         """Print a full evaluation summary (metrics + scenario table) to stdout.
 
         Args:
-            show_datasets: If True, also print per-dataset EvalResults tables.
+            show_workflow: If True, also print per-dataset workflow summary tables.
         """
 
 class EvalScenario:
@@ -2695,7 +2754,11 @@ class TasksFile:
     def __next__(self) -> AssertionTask | LLMJudgeTask | TraceAssertionTask:
         """Return the next task in the file, or raise StopIteration when done."""
 
-    def __getitem__(
+    @overload
+    def __getitem__(self, index: int) -> AssertionTask | LLMJudgeTask | TraceAssertionTask: ...
+    @overload
+    def __getitem__(self, index: slice) -> List[AssertionTask | LLMJudgeTask | TraceAssertionTask]: ...
+    def __getitem__(  # type: ignore[misc]
         self, index: int | slice
     ) -> AssertionTask | LLMJudgeTask | TraceAssertionTask | List[AssertionTask | LLMJudgeTask | TraceAssertionTask]:
         """Get task(s) by index or slice."""
@@ -2754,6 +2817,23 @@ class EvalScenarios:
     def model_validate_json(json_string: str) -> "EvalScenarios":
         """Deserialize from a JSON string."""
 
+    @staticmethod
+    def from_path(path: Path) -> "EvalScenarios":
+        """Load eval scenarios from a file.
+
+        Supports ``.jsonl`` (one scenario per line with flat task list),
+        ``.json`` (array or ``{"collection_id": "...", "scenarios": [...]}``
+        wrapper), and ``.yaml``/``.yml``.
+
+        Tasks in the file use a flat list with a ``task_type`` discriminator
+        (``"Assertion"``, ``"LLMJudge"``, ``"TraceAssertion"``,
+        ``"AgentAssertion"``). If no ``collection_id`` is present a new UUID7
+        is generated automatically.
+
+        Args:
+            path: Path to the scenarios file.
+        """
+
 class EvalRunner:
     """Stateful evaluation engine that orchestrates scenario evaluation.
 
@@ -2764,7 +2844,7 @@ class EvalRunner:
 
     Args:
         scenarios: List of ``EvalScenario`` instances to evaluate.
-        profiles: Map of alias → ``GenAIEvalProfile`` for sub-agent evaluation.
+        profiles: Map of alias → ``AgentEvalProfile`` for sub-agent evaluation.
     """
 
     @property
@@ -2774,12 +2854,12 @@ class EvalRunner:
     def __init__(
         self,
         scenarios: "EvalScenarios",
-        profiles: Dict[str, "GenAIEvalProfile"],
+        profiles: Dict[str, "AgentEvalProfile"],
     ) -> None: ...
     def collect_scenario_data(
         self,
         records: Dict[str, List["EvalRecord"]],
-        response: str,
+        response: Any,
         scenario: "EvalScenario",
     ) -> None:
         """Populate scenario data for evaluation."""

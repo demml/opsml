@@ -10,7 +10,7 @@ use scouter_client::DataProfile;
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-#[pyclass(extends=DataInterface, subclass)]
+#[pyclass(extends=DataInterface, subclass, skip_from_py_object)]
 pub struct SqlData {}
 
 #[pymethods]

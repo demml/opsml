@@ -15,7 +15,7 @@ pub fn add_alert_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<AlertCondition>()?;
     m.add_class::<CustomMetricAlertConfig>()?;
     m.add_class::<AlertCondition>()?;
-    m.add_class::<GenAIAlertConfig>()?;
+    m.add_class::<AgentAlertConfig>()?;
     m.add_class::<SlackDispatchConfig>()?;
     m.add_class::<OpsGenieDispatchConfig>()?;
     m.add_class::<ConsoleDispatchConfig>()?;

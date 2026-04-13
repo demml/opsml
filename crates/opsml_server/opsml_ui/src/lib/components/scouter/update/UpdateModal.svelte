@@ -1,11 +1,11 @@
 
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
-  import { validateSlack,validateCustomConfig, validateOpsGenie, getConfigParams, validatePsiConfig, validateSpcConfig, validateConsole, validateGenAIConfig } from './schema';
-  import type {SpcConfigParams, PsiConfigParams, CustomConfigParams, ConsoleConfigSchema, GenAIConfigParams} from './schema';
+  import { validateSlack,validateCustomConfig, validateOpsGenie, getConfigParams, validatePsiConfig, validateSpcConfig, validateConsole, validateAgentConfig } from './schema';
+  import type {SpcConfigParams, PsiConfigParams, CustomConfigParams, ConsoleConfigSchema, AgentConfigParams} from './schema';
   import type {SlackConfigSchema, OpsGenieConfigSchema, CustomConfigSchema, PsiConfigSchema} from './schema';
   import type { DriftConfigType,  DriftProfile,  UiProfile } from '../utils';
-  import { isSpcConfig, isCustomConfig, isPsiConfig, extractProfile, isGenAIConfig } from '../utils';
+  import { isSpcConfig, isCustomConfig, isPsiConfig, extractProfile, isAgentEvalConfig } from '../utils';
   import { getPsiThresholdKeyValue } from '$lib/components/scouter/psi/utils';
   import CustomFields from './CustomFields.svelte';
   import SpcFields from './SpcFields.svelte';
@@ -19,7 +19,7 @@
   import type { SlackDispatchConfig,  OpsGenieDispatchConfig, ConsoleDispatchConfig} from '../types';
   import { hasSlackConfig, hasOpsGenieConfig, hasConsoleConfig } from '../utils';
   import { type UpdateProfileRequest } from '../types';
-  import GenAIFields from './GenAIFields.svelte';
+  import AgentFields from './AgentFields.svelte';
   import type { RegistryType } from '$lib/utils';
 
 
@@ -61,7 +61,7 @@
   let customErrors = $state<Partial<Record<keyof CustomConfigSchema, string>>>({});
   let psiErrors = $state<Partial<Record<keyof PsiConfigSchema, string>>>({});
   let spcErrors = $state<Partial<Record<keyof SpcConfigParams, string>>>({});
-  let genAIErrors = $state<Partial<Record<keyof GenAIConfigParams, string>>>({});
+  let agentErrors = $state<Partial<Record<keyof AgentConfigParams, string>>>({});
 
   // config state
   let configParams = $state(getConfigParams(config));
@@ -142,17 +142,17 @@
       return true;
     }
 
-    case DriftType.GenAI: {
-       if (!isGenAIConfig(config)) return false;
+    case DriftType.Agent: {
+       if (!isAgentEvalConfig(config)) return false;
 
-        const genAIParams = configParams as GenAIConfigParams;
-        const validated = validateGenAIConfig(
-          genAIParams.schedule,
-          genAIParams.sample_ratio
+        const agentParams = configParams as AgentConfigParams;
+        const validated = validateAgentConfig(
+          agentParams.schedule,
+          agentParams.sample_ratio
         );
 
       if (!validated.success) {
-        genAIErrors = validated.errors ?? {};
+        agentErrors = validated.errors ?? {};
         return false;
       }
       return true;
@@ -287,7 +287,7 @@ function validateDispatchForm(): boolean {
   onOpenChange={(e) => (openState = e.open)}
   triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 text-sm"
   contentBase="card p-2 bg-surface-50 border-2 border-black shadow max-w-screen-xl w-[700px] overflow-visible"
-  backdropClasses="backdrop-blur-sm"
+  backdropClasses="bg-black/40"
   >
   {#snippet trigger()}Update Config{/snippet}
   {#snippet content()}
@@ -318,10 +318,10 @@ function validateDispatchForm(): boolean {
             errors={customErrors}
             updateCallback={updateParamCallback}
             />
-        {:else if driftType === DriftType.GenAI}
-          <GenAIFields
-            params={configParams as GenAIConfigParams}
-            errors={genAIErrors}
+        {:else if driftType === DriftType.Agent}
+          <AgentFields
+            params={configParams as AgentConfigParams}
+            errors={agentErrors}
             updateCallback={updateParamCallback}
             />
         {/if}

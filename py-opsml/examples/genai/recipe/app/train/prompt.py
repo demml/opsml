@@ -1,6 +1,6 @@
 from opsml.card import PromptCard
-from opsml.genai import Prompt
-from opsml.scouter.drift import GenAIAlertConfig, GenAIEvalConfig
+from opsml.agent import Prompt
+from opsml.scouter.drift import AgentAlertConfig, AgentEvalConfig
 from opsml.scouter import CommonCrons
 from app.models import Recipe  # type: ignore
 from .evaluation.tasks import tasks
@@ -46,9 +46,9 @@ def create_recipe_prompt_card() -> PromptCard:
 
     recipe_card.create_eval_profile(
         alias="recipe_metrics",
-        config=GenAIEvalConfig(
+        config=AgentEvalConfig(
             sample_ratio=1.0,
-            alert_config=GenAIAlertConfig(schedule=CommonCrons.Every6Hours),
+            alert_config=AgentAlertConfig(schedule=CommonCrons.Every6Hours),
         ),
         tasks=tasks,
     )

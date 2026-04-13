@@ -1,6 +1,8 @@
 # mypy: disable-error-code="attr-defined"
 # pylint: disable=no-name-in-module
 from .._opsml import (
+    AgentEvalConfig,
+    AgentEvalProfile,
     AlertThreshold,
     AssertionTask,
     CommonCrons,
@@ -11,6 +13,8 @@ from .._opsml import (
     CustomMetricDriftConfig,
     DataProfile,
     DataProfiler,
+    DatasetClient,
+    DatasetProducer,
     Doane,
     Drifter,
     EqualWidthBinning,
@@ -19,8 +23,6 @@ from .._opsml import (
     FeatureMap,
     Features,
     FreedmanDiaconis,
-    GenAIEvalConfig,
-    GenAIEvalProfile,
     GrpcConfig,
     HttpConfig,
     KafkaConfig,
@@ -33,6 +35,7 @@ from .._opsml import (
     PsiDriftMap,
     PsiDriftProfile,
     QuantileBinning,
+    QueryResult,
     Queue,
 )
 from .._opsml import QueueFeature as Feature
@@ -51,10 +54,13 @@ from .._opsml import (
     SpcFeatureDriftProfile,
     SquareRoot,
     Sturges,
+    TableConfig,
     TerrellScott,
+    WriteConfig,
 )
 from . import (
     alert,
+    bifrost,
     client,
     drift,
     evaluate,
@@ -66,9 +72,11 @@ from . import (
     types,
     util,
 )
+from .bifrost import Bifrost
 
 __all__ = [
     "alert",
+    "bifrost",
     "client",
     "drift",
     "evaluate",
@@ -122,9 +130,16 @@ __all__ = [
     "RabbitMQConfig",
     "RedisConfig",
     "AlertThreshold",
-    # genai
-    "GenAIEvalConfig",
-    "GenAIEvalProfile",
+    # bifrost
+    "Bifrost",
+    "DatasetClient",
+    "DatasetProducer",
+    "QueryResult",
+    "TableConfig",
+    "WriteConfig",
+    # agent
+    "AgentEvalConfig",
+    "AgentEvalProfile",
     "EvalRecord",
     "LLMJudgeTask",
     "AssertionTask",

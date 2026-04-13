@@ -16,7 +16,7 @@ from opsml import (
 )
 from opsml.model import ModelCardMetadata, ModelSaveKwargs
 from opsml.experiment import Experiment
-from opsml.scouter.drift import GenAIEvalProfile
+from opsml.scouter.drift import AgentEvalProfile
 from opsml.types import DriftArgs
 from utils import (  # type: ignore
     create_openai_chat_prompt,
@@ -38,7 +38,7 @@ from opsml.scouter.tracing import (
 )
 from opsml.scouter.transport import GrpcConfig
 from opsml.scouter.drift import (
-    GenAIEvalConfig,
+    AgentEvalConfig,
 )
 from opsml.logging import RustyLogger
 from opsml.scouter.queue import ScouterQueue
@@ -141,7 +141,7 @@ class PopulateHelper:
 
         prompt_card.create_eval_profile(
             alias="genai",
-            config=GenAIEvalConfig(),
+            config=AgentEvalConfig(),
             tasks=create_genai_tasks(),
         )
 

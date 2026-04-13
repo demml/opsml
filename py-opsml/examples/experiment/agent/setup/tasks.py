@@ -1,4 +1,4 @@
-from opsml.genai import Prompt
+from opsml.agent import Prompt
 from opsml.scouter.evaluate import (
     LLMJudgeTask,
     ComparisonOperator,

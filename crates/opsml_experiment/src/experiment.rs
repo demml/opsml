@@ -180,7 +180,7 @@ fn extract_code(
     Ok(())
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct Experiment {
     pub experiment: Py<PyAny>,
     pub registries: CardRegistries,

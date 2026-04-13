@@ -15,7 +15,7 @@ use tracing::{debug, instrument, warn};
 
 use crate::OnnxModelConverter;
 
-#[pyclass(extends=ModelInterface, subclass)]
+#[pyclass(extends=ModelInterface, subclass, skip_from_py_object)]
 #[derive(Debug)]
 pub struct OnnxModel {}
 

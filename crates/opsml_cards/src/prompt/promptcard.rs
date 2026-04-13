@@ -13,7 +13,7 @@ use pyo3::types::PyList;
 use scouter_client::AssertionTasks;
 use scouter_client::ProfileRequest;
 use scouter_client::TasksFile;
-use scouter_client::{DriftType, GenAIEvalConfig, GenAIEvalProfile};
+use scouter_client::{AgentEvalConfig, AgentEvalProfile, DriftType};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -43,7 +43,7 @@ pub fn deserialize_from_path<T: DeserializeOwned>(path: PathBuf) -> Result<T, Ca
     Ok(item)
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct PromptCardMetadata {
     #[pyo3(get, set)]
@@ -56,7 +56,7 @@ pub struct PromptCardMetadata {
     pub drift_profile_uri_map: Option<HashMap<String, DriftProfileUri>>,
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Clone)]
 pub struct PromptCard {
     pub prompt: Prompt,
@@ -95,7 +95,7 @@ pub struct PromptCard {
     pub opsml_version: String,
 
     #[pyo3(get, set)]
-    pub eval_profile: Option<GenAIEvalProfile>,
+    pub eval_profile: Option<AgentEvalProfile>,
 }
 
 impl ProfileExt for PromptCard {
@@ -177,7 +177,7 @@ impl PromptCard {
         name: Option<&str>,
         version: Option<&str>,
         tags: Option<Vec<String>>,
-        eval_profile: Option<GenAIEvalProfile>,
+        eval_profile: Option<AgentEvalProfile>,
     ) -> Result<Self, CardError> {
         let prompt = prompt.extract::<Prompt>().inspect_err(|e| {
             error!("Failed to extract prompt: {e}");
@@ -273,10 +273,10 @@ impl PromptCard {
         &mut self,
         alias: String,
         tasks: &Bound<'_, PyList>,
-        config: Option<GenAIEvalConfig>,
+        config: Option<AgentEvalConfig>,
     ) -> Result<(), CardError> {
         debug!("Creating eval profile");
-        self.eval_profile = Some(GenAIEvalProfile::new_py(tasks, config, Some(alias))?);
+        self.eval_profile = Some(AgentEvalProfile::new_py(tasks, config, Some(alias))?);
         Ok(())
     }
 
@@ -345,7 +345,7 @@ impl PromptCard {
 
 #[derive(Debug, Deserialize)]
 pub struct EvaluationConfig {
-    pub config: Option<GenAIEvalConfig>,
+    pub config: Option<AgentEvalConfig>,
     pub tasks: TasksFile,
     pub alias: String,
 }
@@ -382,12 +382,12 @@ impl PromptConfig {
             let tasks: AssertionTasks = AssertionTasks::from_tasks_file(evaluation.tasks);
 
             debug!(
-                "Building GenAIEvalProfile with alias and tasks: {} - tasks: {:?}",
+                "Building AgentEvalProfile with alias and tasks: {} - tasks: {:?}",
                 evaluation.alias, tasks
             );
-            let profile = GenAIEvalProfile::build_from_parts(config, tasks, Some(evaluation.alias))
+            let profile = AgentEvalProfile::build_from_parts(config, tasks, Some(evaluation.alias))
                 .inspect_err(|e| {
-                    error!("Failed to build GenAIEvalProfile: {e}");
+                    error!("Failed to build AgentEvalProfile: {e}");
                 })?;
             card.eval_profile = Some(profile);
         }
@@ -410,7 +410,7 @@ pub struct PromptCardInternal {
     pub created_at: DateTime<Utc>,
     pub is_card: bool,
     pub opsml_version: String,
-    pub eval_profile: Option<GenAIEvalProfile>,
+    pub eval_profile: Option<AgentEvalProfile>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -463,7 +463,7 @@ impl PromptCard {
         name: Option<&str>,
         version: Option<&str>,
         tags: Option<Vec<String>>,
-        eval_profile: Option<GenAIEvalProfile>,
+        eval_profile: Option<AgentEvalProfile>,
     ) -> Result<Self, CardError> {
         let registry_type = RegistryType::Prompt;
         let base_args = BaseArgs::create_args(name, space, version, None, &registry_type)?;
@@ -514,7 +514,7 @@ impl PromptCard {
         let relative_path = save_dir.join(alias.clone()).with_extension(Suffix::Json);
         let full_path = path.join(&relative_path);
 
-        let drift_type = DriftType::GenAI;
+        let drift_type = DriftType::Agent;
         profile.save_to_json(Some(full_path))?;
 
         drift_url_map.insert(
@@ -556,8 +556,8 @@ impl PromptCard {
             let file = std::fs::read_to_string(&filepath)?;
 
             match drift_profile_uri.drift_type {
-                DriftType::GenAI => {
-                    let profile = GenAIEvalProfile::model_validate_json(file);
+                DriftType::Agent => {
+                    let profile = AgentEvalProfile::model_validate_json(file);
                     self.eval_profile = Some(profile);
                 }
                 _ => {

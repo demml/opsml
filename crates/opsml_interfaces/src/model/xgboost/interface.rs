@@ -15,7 +15,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, instrument};
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct XGBoostModelInterfaceMetadata {
     #[pyo3(get)]
@@ -64,7 +64,7 @@ impl XGBoostModelInterfaceMetadata {
     }
 }
 
-#[pyclass(extends=ModelInterface, subclass)]
+#[pyclass(extends=ModelInterface, subclass, skip_from_py_object)]
 #[derive(Debug)]
 pub struct XGBoostModel {
     #[pyo3(get)]

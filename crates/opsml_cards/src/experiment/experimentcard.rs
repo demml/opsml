@@ -22,7 +22,7 @@ use serde::{
     ser::SerializeStruct,
 };
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct UidMetadata {
     #[pyo3(get, set)]
@@ -41,7 +41,7 @@ pub struct UidMetadata {
     pub experimentcard_uids: Vec<String>,
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct ExperimentCard {
     #[pyo3(get, set)]
     pub space: String,

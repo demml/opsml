@@ -13,7 +13,7 @@ use scouter_client::{DataProfile, DataProfiler};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-#[pyclass(extends=DataInterface, subclass)]
+#[pyclass(extends=DataInterface, subclass, skip_from_py_object)]
 #[derive(Debug)]
 pub struct PolarsData {
     #[pyo3(get)]

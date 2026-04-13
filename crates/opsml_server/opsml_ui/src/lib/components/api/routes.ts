@@ -34,12 +34,12 @@ export enum RoutePaths {
   SPC_DRIFT = "/opsml/api/scouter/drift/spc",
   PSI_DRIFT = "/opsml/api/scouter/drift/psi",
   CUSTOM_DRIFT = "/opsml/api/scouter/drift/custom",
-  // GenAI Evaluation
-  GENAI_EVAL_TASK_DRIFT = "/opsml/api/scouter/drift/genai/task",
-  GENAI_EVAL_WORKFLOW_DRIFT = "/opsml/api/scouter/drift/genai/workflow",
-  GENAI_EVAL_TASK_RECORD = "/opsml/api/scouter/genai/task",
-  GENAI_EVAL_RECORD_PAGE = "/opsml/api/scouter/genai/page/record",
-  GENAI_EVAL_WORKFLOW_PAGE = "/opsml/api/scouter/genai/page/workflow",
+  // Agent Evaluation
+  AGENT_EVAL_TASK_DRIFT = "/opsml/api/scouter/drift/agent/task",
+  AGENT_EVAL_WORKFLOW_DRIFT = "/opsml/api/scouter/drift/agent/workflow",
+  AGENT_EVAL_TASK_RECORD = "/opsml/api/scouter/agent/task",
+  AGENT_EVAL_RECORD_PAGE = "/opsml/api/scouter/agent/page/record",
+  AGENT_EVAL_WORKFLOW_PAGE = "/opsml/api/scouter/agent/page/workflow",
 
   DRIFT_PROFILE = "/opsml/api/scouter/profile",
   DRIFT_PROFILE_EXISTS = "/opsml/api/scouter/profile/exists",
@@ -105,17 +105,17 @@ export enum ServerPaths {
   SPC_DRIFT = "/api/scouter/drift/spc",
   PSI_DRIFT = "/api/scouter/drift/psi",
   CUSTOM_DRIFT = "/api/scouter/drift/custom",
-  GENAI_TASK_DRIFT = "/api/scouter/drift/genai/task",
-  GENAI_WORKFLOW_DRIFT = "/api/scouter/drift/genai/workflow",
+  AGENT_TASK_DRIFT = "/api/scouter/drift/agent/task",
+  AGENT_WORKFLOW_DRIFT = "/api/scouter/drift/agent/workflow",
 
   // drift alerts
   MONITORING_ALERTS = "/api/scouter/alerts",
   ACKNOWLEDGE_ALERT = "/api/scouter/alerts/acknowledge",
 
-  // genai
-  GENAI_EVAL_RECORD_PAGE = "/api/scouter/genai/page/record",
-  GENAI_EVAL_WORKFLOW_PAGE = "/api/scouter/genai/page/workflow",
-  GENAI_EVAL_TASK = "/api/scouter/genai/task",
+  // agent
+  AGENT_EVAL_RECORD_PAGE = "/api/scouter/agent/page/record",
+  AGENT_EVAL_WORKFLOW_PAGE = "/api/scouter/agent/page/workflow",
+  AGENT_EVAL_TASK = "/api/scouter/agent/task",
 
   // observability
   TRACE_METRICS = "/api/scouter/observability/trace/metrics",

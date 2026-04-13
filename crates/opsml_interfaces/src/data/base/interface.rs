@@ -20,7 +20,7 @@ use std::path::PathBuf;
 use tracing::debug;
 use tracing::instrument;
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct DataInterfaceMetadata {
     #[pyo3(get)]
@@ -145,7 +145,7 @@ pub fn check_dependent_vars(
     Ok(depen_vars)
 }
 
-#[pyclass(subclass)]
+#[pyclass(subclass, skip_from_py_object)]
 pub struct DataInterface {
     #[pyo3(get)]
     pub data: Option<Py<PyAny>>,

@@ -8,7 +8,7 @@
 <script lang="ts">
   import type { WorkflowWithAgent } from './types';
   import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-svelte';
-  import GenAIEvalWorkflowSideBar from '$lib/components/scouter/genai/workflow/GenAIEvalWorkflowSideBar.svelte';
+  import AgentEvalWorkflowSideBar from '$lib/components/scouter/agent/workflow/AgentEvalWorkflowSideBar.svelte';
 
   let {
     workflows,
@@ -184,7 +184,7 @@
   </div>
 
   {#if selectedWorkflow && isSelected}
-    <GenAIEvalWorkflowSideBar
+    <AgentEvalWorkflowSideBar
       selectedWorkflow={selectedWorkflow}
       profile={selectedWorkflow._profile}
       onClose={handleClosePanel}

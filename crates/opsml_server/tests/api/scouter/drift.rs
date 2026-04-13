@@ -77,7 +77,7 @@ async fn test_scouter_routes_custom_drift_features() {
 }
 
 #[tokio::test]
-async fn test_scouter_routes_genai_task_drift_metrics() {
+async fn test_scouter_routes_agent_task_drift_metrics() {
     let helper = TestHelper::new(None).await;
 
     let drift_request = DriftRequest {
@@ -91,7 +91,7 @@ async fn test_scouter_routes_genai_task_drift_metrics() {
     let query_string = serde_qs::to_string(&drift_request).unwrap();
     let request = Request::builder()
         .uri(format!(
-            "/opsml/api/scouter/drift/genai/task?{query_string}"
+            "/opsml/api/scouter/drift/agent/task?{query_string}"
         ))
         .method("GET")
         .body(Body::empty())
@@ -102,7 +102,7 @@ async fn test_scouter_routes_genai_task_drift_metrics() {
 }
 
 #[tokio::test]
-async fn test_scouter_routes_genai_workflow_drift_metrics() {
+async fn test_scouter_routes_agent_workflow_drift_metrics() {
     let helper = TestHelper::new(None).await;
 
     let drift_request = DriftRequest {
@@ -116,7 +116,7 @@ async fn test_scouter_routes_genai_workflow_drift_metrics() {
     let query_string = serde_qs::to_string(&drift_request).unwrap();
     let request = Request::builder()
         .uri(format!(
-            "/opsml/api/scouter/drift/genai/workflow?{query_string}"
+            "/opsml/api/scouter/drift/agent/workflow?{query_string}"
         ))
         .method("GET")
         .body(Body::empty())

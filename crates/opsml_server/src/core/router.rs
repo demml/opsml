@@ -1,3 +1,4 @@
+use crate::core::agent::route::get_agent_router;
 use crate::core::agentic::route::get_agentic_router;
 use crate::core::auth::middleware::auth_api_middleware;
 use crate::core::auth::route::get_auth_router;
@@ -7,7 +8,6 @@ use crate::core::debug::route::get_debug_router;
 use crate::core::docs::route::get_docs_router;
 use crate::core::experiment::route::get_experiment_router;
 use crate::core::files::route::get_file_router;
-use crate::core::genai::route::get_genai_router;
 use crate::core::health::route::get_health_router;
 use crate::core::middleware::event::event_middleware;
 use crate::core::middleware::metrics::track_metrics;
@@ -65,7 +65,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
     let auth_routes = get_auth_router(ROUTE_PREFIX).await?;
     let user_routes = get_user_router(ROUTE_PREFIX).await?;
     let scouter_routes = get_scouter_router(ROUTE_PREFIX).await?;
-    let genai_routes = get_genai_router(ROUTE_PREFIX).await?;
+    let agent_routes = get_agent_router(ROUTE_PREFIX).await?;
     let agentic_routes = get_agentic_router(ROUTE_PREFIX).await?;
     let docs_routes = get_docs_router(V1_PREFIX).await?;
     let capabilities_routes = get_capabilities_router(V1_PREFIX).await?;
@@ -78,7 +78,7 @@ pub async fn create_router(app_state: Arc<AppState>) -> Result<Router> {
         .merge(run_routes)
         .merge(user_routes)
         .merge(scouter_routes)
-        .merge(genai_routes)
+        .merge(agent_routes)
         .merge(agentic_routes)
         .route_layer(middleware::from_fn_with_state(
             app_state.clone(),

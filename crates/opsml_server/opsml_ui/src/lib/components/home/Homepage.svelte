@@ -27,9 +27,9 @@
     },
     {
       title: "Prompts",
-      description: "Create, test, and version GenAI prompts. Build consistent prompt templates for reliable AI interactions.",
+      description: "Create, test, and version agent prompts. Build consistent prompt templates for reliable AI interactions.",
       icon: NotebookText,
-      path: "/opsml/genai/prompt",
+      path: "/opsml/agent/prompt",
       color: "gradient-success"
     },
     {

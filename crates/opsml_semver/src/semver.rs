@@ -4,7 +4,7 @@ use semver::{BuildMetadata, Prerelease, Version};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use std::string::ToString;
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, PartialEq, Deserialize, Serialize, Clone)]
 pub enum VersionType {
     Major,

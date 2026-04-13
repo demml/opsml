@@ -1,7 +1,7 @@
 import { RegistryType } from "$lib/utils";
 import type { Prompt } from "$lib/components/genai/types";
 import type { DriftProfileUri } from "$lib/components/scouter/types";
-import type { GenAIEvalProfile } from "$lib/components/scouter/genai/types";
+import type { AgentEvalProfile } from "$lib/components/scouter/agent/types";
 
 export interface PromptCardMetadata {
   experimentcard_uid?: string;
@@ -22,7 +22,7 @@ export interface PromptCard {
   created_at: string; // ISO datetime string
   is_card: boolean;
   opsml_version: string;
-  eval_profile?: GenAIEvalProfile;
+  eval_profile?: AgentEvalProfile;
 }
 
 export function isPromptCard(obj: any): obj is PromptCard {

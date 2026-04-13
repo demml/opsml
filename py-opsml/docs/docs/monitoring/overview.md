@@ -92,7 +92,7 @@ registry.register_card(modelcard)
 
 **Note on nomenclature**: In the context of `PromptCards`, drift profiles are often referred to as evaluation profiles, since they are typically used to evaluate the performance of prompts over time.
 
-You can also create evaluation profiles for `PromptCards`. The only difference is that you will use the `create_eval_profile` method on the `PromptCard` instead of the `ModelInterface`. You can also provide a `GenAIEvalProfile` directly when creating the `PromptCard`.
+You can also create evaluation profiles for `PromptCards`. The only difference is that you will use the `create_eval_profile` method on the `PromptCard` instead of the `ModelInterface`. You can also provide a `AgentEvalProfile` directly when creating the `PromptCard`.
 
 For more information on GenAI Evaluations, refer to [LLM Monitoring documentation](https://docs.demml.io/scouter/docs/monitoring/genai/overview/).
 
@@ -100,7 +100,7 @@ For more information on GenAI Evaluations, refer to [LLM Monitoring documentatio
 | Name | Required | Description |
 | --- | --- | --- |
 | **alias** | Yes | The alias for the evaluation profile |
-| **config** | Yes | The GenAI drift config to use |
+| **config** | Yes | The Agent drift config to use |
 | **tasks** | Yes | The tasks to use for the evaluation profile. Must be a combination of `LLMJudgeTask` and `AssertionTask`. See [docs](https://docs.demml.io/scouter/docs/monitoring/genai/tasks/) |
 
 
@@ -108,13 +108,13 @@ For more information on GenAI Evaluations, refer to [LLM Monitoring documentatio
 
 ```python
 from opsml.scouter.evaluate import (
-    GenAIAlertConfig,
-    GenAIEvalConfig,
-    GenAIEvalProfile,
+    AgentAlertConfig,
+    AgentEvalConfig,
+    AgentEvalProfile,
     LLMJudgeTask,
 )
 from opsml.scouter.alert import AlertThreshold
-from opsml.genai import Score, Agent, Task, Workflow, Prompt
+from opsml.agent import Score, Agent, Task, Workflow, Prompt
 
 
 def create_reformulation_evaluation_prompt():
@@ -213,10 +213,10 @@ reformulation = LLMJudgeTask(
     description="Evaluate the quality of the query reformulation",
 )
 
-profile = GenAIEvalProfile(
-    config=GenAIEvalConfig( # name, space, version are auto-set when registering the card
+profile = AgentEvalProfile(
+    config=AgentEvalConfig( # name, space, version are auto-set when registering the card
         sample_ratio=1,
-        alert_config=GenAIAlertConfig(
+        alert_config=AgentAlertConfig(
             alert_condition=AlertCondition(
                 baseline_value=0.80,
                 alert_threshold=AlertThreshold.Below,
@@ -244,9 +244,9 @@ card = PromptCard(
 ### This is how you would create the evaluation profile on an existing PromptCard
 card.create_drift_profile(
     alias="genai_eval",
-    config=GenAIEvalConfig(
+    config=AgentEvalConfig(
         sample_ratio=1,
-        alert_config=GenAIAlertConfig(
+        alert_config=AgentAlertConfig(
             alert_condition=AlertCondition(
                 baseline_value=0.80, # (2)
                 alert_threshold=AlertThreshold.Below,  # (3)

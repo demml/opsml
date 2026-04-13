@@ -6,7 +6,7 @@ use std::fmt::Display;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 pub enum McpTransport {
     #[serde(alias = "HTTP", alias = "http")]
     Http,
@@ -25,7 +25,7 @@ impl Display for McpTransport {
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 pub enum McpCapability {
     #[serde(alias = "RESOURCES", alias = "resources")]
     Resources,
@@ -47,7 +47,7 @@ impl Display for McpCapability {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass]
+#[pyclass(from_py_object)]
 pub struct McpConfig {
     #[pyo3(get)]
     pub capabilities: Vec<McpCapability>,
@@ -71,7 +71,7 @@ impl McpConfig {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct McpServer {
     #[pyo3(get)]
     pub space: String,
@@ -98,7 +98,7 @@ impl McpServer {
     }
 }
 
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 struct McpIter {
     inner: std::vec::IntoIter<McpServer>,
 }
@@ -116,7 +116,7 @@ impl McpIter {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 pub struct McpServers {
     pub servers: Vec<McpServer>,
 }

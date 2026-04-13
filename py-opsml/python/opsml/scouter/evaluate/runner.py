@@ -74,7 +74,7 @@ class EvalOrchestrator:
         self._agent_fn = agent_fn
         self._engine = EvalRunner(
             scenarios=scenarios,
-            profiles=queue.genai_profiles(),
+            profiles=queue.agent_profiles(),
         )
 
     def execute_agent(self, scenario: EvalScenario) -> str:

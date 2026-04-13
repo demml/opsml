@@ -107,7 +107,7 @@ pub fn create_service_reloader(
 /// - An optional reloader that is responsible for reloading the ServiceCard and its associated
 /// resources when changes are detected
 /// The service and queue are put behind Arc RWLocks to ensure thread safety when updating using the reloader
-#[pyclass]
+#[pyclass(skip_from_py_object)]
 #[derive(Debug)]
 pub struct AppState {
     pub service: Arc<RwLock<Py<ServiceCard>>>,

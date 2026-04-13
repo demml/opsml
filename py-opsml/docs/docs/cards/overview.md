@@ -23,7 +23,7 @@ Cards are one of the primary data structures of opsml. All cards store specific 
   
 <span class="text-secondary">**PromptCard**</span>: 
 
-  - Stores prompt/genai-related information
+  - Stores prompt/agent-related information
   - Requires a `Prompt` 
   - Registered in the `PromptRegistry`
 

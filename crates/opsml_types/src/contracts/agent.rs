@@ -30,7 +30,7 @@ fn agent_current_version() -> String {
     "0.0.0".to_string()
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AgentProvider {
@@ -53,7 +53,7 @@ impl AgentProvider {
 }
 
 // should be all caps (JSONRPC, HTTP+JSON, GRPC) but we'll normalise it in the UI to be more flexible
-#[pyclass(eq, eq_int)]
+#[pyclass(eq, eq_int, from_py_object)]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum ProtocolBinding {
@@ -75,7 +75,7 @@ impl From<&str> for ProtocolBinding {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AgentInterface {
@@ -142,7 +142,7 @@ impl AgentInterface {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AgentExtension {
@@ -186,7 +186,7 @@ impl AgentExtension {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AgentCapabilities {
@@ -224,7 +224,7 @@ impl AgentCapabilities {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SecurityRequirement {
@@ -242,7 +242,7 @@ impl SecurityRequirement {
 
 /// Claude Agent Skill Standard
 /// Implements the Agent Skills specification from https://agentskills.io/specification
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AgentSkillStandard {
@@ -507,7 +507,7 @@ impl AgentSkillStandard {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AgentSkill {
@@ -567,7 +567,7 @@ impl AgentSkill {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "format", rename_all = "lowercase")]
 pub enum SkillFormat {
@@ -604,7 +604,7 @@ impl SkillFormat {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ApiKeySecurityScheme {
@@ -629,7 +629,7 @@ impl ApiKeySecurityScheme {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct HttpAuthSecurityScheme {
@@ -655,7 +655,7 @@ impl HttpAuthSecurityScheme {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct MtlsSecurityScheme {
@@ -674,7 +674,7 @@ impl MtlsSecurityScheme {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Oauth2SecurityScheme {
@@ -704,7 +704,7 @@ impl Oauth2SecurityScheme {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct OpenIdConnectSecurityScheme {
@@ -727,7 +727,7 @@ impl OpenIdConnectSecurityScheme {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged, rename_all = "camelCase")]
 #[allow(clippy::large_enum_variant)]
@@ -767,7 +767,7 @@ impl SecurityScheme {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct OAuthFlows {
@@ -807,7 +807,7 @@ impl OAuthFlows {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct AuthorizationCodeFlow {
@@ -848,7 +848,7 @@ impl AuthorizationCodeFlow {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ClientCredentialsFlow {
@@ -879,7 +879,7 @@ impl ClientCredentialsFlow {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct DeviceCodeFlow {
@@ -915,7 +915,7 @@ impl DeviceCodeFlow {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ImplicitAuthFlow {
@@ -946,7 +946,7 @@ impl ImplicitAuthFlow {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct PassWordAuthFlow {
@@ -977,7 +977,7 @@ impl PassWordAuthFlow {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct AgentCardSignature {
@@ -1006,7 +1006,7 @@ impl AgentCardSignature {
     }
 }
 
-#[pyclass]
+#[pyclass(from_py_object)]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct AgentSpec {

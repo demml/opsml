@@ -2,7 +2,7 @@
 
 The following shows how to use a `PromptCard` with OpenAI's [API](https://platform.openai.com/docs/libraries)
 
-``` py { title="GenAI - OpenAI" }
+``` py { title="Agent - OpenAI" }
 from openai import OpenAI
 from opsml import PromptCard, Prompt, CardRegistry
 

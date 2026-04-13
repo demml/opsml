@@ -21,7 +21,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tracing::{debug, error, instrument, warn};
 
-#[pyclass(extends=ModelInterface, subclass)]
+#[pyclass(extends=ModelInterface, subclass, skip_from_py_object)]
 #[derive(Debug)]
 pub struct TensorFlowModel {
     #[pyo3(get)]

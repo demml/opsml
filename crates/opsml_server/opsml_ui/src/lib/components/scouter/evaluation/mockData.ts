@@ -1,5 +1,5 @@
 /**
- * Mock data for the GenAI evaluation dashboard.
+ * Mock data for the Agent evaluation dashboard.
  * Used in dev mode when no live Scouter instance is available.
  * Follows the same style as $lib/server/trace/mockData.ts.
  */
@@ -7,24 +7,24 @@
 import type { RegistryType } from "$lib/utils";
 import type { TimeRange } from "$lib/components/trace/types";
 import type {
-  GenAIEvalProfile,
-  GenAIEvalConfig,
-  GenAIAlertConfig,
+  AgentEvalProfile,
+  AgentEvalConfig,
+  AgentAlertConfig,
   AssertionTasks,
   EvalRecord,
   EvalRecordPaginationResponse,
-  GenAIEvalWorkflowPaginationResponse,
-} from "$lib/components/scouter/genai/types";
-import { Status } from "$lib/components/scouter/genai/types";
+  AgentEvalWorkflowPaginationResponse,
+} from "$lib/components/scouter/agent/types";
+import { Status } from "$lib/components/scouter/agent/types";
 import type {
   AssertionTask,
   LLMJudgeTask,
   TraceAssertionTask,
-  GenAIEvalWorkflowResult,
+  AgentEvalWorkflowResult,
   ExecutionPlan,
   ExecutionNode,
   EvalTaskResult,
-} from "$lib/components/scouter/genai/task";
+} from "$lib/components/scouter/agent/task";
 import type {
   DriftAlertPaginationResponse,
   Alert,
@@ -39,8 +39,8 @@ import type {
   BinnedMetricStats,
 } from "$lib/components/scouter/custom/types";
 import type {
-  GenAIMonitoringPageData,
-  SelectedGenAIData,
+  AgentMonitoringPageData,
+  SelectedAgentData,
 } from "$lib/components/scouter/dashboard/utils";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -69,7 +69,11 @@ function buildStats(base: number, jitter: number): BinnedMetricStats[] {
   });
 }
 
-function buildBinnedMetric(name: string, base: number, jitter: number): BinnedMetric {
+function buildBinnedMetric(
+  name: string,
+  base: number,
+  jitter: number,
+): BinnedMetric {
   return {
     metric: name,
     created_at: buildTimestamps(),
@@ -126,11 +130,13 @@ const mockJudgePrompt: Prompt = {
     messages: [
       {
         role: "developer",
-        content: "You are an expert LLM judge. Evaluate the quality and relevance of the assistant's response on a scale of 1 to 5, where 1 is very poor and 5 is excellent. Return only the numeric score.",
+        content:
+          "You are an expert LLM judge. Evaluate the quality and relevance of the assistant's response on a scale of 1 to 5, where 1 is very poor and 5 is excellent. Return only the numeric score.",
       } as any,
       {
         role: "user",
-        content: "Context: {{context}}\n\nAssistant response: {{response.text}}\n\nRate the response quality (1–5):",
+        content:
+          "Context: {{context}}\n\nAssistant response: {{response.text}}\n\nRate the response quality (1–5):",
       } as any,
     ],
   } as any,
@@ -172,9 +178,9 @@ const assertionTasksObj: AssertionTasks = {
 
 // ── Eval profile ──────────────────────────────────────────────────────────────
 
-/** Builds a mock GenAI evaluation profile (also used by eval layout to inject mock eval_profile) */
-export function buildMockGenAIEvalProfile(): GenAIEvalProfile {
-  const alertConfig: GenAIAlertConfig = {
+/** Builds a mock Agent evaluation profile (also used by eval layout to inject mock eval_profile) */
+export function buildMockAgentEvalProfile(): AgentEvalProfile {
+  const alertConfig: AgentAlertConfig = {
     dispatch_config: { Console: { enabled: true } },
     schedule: "0 * * * *",
     alert_condition: {
@@ -183,14 +189,14 @@ export function buildMockGenAIEvalProfile(): GenAIEvalProfile {
     },
   };
 
-  const config: GenAIEvalConfig = {
+  const config: AgentEvalConfig = {
     sample_ratio: 1.0,
     space: "mock-space",
     name: "intent-classifier",
     version: "1.0.0",
     uid: "mock-eval-uid-0001",
     alert_config: alertConfig,
-    drift_type: DriftType.GenAI,
+    drift_type: DriftType.Agent,
   };
 
   return {
@@ -256,19 +262,24 @@ function buildEvalRecord(index: number): EvalRecord {
       input: `User query #${index + 1}: What is your return policy for electronics?`,
       response: {
         text: `Our return policy allows returns within 30 days of purchase.`,
-        intent: index % 3 === 0 ? "faq" : index % 3 === 1 ? "support" : "purchase",
+        intent:
+          index % 3 === 0 ? "faq" : index % 3 === 1 ? "support" : "purchase",
         confidence: parseFloat((0.65 + (index % 5) * 0.07).toFixed(2)),
       },
     },
     id: 1000 + index,
     updated_at: isProcessed ? iso(-(index + 1) * 3 * 60_000 + 2_000) : null,
-    processing_started_at: isProcessed ? iso(-(index + 1) * 3 * 60_000 + 500) : null,
-    processing_ended_at: isProcessed ? iso(-(index + 1) * 3 * 60_000 + 2_000) : null,
+    processing_started_at: isProcessed
+      ? iso(-(index + 1) * 3 * 60_000 + 500)
+      : null,
+    processing_ended_at: isProcessed
+      ? iso(-(index + 1) * 3 * 60_000 + 2_000)
+      : null,
     processing_duration: isProcessed ? 1500 + index * 100 : null,
     entity_id: 42,
     entity_uid: "mock-eval-uid-0001",
     status,
-    entity_type: EntityType.GenAI,
+    entity_type: EntityType.Agent,
   };
 }
 
@@ -284,7 +295,11 @@ function buildExecutionPlan(): ExecutionPlan {
       id: "check_response_format",
       stage: 0,
       parents: [],
-      children: ["check_intent_label", "check_confidence_score", "judge_response_quality"],
+      children: [
+        "check_intent_label",
+        "check_confidence_score",
+        "judge_response_quality",
+      ],
     },
     check_intent_label: {
       id: "check_intent_label",
@@ -315,14 +330,18 @@ function buildExecutionPlan(): ExecutionPlan {
   return {
     stages: [
       ["check_response_format"],
-      ["check_intent_label", "check_confidence_score", "judge_response_quality"],
+      [
+        "check_intent_label",
+        "check_confidence_score",
+        "judge_response_quality",
+      ],
       ["check_trace_latency"],
     ],
     nodes,
   };
 }
 
-function buildWorkflowResult(index: number): GenAIEvalWorkflowResult {
+function buildWorkflowResult(index: number): AgentEvalWorkflowResult {
   const totalTasks = 5;
   const failedVariants = [0, 0, 0, 1, 0, 2, 0, 1];
   const failedTasks = failedVariants[index % failedVariants.length];
@@ -344,7 +363,7 @@ function buildWorkflowResult(index: number): GenAIEvalWorkflowResult {
   };
 }
 
-function buildWorkflowResults(): GenAIEvalWorkflowResult[] {
+function buildWorkflowResults(): AgentEvalWorkflowResult[] {
   return Array.from({ length: 8 }, (_, i) => buildWorkflowResult(i));
 }
 
@@ -358,7 +377,7 @@ function recordIndex(record_uid: string): number {
 
 /**
  * Builds a realistic EvalTaskResult[] for a given workflow's record_uid.
- * Mirrors the 5 tasks defined in buildMockGenAIEvalProfile() / buildExecutionPlan().
+ * Mirrors the 5 tasks defined in buildMockAgentEvalProfile() / buildExecutionPlan().
  */
 export function buildMockEvalTasks(record_uid: string): EvalTaskResult[] {
   const idx = recordIndex(record_uid);
@@ -488,7 +507,7 @@ function buildDriftAlerts(): DriftAlertPaginationResponse {
     created_at: iso(-15 * 60_000),
     entity_name: "pass_rate",
     alert: {
-      [DriftType.GenAI]: {
+      [DriftType.Agent]: {
         metric_name: "pass_rate",
         baseline_value: 0.8,
         observed_value: 0.72,
@@ -510,14 +529,14 @@ function buildDriftAlerts(): DriftAlertPaginationResponse {
 // ── Page data ─────────────────────────────────────────────────────────────────
 
 /**
- * Returns a mock GenAIMonitoringPageData (success) for prompt evaluation.
+ * Returns a mock AgentMonitoringPageData (success) for prompt evaluation.
  */
-export function getMockGenAIMonitoringPageData(
+export function getMockAgentMonitoringPageData(
   uid: string,
   registryType: RegistryType,
   timeRange: TimeRange,
-): Extract<GenAIMonitoringPageData, { status: "success" }> {
-  const profile = buildMockGenAIEvalProfile();
+): Extract<AgentMonitoringPageData, { status: "success" }> {
+  const profile = buildMockAgentEvalProfile();
   // Override uid in the profile config so it matches the caller's uid.
   profile.config.uid = uid;
 
@@ -527,13 +546,13 @@ export function getMockGenAIMonitoringPageData(
     has_previous: false,
   };
 
-  const workflows: GenAIEvalWorkflowPaginationResponse = {
+  const workflows: AgentEvalWorkflowPaginationResponse = {
     items: buildWorkflowResults(),
     has_next: false,
     has_previous: false,
   };
 
-  const selectedData: SelectedGenAIData = {
+  const selectedData: SelectedAgentData = {
     metrics: {
       task: buildTaskMetrics(),
       workflow: buildWorkflowMetrics(),
