@@ -1176,7 +1176,7 @@ async fn test_opsml_server_card_service_card_mcps() {
         let query_string = serde_qs::to_string(&list_mcps).unwrap();
 
         let request = Request::builder()
-            .uri(format!("/opsml/api/genai/mcp/servers?{query_string}"))
+            .uri(format!("/opsml/api/agent/mcp/servers?{query_string}"))
             .method("GET")
             .body(Body::empty())
             .unwrap();
