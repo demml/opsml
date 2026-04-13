@@ -8,7 +8,8 @@ OUTPUT_FILE = Path("python/opsml/_opsml.pyi")
 STUB_FILES = [
     "header.pyi",
     "common/logging.pyi",
-    "genai/potato.pyi",
+    "agent/potato.pyi",
+    "scouter/bifrost.pyi",
     "scouter/tracing.pyi",
     "scouter/evaluate.pyi",
     "scouter/mock.pyi",
