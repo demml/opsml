@@ -487,7 +487,7 @@ class AgentAlertConfig:
             schedule:
                 Schedule to run monitor. Defaults to daily at midnight
             alert_condition:
-                Alert condition for a GenAI drift profile
+                Alert condition for an Agent eval profile.
 
         """
 
@@ -1738,14 +1738,14 @@ class ScouterQueue:
 
             LLM monitoring with gRPC:
                 >>> queue = ScouterQueue.from_path(
-                ...     path={"genai_eval": Path("genai_profile.json")},
+                ...     path={"agent_eval": Path("agent_profile.json")},
                 ...     transport_config=GrpcConfig(
                 ...         server_uri="http://scouter-server:50051",
                 ...         username="monitoring_user",
                 ...         password="secure_password",
                 ...     ),
                 ... )
-                >>> queue["genai_eval"].insert(
+                >>> queue["agent_eval"].insert(
                 ...     EvalRecord(context={"input": "...", "response": "..."})
                 ... )
         """
@@ -3513,14 +3513,14 @@ class AgentEvalProfile:
                 At least one task (assertion, LLM judge, or trace assertion) is required.
                 Can also be provided as a TasksFile object.
             config (Optional[AgentEvalConfig]):
-                Configuration for the GenAI drift profile containing space, name,
+                Configuration for the Agent evaluation profile containing space, name,
                 version, sample rate, and alert settings. If not provided,
                 defaults will be used.
             alias (Optional[str]):
                 Optional alias for the profile.
 
         Returns:
-            AgentEvalProfile: Configured profile ready for GenAI drift monitoring.
+            AgentEvalProfile: Configured profile ready for execution
 
         Raises:
             ProfileError: If validation fails due to:
@@ -3729,7 +3729,7 @@ class AgentEvalProfile:
         Args:
             path (Optional[Path]):
                 Optional path to save the profile. If None, saves to
-                "genai_eval_profile.json" in the current directory.
+                "agent_eval_profile.json" in the current directory.
 
         Returns:
             Path: Path where the profile was saved.
@@ -3979,7 +3979,7 @@ class Drifter:
 
         Args:
             config (AgentEvalConfig):
-                The configuration for the GenAI drift profile containing space, name,
+                The configuration for the agent evaluation profile containing space, name,
                 version, and alert settings.
             tasks (List[LLMJudgeTask | AssertionTask]):
                 List of evaluation tasks to include in the profile. Can contain
@@ -3989,7 +3989,7 @@ class Drifter:
                 Optional alias for the profile.
 
         Returns:
-            AgentEvalProfile: Configured profile ready for GenAI drift monitoring.
+            AgentEvalProfile: Configured profile ready for execution
 
         Raises:
             ProfileError: If workflow validation fails, metrics are empty when no

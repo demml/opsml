@@ -1,5 +1,5 @@
 import { RegistryType } from "$lib/utils";
-import type { Prompt } from "$lib/components/genai/types";
+import type { Prompt } from "$lib/components/agent/types";
 import type { DriftProfileUri } from "$lib/components/scouter/types";
 import type { AgentEvalProfile } from "$lib/components/scouter/agent/types";
 

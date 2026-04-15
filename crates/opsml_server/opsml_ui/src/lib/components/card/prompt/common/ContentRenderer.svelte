@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Provider } from '$lib/components/genai/types';
-  import type { MessageNum } from '$lib/components/genai/provider/types';
-  import type { ChatMessage } from '$lib/components/genai/provider/openai/v1/chat/request';
-  import type { MessageParam, TextBlockParam } from '$lib/components/genai/provider/anthropic/v1/request';
-  import type { GeminiContent } from '$lib/components/genai/provider/google/v1/generate/request';
+  import { Provider } from '$lib/components/agent/types';
+  import type { MessageNum } from '$lib/components/agent/provider/types';
+  import type { ChatMessage } from '$lib/components/agent/provider/openai/v1/chat/request';
+  import type { MessageParam, TextBlockParam } from '$lib/components/agent/provider/anthropic/v1/request';
+  import type { GeminiContent } from '$lib/components/agent/provider/google/v1/generate/request';
   
   // Icons
   import { FileText, Image as ImageIcon, AudioWaveform, Wrench, Terminal, Code2 } from 'lucide-svelte';
@@ -14,13 +14,13 @@
     OPENAI_CONTENT_PART_IMAGE_URL,
     OPENAI_CONTENT_PART_INPUT_AUDIO,
     OPENAI_CONTENT_PART_FILE
-  } from '$lib/components/genai/provider/openai/v1/chat/request';
+  } from '$lib/components/agent/provider/openai/v1/chat/request';
 
   import { 
     TEXT_TYPE as ANTHROPIC_TEXT, 
     IMAGE_TYPE as ANTHROPIC_IMAGE,
     TOOL_USE_TYPE as ANTHROPIC_TOOL
-  } from '$lib/components/genai/provider/anthropic/v1/request';
+  } from '$lib/components/agent/provider/anthropic/v1/request';
 
   let { message, provider } = $props<{ 
     message: MessageNum; 

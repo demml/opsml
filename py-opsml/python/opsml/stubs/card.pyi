@@ -1135,10 +1135,10 @@ class PromptCard:
     ) -> None:
         """Initialize a AgentEvalProfile for LLM evaluation and drift detection.
 
-        LLM evaluations are run asynchronously on the scouter server.
+        Agent evaluations are run asynchronously on the scouter server.
 
         Overview:
-            GenAI evaluations are defined using assertion tasks and LLM judge tasks.
+            Agent evaluations are defined using assertion tasks and LLM judge tasks.
             Assertion tasks evaluate specific metrics based on model responses, and do not require
             the use of an LLM judge or extra call. It is recommended to use assertion tasks whenever possible
             to reduce cost and latency. LLM judge tasks leverage an additional LLM call to evaluate
@@ -1155,11 +1155,11 @@ class PromptCard:
                 a mix of LLM judge tasks, assertion tasks, trace assertion tasks, and agent assertion tasks.
 
             config (AgentEvalConfig | None):
-                The configuration for the GenAI drift profile containing space, name,
+                The configuration for the Agent eval profile containing space, name,
                 version, and alert settings.
 
         Returns:
-            AgentEvalProfile: Configured profile ready for GenAI drift monitoring.
+            AgentEvalProfile: Configured profile ready for Agent evaluation.
 
         Raises:
             ProfileError: If workflow validation fails, metrics are empty when no

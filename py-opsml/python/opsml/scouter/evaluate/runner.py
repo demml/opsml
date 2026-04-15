@@ -1,6 +1,6 @@
 # mypy: disable-error-code="attr-defined"
 
-from typing import Callable, Dict, List, Optional, Any
+from typing import Any, Callable, Dict, List, Optional
 
 from ..._opsml import (
     EvalRecord,
@@ -181,9 +181,7 @@ class EvalOrchestrator:
     def on_scenario_complete(self, scenario: EvalScenario, response: Any) -> None:
         """Hook called after a scenario is executed. Override to add custom logic."""
 
-    def on_evaluation_complete(
-        self, results: ScenarioEvalResults
-    ) -> ScenarioEvalResults:
+    def on_evaluation_complete(self, results: ScenarioEvalResults) -> ScenarioEvalResults:
         """Hook called after evaluation completes. Override to post-process results."""
         return results
 
@@ -317,9 +315,7 @@ class EvalOrchestrator:
                     response = self._execute_reactive(scenario)
                 else:
                     response = self._execute_with_baggage(scenario)
-                    scenario_response = self.build_scenario_response(
-                        scenario, response, []
-                    )
+                    scenario_response = self.build_scenario_response(scenario, response, [])
                     self._collect_scenario_data(scenario, scenario_response)
 
                 self.on_scenario_complete(scenario, response)

@@ -31,8 +31,8 @@ import type {
 } from "$lib/components/scouter/alert/types";
 import { AlertThreshold } from "$lib/components/scouter/types";
 import { DriftType, EntityType } from "$lib/components/scouter/types";
-import { Provider, ResponseType } from "$lib/components/genai/types";
-import type { Prompt } from "$lib/components/genai/types";
+import { Provider, ResponseType } from "$lib/components/agent/types";
+import type { Prompt } from "$lib/components/agent/types";
 import type {
   BinnedMetrics,
   BinnedMetric,

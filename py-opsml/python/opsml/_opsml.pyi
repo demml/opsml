@@ -7912,7 +7912,9 @@ class AdkLlmResponse:
         """Interaction identifier."""
 
     @property
-    def live_session_resumption_update(self) -> Optional[AdkLiveSessionResumptionUpdate]:
+    def live_session_resumption_update(
+        self,
+    ) -> Optional[AdkLiveSessionResumptionUpdate]:
         """Live session resumption update."""
 
     @property
@@ -16085,7 +16087,14 @@ class ScouterQueue:
 
     @staticmethod
     def from_profile(
-        profile: Union[dict, list, SpcDriftProfile, PsiDriftProfile, CustomDriftProfile, AgentEvalProfile],
+        profile: Union[
+            dict,
+            list,
+            SpcDriftProfile,
+            PsiDriftProfile,
+            CustomDriftProfile,
+            AgentEvalProfile,
+        ],
         transport_config: Union[
             KafkaConfig,
             RabbitMQConfig,
@@ -19549,7 +19558,11 @@ class OpenIdConnectSecurityScheme:
     identity verification and user profile information.
     """
 
-    def __init__(self, description: Optional[str] = None, open_id_connect_url: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        description: Optional[str] = None,
+        open_id_connect_url: Optional[str] = None,
+    ) -> None:
         """Initialize an OpenIdConnectSecurityScheme.
 
         Args:
@@ -19869,7 +19882,12 @@ class AgentCardSignature:
     authenticity and integrity of agent card metadata.
     """
 
-    def __init__(self, protected: str = "", signature: str = "", header: Optional[Dict[str, str]] = None) -> None:
+    def __init__(
+        self,
+        protected: str = "",
+        signature: str = "",
+        header: Optional[Dict[str, str]] = None,
+    ) -> None:
         """Initialize an AgentCardSignature.
 
         Args:
@@ -21128,7 +21146,7 @@ class PromptCard:
         LLM evaluations are run asynchronously on the scouter server.
 
         Overview:
-            GenAI evaluations are defined using assertion tasks and LLM judge tasks.
+            Agent evaluations are defined using assertion tasks and LLM judge tasks.
             Assertion tasks evaluate specific metrics based on model responses, and do not require
             the use of an LLM judge or extra call. It is recommended to use assertion tasks whenever possible
             to reduce cost and latency. LLM judge tasks leverage an additional LLM call to evaluate
@@ -21651,7 +21669,8 @@ class CardRegistry:
     def __new__(cls, registry_type: Union[_DataRegistryType, Literal["data", "Data"]]) -> "DataCardRegistry": ...
     @overload
     def __new__(
-        cls, registry_type: Union[_ExperimentRegistryType, Literal["experiment", "Experiment"]]
+        cls,
+        registry_type: Union[_ExperimentRegistryType, Literal["experiment", "Experiment"]],
     ) -> "ExperimentCardRegistry": ...
     @overload
     def __new__(

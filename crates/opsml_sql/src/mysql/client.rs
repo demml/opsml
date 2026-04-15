@@ -2020,7 +2020,7 @@ mod tests {
         let client = db_client().await;
         let eval_record = EvaluationSqlRecord::new(
             "test".to_string(),
-            EvaluationType::GenAI,
+            EvaluationType::Agent,
             EvaluationProvider::Opsml,
         );
         let uid = eval_record.uid.clone();
