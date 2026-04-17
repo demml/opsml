@@ -1,8 +1,9 @@
 use crate::base::{ModelInterfaceMetadata, ModelInterfaceSaveMetadata, parse_save_kwargs};
-use crate::error::{ModelInterfaceError, OnnxError};
+use crate::error::ModelInterfaceError;
 use crate::model::ModelInterface;
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
 use crate::{OnnxSession, ProcessorType};
+use opsml_types::error::OnnxError;
 use opsml_types::{CommonKwargs, ModelInterfaceType, SaveName, Suffix, TaskType};
 use opsml_utils::pydict_to_json_value;
 use pyo3::IntoPyObjectExt;
@@ -270,11 +271,7 @@ impl CatBoostModel {
             let parent = self_.as_super();
 
             if load_kwargs.load_onnx {
-                let onnx_path = path.join(
-                    &metadata
-                        .onnx_model_uri
-                        .ok_or_else(|| OnnxError::NoOnnxFile)?,
-                );
+                let onnx_path = path.join(&metadata.onnx_model_uri.ok_or(OnnxError::NoOnnxFile)?);
                 parent.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
             }
 

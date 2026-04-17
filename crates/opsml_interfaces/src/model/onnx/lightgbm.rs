@@ -1,7 +1,7 @@
-use crate::error::OnnxError;
+use crate::OnnxSession;
 use crate::model::base::utils::OnnxExtension;
-use crate::model::onnx::OnnxSession;
 use opsml_types::ModelType;
+use opsml_types::error::OnnxError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use tracing::debug;
@@ -37,17 +37,12 @@ impl LightGBMOnnxConverter {
     where
         T: OnnxExtension,
     {
-        let onnxmltools = py
-            .import("onnxmltools")
-            .map_err(|e| OnnxError::ImportError(e.to_string()))?;
+        let onnxmltools = py.import("onnxmltools")?;
 
         let type_helper = py
-            .import("skl2onnx")
-            .map_err(|e| OnnxError::ImportError(e.to_string()))?
-            .getattr("algebra")
-            .unwrap()
-            .getattr("type_helper")
-            .unwrap();
+            .import("skl2onnx")?
+            .getattr("algebra")?
+            .getattr("type_helper")?;
 
         debug!("Step 1: Guessing initial types");
         let initial_types = type_helper.call_method1(

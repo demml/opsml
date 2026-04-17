@@ -10,9 +10,10 @@ use opsml_storage::reset_storage_client;
 #[cfg(feature = "server")]
 use opsml_types::{SqlType, cards::CardTable, contracts::*};
 
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 
-#[pyclass(skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
 #[derive(Debug)]
 pub struct RegistryTestHelper {}
 
@@ -45,17 +46,24 @@ impl RegistryTestHelper {
     }
 }
 
+impl RegistryTestHelper {
+    pub fn new() -> Self {
+        Self {}
+    }
+}
+
 impl Default for RegistryTestHelper {
     fn default() -> Self {
         Self::new()
     }
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl RegistryTestHelper {
     #[new]
-    pub fn new() -> Self {
-        Self {}
+    pub fn py_new() -> Self {
+        Self::new()
     }
 
     #[cfg(feature = "server")]

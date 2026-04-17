@@ -1,4 +1,5 @@
 use opsml_crypt::error::CryptError;
+#[cfg(feature = "python")]
 use opsml_interfaces::error::{DataInterfaceError, ModelInterfaceError};
 use opsml_state::error::StateError;
 use opsml_storage::storage::error::StorageError;
@@ -6,12 +7,16 @@ use opsml_types::RegistryType;
 use opsml_types::error::AgentConfigError;
 use opsml_types::error::TypeError;
 use opsml_utils::error::UtilError;
+#[cfg(feature = "python")]
 use pyo3::exceptions::PyRuntimeError;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
 use pyo3::pyclass::PyClassGuardError;
 use scouter_client::DriftType;
 use std::path::PathBuf;
 use thiserror::Error;
+#[cfg(feature = "python")]
 use tracing::error;
 
 #[derive(Error, Debug)]
@@ -79,9 +84,11 @@ pub enum CardError {
     #[error("File not found for file: {0}")]
     FileNotFoundError(PathBuf),
 
+    #[cfg(feature = "python")]
     #[error(transparent)]
     DataInterfaceError(#[from] DataInterfaceError),
 
+    #[cfg(feature = "python")]
     #[error(transparent)]
     ModelInterfaceError(#[from] ModelInterfaceError),
 
@@ -143,24 +150,28 @@ pub enum CardError {
     AgentConfigNotFoundError,
 }
 
+#[cfg(feature = "python")]
 impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for CardError {
     fn from(err: PyClassGuardError<'a, 'py>) -> Self {
         CardError::Error(err.to_string())
     }
 }
 
+#[cfg(feature = "python")]
 impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for CardError {
     fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         CardError::DowncastError(err.to_string())
     }
 }
 
+#[cfg(feature = "python")]
 impl From<PyErr> for CardError {
     fn from(err: PyErr) -> Self {
         CardError::Error(err.to_string())
     }
 }
 
+#[cfg(feature = "python")]
 impl From<CardError> for PyErr {
     fn from(err: CardError) -> PyErr {
         let msg = err.to_string();

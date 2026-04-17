@@ -14,7 +14,7 @@ opsml-state = { workspace = true }
 opsml-types = { workspace = true }
 opsml-version = { workspace = true }
 opsml-utils = { workspace = true }
-pyo3 = { workspace = true }
+pyo3 = { workspace = true, optional = true }
 serde = { workspace = true }
 serde_yaml = { workspace = true }
 thiserror = { workspace = true }
@@ -22,3 +22,7 @@ tracing = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
+
+[features]
+default = []
+python = ["dep:pyo3", "opsml-types/python", "opsml-utils/python"]

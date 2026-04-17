@@ -6,11 +6,14 @@ use opsml_toml::error::PyProjectTomlError;
 use opsml_types::contracts::ServiceType;
 use opsml_types::error::TypeError;
 use opsml_utils::error::UtilError;
+#[cfg(feature = "python")]
 use pyo3::exceptions::PyRuntimeError;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use scouter_client::ProfileError;
 use std::path::PathBuf;
 use thiserror::Error;
+#[cfg(feature = "python")]
 use tracing::error;
 
 #[derive(Error, Debug)]
@@ -97,6 +100,7 @@ pub enum CliError {
     SpecNotFound(PathBuf),
 }
 
+#[cfg(feature = "python")]
 impl From<CliError> for PyErr {
     fn from(err: CliError) -> PyErr {
         let msg = err.to_string();

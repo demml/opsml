@@ -8,7 +8,7 @@ repository = { workspace = true }
 doctest = false
 
 [dependencies]
-opsml-types = { workspace = true }
+opsml-types = { workspace = true, features = ["python"] }
 opsml-state = { workspace = true }
 opsml-utils = { workspace = true }
 potato-head = { workspace = true }
@@ -24,5 +24,3 @@ thiserror = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 
-[target.'cfg(not(all(target_arch = "x86_64", target_os = "macos")))'.dependencies]
-ort = { workspace = true }

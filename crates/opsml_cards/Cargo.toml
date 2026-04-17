@@ -16,7 +16,7 @@ names = { workspace = true }
 opsml-agent-cli = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-crypt = { workspace = true }
-opsml-interfaces = { workspace = true }
+opsml-interfaces = { workspace = true, optional = true }
 opsml-service = { workspace = true }
 opsml-state = { workspace = true }
 opsml-storage = { workspace = true}
@@ -25,8 +25,8 @@ opsml-types = { workspace = true }
 opsml-utils = { workspace = true }
 opsml-version = { workspace = true }
 potato-head = { workspace = true }
-pyo3 = { workspace = true }
-pythonize = { workspace = true }
+pyo3 = { workspace = true, optional = true }
+pythonize = { workspace = true, optional = true }
 scouter-client = { workspace = true }
 sha2 = { workspace = true }
 serde = { workspace = true }
@@ -43,5 +43,12 @@ tracing = { workspace = true }
 [features]
 default = []
 server = ["opsml-storage/server"]
+python = [
+    "dep:pyo3",
+    "dep:pythonize",
+    "dep:opsml-interfaces",
+    "opsml-utils/python",
+    "opsml-types/python",
+]
 
 

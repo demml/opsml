@@ -1,7 +1,8 @@
 use crate::error::RegistryError;
 use crate::registries::client::artifact::ArtifactExt;
 use crate::registries::client::base::Registry;
-use crate::registries::client::card::{CardRegistry, ClientCardRegistry, ScouterRegistry};
+use crate::registries::client::card::ScouterRegistry;
+use crate::registries::client::card::{CardRegistry, ClientCardRegistry};
 use opsml_semver::VersionType;
 use opsml_settings::ScouterSettings;
 use opsml_settings::config::OpsmlMode;
@@ -62,7 +63,6 @@ impl OpsmlCardRegistry {
 
                     let db_settings = config.database_settings.clone();
 
-                    // check if scouter is enabled
                     let scouter_client = setup_scouter_client(&config.scouter_settings)?;
 
                     // TODO (steven): Why clone config when we could use app state directly in server registry?
@@ -219,11 +219,11 @@ impl OpsmlCardRegistry {
     /// # Returns
     /// * `Result<bool, RegistryError>` - Ok if the service is healthy, Err if there was an error
     #[instrument(skip_all)]
-    pub fn check_service_health(&self, service: IntegratedService) -> Result<bool, RegistryError> {
+    pub fn check_service_health(&self, _service: IntegratedService) -> Result<bool, RegistryError> {
         match self {
-            Self::Client(client_registry) => Ok(client_registry.check_service_health(service)?),
+            Self::Client(client_registry) => Ok(client_registry.check_service_health(_service)?),
             #[cfg(feature = "server")]
-            Self::Server(server_registry) => server_registry.check_service_health(service),
+            Self::Server(server_registry) => server_registry.check_service_health(_service),
         }
     }
 

@@ -1,7 +1,8 @@
 use super::error::SubAgentError;
 use crate::BaseArgs;
 use crate::error::CardError;
-use crate::traits::{OpsmlCard, ProfileExt};
+use crate::traits::OpsmlCard;
+use crate::traits::ProfileExt;
 use chrono::{DateTime, Utc};
 use opsml_agent_cli::AgentCliFramework;
 use opsml_types::contracts::subagent::SubAgentSpec;

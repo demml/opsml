@@ -1,4 +1,6 @@
+#[cfg(feature = "python")]
 use pyo3::PyErr;
+#[cfg(feature = "python")]
 use pyo3::exceptions::PyRuntimeError;
 use thiserror::Error;
 
@@ -41,6 +43,7 @@ configuration environment matches the current environment set in APP_ENV.
     AgentConfigError(#[from] opsml_types::error::AgentConfigError),
 }
 
+#[cfg(feature = "python")]
 impl From<ServiceError> for PyErr {
     fn from(err: ServiceError) -> PyErr {
         let msg = err.to_string();
@@ -49,6 +52,7 @@ impl From<ServiceError> for PyErr {
     }
 }
 
+#[cfg(feature = "python")]
 impl From<PyErr> for ServiceError {
     fn from(err: PyErr) -> ServiceError {
         ServiceError::PyError(err.to_string())

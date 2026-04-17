@@ -1,7 +1,8 @@
-use crate::error::OnnxError;
+use crate::OnnxSession;
 use crate::model::base::utils::OnnxExtension;
-use crate::model::onnx::{OnnxRegistryUpdater, OnnxSession};
+use crate::model::onnx::OnnxRegistryUpdater;
 use opsml_types::ModelType;
+use opsml_types::error::OnnxError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use pyo3::types::PyList;
@@ -164,16 +165,12 @@ impl SklearnOnnxConverter {
         debug!("Step 1: Updating registries for ONNX");
         self.update_sklearn_onnx_registries(py, model, model_type)?;
 
-        let skl2onnx = py
-            .import("skl2onnx")
-            .map_err(|e| OnnxError::ImportError(e.to_string()))?;
+        let skl2onnx = py.import("skl2onnx")?;
 
         let args = (model, sample_data.get_data_for_onnx(py, model_type)?);
 
         debug!("Step 2: Converting model to ONNX");
-        let model_proto = skl2onnx
-            .call_method("to_onnx", args, kwargs)
-            .map_err(|e| OnnxError::PyOnnxConversionError(e.to_string()))?;
+        let model_proto = skl2onnx.call_method("to_onnx", args, kwargs)?;
 
         debug!("Step 3: Extracting ONNX schema");
         let onnx_session = self.get_onnx_session(&model_proto, sample_data.get_feature_names(py)?);

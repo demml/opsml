@@ -1,5 +1,4 @@
 use crate::OnnxSession;
-use crate::error::OnnxError;
 use crate::model::base::utils::OnnxExtension;
 use crate::model::onnx::catboost::CatBoostOnnxConverter;
 use crate::model::onnx::huggingface::HuggingFaceOnnxConverter;
@@ -9,6 +8,7 @@ use crate::model::onnx::sklearn::SklearnOnnxConverter;
 use crate::model::onnx::tensorflow::TensorFlowOnnxConverter;
 use crate::model::onnx::torch::TorchOnnxConverter;
 use crate::model::onnx::xgboost::XGBoostOnnxConverter;
+use opsml_types::error::OnnxError;
 use opsml_types::{ModelInterfaceType, ModelType};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;

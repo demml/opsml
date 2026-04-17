@@ -26,7 +26,7 @@ anyhow = { workspace = true }
 base64 = { workspace = true }
 clap = { workspace = true }
 dirs = { workspace = true }
-pyo3 = { workspace = true }
+pyo3 = { workspace = true, optional = true }
 reqwest = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -41,6 +41,10 @@ zip = { workspace = true }
 [target.'cfg(target_os = "linux")'.dependencies]
 flate2 = "1.*"
 tar = "*"
+
+[features]
+default = []
+python = ["dep:pyo3", "opsml-registry/python", "opsml-service/python"]
 
 [dev-dependencies]
 mockall = { workspace = true }

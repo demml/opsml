@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PromptHelper, type Prompt } from '$lib/components/genai/types';
+  import { PromptHelper, type Prompt } from '$lib/components/agent/types';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
   import MessageBubble from './MessageBubble.svelte';
   import { Eye, Code, Copy, Check } from 'lucide-svelte';

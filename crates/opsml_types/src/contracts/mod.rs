@@ -26,6 +26,7 @@ pub use experiment::*;
 pub use file::*;
 pub use mcp::*;
 pub use potato::*;
+#[cfg(feature = "python")]
 pub use scouter::*;
 pub use security::*;
 pub use service::*;

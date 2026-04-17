@@ -13,9 +13,9 @@ anyhow = { workspace = true }
 opsml-app = { workspace = true }
 opsml-cards = { workspace = true }
 mockito = { workspace = true, optional = true }
-opsml-cli = { workspace = true }
+opsml-cli = { workspace = true, features = ["python"] }
 opsml-interfaces = { workspace = true }
-opsml-registry = { workspace = true }
+opsml-registry = { workspace = true, features = ["python"] }
 opsml-experiment = { workspace = true }
 opsml-mocks = { workspace = true }
 opsml-semver = { workspace = true }
@@ -24,7 +24,7 @@ opsml-service = { workspace = true }
 opsml-storage = { workspace = true, optional = true }
 opsml-settings = { workspace = true }
 opsml-state = { workspace = true }
-opsml-types = { workspace = true }
+opsml-types = { workspace = true, features = ["python"] }
 opsml-utils = { workspace = true }
 opsml-version = { workspace = true }
 potato-head = { workspace = true, features = ['mock'] }

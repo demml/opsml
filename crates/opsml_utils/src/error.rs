@@ -1,7 +1,11 @@
+#[cfg(feature = "python")]
 use pyo3::PyErr;
+#[cfg(feature = "python")]
 use pyo3::exceptions::PyRuntimeError;
+#[cfg(feature = "python")]
 use pythonize::PythonizeError;
 use thiserror::Error;
+#[cfg(feature = "python")]
 use tracing::error;
 
 #[derive(Error, Debug)]
@@ -70,12 +74,14 @@ pub enum UtilError {
     FailedToExtract,
 }
 
+#[cfg(feature = "python")]
 impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for UtilError {
     fn from(err: pyo3::CastError) -> Self {
         UtilError::DowncastError(err.to_string())
     }
 }
 
+#[cfg(feature = "python")]
 impl From<UtilError> for PyErr {
     fn from(err: UtilError) -> PyErr {
         let msg = err.to_string();
@@ -84,12 +90,14 @@ impl From<UtilError> for PyErr {
     }
 }
 
+#[cfg(feature = "python")]
 impl From<PyErr> for UtilError {
     fn from(err: PyErr) -> UtilError {
         UtilError::PyError(err.to_string())
     }
 }
 
+#[cfg(feature = "python")]
 impl From<PythonizeError> for UtilError {
     fn from(err: PythonizeError) -> Self {
         UtilError::PyError(err.to_string())

@@ -1,7 +1,7 @@
-use crate::base::ExtraMetadata;
-use crate::deserialize_dict_field;
-use crate::error::TypeError;
+use crate::error::DataInterfaceError;
+use opsml_types::interfaces::ExtraMetadata;
 use opsml_types::{SaveName, Suffix};
+use opsml_utils::deserialize_dict_field;
 use opsml_utils::{FileUtils, PyHelperFuncs};
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
@@ -75,7 +75,7 @@ pub struct SqlLogic {
 impl SqlLogic {
     #[new]
     #[pyo3(signature = (queries=None))]
-    pub fn new(queries: Option<HashMap<String, String>>) -> Result<Self, TypeError> {
+    pub fn new(queries: Option<HashMap<String, String>>) -> Result<Self, DataInterfaceError> {
         Ok(SqlLogic {
             queries: SqlLogic::extract_sql_logic(queries.unwrap_or_default())?,
         })
@@ -91,12 +91,12 @@ impl SqlLogic {
         name: String,
         query: Option<String>,
         filepath: Option<String>,
-    ) -> Result<(), TypeError> {
+    ) -> Result<(), DataInterfaceError> {
         let query = query.unwrap_or_default();
         let filepath = filepath.unwrap_or_default();
 
         if !query.is_empty() && !filepath.is_empty() {
-            return Err(TypeError::OnlyOneQueryorFilenameError);
+            return Err(DataInterfaceError::OnlyOneQueryorFilenameError);
         }
 
         if !query.is_empty() {
@@ -109,10 +109,10 @@ impl SqlLogic {
         Ok(())
     }
 
-    pub fn __getitem__(&self, key: &str) -> Result<String, TypeError> {
+    pub fn __getitem__(&self, key: &str) -> Result<String, DataInterfaceError> {
         match self.queries.get(key) {
             Some(query) => Ok(query.clone()),
-            None => Err(TypeError::KeyNotFound),
+            None => Err(DataInterfaceError::KeyNotFound),
         }
     }
 }
@@ -120,7 +120,7 @@ impl SqlLogic {
 impl SqlLogic {
     fn extract_sql_logic(
         sql_logic: HashMap<String, String>,
-    ) -> Result<HashMap<String, String>, TypeError> {
+    ) -> Result<HashMap<String, String>, DataInterfaceError> {
         // check if sql logic is present
         if sql_logic.is_empty() {
             return Ok(sql_logic);
@@ -140,7 +140,7 @@ impl SqlLogic {
             .collect()
     }
 
-    pub fn save(&self, save_path: &Path) -> Result<PathBuf, TypeError> {
+    pub fn save(&self, save_path: &Path) -> Result<PathBuf, DataInterfaceError> {
         let sql_directory = save_path.join(SaveName::Sql);
 
         // create directory if it does not exist
@@ -217,7 +217,7 @@ pub struct DataSaveKwargs {
 impl DataSaveKwargs {
     #[new]
     #[pyo3(signature = (data=None))]
-    pub fn new(data: Option<Bound<'_, PyDict>>) -> Result<Self, TypeError> {
+    pub fn new(data: Option<Bound<'_, PyDict>>) -> Result<Self, DataInterfaceError> {
         let data = data.map(|data| data.unbind());
 
         Ok(Self { data })
@@ -335,7 +335,7 @@ pub struct DataLoadKwargs {
 impl DataLoadKwargs {
     #[new]
     #[pyo3(signature = (data=None))]
-    pub fn new(data: Option<Bound<'_, PyDict>>) -> Result<Self, TypeError> {
+    pub fn new(data: Option<Bound<'_, PyDict>>) -> Result<Self, DataInterfaceError> {
         let data = data.map(|data| data.unbind());
 
         Ok(Self { data })

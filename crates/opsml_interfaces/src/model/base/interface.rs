@@ -1,14 +1,12 @@
+use crate::ModelSaveKwargs;
 use crate::OnnxSession;
-use crate::base::{
-    DriftProfileMap, ExtraMetadata, ModelLoadKwargs, ModelSaveKwargs, parse_save_kwargs,
-};
+use crate::base::{DriftProfileMap, ModelLoadKwargs, parse_save_kwargs};
 use crate::data::DataInterface;
 use crate::data::generate_feature_schema;
 use crate::model::SampleData;
 use crate::model::onnx::OnnxConverter;
-use crate::types::{FeatureSchema, ProcessorType};
+use crate::types::FeatureSchema;
 use opsml_types::CommonKwargs;
-use opsml_utils::PyHelperFuncs;
 use scouter_client::{
     AgentEvalProfile, CustomDriftProfile, DriftType, PsiDriftProfile, SpcDriftProfile,
 };
@@ -18,198 +16,21 @@ use crate::model::base::utils;
 
 use opsml_types::{
     DataType, DriftProfileUri, SaveName, Suffix,
-    interfaces::{ModelInterfaceType, ModelType, TaskType},
+    interfaces::{
+        ModelInterfaceMetadata, ModelInterfaceSaveMetadata, ModelInterfaceType, ModelType, TaskType,
+    },
 };
 use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use scouter_client::{DataType as DriftDataType, drifter::PyDrifter};
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use pyo3::PyTraverseError;
 use pyo3::gc::PyVisit;
-use serde_json::Value;
 use tracing::{debug, error, instrument, warn};
-
-#[pyclass(from_py_object)]
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct DataProcessor {
-    #[pyo3(get)]
-    pub name: String,
-    #[pyo3(get)]
-    pub uri: PathBuf,
-    #[pyo3(get)]
-    pub r#type: ProcessorType,
-}
-
-#[pymethods]
-impl DataProcessor {
-    #[new]
-    pub fn new(name: String, uri: PathBuf, r#type: ProcessorType) -> Self {
-        DataProcessor { name, uri, r#type }
-    }
-
-    pub fn __str__(&self) -> String {
-        // serialize the struct to a string
-        PyHelperFuncs::__str__(self)
-    }
-}
-
-#[pyclass(from_py_object)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct ModelInterfaceSaveMetadata {
-    #[pyo3(get)]
-    pub model_uri: PathBuf,
-
-    #[pyo3(get)]
-    pub data_processor_map: HashMap<String, DataProcessor>,
-
-    #[pyo3(get)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub sample_data_uri: Option<PathBuf>,
-
-    #[pyo3(get)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub onnx_model_uri: Option<PathBuf>,
-
-    #[pyo3(get)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub drift_profile_uri_map: Option<HashMap<String, DriftProfileUri>>,
-
-    #[pyo3(get)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub extra: Option<ExtraMetadata>,
-
-    #[pyo3(get)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub save_kwargs: Option<ModelSaveKwargs>,
-}
-
-#[pymethods]
-impl ModelInterfaceSaveMetadata {
-    #[new]
-    #[pyo3(signature = (model_uri, data_processor_map=HashMap::new(), sample_data_uri=None, onnx_model_uri=None, drift_profile_uri_map=None, extra=None, save_kwargs=None))]
-    pub fn new(
-        model_uri: PathBuf,
-        data_processor_map: Option<HashMap<String, DataProcessor>>,
-        sample_data_uri: Option<PathBuf>,
-        onnx_model_uri: Option<PathBuf>,
-        drift_profile_uri_map: Option<HashMap<String, DriftProfileUri>>,
-        extra: Option<ExtraMetadata>,
-        save_kwargs: Option<ModelSaveKwargs>,
-    ) -> Self {
-        ModelInterfaceSaveMetadata {
-            model_uri,
-            sample_data_uri,
-            onnx_model_uri,
-            data_processor_map: data_processor_map.unwrap_or_default(),
-            drift_profile_uri_map,
-            extra,
-            save_kwargs,
-        }
-    }
-
-    pub fn __str__(&self) -> String {
-        // serialize the struct to a string
-        PyHelperFuncs::__str__(self)
-    }
-
-    pub fn model_dump_json(&self) -> String {
-        // serialize the struct to a string
-        PyHelperFuncs::__json__(self)
-    }
-}
-
-#[pyclass(from_py_object)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-pub struct ModelInterfaceMetadata {
-    #[pyo3(get)]
-    pub task_type: TaskType,
-
-    #[pyo3(get)]
-    pub model_type: ModelType,
-
-    #[pyo3(get)]
-    pub data_type: DataType,
-
-    #[pyo3(get)]
-    pub onnx_session: Option<OnnxSession>,
-
-    #[pyo3(get)]
-    pub schema: FeatureSchema,
-
-    #[pyo3(get)]
-    pub save_metadata: ModelInterfaceSaveMetadata,
-
-    #[pyo3(get)]
-    pub extra_metadata: HashMap<String, String>,
-
-    #[pyo3(get)]
-    pub interface_type: ModelInterfaceType,
-
-    pub model_specific_metadata: Value,
-
-    #[pyo3(get)]
-    pub version: String,
-}
-
-#[pymethods]
-impl ModelInterfaceMetadata {
-    #[new]
-    #[pyo3(signature = (
-        save_metadata,
-        task_type=TaskType::Undefined,
-        model_type=ModelType::Unknown,
-        data_type=DataType::NotProvided,
-        schema=FeatureSchema::default(),
-        interface_type=ModelInterfaceType::Base,
-        onnx_session=None,
-        extra_metadata=HashMap::new(),
-        version=CommonKwargs::Undefined.to_string()
-     )
-    )]
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        save_metadata: ModelInterfaceSaveMetadata,
-        task_type: TaskType,
-        model_type: ModelType,
-        data_type: DataType,
-        schema: FeatureSchema,
-        interface_type: ModelInterfaceType,
-        onnx_session: Option<OnnxSession>,
-        extra_metadata: HashMap<String, String>,
-        version: String,
-    ) -> Self {
-        ModelInterfaceMetadata {
-            task_type,
-            model_type,
-            data_type,
-            onnx_session,
-            schema,
-            interface_type,
-            save_metadata,
-            extra_metadata,
-            model_specific_metadata: Value::Null,
-            version,
-        }
-    }
-    pub fn __str__(&self) -> String {
-        // serialize the struct to a string
-        PyHelperFuncs::__str__(self)
-    }
-
-    pub fn model_dump_json(&self) -> String {
-        serde_json::to_string(self).unwrap()
-    }
-
-    #[staticmethod]
-    pub fn model_validate_json(json_string: String) -> ModelInterfaceMetadata {
-        serde_json::from_str(&json_string).unwrap()
-    }
-}
 
 #[pyclass(subclass, skip_from_py_object)]
 #[derive(Debug)]

@@ -9,6 +9,7 @@ use opsml_semver::VersionType;
 use opsml_service::service::DEFAULT_SERVICE_FILENAME;
 use opsml_types::{RegistryType, contracts::CardQueryArgs};
 use opsml_utils::clean_string;
+#[cfg(feature = "python")]
 use pyo3::{pyclass, pymethods};
 use scouter_client::DriftType;
 
@@ -130,7 +131,7 @@ impl IntoQueryArgs for ListCards {
 }
 
 #[derive(Args, Clone)]
-#[pyclass(skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
 pub struct DownloadCard {
     /// Card space
     #[arg(long = "space")]
@@ -153,6 +154,7 @@ pub struct DownloadCard {
     pub write_dir: String,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl DownloadCard {
     /// Create a new DownloadCard
@@ -230,7 +232,7 @@ pub struct KeyArgs {
 }
 
 #[derive(Args, Clone)]
-#[pyclass(skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
 pub struct ScouterArgs {
     /// Space name
     #[arg(long = "space")]
@@ -256,6 +258,7 @@ pub struct ScouterArgs {
     pub deactivate_others: bool,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl ScouterArgs {
     /// Convert the ScouterArgs to a CardQueryArgs

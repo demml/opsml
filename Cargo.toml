@@ -86,7 +86,7 @@ ort = { version = "=2.0.0-rc.11" }
 owo-colors = "4.*"
 password-auth = "1.*"
 pbkdf2 = { version = "0.*", features = ["hmac"] }
-potato-head = "0.*"
+potato-head = { git = "https://github.com/demml/potatohead", branch = "python-result-fix" }
 pyo3 = { version = "0.28.*", features = ["abi3-py310", "extension-module", "anyhow", "serde", "chrono"] }
 rand = { version = "0.9.1"}
 rayon = "1.*"
@@ -124,7 +124,7 @@ utoipa = { version = "5", features = ["axum_extras", "uuid", "chrono"] }
 utoipa-swagger-ui = { version = "9", features = ["axum"] }
 uuid = { version = "1.*", features = ["v7"] }
 walkdir = "2.*"
-zip = "7.*"
+zip = { version = "7.*", default-features = false }
 
 [profile.release]
 lto = "fat"

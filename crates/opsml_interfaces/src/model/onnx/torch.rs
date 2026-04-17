@@ -1,7 +1,7 @@
-use crate::error::OnnxError;
+use crate::OnnxSession;
 use crate::model::base::utils::OnnxExtension;
-use crate::model::onnx::OnnxSession;
 use opsml_types::ModelType;
+use opsml_types::error::OnnxError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use std::path::Path;
@@ -36,10 +36,7 @@ impl TorchOnnxConverter {
     where
         T: OnnxExtension,
     {
-        let torch_onnx = py
-            .import("torch")
-            .map_err(|e| OnnxError::ImportError(e.to_string()))?
-            .getattr("onnx")?;
+        let torch_onnx = py.import("torch")?.getattr("onnx")?;
 
         debug!("Step 1: Converting torch model to ONNX");
 
@@ -49,9 +46,7 @@ impl TorchOnnxConverter {
         // create path in temp dir
         let tmp_path = tmp_dir.path().join("model.onnx");
 
-        torch_onnx
-            .call_method("export", (model, onnx_data, &tmp_path), kwargs)
-            .map_err(|e| OnnxError::PyOnnxConversionError(e.to_string()))?;
+        torch_onnx.call_method("export", (model, onnx_data, &tmp_path), kwargs)?;
 
         debug!("Step 3: Extracting ONNX schema");
         let onnx_session = self.get_onnx_session(py, &tmp_path);

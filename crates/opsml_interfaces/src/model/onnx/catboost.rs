@@ -1,5 +1,5 @@
-use crate::error::OnnxError;
-use crate::model::onnx::OnnxSession;
+use crate::OnnxSession;
+use opsml_types::error::OnnxError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use std::path::Path;

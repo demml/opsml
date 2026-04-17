@@ -11,18 +11,21 @@ use crate::cli::{
     AgentCommands, Cli, Commands, GenerateCommands, GetCommands, InstallCommands, LOGO_TEXT,
     ListCommands, SkillCommands, ToolCommands,
 };
+
+pub use actions::update_drift_profile_status;
 pub use actions::{
     generate_key,
     lock::install_service,
     register::register_service,
     ui::{start_ui, stop_ui},
-    update_drift_profile_status,
     validate::validate_project,
 };
 use anyhow::Context;
 use clap::Parser;
-pub use cli::arg::{DownloadCard, ScouterArgs};
-use cli::commands::{ScouterCommands, UiCommands};
+pub use cli::arg::DownloadCard;
+pub use cli::arg::ScouterArgs;
+use cli::commands::ScouterCommands;
+use cli::commands::UiCommands;
 use opsml_colors::Colorize;
 use opsml_types::RegistryType;
 
@@ -72,7 +75,6 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
                 Ok(())
             }
         },
-
         Some(Commands::Version) => {
             println!(
                 "opsml-cli version {}",
@@ -102,6 +104,7 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
                 Ok(())
             }
         },
+
         Some(Commands::Scouter { command }) => match command {
             // Scouter commands can be added here
             ScouterCommands::UpdateProfileStatus(args) => {
@@ -151,7 +154,6 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
             SkillCommands::Sync(args) => sync_skills(args).context("Failed to sync skills"),
             SkillCommands::Remove(args) => remove_skill(args).context("Failed to remove skill"),
         },
-
         Some(Commands::Configure(args)) => {
             configure_cli(args).context("Failed to configure CLI integration")
         }
@@ -185,7 +187,6 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
                 actions::tool::init_tool(args).context("Failed to init tool")
             }
         },
-
         None => {
             println!("No command provided");
             Ok(())

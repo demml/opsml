@@ -1,7 +1,12 @@
 use crate::contracts::DeploymentConfig;
 use crate::error::AgentConfigError;
-use opsml_utils::{PyHelperFuncs, convert_keys_to_snake_case};
+#[cfg(feature = "python")]
+use opsml_utils::PyHelperFuncs;
+#[cfg(feature = "python")]
+use opsml_utils::convert_keys_to_snake_case;
+#[cfg(feature = "python")]
 use pyo3::{IntoPyObjectExt, prelude::*, types::PyDict};
+#[cfg(feature = "python")]
 use pythonize::depythonize;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -10,6 +15,7 @@ use serde_yaml;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
+
 // Validation constants per Agent Skills Spec
 const MAX_SKILL_NAME_LENGTH: usize = 64;
 const MAX_DESCRIPTION_LENGTH: usize = 1024;
@@ -30,20 +36,15 @@ fn agent_current_version() -> String {
     "0.0.0".to_string()
 }
 
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AgentProvider {
-    #[pyo3(get, set)]
     pub organization: String,
-
-    #[pyo3(get, set)]
     pub url: String,
 }
 
-#[pymethods]
 impl AgentProvider {
-    #[new]
     pub fn new(organization: Option<String>, url: Option<String>) -> Self {
         Self {
             organization: organization.unwrap_or_default(),
@@ -52,8 +53,37 @@ impl AgentProvider {
     }
 }
 
+#[cfg(feature = "python")]
+#[pymethods]
+impl AgentProvider {
+    #[new]
+    pub fn py_new(organization: Option<String>, url: Option<String>) -> Self {
+        Self::new(organization, url)
+    }
+
+    #[getter]
+    pub fn organization(&self) -> String {
+        self.organization.clone()
+    }
+
+    #[setter]
+    pub fn set_organization(&mut self, val: String) {
+        self.organization = val;
+    }
+
+    #[getter]
+    pub fn url(&self) -> String {
+        self.url.clone()
+    }
+
+    #[setter]
+    pub fn set_url(&mut self, val: String) {
+        self.url = val;
+    }
+}
+
 // should be all caps (JSONRPC, HTTP+JSON, GRPC) but we'll normalise it in the UI to be more flexible
-#[pyclass(eq, eq_int, from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, from_py_object))]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum ProtocolBinding {
@@ -75,25 +105,38 @@ impl From<&str> for ProtocolBinding {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AgentInterface {
-    #[pyo3(get, set)]
     pub url: String,
 
-    #[pyo3(get, set)]
     #[serde(alias = "protocol_binding")]
     pub protocol_binding: ProtocolBinding,
 
-    #[pyo3(get, set)]
     #[serde(alias = "protocol_version", default = "a2a_current_version")]
     pub protocol_version: String,
 
-    #[pyo3(get, set)]
     pub tenant: String,
 }
 
+impl AgentInterface {
+    pub fn new_rs(
+        url: String,
+        protocol_binding: ProtocolBinding,
+        protocol_version: String,
+        tenant: Option<String>,
+    ) -> Self {
+        Self {
+            url,
+            protocol_binding,
+            protocol_version,
+            tenant: tenant.unwrap_or_default(),
+        }
+    }
+}
+
+#[cfg(feature = "python")]
 #[pymethods]
 impl AgentInterface {
     #[new]
@@ -124,40 +167,75 @@ impl AgentInterface {
             tenant: tenant.unwrap_or_default(),
         }
     }
+
+    #[getter]
+    pub fn url(&self) -> String {
+        self.url.clone()
+    }
+
+    #[setter]
+    pub fn set_url(&mut self, val: String) {
+        self.url = val;
+    }
+
+    #[getter]
+    pub fn protocol_binding(&self) -> ProtocolBinding {
+        self.protocol_binding.clone()
+    }
+
+    #[setter]
+    pub fn set_protocol_binding(&mut self, val: ProtocolBinding) {
+        self.protocol_binding = val;
+    }
+
+    #[getter]
+    pub fn protocol_version(&self) -> String {
+        self.protocol_version.clone()
+    }
+
+    #[setter]
+    pub fn set_protocol_version(&mut self, val: String) {
+        self.protocol_version = val;
+    }
+
+    #[getter]
+    pub fn tenant(&self) -> String {
+        self.tenant.clone()
+    }
+
+    #[setter]
+    pub fn set_tenant(&mut self, val: String) {
+        self.tenant = val;
+    }
 }
 
-impl AgentInterface {
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[serde(rename_all = "camelCase", default)]
+pub struct AgentExtension {
+    pub description: Option<String>,
+    pub params: Option<Value>,
+    pub required: bool,
+    pub uri: String,
+}
+
+impl AgentExtension {
     pub fn new_rs(
-        url: String,
-        protocol_binding: ProtocolBinding,
-        protocol_version: String,
-        tenant: Option<String>,
+        uri: String,
+        description: Option<String>,
+        params: Option<Value>,
+        required: bool,
     ) -> Self {
         Self {
-            url,
-            protocol_binding,
-            protocol_version,
-            tenant: tenant.unwrap_or_default(),
+            uri,
+            description,
+            params,
+            required,
         }
     }
 }
 
-#[pyclass(from_py_object)]
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
-#[serde(rename_all = "camelCase", default)]
-pub struct AgentExtension {
-    #[pyo3(get, set)]
-    pub description: Option<String>,
-
-    pub params: Option<Value>,
-
-    #[pyo3(get, set)]
-    pub required: bool,
-
-    #[pyo3(get, set)]
-    pub uri: String,
-}
-
+#[cfg(feature = "python")]
 #[pymethods]
 impl AgentExtension {
     #[new]
@@ -178,37 +256,65 @@ impl AgentExtension {
     }
 
     #[getter]
+    pub fn description(&self) -> Option<String> {
+        self.description.clone()
+    }
+
+    #[setter]
+    pub fn set_description(&mut self, val: Option<String>) {
+        self.description = val;
+    }
+
+    #[getter]
     pub fn get_params<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, AgentConfigError> {
         match &self.params {
             Some(params) => Ok(pythonize::pythonize(py, params)?),
             None => Ok(py.None().into_bound_py_any(py)?),
         }
     }
+
+    #[setter]
+    pub fn set_params(&mut self, val: Option<&Bound<'_, PyAny>>) {
+        self.params = val.map(|p| depythonize(p).unwrap_or_default());
+    }
+
+    #[getter]
+    pub fn required(&self) -> bool {
+        self.required
+    }
+
+    #[setter]
+    pub fn set_required(&mut self, val: bool) {
+        self.required = val;
+    }
+
+    #[getter]
+    pub fn uri(&self) -> String {
+        self.uri.clone()
+    }
+
+    #[setter]
+    pub fn set_uri(&mut self, val: String) {
+        self.uri = val;
+    }
 }
 
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AgentCapabilities {
-    #[pyo3(get, set)]
     pub streaming: bool,
 
-    #[pyo3(get, set)]
     #[serde(alias = "push_notifications")]
     pub push_notifications: bool,
 
-    #[pyo3(get, set)]
     #[serde(alias = "extended_agent_card")]
     pub extended_agent_card: bool,
 
-    #[pyo3(get, set)]
     pub extensions: Vec<AgentExtension>,
 }
 
-#[pymethods]
 impl AgentCapabilities {
-    #[new]
-    #[pyo3(signature = (streaming=false, push_notifications=false, extended_agent_card=false, extensions=None))]
     pub fn new(
         streaming: bool,
         push_notifications: bool,
@@ -224,59 +330,127 @@ impl AgentCapabilities {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl AgentCapabilities {
+    #[new]
+    #[pyo3(signature = (streaming=false, push_notifications=false, extended_agent_card=false, extensions=None))]
+    pub fn py_new(
+        streaming: bool,
+        push_notifications: bool,
+        extended_agent_card: bool,
+        extensions: Option<Vec<AgentExtension>>,
+    ) -> Self {
+        Self::new(
+            streaming,
+            push_notifications,
+            extended_agent_card,
+            extensions,
+        )
+    }
+
+    #[getter]
+    pub fn streaming(&self) -> bool {
+        self.streaming
+    }
+
+    #[setter]
+    pub fn set_streaming(&mut self, val: bool) {
+        self.streaming = val;
+    }
+
+    #[getter]
+    pub fn push_notifications(&self) -> bool {
+        self.push_notifications
+    }
+
+    #[setter]
+    pub fn set_push_notifications(&mut self, val: bool) {
+        self.push_notifications = val;
+    }
+
+    #[getter]
+    pub fn extended_agent_card(&self) -> bool {
+        self.extended_agent_card
+    }
+
+    #[setter]
+    pub fn set_extended_agent_card(&mut self, val: bool) {
+        self.extended_agent_card = val;
+    }
+
+    #[getter]
+    pub fn extensions(&self) -> Vec<AgentExtension> {
+        self.extensions.clone()
+    }
+
+    #[setter]
+    pub fn set_extensions(&mut self, val: Vec<AgentExtension>) {
+        self.extensions = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SecurityRequirement {
-    #[pyo3(get, set)]
     pub schemes: Vec<String>,
 }
 
-#[pymethods]
 impl SecurityRequirement {
-    #[new]
     pub fn new(schemes: Vec<String>) -> Self {
         Self { schemes }
     }
 }
 
+#[cfg(feature = "python")]
+#[pymethods]
+impl SecurityRequirement {
+    #[new]
+    pub fn py_new(schemes: Vec<String>) -> Self {
+        Self::new(schemes)
+    }
+
+    #[getter]
+    pub fn schemes(&self) -> Vec<String> {
+        self.schemes.clone()
+    }
+
+    #[setter]
+    pub fn set_schemes(&mut self, val: Vec<String>) {
+        self.schemes = val;
+    }
+}
+
 /// Claude Agent Skill Standard
 /// Implements the Agent Skills specification from https://agentskills.io/specification
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AgentSkillStandard {
-    #[pyo3(get, set)]
     pub name: String, // lowercase alphanumeric + hyphens only, 1-64 chars
 
-    #[pyo3(get, set)]
     pub description: String, // 1-1024 chars
 
-    #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub license: Option<String>,
 
-    #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub compatibility: Option<String>, // max 500 chars
 
-    #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub metadata: Option<HashMap<String, String>>,
 
-    #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none", alias = "allowed_tools")]
     pub allowed_tools: Option<Vec<String>>,
 
     // Optional directory path to the skill
     // If None: expected at {parent}/skills/{skill-name}/SKILL.md
     // If Some(path): expected at {path}/SKILL.md, where last directory in path must match skill name
-    #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none", alias = "skills_path")]
     pub skills_path: Option<PathBuf>,
 
     // The actual Markdown body (loaded on demand)
-    #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub body: Option<String>,
 }
@@ -445,19 +619,34 @@ impl AgentSkillStandard {
     /// Comprehensive validation of all fields
     pub fn validate(&self, root_path: &Path) -> Result<(), AgentConfigError> {
         self.validate_name()?;
-
         self.validate_description()?;
-
         self.validate_compatibility()?;
-
         self.validate_skills_path(root_path)?;
-
         Ok(())
+    }
+
+    /// Get the expected SKILL.md file path based on skills_path
+    /// Returns the full path where SKILL.md should be located
+    pub fn get_skill_md_path(&self, parent_dir: Option<String>) -> String {
+        let skill_name = self.name.trim();
+
+        let path = match &self.skills_path {
+            Some(dir_path) => Path::new(dir_path).join("SKILL.md"),
+            None => {
+                let base = parent_dir
+                    .as_ref()
+                    .map(|p| Path::new(p.as_str()))
+                    .unwrap_or_else(|| Path::new("."));
+                base.join("skills").join(skill_name).join("SKILL.md")
+            }
+        };
+
+        path.to_string_lossy().to_string()
     }
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
-
 impl AgentSkillStandard {
     #[new]
     #[pyo3(signature = (name, description, license=None, compatibility=None, metadata=None, allowed_tools=None, skills_path=None, body=None))]
@@ -490,60 +679,116 @@ impl AgentSkillStandard {
     /// Returns the full path where SKILL.md should be located
     #[pyo3(name = "get_skill_md_path")]
     pub fn py_get_skill_md_path(&self, parent_dir: Option<String>) -> String {
-        let skill_name = self.name.trim();
+        self.get_skill_md_path(parent_dir)
+    }
 
-        let path = match &self.skills_path {
-            Some(dir_path) => Path::new(dir_path).join("SKILL.md"),
-            None => {
-                let base = parent_dir
-                    .as_ref()
-                    .map(|p| Path::new(p.as_str()))
-                    .unwrap_or_else(|| Path::new("."));
-                base.join("skills").join(skill_name).join("SKILL.md")
-            }
-        };
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
 
-        path.to_string_lossy().to_string()
+    #[setter]
+    pub fn set_name(&mut self, val: String) {
+        self.name = val;
+    }
+
+    #[getter]
+    pub fn description(&self) -> String {
+        self.description.clone()
+    }
+
+    #[setter]
+    pub fn set_description(&mut self, val: String) {
+        self.description = val;
+    }
+
+    #[getter]
+    pub fn license(&self) -> Option<String> {
+        self.license.clone()
+    }
+
+    #[setter]
+    pub fn set_license(&mut self, val: Option<String>) {
+        self.license = val;
+    }
+
+    #[getter]
+    pub fn compatibility(&self) -> Option<String> {
+        self.compatibility.clone()
+    }
+
+    #[setter]
+    pub fn set_compatibility(&mut self, val: Option<String>) {
+        self.compatibility = val;
+    }
+
+    #[getter]
+    pub fn metadata(&self) -> Option<HashMap<String, String>> {
+        self.metadata.clone()
+    }
+
+    #[setter]
+    pub fn set_metadata(&mut self, val: Option<HashMap<String, String>>) {
+        self.metadata = val;
+    }
+
+    #[getter]
+    pub fn allowed_tools(&self) -> Option<Vec<String>> {
+        self.allowed_tools.clone()
+    }
+
+    #[setter]
+    pub fn set_allowed_tools(&mut self, val: Option<Vec<String>>) {
+        self.allowed_tools = val;
+    }
+
+    #[getter]
+    pub fn skills_path(&self) -> Option<PathBuf> {
+        self.skills_path.clone()
+    }
+
+    #[setter]
+    pub fn set_skills_path(&mut self, val: Option<PathBuf>) {
+        self.skills_path = val;
+    }
+
+    #[getter]
+    pub fn body(&self) -> Option<String> {
+        self.body.clone()
+    }
+
+    #[setter]
+    pub fn set_body(&mut self, val: Option<String>) {
+        self.body = val;
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct AgentSkill {
-    #[pyo3(get, set)]
     pub description: String,
 
-    #[pyo3(get, set)]
     pub examples: Vec<String>,
 
-    #[pyo3(get, set)]
     pub id: String,
 
-    #[pyo3(get, set)]
     #[serde(alias = "input_modes")]
     pub input_modes: Option<Vec<String>>,
 
-    #[pyo3(get, set)]
     pub name: String,
 
-    #[pyo3(get, set)]
     #[serde(alias = "output_modes")]
     pub output_modes: Option<Vec<String>>,
 
-    #[pyo3(get, set)]
     #[serde(alias = "security_requirements")]
     pub security_requirements: Option<Vec<SecurityRequirement>>,
 
-    #[pyo3(get, set)]
     pub tags: Vec<String>,
 }
 
-#[pymethods]
 impl AgentSkill {
-    #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (id, name, description, tags=None, examples=None, input_modes=None, output_modes=None, security_requirements=None))]
     pub fn new(
         id: String,
         name: String,
@@ -567,7 +812,116 @@ impl AgentSkill {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl AgentSkill {
+    #[new]
+    #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (id, name, description, tags=None, examples=None, input_modes=None, output_modes=None, security_requirements=None))]
+    pub fn py_new(
+        id: String,
+        name: String,
+        description: String,
+        tags: Option<Vec<String>>,
+        examples: Option<Vec<String>>,
+        input_modes: Option<Vec<String>>,
+        output_modes: Option<Vec<String>>,
+        security_requirements: Option<Vec<SecurityRequirement>>,
+    ) -> Self {
+        Self::new(
+            id,
+            name,
+            description,
+            tags,
+            examples,
+            input_modes,
+            output_modes,
+            security_requirements,
+        )
+    }
+
+    #[getter]
+    pub fn description(&self) -> String {
+        self.description.clone()
+    }
+
+    #[setter]
+    pub fn set_description(&mut self, val: String) {
+        self.description = val;
+    }
+
+    #[getter]
+    pub fn examples(&self) -> Vec<String> {
+        self.examples.clone()
+    }
+
+    #[setter]
+    pub fn set_examples(&mut self, val: Vec<String>) {
+        self.examples = val;
+    }
+
+    #[getter]
+    pub fn id(&self) -> String {
+        self.id.clone()
+    }
+
+    #[setter]
+    pub fn set_id(&mut self, val: String) {
+        self.id = val;
+    }
+
+    #[getter]
+    pub fn input_modes(&self) -> Option<Vec<String>> {
+        self.input_modes.clone()
+    }
+
+    #[setter]
+    pub fn set_input_modes(&mut self, val: Option<Vec<String>>) {
+        self.input_modes = val;
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    #[setter]
+    pub fn set_name(&mut self, val: String) {
+        self.name = val;
+    }
+
+    #[getter]
+    pub fn output_modes(&self) -> Option<Vec<String>> {
+        self.output_modes.clone()
+    }
+
+    #[setter]
+    pub fn set_output_modes(&mut self, val: Option<Vec<String>>) {
+        self.output_modes = val;
+    }
+
+    #[getter]
+    pub fn security_requirements(&self) -> Option<Vec<SecurityRequirement>> {
+        self.security_requirements.clone()
+    }
+
+    #[setter]
+    pub fn set_security_requirements(&mut self, val: Option<Vec<SecurityRequirement>>) {
+        self.security_requirements = val;
+    }
+
+    #[getter]
+    pub fn tags(&self) -> Vec<String> {
+        self.tags.clone()
+    }
+
+    #[setter]
+    pub fn set_tags(&mut self, val: Vec<String>) {
+        self.tags = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(tag = "format", rename_all = "lowercase")]
 pub enum SkillFormat {
@@ -585,6 +939,7 @@ impl SkillFormat {
     }
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl SkillFormat {
     #[new]
@@ -604,22 +959,16 @@ impl SkillFormat {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ApiKeySecurityScheme {
-    #[pyo3(get, set)]
     pub description: Option<String>,
-    #[pyo3(get, set)]
     pub location: String,
-    #[pyo3(get, set)]
     pub name: String,
 }
 
-#[pymethods]
 impl ApiKeySecurityScheme {
-    #[new]
-    #[pyo3(signature = (name, location, description=None))]
     pub fn new(name: String, location: String, description: Option<String>) -> Self {
         Self {
             name,
@@ -629,23 +978,57 @@ impl ApiKeySecurityScheme {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl ApiKeySecurityScheme {
+    #[new]
+    #[pyo3(signature = (name, location, description=None))]
+    pub fn py_new(name: String, location: String, description: Option<String>) -> Self {
+        Self::new(name, location, description)
+    }
+
+    #[getter]
+    pub fn description(&self) -> Option<String> {
+        self.description.clone()
+    }
+
+    #[setter]
+    pub fn set_description(&mut self, val: Option<String>) {
+        self.description = val;
+    }
+
+    #[getter]
+    pub fn location(&self) -> String {
+        self.location.clone()
+    }
+
+    #[setter]
+    pub fn set_location(&mut self, val: String) {
+        self.location = val;
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    #[setter]
+    pub fn set_name(&mut self, val: String) {
+        self.name = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct HttpAuthSecurityScheme {
-    #[pyo3(get, set)]
     scheme: String,
-    #[pyo3(get, set)]
     #[serde(alias = "bearer_format")]
     bearer_format: String,
-    #[pyo3(get, set)]
     description: String,
 }
 
-#[pymethods]
 impl HttpAuthSecurityScheme {
-    #[new]
-    #[pyo3(signature = (scheme, bearer_format=None, description=None))]
     pub fn new(scheme: String, bearer_format: Option<String>, description: Option<String>) -> Self {
         Self {
             scheme,
@@ -655,18 +1038,58 @@ impl HttpAuthSecurityScheme {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl HttpAuthSecurityScheme {
+    #[new]
+    #[pyo3(signature = (scheme, bearer_format=None, description=None))]
+    pub fn py_new(
+        scheme: String,
+        bearer_format: Option<String>,
+        description: Option<String>,
+    ) -> Self {
+        Self::new(scheme, bearer_format, description)
+    }
+
+    #[getter]
+    pub fn scheme(&self) -> String {
+        self.scheme.clone()
+    }
+
+    #[setter]
+    pub fn set_scheme(&mut self, val: String) {
+        self.scheme = val;
+    }
+
+    #[getter]
+    pub fn bearer_format(&self) -> String {
+        self.bearer_format.clone()
+    }
+
+    #[setter]
+    pub fn set_bearer_format(&mut self, val: String) {
+        self.bearer_format = val;
+    }
+
+    #[getter]
+    pub fn description(&self) -> String {
+        self.description.clone()
+    }
+
+    #[setter]
+    pub fn set_description(&mut self, val: String) {
+        self.description = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct MtlsSecurityScheme {
-    #[pyo3(get, set)]
     description: String,
 }
 
-#[pymethods]
 impl MtlsSecurityScheme {
-    #[new]
-    #[pyo3(signature = (description=None))]
     pub fn new(description: Option<String>) -> Self {
         Self {
             description: description.unwrap_or_default(),
@@ -674,23 +1097,37 @@ impl MtlsSecurityScheme {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl MtlsSecurityScheme {
+    #[new]
+    #[pyo3(signature = (description=None))]
+    pub fn py_new(description: Option<String>) -> Self {
+        Self::new(description)
+    }
+
+    #[getter]
+    pub fn description(&self) -> String {
+        self.description.clone()
+    }
+
+    #[setter]
+    pub fn set_description(&mut self, val: String) {
+        self.description = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct Oauth2SecurityScheme {
-    #[pyo3(get, set)]
     pub description: Option<String>,
-    #[pyo3(get, set)]
     pub flows: OAuthFlows,
-    #[pyo3(get, set)]
     #[serde(alias = "oauth2_metadata_url")]
     pub oauth2_metadata_url: Option<String>,
 }
 
-#[pymethods]
 impl Oauth2SecurityScheme {
-    #[new]
-    #[pyo3(signature = (flows, description=None, oauth2_metadata_url=None))]
     pub fn new(
         flows: OAuthFlows,
         description: Option<String>,
@@ -704,21 +1141,60 @@ impl Oauth2SecurityScheme {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl Oauth2SecurityScheme {
+    #[new]
+    #[pyo3(signature = (flows, description=None, oauth2_metadata_url=None))]
+    pub fn py_new(
+        flows: OAuthFlows,
+        description: Option<String>,
+        oauth2_metadata_url: Option<String>,
+    ) -> Self {
+        Self::new(flows, description, oauth2_metadata_url)
+    }
+
+    #[getter]
+    pub fn description(&self) -> Option<String> {
+        self.description.clone()
+    }
+
+    #[setter]
+    pub fn set_description(&mut self, val: Option<String>) {
+        self.description = val;
+    }
+
+    #[getter]
+    pub fn flows(&self) -> OAuthFlows {
+        self.flows.clone()
+    }
+
+    #[setter]
+    pub fn set_flows(&mut self, val: OAuthFlows) {
+        self.flows = val;
+    }
+
+    #[getter]
+    pub fn oauth2_metadata_url(&self) -> Option<String> {
+        self.oauth2_metadata_url.clone()
+    }
+
+    #[setter]
+    pub fn set_oauth2_metadata_url(&mut self, val: Option<String>) {
+        self.oauth2_metadata_url = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct OpenIdConnectSecurityScheme {
-    #[pyo3(get, set)]
     pub description: Option<String>,
-    #[pyo3(get, set)]
     #[serde(alias = "openIdConnectUrl")]
     pub open_id_connect_url: Option<String>,
 }
 
-#[pymethods]
 impl OpenIdConnectSecurityScheme {
-    #[new]
-    #[pyo3(signature = (open_id_connect_url=None, description=None))]
     pub fn new(open_id_connect_url: Option<String>, description: Option<String>) -> Self {
         Self {
             open_id_connect_url,
@@ -727,7 +1203,37 @@ impl OpenIdConnectSecurityScheme {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl OpenIdConnectSecurityScheme {
+    #[new]
+    #[pyo3(signature = (open_id_connect_url=None, description=None))]
+    pub fn py_new(open_id_connect_url: Option<String>, description: Option<String>) -> Self {
+        Self::new(open_id_connect_url, description)
+    }
+
+    #[getter]
+    pub fn description(&self) -> Option<String> {
+        self.description.clone()
+    }
+
+    #[setter]
+    pub fn set_description(&mut self, val: Option<String>) {
+        self.description = val;
+    }
+
+    #[getter]
+    pub fn open_id_connect_url(&self) -> Option<String> {
+        self.open_id_connect_url.clone()
+    }
+
+    #[setter]
+    pub fn set_open_id_connect_url(&mut self, val: Option<String>) {
+        self.open_id_connect_url = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged, rename_all = "camelCase")]
 #[allow(clippy::large_enum_variant)]
@@ -739,6 +1245,7 @@ pub enum SecurityScheme {
     OpenIdConnectSecurityScheme(OpenIdConnectSecurityScheme),
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl SecurityScheme {
     #[new]
@@ -767,29 +1274,21 @@ impl SecurityScheme {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct OAuthFlows {
-    #[pyo3(get, set)]
     #[serde(alias = "authorization_code")]
     pub authorization_code: Option<AuthorizationCodeFlow>,
-    #[pyo3(get, set)]
     #[serde(alias = "client_credentials")]
     pub client_credentials: Option<ClientCredentialsFlow>,
-    #[pyo3(get, set)]
     #[serde(alias = "device_code")]
     pub device_code: Option<DeviceCodeFlow>,
-    #[pyo3(get, set)]
     pub implicit: Option<ImplicitAuthFlow>,
-    #[pyo3(get, set)]
     pub password: Option<PassWordAuthFlow>,
 }
 
-#[pymethods]
 impl OAuthFlows {
-    #[new]
-    #[pyo3(signature = (authorization_code=None, client_credentials=None, device_code=None, implicit=None, password=None))]
     pub fn new(
         authorization_code: Option<AuthorizationCodeFlow>,
         client_credentials: Option<ClientCredentialsFlow>,
@@ -807,30 +1306,94 @@ impl OAuthFlows {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl OAuthFlows {
+    #[new]
+    #[pyo3(signature = (authorization_code=None, client_credentials=None, device_code=None, implicit=None, password=None))]
+    pub fn py_new(
+        authorization_code: Option<AuthorizationCodeFlow>,
+        client_credentials: Option<ClientCredentialsFlow>,
+        device_code: Option<DeviceCodeFlow>,
+        implicit: Option<ImplicitAuthFlow>,
+        password: Option<PassWordAuthFlow>,
+    ) -> Self {
+        Self::new(
+            authorization_code,
+            client_credentials,
+            device_code,
+            implicit,
+            password,
+        )
+    }
+
+    #[getter]
+    pub fn authorization_code(&self) -> Option<AuthorizationCodeFlow> {
+        self.authorization_code.clone()
+    }
+
+    #[setter]
+    pub fn set_authorization_code(&mut self, val: Option<AuthorizationCodeFlow>) {
+        self.authorization_code = val;
+    }
+
+    #[getter]
+    pub fn client_credentials(&self) -> Option<ClientCredentialsFlow> {
+        self.client_credentials.clone()
+    }
+
+    #[setter]
+    pub fn set_client_credentials(&mut self, val: Option<ClientCredentialsFlow>) {
+        self.client_credentials = val;
+    }
+
+    #[getter]
+    pub fn device_code(&self) -> Option<DeviceCodeFlow> {
+        self.device_code.clone()
+    }
+
+    #[setter]
+    pub fn set_device_code(&mut self, val: Option<DeviceCodeFlow>) {
+        self.device_code = val;
+    }
+
+    #[getter]
+    pub fn implicit(&self) -> Option<ImplicitAuthFlow> {
+        self.implicit.clone()
+    }
+
+    #[setter]
+    pub fn set_implicit(&mut self, val: Option<ImplicitAuthFlow>) {
+        self.implicit = val;
+    }
+
+    #[getter]
+    pub fn password(&self) -> Option<PassWordAuthFlow> {
+        self.password.clone()
+    }
+
+    #[setter]
+    pub fn set_password(&mut self, val: Option<PassWordAuthFlow>) {
+        self.password = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct AuthorizationCodeFlow {
-    #[pyo3(get, set)]
     #[serde(alias = "authorization_url")]
     pub authorization_url: String,
-    #[pyo3(get, set)]
     #[serde(alias = "pkce_required")]
     pub pkce_required: bool,
-    #[pyo3(get, set)]
     #[serde(alias = "refresh_url")]
     pub refresh_url: String,
-    #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
-    #[pyo3(get, set)]
     #[serde(alias = "token_url")]
     pub token_url: String,
 }
 
-#[pymethods]
 impl AuthorizationCodeFlow {
-    #[new]
-    #[pyo3(signature = (authorization_url, token_url, refresh_url=None, scopes=None, pkce_required=false))]
     pub fn new(
         authorization_url: String,
         token_url: String,
@@ -848,24 +1411,90 @@ impl AuthorizationCodeFlow {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl AuthorizationCodeFlow {
+    #[new]
+    #[pyo3(signature = (authorization_url, token_url, refresh_url=None, scopes=None, pkce_required=false))]
+    pub fn py_new(
+        authorization_url: String,
+        token_url: String,
+        refresh_url: Option<String>,
+        scopes: Option<HashMap<String, String>>,
+        pkce_required: bool,
+    ) -> Self {
+        Self::new(
+            authorization_url,
+            token_url,
+            refresh_url,
+            scopes,
+            pkce_required,
+        )
+    }
+
+    #[getter]
+    pub fn authorization_url(&self) -> String {
+        self.authorization_url.clone()
+    }
+
+    #[setter]
+    pub fn set_authorization_url(&mut self, val: String) {
+        self.authorization_url = val;
+    }
+
+    #[getter]
+    pub fn pkce_required(&self) -> bool {
+        self.pkce_required
+    }
+
+    #[setter]
+    pub fn set_pkce_required(&mut self, val: bool) {
+        self.pkce_required = val;
+    }
+
+    #[getter]
+    pub fn refresh_url(&self) -> String {
+        self.refresh_url.clone()
+    }
+
+    #[setter]
+    pub fn set_refresh_url(&mut self, val: String) {
+        self.refresh_url = val;
+    }
+
+    #[getter]
+    pub fn scopes(&self) -> HashMap<String, String> {
+        self.scopes.clone()
+    }
+
+    #[setter]
+    pub fn set_scopes(&mut self, val: HashMap<String, String>) {
+        self.scopes = val;
+    }
+
+    #[getter]
+    pub fn token_url(&self) -> String {
+        self.token_url.clone()
+    }
+
+    #[setter]
+    pub fn set_token_url(&mut self, val: String) {
+        self.token_url = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ClientCredentialsFlow {
-    #[pyo3(get, set)]
     #[serde(alias = "refresh_url")]
     pub refresh_url: String,
-    #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
-    #[pyo3(get, set)]
     #[serde(alias = "token_url")]
     pub token_url: String,
 }
 
-#[pymethods]
 impl ClientCredentialsFlow {
-    #[new]
-    #[pyo3(signature = (token_url, refresh_url=None, scopes=None))]
     pub fn new(
         token_url: String,
         refresh_url: Option<String>,
@@ -879,27 +1508,64 @@ impl ClientCredentialsFlow {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl ClientCredentialsFlow {
+    #[new]
+    #[pyo3(signature = (token_url, refresh_url=None, scopes=None))]
+    pub fn py_new(
+        token_url: String,
+        refresh_url: Option<String>,
+        scopes: Option<HashMap<String, String>>,
+    ) -> Self {
+        Self::new(token_url, refresh_url, scopes)
+    }
+
+    #[getter]
+    pub fn refresh_url(&self) -> String {
+        self.refresh_url.clone()
+    }
+
+    #[setter]
+    pub fn set_refresh_url(&mut self, val: String) {
+        self.refresh_url = val;
+    }
+
+    #[getter]
+    pub fn scopes(&self) -> HashMap<String, String> {
+        self.scopes.clone()
+    }
+
+    #[setter]
+    pub fn set_scopes(&mut self, val: HashMap<String, String>) {
+        self.scopes = val;
+    }
+
+    #[getter]
+    pub fn token_url(&self) -> String {
+        self.token_url.clone()
+    }
+
+    #[setter]
+    pub fn set_token_url(&mut self, val: String) {
+        self.token_url = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct DeviceCodeFlow {
-    #[pyo3(get, set)]
     #[serde(alias = "device_authorization_url")]
     pub device_authorization_url: String,
-    #[pyo3(get, set)]
     #[serde(alias = "refresh_url")]
     pub refresh_url: String,
-    #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
-    #[pyo3(get, set)]
     #[serde(alias = "token_url")]
     pub token_url: String,
 }
 
-#[pymethods]
 impl DeviceCodeFlow {
-    #[new]
-    #[pyo3(signature = (device_authorization_url, token_url, refresh_url=None, scopes=None))]
     pub fn new(
         device_authorization_url: String,
         token_url: String,
@@ -915,24 +1581,73 @@ impl DeviceCodeFlow {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl DeviceCodeFlow {
+    #[new]
+    #[pyo3(signature = (device_authorization_url, token_url, refresh_url=None, scopes=None))]
+    pub fn py_new(
+        device_authorization_url: String,
+        token_url: String,
+        refresh_url: Option<String>,
+        scopes: Option<HashMap<String, String>>,
+    ) -> Self {
+        Self::new(device_authorization_url, token_url, refresh_url, scopes)
+    }
+
+    #[getter]
+    pub fn device_authorization_url(&self) -> String {
+        self.device_authorization_url.clone()
+    }
+
+    #[setter]
+    pub fn set_device_authorization_url(&mut self, val: String) {
+        self.device_authorization_url = val;
+    }
+
+    #[getter]
+    pub fn refresh_url(&self) -> String {
+        self.refresh_url.clone()
+    }
+
+    #[setter]
+    pub fn set_refresh_url(&mut self, val: String) {
+        self.refresh_url = val;
+    }
+
+    #[getter]
+    pub fn scopes(&self) -> HashMap<String, String> {
+        self.scopes.clone()
+    }
+
+    #[setter]
+    pub fn set_scopes(&mut self, val: HashMap<String, String>) {
+        self.scopes = val;
+    }
+
+    #[getter]
+    pub fn token_url(&self) -> String {
+        self.token_url.clone()
+    }
+
+    #[setter]
+    pub fn set_token_url(&mut self, val: String) {
+        self.token_url = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ImplicitAuthFlow {
-    #[pyo3(get, set)]
     #[serde(alias = "authorization_url")]
     pub authorization_url: String,
-    #[pyo3(get, set)]
     #[serde(alias = "refresh_url")]
     pub refresh_url: String,
-    #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
 }
 
-#[pymethods]
 impl ImplicitAuthFlow {
-    #[new]
-    #[pyo3(signature = (authorization_url, refresh_url=None, scopes=None))]
     pub fn new(
         authorization_url: String,
         refresh_url: Option<String>,
@@ -946,24 +1661,62 @@ impl ImplicitAuthFlow {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl ImplicitAuthFlow {
+    #[new]
+    #[pyo3(signature = (authorization_url, refresh_url=None, scopes=None))]
+    pub fn py_new(
+        authorization_url: String,
+        refresh_url: Option<String>,
+        scopes: Option<HashMap<String, String>>,
+    ) -> Self {
+        Self::new(authorization_url, refresh_url, scopes)
+    }
+
+    #[getter]
+    pub fn authorization_url(&self) -> String {
+        self.authorization_url.clone()
+    }
+
+    #[setter]
+    pub fn set_authorization_url(&mut self, val: String) {
+        self.authorization_url = val;
+    }
+
+    #[getter]
+    pub fn refresh_url(&self) -> String {
+        self.refresh_url.clone()
+    }
+
+    #[setter]
+    pub fn set_refresh_url(&mut self, val: String) {
+        self.refresh_url = val;
+    }
+
+    #[getter]
+    pub fn scopes(&self) -> HashMap<String, String> {
+        self.scopes.clone()
+    }
+
+    #[setter]
+    pub fn set_scopes(&mut self, val: HashMap<String, String>) {
+        self.scopes = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct PassWordAuthFlow {
-    #[pyo3(get, set)]
     #[serde(alias = "refresh_url")]
     pub refresh_url: String,
-    #[pyo3(get, set)]
     pub scopes: HashMap<String, String>,
-    #[pyo3(get, set)]
     #[serde(alias = "token_url")]
     pub token_url: String,
 }
 
-#[pymethods]
 impl PassWordAuthFlow {
-    #[new]
-    #[pyo3(signature = (token_url, refresh_url=None, scopes=None))]
     pub fn new(
         token_url: String,
         refresh_url: Option<String>,
@@ -977,22 +1730,60 @@ impl PassWordAuthFlow {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl PassWordAuthFlow {
+    #[new]
+    #[pyo3(signature = (token_url, refresh_url=None, scopes=None))]
+    pub fn py_new(
+        token_url: String,
+        refresh_url: Option<String>,
+        scopes: Option<HashMap<String, String>>,
+    ) -> Self {
+        Self::new(token_url, refresh_url, scopes)
+    }
+
+    #[getter]
+    pub fn refresh_url(&self) -> String {
+        self.refresh_url.clone()
+    }
+
+    #[setter]
+    pub fn set_refresh_url(&mut self, val: String) {
+        self.refresh_url = val;
+    }
+
+    #[getter]
+    pub fn scopes(&self) -> HashMap<String, String> {
+        self.scopes.clone()
+    }
+
+    #[setter]
+    pub fn set_scopes(&mut self, val: HashMap<String, String>) {
+        self.scopes = val;
+    }
+
+    #[getter]
+    pub fn token_url(&self) -> String {
+        self.token_url.clone()
+    }
+
+    #[setter]
+    pub fn set_token_url(&mut self, val: String) {
+        self.token_url = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct AgentCardSignature {
-    #[pyo3(get, set)]
     pub header: Option<HashMap<String, String>>,
-    #[pyo3(get, set)]
     pub protected: String,
-    #[pyo3(get, set)]
     pub signature: String,
 }
 
-#[pymethods]
 impl AgentCardSignature {
-    #[new]
-    #[pyo3(signature = (protected, signature, header=None))]
     pub fn new(
         protected: String,
         signature: String,
@@ -1006,66 +1797,174 @@ impl AgentCardSignature {
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl AgentCardSignature {
+    #[new]
+    #[pyo3(signature = (protected, signature, header=None))]
+    pub fn py_new(
+        protected: String,
+        signature: String,
+        header: Option<HashMap<String, String>>,
+    ) -> Self {
+        Self::new(protected, signature, header)
+    }
+
+    #[getter]
+    pub fn header(&self) -> Option<HashMap<String, String>> {
+        self.header.clone()
+    }
+
+    #[setter]
+    pub fn set_header(&mut self, val: Option<HashMap<String, String>>) {
+        self.header = val;
+    }
+
+    #[getter]
+    pub fn protected(&self) -> String {
+        self.protected.clone()
+    }
+
+    #[setter]
+    pub fn set_protected(&mut self, val: String) {
+        self.protected = val;
+    }
+
+    #[getter]
+    pub fn signature(&self) -> String {
+        self.signature.clone()
+    }
+
+    #[setter]
+    pub fn set_signature(&mut self, val: String) {
+        self.signature = val;
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct AgentSpec {
-    #[pyo3(get, set)]
     pub capabilities: AgentCapabilities, // required
 
-    #[pyo3(get, set)]
     #[serde(alias = "default_output_modes")]
     pub default_output_modes: Vec<String>, // required, can be empty
 
-    #[pyo3(get, set)]
     #[serde(alias = "default_input_modes")]
     pub default_input_modes: Vec<String>, // required, can be empty
 
-    #[pyo3(get, set)]
     pub description: String, // required, non-empty
 
-    #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none", alias = "documentation_url")]
     pub documentation_url: Option<String>, // not required
 
-    #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none", alias = "icon_url")]
     pub icon_url: Option<String>, // not required
 
-    #[pyo3(get, set)]
     pub name: String, // required, non-empty
 
-    #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub provider: Option<AgentProvider>, // not required
 
-    #[pyo3(get, set)]
     #[serde(
         skip_serializing_if = "Option::is_none",
         alias = "security_requirements"
     )]
     pub security_requirements: Option<Vec<SecurityRequirement>>, // not required
 
-    #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none", alias = "security_schemes")]
     pub security_schemes: Option<HashMap<String, SecurityScheme>>, // not required
 
-    #[pyo3(get, set)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub signatures: Option<Vec<AgentCardSignature>>, // not required
 
-    #[pyo3(set)]
     pub skills: Vec<SkillFormat>, // required
 
-    #[pyo3(get, set)]
     #[serde(alias = "supported_interfaces")]
     pub supported_interfaces: Vec<AgentInterface>, // required, non-empty
 
-    #[pyo3(get, set)]
     #[serde(default = "agent_current_version")] // required
     pub version: String,
 }
 
+impl AgentSpec {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new_rs(
+        name: String,
+        description: String,
+        version: String,
+        supported_interfaces: Vec<AgentInterface>,
+        capabilities: AgentCapabilities,
+        default_input_modes: Vec<String>,
+        default_output_modes: Vec<String>,
+        skills: Vec<SkillFormat>,
+        provider: Option<AgentProvider>,
+        documentation_url: Option<String>,
+        icon_url: Option<String>,
+        security_schemes: Option<HashMap<String, SecurityScheme>>,
+        security_requirements: Option<Vec<SecurityRequirement>>,
+        signatures: Option<Vec<AgentCardSignature>>,
+    ) -> Result<Self, AgentConfigError> {
+        Ok(Self {
+            name,
+            description,
+            version,
+            supported_interfaces,
+            provider,
+            documentation_url,
+            icon_url,
+            capabilities,
+            default_input_modes,
+            default_output_modes,
+            skills,
+            security_schemes,
+            security_requirements,
+            signatures,
+        })
+    }
+
+    /// Validate all skills in the agent spec
+    /// For skills in Standard format, also validate their fields and check for SKILL.md file existence
+    /// If supported_interfaces is empty, attempt to populate it from deploy_config URLs. If deploy_config is None or contains no URLs, return an error since supported_interfaces cannot be empty.
+    pub(crate) fn validate(
+        &mut self,
+        root_path: &Path,
+        deploy_config: &Option<Vec<DeploymentConfig>>,
+    ) -> Result<(), AgentConfigError> {
+        for skill in &self.skills {
+            skill.validate(root_path)?;
+        }
+
+        if self.supported_interfaces.is_empty() {
+            let Some(deploy_configs) = deploy_config else {
+                return Err(AgentConfigError::InterfaceUrlMissing);
+            };
+
+            let all_urls: Vec<String> = deploy_configs
+                .iter()
+                .flat_map(|config| config.urls.iter().cloned())
+                .collect();
+
+            if all_urls.is_empty() {
+                return Err(AgentConfigError::InterfaceUrlMissing);
+            }
+
+            self.supported_interfaces = all_urls
+                .into_iter()
+                .map(|url| AgentInterface {
+                    url,
+                    protocol_binding: ProtocolBinding::HttpJson,
+                    protocol_version: a2a_current_version(),
+                    tenant: String::new(),
+                })
+                .collect();
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(feature = "python")]
 #[pymethods]
 impl AgentSpec {
     #[new]
@@ -1150,10 +2049,6 @@ impl AgentSpec {
         Ok(pythonized_spec)
     }
 
-    pub fn __str__(&self) -> String {
-        PyHelperFuncs::__str__(self)
-    }
-
     pub fn supports_authenticated_extended_card(&self) {}
 
     #[getter]
@@ -1175,82 +2070,157 @@ impl AgentSpec {
             })
             .collect()
     }
-}
 
-impl AgentSpec {
-    #[allow(clippy::too_many_arguments)]
-    pub fn new_rs(
-        name: String,
-        description: String,
-        version: String,
-        supported_interfaces: Vec<AgentInterface>,
-        capabilities: AgentCapabilities,
-        default_input_modes: Vec<String>,
-        default_output_modes: Vec<String>,
-        skills: Vec<SkillFormat>,
-        provider: Option<AgentProvider>,
-        documentation_url: Option<String>,
-        icon_url: Option<String>,
-        security_schemes: Option<HashMap<String, SecurityScheme>>,
-        security_requirements: Option<Vec<SecurityRequirement>>,
-        signatures: Option<Vec<AgentCardSignature>>,
-    ) -> Result<Self, AgentConfigError> {
-        Ok(Self {
-            name,
-            description,
-            version,
-            supported_interfaces,
-            provider,
-            documentation_url,
-            icon_url,
-            capabilities,
-            default_input_modes,
-            default_output_modes,
-            skills,
-            security_schemes,
-            security_requirements,
-            signatures,
-        })
+    #[setter]
+    pub fn set_skills(&mut self, skills: Vec<Bound<'_, PyAny>>) -> Result<(), AgentConfigError> {
+        let mut parsed_skills = Vec::new();
+        for skill in skills {
+            if skill.is_instance_of::<AgentSkillStandard>() {
+                let standard_skill = skill.extract::<AgentSkillStandard>()?;
+                parsed_skills.push(SkillFormat::Standard(standard_skill));
+            } else if skill.is_instance_of::<AgentSkill>() {
+                let a2a_skill = skill.extract::<AgentSkill>()?;
+                parsed_skills.push(SkillFormat::A2A(a2a_skill));
+            } else {
+                return Err(AgentConfigError::InvalidSkillFormat);
+            }
+        }
+        self.skills = parsed_skills;
+        Ok(())
     }
 
-    /// Validate all skills in the agent spec
-    /// For skills in Standard format, also validate their fields and check for SKILL.md file existence
-    /// If supported_interfaces is empty, attempt to populate it from deploy_config URLs. If deploy_config is None or contains no URLs, return an error since supported_interfaces cannot be empty.
-    pub(crate) fn validate(
-        &mut self,
-        root_path: &Path,
-        deploy_config: &Option<Vec<DeploymentConfig>>,
-    ) -> Result<(), AgentConfigError> {
-        for skill in &self.skills {
-            skill.validate(root_path)?;
-        }
+    #[getter]
+    pub fn capabilities(&self) -> AgentCapabilities {
+        self.capabilities.clone()
+    }
 
-        if self.supported_interfaces.is_empty() {
-            let Some(deploy_configs) = deploy_config else {
-                return Err(AgentConfigError::InterfaceUrlMissing);
-            };
+    #[setter]
+    pub fn set_capabilities(&mut self, val: AgentCapabilities) {
+        self.capabilities = val;
+    }
 
-            let all_urls: Vec<String> = deploy_configs
-                .iter()
-                .flat_map(|config| config.urls.iter().cloned())
-                .collect();
+    #[getter]
+    pub fn default_output_modes(&self) -> Vec<String> {
+        self.default_output_modes.clone()
+    }
 
-            if all_urls.is_empty() {
-                return Err(AgentConfigError::InterfaceUrlMissing);
-            }
+    #[setter]
+    pub fn set_default_output_modes(&mut self, val: Vec<String>) {
+        self.default_output_modes = val;
+    }
 
-            self.supported_interfaces = all_urls
-                .into_iter()
-                .map(|url| AgentInterface {
-                    url,
-                    protocol_binding: ProtocolBinding::HttpJson,
-                    protocol_version: a2a_current_version(),
-                    tenant: String::new(),
-                })
-                .collect();
-        }
+    #[getter]
+    pub fn default_input_modes(&self) -> Vec<String> {
+        self.default_input_modes.clone()
+    }
 
-        Ok(())
+    #[setter]
+    pub fn set_default_input_modes(&mut self, val: Vec<String>) {
+        self.default_input_modes = val;
+    }
+
+    #[getter]
+    pub fn description(&self) -> String {
+        self.description.clone()
+    }
+
+    #[setter]
+    pub fn set_description(&mut self, val: String) {
+        self.description = val;
+    }
+
+    #[getter]
+    pub fn documentation_url(&self) -> Option<String> {
+        self.documentation_url.clone()
+    }
+
+    #[setter]
+    pub fn set_documentation_url(&mut self, val: Option<String>) {
+        self.documentation_url = val;
+    }
+
+    #[getter]
+    pub fn icon_url(&self) -> Option<String> {
+        self.icon_url.clone()
+    }
+
+    #[setter]
+    pub fn set_icon_url(&mut self, val: Option<String>) {
+        self.icon_url = val;
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    #[setter]
+    pub fn set_name(&mut self, val: String) {
+        self.name = val;
+    }
+
+    #[getter]
+    pub fn provider(&self) -> Option<AgentProvider> {
+        self.provider.clone()
+    }
+
+    #[setter]
+    pub fn set_provider(&mut self, val: Option<AgentProvider>) {
+        self.provider = val;
+    }
+
+    #[getter]
+    pub fn security_requirements(&self) -> Option<Vec<SecurityRequirement>> {
+        self.security_requirements.clone()
+    }
+
+    #[setter]
+    pub fn set_security_requirements(&mut self, val: Option<Vec<SecurityRequirement>>) {
+        self.security_requirements = val;
+    }
+
+    #[getter]
+    pub fn security_schemes(&self) -> Option<HashMap<String, SecurityScheme>> {
+        self.security_schemes.clone()
+    }
+
+    #[setter]
+    pub fn set_security_schemes(&mut self, val: Option<HashMap<String, SecurityScheme>>) {
+        self.security_schemes = val;
+    }
+
+    #[getter]
+    pub fn signatures(&self) -> Option<Vec<AgentCardSignature>> {
+        self.signatures.clone()
+    }
+
+    #[setter]
+    pub fn set_signatures(&mut self, val: Option<Vec<AgentCardSignature>>) {
+        self.signatures = val;
+    }
+
+    #[getter]
+    pub fn supported_interfaces(&self) -> Vec<AgentInterface> {
+        self.supported_interfaces.clone()
+    }
+
+    #[setter]
+    pub fn set_supported_interfaces(&mut self, val: Vec<AgentInterface>) {
+        self.supported_interfaces = val;
+    }
+
+    #[getter]
+    pub fn version(&self) -> String {
+        self.version.clone()
+    }
+
+    #[setter]
+    pub fn set_version(&mut self, val: String) {
+        self.version = val;
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
     }
 }
 

@@ -13,6 +13,7 @@ use opsml_types::{
     contracts::{ArtifactKey, Card, CardQueryArgs},
 };
 use opsml_utils::PyHelperFuncs;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use std::collections::HashSet;
 use std::path::Path;
@@ -159,6 +160,7 @@ pub fn download_service_sub_cards(
             mapping.add_card_path(&card.alias, &card_path);
 
             // If modelcard or promptcard, load and process drift paths
+            #[cfg(feature = "python")]
             if card.registry_type == RegistryType::Model
                 || card.registry_type == RegistryType::Prompt
             {
@@ -211,8 +213,9 @@ pub fn download_service_from_registry(
     Ok(())
 }
 
+#[cfg(feature = "python")]
 #[pyfunction]
-#[pyo3(signature = (write_dir, space=None, name=None, version=None, uid=None))]
+#[cfg_attr(feature = "python", pyo3(signature = (write_dir, space=None, name=None, version=None, uid=None)))]
 /// Helper function for downloading a service from the registry
 /// # Arguments
 /// * `write_dir` - The directory to write the downloaded service to
@@ -300,6 +303,7 @@ async fn async_download_card(
     mapping.add_card_path(&card.alias, &card_path);
 
     // check if card has drift profiles and add them to map
+    #[cfg(feature = "python")]
     if card.registry_type == RegistryType::Model || card.registry_type == RegistryType::Prompt {
         process_drift_paths(card, &card_path, mapping)?;
     }

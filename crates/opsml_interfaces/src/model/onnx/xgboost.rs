@@ -1,7 +1,7 @@
-use crate::error::OnnxError;
+use crate::OnnxSession;
 use crate::model::base::utils::OnnxExtension;
-use crate::model::onnx::OnnxSession;
 use opsml_types::ModelType;
+use opsml_types::error::OnnxError;
 use pyo3::types::PyList;
 use pyo3::types::{PyDict, PyTuple};
 use pyo3::{IntoPyObjectExt, prelude::*};
@@ -95,17 +95,12 @@ impl XGBoostOnnxConverter {
     where
         T: OnnxExtension,
     {
-        let onnxmltools = py
-            .import("onnxmltools")
-            .map_err(|e| OnnxError::ImportError(e.to_string()))?;
+        let onnxmltools = py.import("onnxmltools")?;
 
         let type_helper = py
-            .import("skl2onnx")
-            .unwrap()
-            .getattr("algebra")
-            .unwrap()
-            .getattr("type_helper")
-            .unwrap();
+            .import("skl2onnx")?
+            .getattr("algebra")?
+            .getattr("type_helper")?;
 
         debug!("Step 1: Guessing initial types");
         // returns a list of tuples with (1) name and (2) type

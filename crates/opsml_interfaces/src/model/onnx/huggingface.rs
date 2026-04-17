@@ -1,5 +1,5 @@
-use crate::error::OnnxError;
-use crate::model::onnx::OnnxSession;
+use crate::OnnxSession;
+use opsml_types::error::OnnxError;
 
 use opsml_types::SaveName;
 use pyo3::prelude::*;
@@ -48,7 +48,7 @@ impl HuggingFaceOnnxConverter {
                 })
             })
             .next()
-            .ok_or_else(|| OnnxError::NoOnnxFile)?;
+            .ok_or(OnnxError::NoOnnxFile)?;
 
         // load model_path to onnx_bytes
         OnnxSession::from_file(py, &onnx_file, None)
@@ -58,7 +58,7 @@ impl HuggingFaceOnnxConverter {
         py: Python<'py>,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> PyResult<HuggingFaceKwargs<'py>> {
-        let kwargs = kwargs.ok_or_else(|| OnnxError::MissingOnnxKwargs)?;
+        let kwargs = kwargs.ok_or(OnnxError::MissingOnnxKwargs)?;
 
         let ort_type = kwargs
             .get_item("ort_type")

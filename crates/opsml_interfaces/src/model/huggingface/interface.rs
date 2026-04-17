@@ -6,17 +6,17 @@ use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+use crate::ExtraMetadata;
 use crate::OnnxConverter;
 use crate::OnnxSession;
-use crate::base::{
-    ExtraMetadata, ModelInterfaceMetadata, ModelInterfaceSaveMetadata, parse_save_kwargs,
-};
+use crate::base::{ModelInterfaceMetadata, ModelInterfaceSaveMetadata, parse_save_kwargs};
 use crate::data::DataInterface;
 use crate::data::generate_feature_schema;
-use crate::error::{ModelInterfaceError, OnnxError};
+use crate::error::ModelInterfaceError;
 use crate::model::ModelInterface;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
+use opsml_types::error::OnnxError;
 use pyo3::IntoPyObjectExt;
 use pyo3::PyTraverseError;
 use pyo3::PyVisit;
@@ -1059,7 +1059,7 @@ impl HuggingFaceModel {
                 })
             })
             .next()
-            .ok_or_else(|| OnnxError::NoOnnxFile)?;
+            .ok_or(OnnxError::NoOnnxFile)?;
 
         let onnx_bytes = std::fs::read(&file_path)?;
         let sess = OnnxSession::get_py_session_from_bytes(py, &onnx_bytes, kwargs)?;

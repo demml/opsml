@@ -10,7 +10,7 @@ doctest = false
 [dependencies]
 colored_json = { workspace = true }
 chrono = { workspace = true }
-pyo3 = { workspace = true }
+pyo3 = { workspace = true, optional = true }
 regex = { workspace = true }
 serde_json = { workspace = true }
 serde = { workspace = true }
@@ -20,4 +20,8 @@ tokio = { workspace = true }
 tracing = { workspace = true }
 uuid = { workspace = true }
 walkdir = { workspace = true }
-pythonize = { workspace = true }
+pythonize = { workspace = true, optional = true }
+
+[features]
+default = []
+python = ["dep:pyo3", "dep:pythonize"]

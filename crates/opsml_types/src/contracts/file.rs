@@ -4,7 +4,10 @@ use crate::contracts::ArtifactType;
 use crate::error::TypeError;
 use crate::interfaces::DriftProfileUri;
 use opsml_crypt::decrypt_key;
-use opsml_utils::{PyHelperFuncs, uid_to_byte_key};
+#[cfg(feature = "python")]
+use opsml_utils::PyHelperFuncs;
+use opsml_utils::uid_to_byte_key;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -50,26 +53,42 @@ pub struct DownloadFileQuery {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
 pub struct FileInfo {
-    #[pyo3(get)]
     pub name: String,
-    #[pyo3(get)]
     pub size: i64,
-    #[pyo3(get)]
     pub object_type: String,
-    #[pyo3(get)]
     pub created: String,
-    #[pyo3(get)]
     pub suffix: String,
 
     pub stripped_path: String,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl FileInfo {
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+    #[getter]
+    pub fn size(&self) -> i64 {
+        self.size
+    }
+    #[getter]
+    pub fn object_type(&self) -> String {
+        self.object_type.clone()
+    }
+    #[getter]
+    pub fn created(&self) -> String {
+        self.created.clone()
+    }
+    #[getter]
+    pub fn suffix(&self) -> String {
+        self.suffix.clone()
+    }
+
     pub fn __str__(&self) -> String {
-        // serialize the struct to a string
         PyHelperFuncs::__str__(self)
     }
 }

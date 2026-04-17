@@ -7,10 +7,14 @@ use opsml_storage::storage::error::StorageError;
 use opsml_types::RegistryType;
 use opsml_types::error::TypeError;
 use opsml_utils::error::UtilError;
+#[cfg(feature = "python")]
 use pyo3::exceptions::PyRuntimeError;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
 use pyo3::pyclass::PyClassGuardError;
 use thiserror::Error;
+#[cfg(feature = "python")]
 use tracing::error;
 
 #[derive(Error, Debug)]
@@ -145,22 +149,22 @@ pub enum RegistryError {
     #[error("Failed to insert parameters")]
     InsertParameterError,
 
+    #[cfg(feature = "python")]
     #[error(transparent)]
     TraceError(#[from] scouter_client::TraceError),
 
     #[error("Invalid registry type for drift profiles: {0}")]
     InvalidRegistryType(String),
-
-    #[error(transparent)]
-    InterfaceTypeError(#[from] opsml_interfaces::error::TypeError),
 }
 
+#[cfg(feature = "python")]
 impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for RegistryError {
     fn from(err: PyClassGuardError<'a, 'py>) -> Self {
         RegistryError::Error(err.to_string())
     }
 }
 
+#[cfg(feature = "python")]
 impl From<RegistryError> for PyErr {
     fn from(err: RegistryError) -> PyErr {
         let msg = err.to_string();
@@ -169,12 +173,14 @@ impl From<RegistryError> for PyErr {
     }
 }
 
+#[cfg(feature = "python")]
 impl From<PyErr> for RegistryError {
     fn from(err: PyErr) -> Self {
         RegistryError::Error(err.to_string())
     }
 }
 
+#[cfg(feature = "python")]
 impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for RegistryError {
     fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         RegistryError::DowncastError(err.to_string())

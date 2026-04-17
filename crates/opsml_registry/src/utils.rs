@@ -1,21 +1,28 @@
+#[cfg(feature = "python")]
 use crate::CardRegistries;
 use crate::error::RegistryError;
 use crate::registries::card::OpsmlCardRegistry;
-use opsml_cards::{
-    DataCard, ExperimentCard, ModelCard, PromptCard, ServiceCard, SkillCard, traits::OpsmlCard,
-};
+use opsml_cards::ServiceCard;
+use opsml_cards::traits::OpsmlCard;
+#[cfg(feature = "python")]
+use opsml_cards::{DataCard, ExperimentCard, ModelCard, PromptCard, SkillCard};
 use opsml_crypt::{decrypt_directory, encrypt_directory};
-use opsml_interfaces::DriftArgs;
 use opsml_storage::storage_client;
 use opsml_types::contracts::*;
 use opsml_types::*;
+#[cfg(feature = "python")]
 use pyo3::IntoPyObjectExt;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
 use pyo3::types::PyList;
+#[cfg(feature = "python")]
 use pyo3::types::PyString;
+#[cfg(feature = "python")]
 use scouter_client::ProfileRequest;
 use std::collections::HashMap;
 use std::path::PathBuf;
+#[cfg(feature = "python")]
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
 
@@ -28,6 +35,7 @@ use tracing::{debug, error, instrument};
 /// * `interface`: Optional interface to use
 /// * `load_kwargs`: Optional load kwargs
 ///
+#[cfg(feature = "python")]
 fn load_and_extract_card(
     py: Python,
     card_registries: &CardRegistries,
@@ -77,6 +85,7 @@ fn load_and_extract_card(
     Ok(card_obj.into_py_any(py)?)
 }
 
+#[cfg(feature = "python")]
 pub enum CardEnum {
     ModelCard(ModelCard),
     DataCard(DataCard),
@@ -86,6 +95,7 @@ pub enum CardEnum {
     SkillCard(Box<SkillCard>),
 }
 
+#[cfg(feature = "python")]
 impl CardEnum {
     #[allow(clippy::needless_lifetimes)]
     pub fn into_bound_py_any<'py>(
@@ -105,6 +115,7 @@ impl CardEnum {
     }
 }
 
+#[cfg(feature = "python")]
 pub fn load_service_card<'py>(
     py: Python<'py>,
     service: &mut ServiceCard,
@@ -135,6 +146,7 @@ pub fn load_service_card<'py>(
     Ok(())
 }
 
+#[cfg(feature = "python")]
 pub fn check_if_card(card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
     let is_card: bool = card.getattr("is_card")?.extract()?;
 
@@ -164,6 +176,7 @@ pub fn check_if_card(card: &Bound<'_, PyAny>) -> Result<(), RegistryError> {
 ///
 /// # Errors
 /// * `RegistryError` - Error creating card
+#[cfg(feature = "python")]
 pub fn card_from_string<'py>(
     py: Python<'py>,
     card_json: String,
@@ -172,8 +185,8 @@ pub fn card_from_string<'py>(
 ) -> Result<CardEnum, RegistryError> {
     let card = match key.registry_type {
         RegistryType::Model => {
-            let mut card =
-                ModelCard::model_validate_json(py, card_json, interface).inspect_err(|e| {
+            let mut card = ModelCard::model_validate_json_py(py, card_json, interface)
+                .inspect_err(|e| {
                     error!("Failed to validate ModelCard: {e}");
                 })?;
 
@@ -183,7 +196,7 @@ pub fn card_from_string<'py>(
 
         RegistryType::Data => {
             let mut card =
-                DataCard::model_validate_json(py, card_json, interface).inspect_err(|e| {
+                DataCard::model_validate_json_py(py, card_json, interface).inspect_err(|e| {
                     error!("Failed to validate DataCard: {e}");
                 })?;
 
@@ -249,6 +262,7 @@ pub fn card_from_string<'py>(
 ///
 /// # Errors
 /// * `RegistryError` - Error downloading card
+#[cfg(feature = "python")]
 #[instrument(skip_all)]
 pub fn download_card<'py>(
     py: Python<'py>,
@@ -437,6 +451,7 @@ pub fn validate_service_cards(service: &mut [Card]) -> Result<(), RegistryError>
 ///
 /// # Errors
 /// * `RegistryError` - Error verifying card
+#[cfg(feature = "python")]
 #[instrument(skip_all)]
 pub fn verify_card(
     card: &Bound<'_, PyAny>,
@@ -522,6 +537,7 @@ where
 /// * `registry` - OpsmlCardRegistry
 /// # Returns
 /// * `Result<(), RegistryError>` - Result
+#[cfg(feature = "python")]
 pub(crate) fn upload_profile(
     profile: &Bound<'_, PyAny>,
     drift_args: Option<&DriftArgs>,
@@ -549,6 +565,7 @@ pub(crate) fn upload_profile(
 /// * `registry` - OpsmlCardRegistry
 /// # Returns
 /// * `Result<(), RegistryError>` - Result
+#[cfg(feature = "python")]
 pub(crate) fn upload_drift_profile_map(
     profile_map: &Bound<'_, PyAny>,
     drift_args: Option<&DriftArgs>,

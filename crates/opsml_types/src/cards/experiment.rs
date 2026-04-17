@@ -1,7 +1,10 @@
 use crate::error::TypeError;
 use chrono::{DateTime, Utc};
+#[cfg(feature = "python")]
 use opsml_utils::PyHelperFuncs;
+#[cfg(feature = "python")]
 use pyo3::IntoPyObjectExt;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -9,54 +12,35 @@ use sysinfo::{Networks, System};
 
 use core::fmt::Debug;
 
+#[cfg_attr(feature = "python", pyclass(name = "ExperimentMetric", from_py_object))]
+#[cfg_attr(feature = "python", pyo3(module = "opsml.experiment"))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(name = "ExperimentMetric", from_py_object)]
-#[pyo3(module = "opsml.experiment")]
 pub struct Metric {
-    #[pyo3(get)]
     pub name: String,
-
-    #[pyo3(get)]
     pub value: f64,
-
-    #[pyo3(get)]
     pub step: Option<i32>,
-
-    #[pyo3(get)]
     pub timestamp: Option<i64>,
-
-    #[pyo3(get)]
     pub created_at: Option<DateTime<Utc>>,
-
-    #[pyo3(get)]
     pub is_eval: bool,
 }
 
-#[pymethods]
 impl Metric {
-    #[new]
-    #[pyo3(signature = (name, value, step = None, timestamp = None, created_at = None))]
-    pub fn new(
+    pub fn new_rs(
         name: String,
         value: f64,
         step: Option<i32>,
         timestamp: Option<i64>,
         created_at: Option<DateTime<Utc>>,
     ) -> Self {
-        let is_eval = false;
         Self {
             name,
             value,
             step,
             timestamp,
             created_at,
-            is_eval,
+            is_eval: false,
         }
-    }
-
-    pub fn __str__(&self) -> String {
-        PyHelperFuncs::__str__(self)
     }
 }
 
@@ -73,10 +57,54 @@ impl Default for Metric {
     }
 }
 
+#[cfg(feature = "python")]
+#[pymethods]
+impl Metric {
+    #[new]
+    #[pyo3(signature = (name, value, step = None, timestamp = None, created_at = None))]
+    pub fn new(
+        name: String,
+        value: f64,
+        step: Option<i32>,
+        timestamp: Option<i64>,
+        created_at: Option<DateTime<Utc>>,
+    ) -> Self {
+        Self::new_rs(name, value, step, timestamp, created_at)
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+    #[getter]
+    pub fn value(&self) -> f64 {
+        self.value
+    }
+    #[getter]
+    pub fn step(&self) -> Option<i32> {
+        self.step
+    }
+    #[getter]
+    pub fn timestamp(&self) -> Option<i64> {
+        self.timestamp
+    }
+    #[getter]
+    pub fn created_at(&self) -> Option<DateTime<Utc>> {
+        self.created_at
+    }
+    #[getter]
+    pub fn is_eval(&self) -> bool {
+        self.is_eval
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[pyclass(from_py_object)]
 pub struct ExperimentEvalMetrics {
-    #[pyo3(get)]
     pub metrics: HashMap<String, Metric>,
 }
 
@@ -86,6 +114,7 @@ impl ExperimentEvalMetrics {
     }
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl ExperimentEvalMetrics {
     #[new]
@@ -109,10 +138,15 @@ impl ExperimentEvalMetrics {
         Self { metrics }
     }
 
+    #[getter]
+    pub fn metrics(&self) -> HashMap<String, Metric> {
+        self.metrics.clone()
+    }
+
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
-    // make it iterable and indexable
+
     pub fn __getitem__(&self, key: &str) -> Result<f64, TypeError> {
         match self.metrics.get(key) {
             Some(metric) => Ok(metric.value),
@@ -125,19 +159,23 @@ impl ExperimentEvalMetrics {
     }
 }
 
+#[cfg_attr(
+    feature = "python",
+    pyclass(name = "ExperimentMetrics", from_py_object)
+)]
+#[cfg_attr(feature = "python", pyo3(module = "opsml.experiment"))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass(name = "ExperimentMetrics", from_py_object)]
-#[pyo3(module = "opsml.experiment")]
 pub struct Metrics {
-    #[pyo3(get)]
     pub metrics: Vec<Metric>,
 }
 
+#[cfg(feature = "python")]
 #[pyclass(skip_from_py_object)]
 struct MetricIter {
     inner: std::vec::IntoIter<Metric>,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl MetricIter {
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
@@ -149,12 +187,18 @@ impl MetricIter {
     }
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl Metrics {
+    #[getter]
+    pub fn metrics(&self) -> Vec<Metric> {
+        self.metrics.clone()
+    }
+
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
-    // make it iterable and indexable
+
     pub fn __getitem__(&self, index: usize) -> Option<Metric> {
         self.metrics.get(index).cloned()
     }
@@ -179,6 +223,7 @@ pub enum ParameterValue {
     Str(String),
 }
 
+#[cfg(feature = "python")]
 impl ParameterValue {
     pub fn from_any(value: Bound<'_, PyAny>) -> Result<Self, TypeError> {
         if let Ok(value) = value.extract::<i64>() {
@@ -193,24 +238,37 @@ impl ParameterValue {
     }
 }
 
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
+#[cfg_attr(feature = "python", pyo3(module = "opsml.experiment"))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(from_py_object)]
-#[pyo3(module = "opsml.experiment")]
 pub struct Parameter {
-    #[pyo3(get)]
     pub name: String,
     pub value: ParameterValue,
 }
 
+impl Default for Parameter {
+    fn default() -> Self {
+        Self {
+            name: "".to_string(),
+            value: ParameterValue::Int(0),
+        }
+    }
+}
+
+#[cfg(feature = "python")]
 #[pymethods]
 impl Parameter {
     #[new]
     #[pyo3(signature = (name, value))]
     pub fn new(name: String, value: Bound<'_, PyAny>) -> Result<Self, TypeError> {
         let value = ParameterValue::from_any(value)?;
-
         Ok(Self { name, value })
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
     }
 
     #[getter]
@@ -223,20 +281,13 @@ impl Parameter {
     }
 }
 
-impl Default for Parameter {
-    fn default() -> Self {
-        Self {
-            name: "".to_string(),
-            value: ParameterValue::Int(0),
-        }
-    }
-}
-
+#[cfg(feature = "python")]
 #[pyclass(skip_from_py_object)]
 struct ParamIter {
     inner: std::vec::IntoIter<Parameter>,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl ParamIter {
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
@@ -248,20 +299,25 @@ impl ParamIter {
     }
 }
 
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
+#[cfg_attr(feature = "python", pyo3(module = "opsml.experiment"))]
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass(from_py_object)]
-#[pyo3(module = "opsml.experiment")]
 pub struct Parameters {
-    #[pyo3(get)]
     pub parameters: Vec<Parameter>,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl Parameters {
+    #[getter]
+    pub fn parameters(&self) -> Vec<Parameter> {
+        self.parameters.clone()
+    }
+
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
-    // make it iterable and indexable
+
     pub fn __getitem__(&self, index: usize) -> Option<Parameter> {
         self.parameters.get(index).cloned()
     }
@@ -455,18 +511,35 @@ impl Default for HardwareMetricLogger {
     }
 }
 
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[pyclass(from_py_object)]
 pub struct ComputeEnvironment {
-    cpu_count: usize,
-    total_memory: u64,
-    total_swap: u64,
-    system: String,
-    os_version: String,
-    hostname: String,
-    python_version: String,
+    pub cpu_count: usize,
+    pub total_memory: u64,
+    pub total_swap: u64,
+    pub system: String,
+    pub os_version: String,
+    pub hostname: String,
+    pub python_version: String,
 }
 
+impl ComputeEnvironment {
+    pub fn new_rs() -> Result<Self, TypeError> {
+        let sys = System::new_all();
+        Ok(Self {
+            cpu_count: sys.cpus().len(),
+            total_memory: sys.total_memory(),
+            total_swap: sys.total_swap(),
+            system: System::name().unwrap_or("Unknown".to_string()),
+            os_version: System::os_version().unwrap_or("Unknown".to_string()),
+            hostname: System::host_name().unwrap_or("Unknown".to_string()),
+            python_version: std::env::var("PYTHON_VERSION")
+                .unwrap_or_else(|_| "unknown".to_string()),
+        })
+    }
+}
+
+#[cfg(feature = "python")]
 #[pymethods]
 impl ComputeEnvironment {
     #[new]
@@ -484,6 +557,35 @@ impl ComputeEnvironment {
         })
     }
 
+    #[getter]
+    pub fn cpu_count(&self) -> usize {
+        self.cpu_count
+    }
+    #[getter]
+    pub fn total_memory(&self) -> u64 {
+        self.total_memory
+    }
+    #[getter]
+    pub fn total_swap(&self) -> u64 {
+        self.total_swap
+    }
+    #[getter]
+    pub fn system(&self) -> String {
+        self.system.clone()
+    }
+    #[getter]
+    pub fn os_version(&self) -> String {
+        self.os_version.clone()
+    }
+    #[getter]
+    pub fn hostname(&self) -> String {
+        self.hostname.clone()
+    }
+    #[getter]
+    pub fn python_version(&self) -> String {
+        self.python_version.clone()
+    }
+
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
@@ -496,9 +598,7 @@ mod tests {
     #[test]
     fn test_hardware_metrics_logger() {
         let mut logger = HardwareMetricLogger::new();
-        // sleep for 5 seconds
         std::thread::sleep(std::time::Duration::from_secs(2));
-
         logger.get_metrics();
     }
 }

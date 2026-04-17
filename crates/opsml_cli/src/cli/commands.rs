@@ -1,8 +1,9 @@
+use crate::cli::arg::ScouterArgs;
 use crate::cli::arg::{
     AgentInitArgs, AgentListArgs, AgentPullArgs, AgentPushArgs, ConfigureArgs, DownloadCard,
-    KeyArgs, ListCards, LockArgs, RegisterArgs, ScouterArgs, SkillInitArgs, SkillListArgs,
-    SkillPullArgs, SkillPushArgs, SkillRemoveArgs, SyncArgs, ToolInitArgs, ToolListArgs,
-    ToolPullArgs, ToolPushArgs, UiArgs,
+    KeyArgs, ListCards, LockArgs, RegisterArgs, SkillInitArgs, SkillListArgs, SkillPullArgs,
+    SkillPushArgs, SkillRemoveArgs, SyncArgs, ToolInitArgs, ToolListArgs, ToolPullArgs,
+    ToolPushArgs, UiArgs,
 };
 use clap::Parser;
 use clap::Subcommand;

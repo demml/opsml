@@ -2,6 +2,7 @@ use crate::cli::arg::ScouterArgs;
 use crate::error::CliError;
 use opsml_registry::registries::card::OpsmlCardRegistry;
 use opsml_types::RegistryType;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use scouter_client::ProfileStatusRequest;
 
@@ -11,7 +12,7 @@ use scouter_client::ProfileStatusRequest;
 /// * `args` - The command line arguments
 ///
 ///
-#[pyfunction]
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn update_drift_profile_status(args: &ScouterArgs) -> Result<(), CliError> {
     let request = ProfileStatusRequest {
         space: args.space.clone(),

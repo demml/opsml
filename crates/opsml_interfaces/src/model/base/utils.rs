@@ -1,7 +1,9 @@
-use crate::base::{DriftProfileMap, ModelSaveKwargs};
+use crate::ModelSaveKwargs;
+use crate::base::DriftProfileMap;
 use crate::data::{ArrowData, DataInterface, NumpyData, PandasData, PolarsData, TorchData};
-use crate::error::{ModelInterfaceError, OnnxError, SampleDataError};
+use crate::error::{ModelInterfaceError, SampleDataError};
 use crate::model::InterfaceDataType;
+use opsml_types::error::OnnxError;
 
 use opsml_types::{DataType, ModelType, SaveName, Suffix};
 use pyo3::IntoPyObjectExt;

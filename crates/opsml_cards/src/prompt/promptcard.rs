@@ -1,5 +1,6 @@
 use crate::error::CardError;
-use crate::traits::{OpsmlCard, ProfileExt};
+use crate::traits::OpsmlCard;
+use crate::traits::ProfileExt;
 use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
 use opsml_types::DriftProfileUri;
@@ -7,18 +8,21 @@ use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
 use opsml_types::{RegistryType, SaveName, Suffix};
 use opsml_utils::{PyHelperFuncs, get_utc_datetime};
 use potato_head::prompt_types::Prompt;
+#[cfg(feature = "python")]
 use pyo3::IntoPyObjectExt;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
 use pyo3::types::PyList;
-use scouter_client::AssertionTasks;
-use scouter_client::ProfileRequest;
-use scouter_client::TasksFile;
-use scouter_client::{AgentEvalConfig, AgentEvalProfile, DriftType};
+use scouter_client::{
+    AgentEvalConfig, AgentEvalProfile, AssertionTasks, DriftType, ProfileRequest, TasksFile,
+};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
+use std::path::PathBuf;
 use tracing::{debug, error, instrument};
 
 pub fn deserialize_from_path<T: DeserializeOwned>(path: PathBuf) -> Result<T, CardError> {
@@ -43,58 +47,58 @@ pub fn deserialize_from_path<T: DeserializeOwned>(path: PathBuf) -> Result<T, Ca
     Ok(item)
 }
 
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct PromptCardMetadata {
-    #[pyo3(get, set)]
     pub experimentcard_uid: Option<String>,
-
-    #[pyo3(get, set)]
     pub auditcard_uid: Option<String>,
-
-    #[pyo3(get)]
     pub drift_profile_uri_map: Option<HashMap<String, DriftProfileUri>>,
 }
 
-#[pyclass(from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl PromptCardMetadata {
+    #[getter]
+    pub fn experimentcard_uid(&self) -> Option<&str> {
+        self.experimentcard_uid.as_deref()
+    }
+
+    #[setter]
+    pub fn set_experimentcard_uid(&mut self, val: Option<String>) {
+        self.experimentcard_uid = val;
+    }
+
+    #[getter]
+    pub fn auditcard_uid(&self) -> Option<&str> {
+        self.auditcard_uid.as_deref()
+    }
+
+    #[setter]
+    pub fn set_auditcard_uid(&mut self, val: Option<String>) {
+        self.auditcard_uid = val;
+    }
+
+    #[getter]
+    pub fn drift_profile_uri_map(&self) -> Option<HashMap<String, DriftProfileUri>> {
+        self.drift_profile_uri_map.clone()
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
 #[derive(Debug, Serialize, Clone)]
 pub struct PromptCard {
     pub prompt: Prompt,
-
-    #[pyo3(get, set)]
     pub space: String,
-
-    #[pyo3(get, set)]
     pub name: String,
-
-    #[pyo3(get, set)]
     pub version: String,
-
-    #[pyo3(get, set)]
     pub uid: String,
-
-    #[pyo3(get, set)]
     pub tags: Vec<String>,
-
-    #[pyo3(get, set)]
     pub metadata: PromptCardMetadata,
-
-    #[pyo3(get)]
     pub registry_type: RegistryType,
-
-    #[pyo3(get, set)]
     pub app_env: String,
-
-    #[pyo3(get, set)]
     pub created_at: DateTime<Utc>,
-
-    #[pyo3(get)]
     pub is_card: bool,
-
-    #[pyo3(get)]
     pub opsml_version: String,
-
-    #[pyo3(get, set)]
     pub eval_profile: Option<AgentEvalProfile>,
 }
 
@@ -114,7 +118,7 @@ impl ProfileExt for PromptCard {
 
 impl OpsmlCard for PromptCard {
     fn get_registry_card(&self) -> Result<CardRecord, CardError> {
-        self.get_registry_card()
+        self.build_registry_card()
     }
 
     fn get_version(&self) -> String {
@@ -158,14 +162,17 @@ impl OpsmlCard for PromptCard {
     }
 
     fn update_drift_config_args(&mut self) -> Result<(), CardError> {
-        self.update_drift_config_args()
+        self.update_drift_config_args_impl()?;
+        Ok(())
     }
 
     fn set_profile_uid(&mut self, profile_uid: String) -> Result<(), CardError> {
-        self.update_eval_uid(profile_uid)
+        self.update_eval_uid(profile_uid)?;
+        Ok(())
     }
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl PromptCard {
     #[new]
@@ -183,7 +190,9 @@ impl PromptCard {
             error!("Failed to extract prompt: {e}");
         })?;
 
-        Self::new_rs(prompt, space, name, version, tags, eval_profile)
+        let mut card = Self::new_rs(prompt, space, name, version, tags)?;
+        card.eval_profile = eval_profile;
+        Ok(card)
     }
 
     #[getter]
@@ -201,6 +210,111 @@ impl PromptCard {
     }
 
     #[getter]
+    pub fn space(&self) -> String {
+        self.space.clone()
+    }
+
+    #[setter]
+    pub fn set_space(&mut self, val: String) {
+        self.space = val;
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    #[setter]
+    pub fn set_name(&mut self, val: String) {
+        self.name = val;
+    }
+
+    #[getter]
+    pub fn version(&self) -> String {
+        self.version.clone()
+    }
+
+    #[setter]
+    pub fn set_version(&mut self, val: String) {
+        self.version = val;
+    }
+
+    #[getter]
+    pub fn uid(&self) -> String {
+        self.uid.clone()
+    }
+
+    #[setter]
+    pub fn set_uid(&mut self, val: String) {
+        self.uid = val;
+    }
+
+    #[getter]
+    pub fn tags(&self) -> Vec<String> {
+        self.tags.clone()
+    }
+
+    #[setter]
+    pub fn set_tags(&mut self, val: Vec<String>) {
+        self.tags = val;
+    }
+
+    #[getter]
+    pub fn metadata(&self) -> PromptCardMetadata {
+        self.metadata.clone()
+    }
+
+    #[setter]
+    pub fn set_metadata(&mut self, val: PromptCardMetadata) {
+        self.metadata = val;
+    }
+
+    #[getter]
+    pub fn registry_type(&self) -> RegistryType {
+        self.registry_type.clone()
+    }
+
+    #[getter]
+    pub fn app_env(&self) -> String {
+        self.app_env.clone()
+    }
+
+    #[setter]
+    pub fn set_app_env(&mut self, val: String) {
+        self.app_env = val;
+    }
+
+    #[getter]
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+
+    #[setter]
+    pub fn set_created_at(&mut self, val: DateTime<Utc>) {
+        self.created_at = val;
+    }
+
+    #[getter]
+    pub fn is_card(&self) -> bool {
+        self.is_card
+    }
+
+    #[getter]
+    pub fn opsml_version(&self) -> String {
+        self.opsml_version.clone()
+    }
+
+    #[getter]
+    pub fn eval_profile(&self) -> Option<AgentEvalProfile> {
+        self.eval_profile.clone()
+    }
+
+    #[setter]
+    pub fn set_eval_profile(&mut self, val: Option<AgentEvalProfile>) {
+        self.eval_profile = val;
+    }
+
+    #[getter]
     pub fn experimentcard_uid(&self) -> Option<&str> {
         self.metadata.experimentcard_uid.as_deref()
     }
@@ -215,22 +329,8 @@ impl PromptCard {
     }
 
     #[pyo3(signature = (path), name = "save")]
-    pub fn save_card(&mut self, path: PathBuf) -> Result<(), CardError> {
-        debug!("Saving PromptCard to path: {:?}", path);
-
-        let eval_profile_uri_map = if let Some(_eval_profile) = &mut self.eval_profile {
-            Some(self.save_eval_profile(&path)?)
-        } else {
-            None
-        };
-
-        self.metadata.drift_profile_uri_map = eval_profile_uri_map;
-
-        self.prompt.save_prompt(Some(path.clone()))?;
-        let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        PyHelperFuncs::save_to_json(&self, &card_save_path)?;
-
-        Ok(())
+    pub fn save_card_py(&mut self, path: PathBuf) -> Result<(), CardError> {
+        self.save_card(path)
     }
 
     #[staticmethod]
@@ -239,25 +339,6 @@ impl PromptCard {
         Ok(serde_json::from_str(&json_string).inspect_err(|e| {
             error!("Failed to validate json: {e}");
         })?)
-    }
-
-    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
-        let record = PromptCardClientRecord {
-            created_at: self.created_at,
-            app_env: self.app_env.clone(),
-            space: self.space.clone(),
-            name: self.name.clone(),
-            version: self.version.clone(),
-            uid: self.uid.clone(),
-            tags: self.tags.clone(),
-            experimentcard_uid: self.metadata.experimentcard_uid.clone(),
-            auditcard_uid: self.metadata.auditcard_uid.clone(),
-            opsml_version: self.opsml_version.clone(),
-            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
-            content_hash: self.calculate_content_hash()?,
-        };
-
-        Ok(CardRecord::Prompt(record))
     }
 
     /// Create drift profile
@@ -281,23 +362,13 @@ impl PromptCard {
     }
 
     #[pyo3(name = "_update_drift_config_args")]
-    fn update_drift_config_args(&mut self) -> Result<(), CardError> {
-        if let Some(profile) = &mut self.eval_profile {
-            profile.config.name = self.name.clone();
-            profile.config.space = self.space.clone();
-            profile.config.version = self.version.clone();
-        }
-
-        Ok(())
+    fn update_drift_config_args_py(&mut self) -> Result<(), CardError> {
+        self.update_drift_config_args_impl()
     }
 
     #[pyo3(name = "_update_eval_uid")]
-    fn update_eval_uid(&mut self, uid: String) -> Result<(), CardError> {
-        if let Some(profile) = &mut self.eval_profile {
-            profile.config.uid = uid;
-        }
-
-        Ok(())
+    fn update_eval_uid_py(&mut self, uid: String) -> Result<(), CardError> {
+        self.update_eval_uid(uid)
     }
 
     #[staticmethod]
@@ -310,17 +381,51 @@ impl PromptCard {
     }
 
     pub fn calculate_content_hash(&self) -> Result<Vec<u8>, CardError> {
+        self.content_hash()
+    }
+
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
+        self.build_registry_card()
+    }
+}
+
+impl PromptCard {
+    pub fn new_rs(
+        prompt: Prompt,
+        space: Option<&str>,
+        name: Option<&str>,
+        version: Option<&str>,
+        tags: Option<Vec<String>>,
+    ) -> Result<Self, CardError> {
+        let registry_type = RegistryType::Prompt;
+        let base_args = BaseArgs::create_args(name, space, version, None, &registry_type)?;
+
+        Ok(Self {
+            prompt,
+            space: base_args.0,
+            name: base_args.1,
+            version: base_args.2,
+            uid: base_args.3,
+            tags: tags.unwrap_or_default(),
+            metadata: PromptCardMetadata::default(),
+            registry_type,
+            app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
+            created_at: get_utc_datetime(),
+            is_card: true,
+            opsml_version: opsml_version::version(),
+            eval_profile: None,
+        })
+    }
+
+    pub fn content_hash(&self) -> Result<Vec<u8>, CardError> {
         let mut hasher = Sha256::new();
 
-        // Hash the prompt
         let prompt_string = serde_json::to_string(&self.prompt)?;
         hasher.update(prompt_string.as_bytes());
 
-        // Hash the eval profile, excluding runtime-generated uid
         if let Some(eval_profile) = &self.eval_profile {
             let mut eval_value = serde_json::to_value(eval_profile)?;
 
-            // Remove runtime-generated fields from config
             if let Some(config) = eval_value.get_mut("config")
                 && let Some(config_obj) = config.as_object_mut()
             {
@@ -330,7 +435,6 @@ impl PromptCard {
                 config_obj.remove("version");
             }
 
-            // remove workflow if exists since it contains runtime-generated fields like id and created_at
             if let Some(_workflow) = eval_value.get_mut("workflow") {
                 eval_value.as_object_mut().unwrap().remove("workflow");
             }
@@ -340,6 +444,139 @@ impl PromptCard {
         }
 
         Ok(hasher.finalize().to_vec())
+    }
+
+    pub fn build_registry_card(&self) -> Result<CardRecord, CardError> {
+        let record = PromptCardClientRecord {
+            created_at: self.created_at,
+            app_env: self.app_env.clone(),
+            space: self.space.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+            uid: self.uid.clone(),
+            tags: self.tags.clone(),
+            experimentcard_uid: self.metadata.experimentcard_uid.clone(),
+            auditcard_uid: self.metadata.auditcard_uid.clone(),
+            opsml_version: self.opsml_version.clone(),
+            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            content_hash: self.content_hash()?,
+        };
+
+        Ok(CardRecord::Prompt(record))
+    }
+
+    pub fn save_card(&mut self, path: PathBuf) -> Result<(), CardError> {
+        debug!("Saving PromptCard to path: {:?}", path);
+
+        {
+            let eval_profile_uri_map = if self.eval_profile.is_some() {
+                Some(self.save_eval_profile(&path)?)
+            } else {
+                None
+            };
+            self.metadata.drift_profile_uri_map = eval_profile_uri_map;
+        }
+
+        self.prompt
+            .save_prompt(Some(path.clone()))
+            .map_err(|e| CardError::Error(e.to_string()))?;
+
+        let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
+        PyHelperFuncs::save_to_json(self, &card_save_path)?;
+
+        Ok(())
+    }
+
+    pub fn update_drift_config_args_impl(&mut self) -> Result<(), CardError> {
+        if let Some(profile) = &mut self.eval_profile {
+            profile.config.name = self.name.clone();
+            profile.config.space = self.space.clone();
+            profile.config.version = self.version.clone();
+        }
+        Ok(())
+    }
+
+    pub fn update_eval_uid(&mut self, uid: String) -> Result<(), CardError> {
+        if let Some(profile) = &mut self.eval_profile {
+            profile.config.uid = uid;
+        }
+        Ok(())
+    }
+
+    #[instrument(skip_all, name = "save_eval_profile")]
+    pub fn save_eval_profile(
+        &mut self,
+        path: &Path,
+    ) -> Result<HashMap<String, DriftProfileUri>, CardError> {
+        let profile = self
+            .eval_profile
+            .as_ref()
+            .ok_or(CardError::DriftProfileNotFoundError)?;
+
+        let alias = profile
+            .alias
+            .clone()
+            .unwrap_or_else(|| "eval_profile".to_string());
+
+        let mut drift_url_map = HashMap::new();
+        let save_dir = PathBuf::from(SaveName::Evaluation);
+        let relative_path = save_dir.join(alias.clone()).with_extension(Suffix::Json);
+        let full_path = path.join(&relative_path);
+        let drift_type = DriftType::Agent;
+        profile.save_to_json(Some(full_path))?;
+
+        drift_url_map.insert(
+            alias,
+            DriftProfileUri {
+                root_dir: save_dir.clone(),
+                uri: relative_path,
+                drift_type,
+            },
+        );
+        debug!("Drift profile saved");
+        Ok(drift_url_map)
+    }
+
+    pub fn load_drift_profile(&mut self, path: &Path) -> Result<(), CardError> {
+        let map = self
+            .metadata
+            .drift_profile_uri_map
+            .as_ref()
+            .ok_or(CardError::DriftProfileNotFoundInMap)?;
+
+        for (alias, drift_profile_uri) in map {
+            debug!(filepath = ?drift_profile_uri.uri, tmp_path = ?path, "Loading drift profile for alias: {}", alias);
+            let filepath = path.join(&drift_profile_uri.uri);
+            let file = std::fs::read_to_string(&filepath)?;
+
+            match drift_profile_uri.drift_type {
+                DriftType::Agent => {
+                    let profile = AgentEvalProfile::model_validate_json(file);
+                    self.eval_profile = Some(profile);
+                }
+                _ => {
+                    error!(
+                        "PromptCard does not support drift type: {:?}",
+                        drift_profile_uri.drift_type
+                    );
+                    return Err(CardError::UnsupportedDriftType(
+                        drift_profile_uri.drift_type.clone(),
+                    ));
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    #[cfg(not(feature = "python"))]
+    pub fn from_path(path: std::path::PathBuf) -> Result<Self, CardError> {
+        deserialize_from_path(path)
+    }
+
+    #[cfg(not(feature = "python"))]
+    pub fn calculate_content_hash(&self) -> Result<Vec<u8>, CardError> {
+        self.content_hash()
     }
 }
 
@@ -374,7 +611,6 @@ impl PromptConfig {
             self.name.as_deref(),
             self.version.as_deref(),
             self.tags,
-            None,
         )?;
 
         if let Some(evaluation) = self.evaluation {
@@ -453,125 +689,5 @@ impl<'de> Deserialize<'de> for PromptCard {
                 eval_profile: internal.eval_profile,
             }),
         }
-    }
-}
-
-impl PromptCard {
-    pub fn new_rs(
-        prompt: Prompt,
-        space: Option<&str>,
-        name: Option<&str>,
-        version: Option<&str>,
-        tags: Option<Vec<String>>,
-        eval_profile: Option<AgentEvalProfile>,
-    ) -> Result<Self, CardError> {
-        let registry_type = RegistryType::Prompt;
-        let base_args = BaseArgs::create_args(name, space, version, None, &registry_type)?;
-
-        Ok(Self {
-            prompt,
-            space: base_args.0,
-            name: base_args.1,
-            version: base_args.2,
-            uid: base_args.3,
-            tags: tags.unwrap_or_default(),
-            metadata: PromptCardMetadata::default(),
-            registry_type,
-            app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
-            created_at: get_utc_datetime(),
-            is_card: true,
-            opsml_version: opsml_version::version(),
-            eval_profile,
-        })
-    }
-    /// Save drift profile
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - Path to save drift profile
-    ///
-    /// # Returns
-    ///
-    /// * `PyResult<PathBuf>` - Path to saved drift profile
-    #[instrument(skip_all, name = "save_eval_profile")]
-    pub fn save_eval_profile(
-        &mut self,
-        path: &Path,
-    ) -> Result<HashMap<String, DriftProfileUri>, CardError> {
-        let profile = self
-            .eval_profile
-            .as_ref()
-            .ok_or(CardError::DriftProfileNotFoundError)?;
-
-        let alias = profile
-            .alias
-            .clone()
-            .unwrap_or_else(|| "eval_profile".to_string());
-
-        let mut drift_url_map = HashMap::new();
-        let save_dir = PathBuf::from(SaveName::Evaluation);
-
-        let relative_path = save_dir.join(alias.clone()).with_extension(Suffix::Json);
-        let full_path = path.join(&relative_path);
-
-        let drift_type = DriftType::Agent;
-        profile.save_to_json(Some(full_path))?;
-
-        drift_url_map.insert(
-            alias,
-            DriftProfileUri {
-                root_dir: save_dir.clone(),
-                uri: relative_path,
-                drift_type,
-            },
-        );
-        debug!("Drift profile saved");
-        Ok(drift_url_map)
-    }
-
-    /// Load drift profile
-    ///
-    /// # Arguments
-    ///
-    /// * `path` - Path to load drift profile
-    ///
-    /// # Returns
-    ///
-    /// * `PyResult<()>` - Result of loading drift profile
-    pub fn load_drift_profile(&mut self, path: &Path) -> Result<(), CardError> {
-        let map = self
-            .metadata
-            .drift_profile_uri_map
-            .as_ref()
-            .ok_or(CardError::DriftProfileNotFoundInMap)?;
-
-        for (alias, drift_profile_uri) in map {
-            debug!(filepath = ?drift_profile_uri.uri, tmp_path = ?path, "Loading drift profile for alias: {}", alias);
-
-            let filepath = path.join(&drift_profile_uri.uri);
-
-            debug!("Drift profile file path: {:?}", filepath);
-
-            // load file to json string
-            let file = std::fs::read_to_string(&filepath)?;
-
-            match drift_profile_uri.drift_type {
-                DriftType::Agent => {
-                    let profile = AgentEvalProfile::model_validate_json(file);
-                    self.eval_profile = Some(profile);
-                }
-                _ => {
-                    error!(
-                        "PromptCard does not support drift type: {:?}",
-                        drift_profile_uri.drift_type
-                    );
-                    return Err(CardError::UnsupportedDriftType(
-                        drift_profile_uri.drift_type.clone(),
-                    ));
-                }
-            }
-        }
-
-        Ok(())
     }
 }

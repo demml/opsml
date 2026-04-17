@@ -1,3 +1,4 @@
+use opsml_types::error::{OnnxError, TypeError};
 use opsml_utils::error::UtilError;
 use pyo3::PyErr;
 use pyo3::exceptions::PyRuntimeError;
@@ -5,47 +6,6 @@ use pyo3::pyclass::PyClassGuardError;
 use pythonize::PythonizeError;
 use thiserror::Error;
 use tracing::error;
-
-#[derive(Error, Debug)]
-pub enum TypeError {
-    #[error("{0}")]
-    Error(String),
-
-    #[error("Key {0} not found in FeatureMap")]
-    MissingKeyError(String),
-
-    #[error("Only one of query or filename can be provided")]
-    OnlyOneQueryorFilenameError,
-
-    #[error("Key not found")]
-    KeyNotFound,
-
-    #[error(transparent)]
-    UtilError(#[from] UtilError),
-
-    #[error(transparent)]
-    IoError(#[from] std::io::Error),
-
-    #[error("Invalid data type")]
-    InvalidDataType,
-
-    #[error("Invalid onnx type")]
-    InvalidOnnxType,
-}
-
-impl From<TypeError> for PyErr {
-    fn from(err: TypeError) -> PyErr {
-        let msg = err.to_string();
-        error!("{}", msg);
-        PyRuntimeError::new_err(msg)
-    }
-}
-
-impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for TypeError {
-    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
-        TypeError::Error(err.to_string())
-    }
-}
 
 #[derive(Error, Debug)]
 pub enum DataInterfaceError {
@@ -114,6 +74,15 @@ pub enum DataInterfaceError {
 
     #[error("Failed to downcast Python object: {0}")]
     DowncastError(String),
+
+    #[error("Only one of query or filename can be provided")]
+    OnlyOneQueryorFilenameError,
+
+    #[error("Key not found")]
+    KeyNotFound,
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
 }
 
 impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for DataInterfaceError {
@@ -186,105 +155,6 @@ impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for SampleDataError {
 
 impl From<SampleDataError> for PyErr {
     fn from(err: SampleDataError) -> PyErr {
-        let msg = err.to_string();
-        error!("{}", msg);
-        PyRuntimeError::new_err(msg)
-    }
-}
-
-#[derive(Error, Debug)]
-pub enum OnnxError {
-    #[error("{0}")]
-    Error(String),
-
-    #[cfg(not(all(target_arch = "x86_64", target_os = "macos")))]
-    #[error("Failed to create onnx session: {0}")]
-    SessionCreateError(ort::Error),
-
-    #[cfg(not(all(target_arch = "x86_64", target_os = "macos")))]
-    #[error("Failed to commit onnx session: {0}")]
-    SessionCommitError(ort::Error),
-
-    #[error("Failed to serialize py error: {0}")]
-    PySerializeError(String),
-
-    #[error("Failed to extract model bytes: {0}")]
-    PyModelBytesExtractError(String),
-
-    #[error("Session must be an instance of InferenceSession")]
-    MustBeInferenceSession,
-
-    #[error("Session is not set. Please load an onnx model first")]
-    SessionNotFound,
-
-    #[error("Session error: {0}")]
-    SessionRunError(String),
-
-    #[error("InferenceSession error: {0}")]
-    InferenceSessionError(String),
-
-    #[error("Import error: {0}")]
-    ImportError(String),
-
-    #[error("Provider error: {0}")]
-    ProviderError(String),
-
-    #[error("Cannot save ONNX model without sample data")]
-    MissingSampleData,
-
-    #[error("Failed to convert model to ONNX: {0}")]
-    PyOnnxConversionError(String),
-
-    #[error("Failed to extract model bytes: {0}")]
-    PyOnnxExtractError(String),
-
-    #[error(transparent)]
-    IoError(#[from] std::io::Error),
-
-    #[error(transparent)]
-    SampleDataError(#[from] SampleDataError),
-
-    #[error("No onnx file found")]
-    NoOnnxFile,
-
-    #[error("No onnx kwargs found. Onnx kwargs are required for HuggingFace models")]
-    MissingOnnxKwargs,
-
-    #[error("No ort type found. Ort type is required for HuggingFace models: {0}")]
-    MissingOrtType(String),
-
-    #[error("Failed to get quantize args: {0}")]
-    QuantizeArgError(String),
-
-    #[error("{0}")]
-    LoadModelError(String),
-
-    #[error("Model type not supported for onnx conversion")]
-    ModelTypeError,
-
-    #[error("Failed to downcast Python object: {0}")]
-    DowncastError(String),
-}
-
-impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for OnnxError {
-    fn from(err: PyClassGuardError<'a, 'py>) -> Self {
-        OnnxError::Error(err.to_string())
-    }
-}
-
-impl From<PyErr> for OnnxError {
-    fn from(err: PyErr) -> Self {
-        OnnxError::Error(err.to_string())
-    }
-}
-
-impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for OnnxError {
-    fn from(err: pyo3::CastError<'a, 'py>) -> Self {
-        OnnxError::DowncastError(err.to_string())
-    }
-}
-impl From<OnnxError> for PyErr {
-    fn from(err: OnnxError) -> PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
@@ -397,11 +267,6 @@ pub enum ModelInterfaceError {
     #[error("Model must be an Onnx ModelProto with SerializeToString method")]
     OnnxModelTypeError,
 
-    #[error(
-        "Config must be an instance of AutoQuantizationConfig, ORTConfig, or QuantizationConfig"
-    )]
-    HuggingFaceOnnxArgTypeError,
-
     #[error("Failed to downcast Python object: {0}")]
     DowncastError(String),
 
@@ -418,6 +283,11 @@ pub enum ModelInterfaceError {
 
     #[error("Drift profile alias must be set when passing drift profile")]
     DriftProfileAliasMustBeSet,
+
+    #[error(
+        "Config must be an instance of AutoQuantizationConfig, ORTConfig, or QuantizationConfig"
+    )]
+    HuggingFaceOnnxArgTypeError,
 }
 
 impl From<PythonizeError> for ModelInterfaceError {
@@ -449,5 +319,11 @@ impl From<ModelInterfaceError> for PyErr {
         let msg = err.to_string();
         error!("{}", msg);
         PyRuntimeError::new_err(msg)
+    }
+}
+
+impl From<SampleDataError> for OnnxError {
+    fn from(err: SampleDataError) -> Self {
+        OnnxError::PyOnnxConversionError(err.to_string())
     }
 }

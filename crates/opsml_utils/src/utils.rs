@@ -2,16 +2,24 @@ use crate::error::UtilError;
 use chrono::Timelike;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use colored_json::{Color, ColorMode, ColoredFormatter, PrettyFormatter, Styler};
+#[cfg(feature = "python")]
 use pyo3::types::{PyBool, PyDict, PyFloat, PyInt, PyList, PyString, PyTuple};
+#[cfg(feature = "python")]
 use pyo3::{prelude::*, types::PyAnyMethods};
 use regex::Regex;
 use serde::Serialize;
-use serde_json::{Value, json};
+#[cfg(feature = "python")]
+use serde::de::MapAccess;
+use serde_json::Value;
+#[cfg(feature = "python")]
+use serde_json::json;
 use std::path::{Path, PathBuf};
+#[cfg(feature = "python")]
 use tracing::debug;
 use uuid::Uuid;
 const PUNCTUATION: &str = "!\"#$%&'()*+,./:;<=>?@[\\]^`{|}~";
 const NAME_SPACE_PATTERN: &str = r"^[a-z0-9]+(?:[-a-z0-9]+)*/[-a-z0-9]+$";
+#[cfg(feature = "python")]
 use pythonize::depythonize;
 
 /// Clean a string by removing punctuation and converting to lowercase
@@ -233,12 +241,14 @@ pub fn create_tmp_path() -> Result<PathBuf, UtilError> {
 /// This function will return an error if:
 /// - The attribute cannot be found.
 /// - The attribute cannot be extracted as a string.
+#[cfg(feature = "python")]
 pub fn unwrap_pystring(obj: &Bound<'_, PyAny>, field: &str) -> Result<String, UtilError> {
     Ok(obj.getattr(field)?.extract::<String>()?)
 }
 
 /// Recursively converts Python objects to JSON-compatible values
 /// Handles ndarrays and other non-serializable types by converting to lists or strings
+#[cfg(feature = "python")]
 fn pyobject_to_json_value(_py: Python, obj: &Bound<'_, PyAny>) -> Result<Value, UtilError> {
     if obj.is_none() {
         return Ok(Value::Null);
@@ -309,6 +319,7 @@ fn pyobject_to_json_value(_py: Python, obj: &Bound<'_, PyAny>) -> Result<Value, 
 }
 
 /// Converts a PyDict to a JSON Value, handling numpy arrays and other non-serializable types
+#[cfg(feature = "python")]
 pub fn pydict_to_json_value(py: Python, dict: &Bound<'_, PyDict>) -> Result<Value, UtilError> {
     let mut map = serde_json::Map::new();
 
@@ -359,6 +370,7 @@ pub fn convert_keys_to_snake_case(value: Value) -> Value {
     }
 }
 
+#[cfg(feature = "python")]
 pub fn is_pydantic_basemodel(py: Python, obj: &Bound<'_, PyAny>) -> Result<bool, UtilError> {
     let pydantic = match py.import("pydantic") {
         Ok(module) => module,
@@ -376,6 +388,33 @@ pub fn is_pydantic_basemodel(py: Python, obj: &Bound<'_, PyAny>) -> Result<bool,
     Ok(is_basemodel)
 }
 
+/// Deserialize a dictionary field that may be null into Option<Py<PyDict>>
+#[cfg(feature = "python")]
+pub fn deserialize_dict_field<'de, A>(
+    map: &mut A,
+    py: Python<'_>,
+) -> Result<Option<Py<PyDict>>, A::Error>
+where
+    A: MapAccess<'de>,
+{
+    let value = map.next_value::<serde_json::Value>()?;
+    match value {
+        serde_json::Value::Null => Ok(None),
+        _ => {
+            let py_obj = pythonize::pythonize(py, &value)
+                .map_err(|e| serde::de::Error::custom(format!("Deserialization failed: {}", e)))?;
+
+            let dict = py_obj
+                .cast::<PyDict>()
+                .map_err(|_| serde::de::Error::custom("Expected a dictionary"))?
+                .clone();
+
+            Ok(Some(dict.unbind()))
+        }
+    }
+}
+
+#[cfg(feature = "python")]
 fn process_dict_with_nested_models(
     py: Python<'_>,
     dict: &Bound<'_, PyAny>,
@@ -392,6 +431,7 @@ fn process_dict_with_nested_models(
     Ok(Value::Object(result))
 }
 
+#[cfg(feature = "python")]
 pub fn depythonize_object_to_value<'py>(
     py: Python<'py>,
     value: &Bound<'py, PyAny>,
