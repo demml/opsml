@@ -1,30 +1,24 @@
-#[cfg(feature = "python")]
-use crate::CardRegistries;
 use crate::error::RegistryError;
 use crate::registries::card::OpsmlCardRegistry;
-use opsml_cards::ServiceCard;
 use opsml_cards::traits::OpsmlCard;
-#[cfg(feature = "python")]
-use opsml_cards::{DataCard, ExperimentCard, ModelCard, PromptCard, SkillCard};
-use opsml_crypt::{decrypt_directory, encrypt_directory};
+use opsml_crypt::encrypt_directory;
 use opsml_storage::storage_client;
 use opsml_types::contracts::*;
 use opsml_types::*;
-#[cfg(feature = "python")]
-use pyo3::IntoPyObjectExt;
-#[cfg(feature = "python")]
-use pyo3::prelude::*;
-#[cfg(feature = "python")]
-use pyo3::types::PyList;
-#[cfg(feature = "python")]
-use pyo3::types::PyString;
-#[cfg(feature = "python")]
-use scouter_client::ProfileRequest;
-use std::collections::HashMap;
 use std::path::PathBuf;
-#[cfg(feature = "python")]
-use tempfile::TempDir;
 use tracing::{debug, error, instrument};
+
+#[cfg(feature = "python")]
+use {
+    crate::CardRegistries,
+    opsml_cards::{DataCard, ExperimentCard, ModelCard, PromptCard, ServiceCard, SkillCard},
+    opsml_crypt::decrypt_directory,
+    pyo3::types::{PyList, PyString},
+    pyo3::{IntoPyObjectExt, prelude::*},
+    scouter_client::ProfileRequest,
+    std::collections::HashMap,
+    tempfile::TempDir,
+};
 
 /// Helper function to load a card and convert it to PyObject
 ///

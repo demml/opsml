@@ -27,14 +27,13 @@ use ort::{session::Session, value::ValueType};
 #[cfg(feature = "python")]
 use pythonize::depythonize;
 use scouter_client::DriftType;
+use serde::{Deserialize, Deserializer, Serialize};
+#[cfg(feature = "python")]
 use serde::{
-    Deserialize, Deserializer, Serialize, Serializer,
     de::{self, MapAccess, Visitor},
-    ser::SerializeStruct,
+    ser::{SerializeStruct, Serializer},
 };
-#[cfg(feature = "python")]
 use std::collections::HashMap;
-#[cfg(feature = "python")]
 use std::fmt;
 use std::fmt::Display;
 use std::fmt::Formatter;
@@ -1413,7 +1412,10 @@ impl ModelInterfaceMetadata {
     }
 }
 
-#[cfg(not(all(target_arch = "x86_64", target_os = "macos")))]
+#[cfg(all(
+    feature = "python",
+    not(all(target_arch = "x86_64", target_os = "macos"))
+))]
 fn parse_session_schema(
     ort_session: &Session,
 ) -> Result<(FeatureSchema, FeatureSchema), OnnxError> {
@@ -1753,6 +1755,7 @@ impl Serialize for OnnxSession {
     }
 }
 
+#[cfg(feature = "python")]
 impl<'de> Deserialize<'de> for OnnxSession {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where

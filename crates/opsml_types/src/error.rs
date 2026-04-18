@@ -245,6 +245,7 @@ impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for AgentConfigError {
     }
 }
 
+#[cfg(feature = "python")]
 #[derive(Error, Debug)]
 pub enum OnnxError {
     #[error("{0}")]
@@ -307,24 +308,28 @@ pub enum OnnxError {
     DowncastError(String),
 }
 
+#[cfg(feature = "python")]
 impl<'a, 'py> From<PyClassGuardError<'a, 'py>> for OnnxError {
     fn from(err: PyClassGuardError<'a, 'py>) -> Self {
         OnnxError::Error(err.to_string())
     }
 }
 
+#[cfg(feature = "python")]
 impl From<PyErr> for OnnxError {
     fn from(err: PyErr) -> Self {
         OnnxError::Error(err.to_string())
     }
 }
 
+#[cfg(feature = "python")]
 impl<'a, 'py> From<pyo3::CastError<'a, 'py>> for OnnxError {
     fn from(err: pyo3::CastError<'a, 'py>) -> Self {
         OnnxError::DowncastError(err.to_string())
     }
 }
 
+#[cfg(feature = "python")]
 impl From<OnnxError> for PyErr {
     fn from(err: OnnxError) -> PyErr {
         let msg = err.to_string();

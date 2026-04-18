@@ -2,11 +2,13 @@ use crate::error::CardError;
 use crate::traits::OpsmlCard;
 use crate::traits::ProfileExt;
 use crate::utils::BaseArgs;
+#[cfg(feature = "python")]
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
 #[cfg(feature = "python")]
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
 use opsml_service::OpsmlServiceSpec;
+#[cfg(feature = "python")]
 use opsml_types::contracts::AgentSpec;
 use opsml_types::contracts::{Card, CardEntry, ServiceConfig};
 use opsml_types::{

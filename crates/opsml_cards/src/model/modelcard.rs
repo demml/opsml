@@ -1,51 +1,36 @@
 use crate::error::CardError;
-#[cfg(feature = "python")]
-use crate::model::error::interface_error;
-#[cfg(feature = "python")]
-use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
-use opsml_crypt::decrypt_directory;
-#[cfg(feature = "python")]
-use opsml_interfaces::base::DriftProfileMap;
-#[cfg(feature = "python")]
-use opsml_interfaces::{
-    CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
-    XGBoostModel,
-};
-#[cfg(feature = "python")]
-use opsml_interfaces::{ModelInterface, TensorFlowModel};
-#[cfg(feature = "python")]
-use opsml_interfaces::{ModelLoadKwargs, ModelSaveKwargs};
-#[cfg(feature = "python")]
-use opsml_interfaces::{OnnxModel, OnnxSession, error::ModelInterfaceError};
-use opsml_storage::storage_client;
 use opsml_types::contracts::{ArtifactKey, CardRecord, ModelCardClientRecord};
 use opsml_types::interfaces::ModelInterfaceMetadata;
-#[cfg(feature = "python")]
-use opsml_types::{DataType, ModelInterfaceType, ModelType, TaskType};
 use opsml_types::{RegistryType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
-#[cfg(feature = "python")]
-use opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime};
-#[cfg(feature = "python")]
-use pyo3::IntoPyObjectExt;
-#[cfg(feature = "python")]
-use pyo3::prelude::*;
-#[cfg(feature = "python")]
-use pyo3::types::{PyDict, PyList};
-#[cfg(feature = "python")]
-use pyo3::{PyTraverseError, PyVisit};
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
 };
-
 use std::fmt;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use tracing::error;
+
 #[cfg(feature = "python")]
-use tracing::{debug, instrument};
+use {
+    crate::model::error::interface_error,
+    crate::utils::BaseArgs,
+    opsml_crypt::decrypt_directory,
+    opsml_interfaces::{
+        CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, ModelInterface,
+        ModelLoadKwargs, ModelSaveKwargs, OnnxModel, OnnxSession, SklearnModel, TensorFlowModel,
+        TorchModel, XGBoostModel, base::DriftProfileMap, error::ModelInterfaceError,
+    },
+    opsml_storage::storage_client,
+    opsml_types::{DataType, ModelInterfaceType, ModelType, TaskType},
+    opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime},
+    pyo3::types::{PyDict, PyList},
+    pyo3::{IntoPyObjectExt, PyTraverseError, PyVisit, prelude::*},
+    std::path::Path,
+    tracing::{debug, instrument},
+};
 
 #[cfg(feature = "python")]
 fn interface_from_metadata<'py>(
@@ -646,6 +631,7 @@ impl ModelCard {
         Ok(())
     }
 
+    #[cfg(feature = "python")]
     fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
         if let Some(ref key) = self.artifact_key {
             Ok(key.get_crypt_key()?)
@@ -654,6 +640,7 @@ impl ModelCard {
         }
     }
 
+    #[cfg(feature = "python")]
     fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {
         let decrypt_key = self.get_decryption_key()?;
         let uri = self.artifact_key.as_ref().unwrap().storage_path();

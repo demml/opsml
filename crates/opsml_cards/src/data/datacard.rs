@@ -1,6 +1,5 @@
 use crate::error::CardError;
 use chrono::{DateTime, Utc};
-use opsml_types::contracts::ArtifactKey;
 use opsml_types::{RegistryType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
 use serde::{Deserialize, Serialize};
@@ -8,32 +7,26 @@ use std::path::PathBuf;
 use tracing::error;
 
 #[cfg(feature = "python")]
-use crate::utils::BaseArgs;
-#[cfg(feature = "python")]
-use opsml_crypt::decrypt_directory;
-#[cfg(feature = "python")]
-use opsml_interfaces::FeatureSchema;
-#[cfg(feature = "python")]
-use opsml_interfaces::data::{
-    ArrowData, DataInterface, DataInterfaceMetadata, DataLoadKwargs, DataSaveKwargs, NumpyData,
-    PandasData, PolarsData, SqlData, TorchData,
+use {
+    crate::utils::BaseArgs,
+    opsml_crypt::decrypt_directory,
+    opsml_interfaces::{
+        FeatureSchema,
+        data::{
+            ArrowData, DataInterface, DataInterfaceMetadata, DataLoadKwargs, DataSaveKwargs,
+            NumpyData, PandasData, PolarsData, SqlData, TorchData,
+        },
+    },
+    opsml_storage::storage_client,
+    opsml_types::{
+        DataType,
+        contracts::{ArtifactKey, CardRecord, DataCardClientRecord},
+        interfaces::types::DataInterfaceType,
+    },
+    opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime},
+    pyo3::{IntoPyObjectExt, PyTraverseError, PyVisit, prelude::*},
+    std::path::Path,
 };
-#[cfg(feature = "python")]
-use opsml_storage::storage_client;
-#[cfg(feature = "python")]
-use opsml_types::DataType;
-#[cfg(feature = "python")]
-use opsml_types::contracts::{CardRecord, DataCardClientRecord};
-#[cfg(feature = "python")]
-use opsml_types::interfaces::types::DataInterfaceType;
-#[cfg(feature = "python")]
-use opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime};
-#[cfg(feature = "python")]
-use pyo3::{IntoPyObjectExt, prelude::*};
-#[cfg(feature = "python")]
-use pyo3::{PyTraverseError, PyVisit};
-#[cfg(feature = "python")]
-use std::path::Path;
 
 #[cfg(feature = "python")]
 fn interface_from_metadata<'py>(
@@ -119,6 +112,7 @@ pub struct DataCard {
     pub interface: Option<Py<PyAny>>,
 
     #[serde(skip)]
+    #[cfg(feature = "python")]
     artifact_key: Option<ArtifactKey>,
 }
 
@@ -476,6 +470,7 @@ impl DataCard {
         }
     }
 
+    #[cfg(feature = "python")]
     fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
         if let Some(ref key) = self.artifact_key {
             Ok(key.get_crypt_key()?)
@@ -484,6 +479,7 @@ impl DataCard {
         }
     }
 
+    #[cfg(feature = "python")]
     fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {
         let decrypt_key = self.get_decryption_key()?;
         let uri = self.artifact_key.as_ref().unwrap().storage_path();
