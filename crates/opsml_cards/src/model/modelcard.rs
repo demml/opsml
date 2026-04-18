@@ -546,19 +546,6 @@ impl ModelCard {
             Ok(())
         }
     }
-}
-
-impl ModelCard {
-    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
-        self.artifact_key = Some(key);
-    }
-
-    pub fn model_validate_json(json_string: String) -> Result<ModelCard, CardError> {
-        serde_json::from_str(&json_string).map_err(|e| {
-            error!("Failed to validate json: {e}");
-            CardError::from(e)
-        })
-    }
 
     /// Helper function to get the drift profile path from the metadata.
     /// This function will return an error if no drift profile map is found or
@@ -582,6 +569,29 @@ impl ModelCard {
         map.get(alias)
             .ok_or(CardError::DriftProfileNotFoundInMap)
             .map(|profile| profile.uri.clone())
+    }
+
+    #[pyo3(name = "get_registry_card")]
+    pub fn get_registry_card_py(&self) -> Result<CardRecord, CardError> {
+        self.get_registry_card()
+    }
+
+    #[pyo3(name = "save_card")]
+    pub fn save_card_py(&self, path: PathBuf) -> Result<(), CardError> {
+        self.save_card(path)
+    }
+}
+
+impl ModelCard {
+    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
+        self.artifact_key = Some(key);
+    }
+
+    pub fn model_validate_json(json_string: String) -> Result<ModelCard, CardError> {
+        serde_json::from_str(&json_string).map_err(|e| {
+            error!("Failed to validate json: {e}");
+            CardError::from(e)
+        })
     }
 
     pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {

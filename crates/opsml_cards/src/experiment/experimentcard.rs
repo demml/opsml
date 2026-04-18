@@ -150,7 +150,7 @@ impl ExperimentCard {
         Ok(CardRecord::Experiment(record))
     }
 
-    pub fn save_card(&mut self, path: PathBuf) -> Result<(), CardError> {
+    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         PyHelperFuncs::save_to_json(self, &card_save_path)?;
         Ok(())
@@ -502,6 +502,36 @@ impl ExperimentCard {
         lpath: Option<PathBuf>,
     ) -> Result<(), CardError> {
         self.download_artifacts_rs(path, lpath)
+    }
+
+    #[pyo3(name = "get_registry_card")]
+    pub fn get_registry_card_py(&self) -> Result<CardRecord, CardError> {
+        self.get_registry_card()
+    }
+
+    #[pyo3(name = "add_modelcard_uid")]
+    pub fn add_modelcard_uid_py(&mut self, uid: &str) {
+        self.add_modelcard_uid(uid);
+    }
+
+    #[pyo3(name = "add_datacard_uid")]
+    pub fn add_datacard_uid_py(&mut self, uid: &str) {
+        self.add_datacard_uid(uid);
+    }
+
+    #[pyo3(name = "add_promptcard_uid")]
+    pub fn add_promptcard_uid_py(&mut self, uid: &str) {
+        self.add_promptcard_uid(uid);
+    }
+
+    #[pyo3(name = "add_service_card_uid")]
+    pub fn add_service_card_uid_py(&mut self, uid: &str) {
+        self.add_service_card_uid(uid);
+    }
+
+    #[pyo3(name = "save_card")]
+    pub fn save_card_py(&self, path: PathBuf) -> Result<(), CardError> {
+        self.save_card(path)
     }
 }
 
