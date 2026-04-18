@@ -1,46 +1,39 @@
 use crate::DataType;
-#[cfg(feature = "python")]
-use crate::{
-    CommonKwargs,
-    error::{OnnxError, TypeError},
-};
-#[cfg(feature = "python")]
-use opsml_utils::PyHelperFuncs;
-#[cfg(feature = "python")]
-use pyo3::{
-    IntoPyObjectExt, PyTraverseError, PyVisit,
-    prelude::*,
-    types::{PyDict, PyList, PyType},
-};
-#[cfg(feature = "python")]
-use serde_json::{Value, json};
-#[cfg(feature = "python")]
-use std::path::Path;
-// should also be under python feature flag, but needed for type conversions
-#[cfg(feature = "python")]
-use opsml_utils::deserialize_dict_field;
-#[cfg(all(
-    feature = "python",
-    not(all(target_arch = "x86_64", target_os = "macos"))
-))]
-use ort::{session::Session, value::ValueType};
-#[cfg(feature = "python")]
-use pythonize::depythonize;
 use scouter_client::DriftType;
 use serde::{Deserialize, Deserializer, Serialize};
-#[cfg(feature = "python")]
-use serde::{
-    de::{self, MapAccess, Visitor},
-    ser::{SerializeStruct, Serializer},
-};
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::path::PathBuf;
-#[cfg(feature = "python")]
-use tracing::{debug, error, instrument};
 
+#[cfg(feature = "python")]
+use {
+    crate::{
+        CommonKwargs,
+        error::{OnnxError, TypeError},
+    },
+    opsml_utils::{PyHelperFuncs, deserialize_dict_field},
+    pyo3::{
+        IntoPyObjectExt, PyTraverseError, PyVisit,
+        prelude::*,
+        types::{PyDict, PyList, PyType},
+    },
+    pythonize::depythonize,
+    serde::{
+        de::{self, MapAccess, Visitor},
+        ser::{SerializeStruct, Serializer},
+    },
+    serde_json::{Value, json},
+    std::path::Path,
+    tracing::{debug, error, instrument},
+};
+
+#[cfg(all(
+    feature = "python",
+    not(all(target_arch = "x86_64", target_os = "macos"))
+))]
+use ort::{session::Session, value::ValueType};
 #[cfg_attr(feature = "python", pyclass(eq, from_py_object))]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Default)]
 pub enum TaskType {
