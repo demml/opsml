@@ -28,8 +28,10 @@ jobs:
             archive: tar.gz
             binary_name: opsml-server
             mcp_binary_name: opsml-mcp
+            cli_binary_name: opsml
             archive_name: opsml-server-x86_64-linux-gnu
             mcp_archive_name: opsml-mcp-x86_64-linux-gnu
+            cli_archive_name: opsml-cli-x86_64-linux-gnu
             container_image: null
             tag: ubuntu
 
@@ -39,8 +41,10 @@ jobs:
             archive: tar.gz
             binary_name: opsml-server
             mcp_binary_name: opsml-mcp
+            cli_binary_name: opsml
             archive_name: opsml-server-x86_64-linux-gnu-rocky
             mcp_archive_name: opsml-mcp-x86_64-linux-gnu-rocky
+            cli_archive_name: opsml-cli-x86_64-linux-gnu-rocky
             container_image: rockylinux:9
             tag: rocky
 
@@ -49,8 +53,10 @@ jobs:
             archive: tar.gz
             binary_name: opsml-server
             mcp_binary_name: opsml-mcp
+            cli_binary_name: opsml
             archive_name: opsml-server-aarch64-linux-gnu
             mcp_archive_name: opsml-mcp-aarch64-linux-gnu
+            cli_archive_name: opsml-cli-aarch64-linux-gnu
             container_image: null
             tag: ubuntu
 
@@ -59,8 +65,10 @@ jobs:
             archive: zip
             binary_name: opsml-server
             mcp_binary_name: opsml-mcp
+            cli_binary_name: opsml
             archive_name: opsml-server-x86_64-darwin
             mcp_archive_name: opsml-mcp-x86_64-darwin
+            cli_archive_name: opsml-cli-x86_64-darwin
             container_image: null
             tag: macos
 
@@ -69,8 +77,10 @@ jobs:
             archive: zip
             binary_name: opsml-server.exe
             mcp_binary_name: opsml-mcp.exe
+            cli_binary_name: opsml.exe
             archive_name: opsml-server-x86_64-windows
             mcp_archive_name: opsml-mcp-x86_64-windows
+            cli_archive_name: opsml-cli-x86_64-windows
             container_image: null
             tag: windows
 
@@ -179,19 +189,23 @@ jobs:
       - name: Build Binaries
         run: |
           cargo build -p opsml-server -p opsml-mcp --release --target ${{ matrix.target }}
+          cargo build -p opsml-cli --bin opsml --release --target ${{ matrix.target }}
 
       - name: Prepare binary directories
         shell: bash
         run: |
-          mkdir -p release-bin release-mcp-bin
+          mkdir -p release-bin release-mcp-bin release-cli-bin
           if [ "${{ contains(matrix.os, 'windows') }}" == "true" ]; then
             cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release-bin/
             cp target/${{ matrix.target }}/release/${{ matrix.mcp_binary_name }} release-mcp-bin/
+            cp target/${{ matrix.target }}/release/${{ matrix.cli_binary_name }} release-cli-bin/
           else
             cp target/${{ matrix.target }}/release/${{ matrix.binary_name }} release-bin/
             chmod +x release-bin/${{ matrix.binary_name }}
             cp target/${{ matrix.target }}/release/${{ matrix.mcp_binary_name }} release-mcp-bin/
             chmod +x release-mcp-bin/${{ matrix.mcp_binary_name }}
+            cp target/${{ matrix.target }}/release/${{ matrix.cli_binary_name }} release-cli-bin/
+            chmod +x release-cli-bin/${{ matrix.cli_binary_name }}
           fi
           # Copy UI build for Docker builds
           if [ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ] || [ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]; then
@@ -216,6 +230,12 @@ jobs:
           else
             zip -r ../${{ matrix.mcp_archive_name }}.zip ./*
           fi
+          cd ../release-cli-bin
+          if [ "${{ contains(matrix.os, 'windows') }}" == "true" ]; then
+            7z a -tzip ../${{ matrix.cli_archive_name }}.zip ./*
+          else
+            zip -r ../${{ matrix.cli_archive_name }}.zip ./*
+          fi
 
       - name: Create tar.gz archives (Linux)
         if: contains(matrix.archive, 'tar.gz')
@@ -225,6 +245,8 @@ jobs:
           tar -czf ../${{ matrix.archive_name }}.tar.gz ./*
           cd ../release-mcp-bin
           tar -czf ../${{ matrix.mcp_archive_name }}.tar.gz ./*
+          cd ../release-cli-bin
+          tar -czf ../${{ matrix.cli_archive_name }}.tar.gz ./*
 
       - name: Upload server artifact
         uses: actions/upload-artifact@v4
@@ -238,6 +260,13 @@ jobs:
         with:
           name: ${{ matrix.mcp_archive_name }}
           path: ${{ matrix.mcp_archive_name }}.${{ matrix.archive }}
+          retention-days: 1
+
+      - name: Upload CLI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.cli_archive_name }}
+          path: ${{ matrix.cli_archive_name }}.${{ matrix.archive }}
           retention-days: 1
 
       - name: Package UI for Node.js distribution

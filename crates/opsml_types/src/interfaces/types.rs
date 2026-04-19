@@ -1,11 +1,14 @@
 use crate::DataType;
 use scouter_client::DriftType;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Display;
 use std::fmt::Formatter;
 use std::path::PathBuf;
+
+#[cfg(feature = "python")]
+use serde::Deserializer;
 
 #[cfg(feature = "python")]
 use {

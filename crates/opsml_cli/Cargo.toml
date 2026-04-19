@@ -5,6 +5,10 @@ edition = { workspace = true }
 repository = { workspace = true }
 description = "OpsML CLI - Command line interface for OpsML"
 
+[[bin]]
+name = "opsml"
+path = "src/main.rs"
+
 [dependencies]
 opsml-agent-cli = { workspace = true }
 opsml-cards = { workspace = true }
