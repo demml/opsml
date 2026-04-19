@@ -332,6 +332,12 @@ impl SkillCard {
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
+
+    #[pyo3(name = "get_registry_card")]
+    pub fn get_registry_card_py(&self) -> Result<CardRecord, CardError> {
+        let record = self.get_registry_card()?;
+        Ok(record)
+    }
 }
 
 impl SkillCard {

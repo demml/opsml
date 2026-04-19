@@ -446,6 +446,11 @@ impl DataCard {
 
         Ok(interface.bind(py).call_method0("split_data")?)
     }
+
+    #[pyo3(name = "save_card")]
+    pub fn save_card_py(&self, path: PathBuf) -> Result<(), CardError> {
+        self.save_card(path)
+    }
 }
 
 #[cfg(feature = "python")]
