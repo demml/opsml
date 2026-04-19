@@ -1,7 +1,8 @@
 use crate::error::UiError;
 use anyhow::Result;
-use reqwest;
+use sha2::{Digest, Sha256};
 use std::process::Child;
+use std::time::Duration;
 use std::{
     env, fs,
     path::{Path, PathBuf},
@@ -18,6 +19,64 @@ const PID_FILE: &str = "opsml-server.pid";
 // UI archive
 const UI_ARCHIVE_NAME: &str = "opsml-ui-node.zip";
 const UI_PID_FILE: &str = "opsml-ui.pid";
+
+const PERMITTED_DOWNLOAD_PREFIXES: &[&str] = &[
+    "https://github.com/demml/opsml/",
+    "https://releases.demml.io/",
+];
+
+fn is_permitted_download_url(url: &str) -> bool {
+    PERMITTED_DOWNLOAD_PREFIXES
+        .iter()
+        .any(|prefix| url.starts_with(prefix))
+}
+
+fn download_client() -> Result<reqwest::blocking::Client, UiError> {
+    reqwest::blocking::Client::builder()
+        .timeout(Duration::from_secs(300))
+        .connect_timeout(Duration::from_secs(30))
+        .redirect(reqwest::redirect::Policy::limited(5))
+        .build()
+        .map_err(UiError::DownloadBinaryError)
+}
+
+fn verify_checksum(
+    client: &reqwest::blocking::Client,
+    archive_bytes: &[u8],
+    archive_name: &str,
+    version: &str,
+) -> Result<(), UiError> {
+    let checksums_url = format!(
+        "https://github.com/{GITHUB_REPO}/releases/download/v{version}/checksums.txt"
+    );
+    let text = client
+        .get(&checksums_url)
+        .send()
+        .and_then(|r| r.text())
+        .map_err(UiError::ChecksumFetchError)?;
+
+    let expected = text
+        .lines()
+        .find_map(|line| {
+            let mut parts = line.split_whitespace();
+            let hash = parts.next()?;
+            let name = parts.next()?;
+            (name == archive_name || name == format!("./{archive_name}")).then(|| hash.to_string())
+        })
+        .ok_or_else(|| UiError::ChecksumMissingEntry(archive_name.to_string()))?;
+
+    let actual = hex::encode(Sha256::digest(archive_bytes));
+
+    if actual != expected {
+        return Err(UiError::ChecksumMismatch {
+            archive: archive_name.to_string(),
+            expected,
+            actual,
+        });
+    }
+
+    Ok(())
+}
 
 pub fn save_process_id(process: &Child, is_ui: bool) -> Result<(), UiError> {
     let pid_path = get_pid_file_path(is_ui)?;
@@ -208,11 +267,21 @@ fn download_binary(
         }
     };
 
-    let response = reqwest::blocking::get(&url).map_err(UiError::DownloadBinaryError)?;
-    let archive_path = cache_dir.join(&archive_name);
+    if !is_permitted_download_url(&url) {
+        return Err(UiError::UnpermittedDownloadUrl(url));
+    }
 
-    let bytes = response.bytes().map_err(UiError::DownloadBinaryError)?;
-    fs::write(&archive_path, bytes).map_err(UiError::WriteBinaryError)?;
+    let client = download_client()?;
+    let bytes = client
+        .get(&url)
+        .send()
+        .and_then(|r| r.bytes())
+        .map_err(UiError::DownloadBinaryError)?;
+
+    verify_checksum(&client, &bytes, &archive_name, version)?;
+
+    let archive_path = cache_dir.join(&archive_name);
+    fs::write(&archive_path, &bytes).map_err(UiError::WriteBinaryError)?;
 
     match platform {
         Platform::Windows | Platform::MacOS(_) => {
@@ -288,13 +357,23 @@ fn download_ui_package(
         ),
     };
 
+    if !is_permitted_download_url(&url) {
+        return Err(UiError::UnpermittedDownloadUrl(url));
+    }
+
     println!("Downloading UI package for version {version}...");
 
-    let response = reqwest::blocking::get(&url).map_err(UiError::DownloadBinaryError)?;
-    let archive_path = cache_dir.join(UI_ARCHIVE_NAME);
+    let client = download_client()?;
+    let bytes = client
+        .get(&url)
+        .send()
+        .and_then(|r| r.bytes())
+        .map_err(UiError::DownloadBinaryError)?;
 
-    let bytes = response.bytes().map_err(UiError::DownloadBinaryError)?;
-    fs::write(&archive_path, bytes).map_err(UiError::WriteBinaryError)?;
+    verify_checksum(&client, &bytes, UI_ARCHIVE_NAME, version)?;
+
+    let archive_path = cache_dir.join(UI_ARCHIVE_NAME);
+    fs::write(&archive_path, &bytes).map_err(UiError::WriteBinaryError)?;
 
     // Create versioned UI directory
     let ui_dir = cache_dir.join(format!("opsml-ui-v{version}"));

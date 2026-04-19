@@ -203,6 +203,22 @@ pub enum UiError {
 
     #[error("Package JSON not found")]
     PackageJsonNotFound,
+
+    #[error("Download URL is not from a permitted host: {0}")]
+    UnpermittedDownloadUrl(String),
+
+    #[error("Failed to fetch checksums: {0}")]
+    ChecksumFetchError(#[source] reqwest::Error),
+
+    #[error("Checksum file missing entry for {0}")]
+    ChecksumMissingEntry(String),
+
+    #[error("Checksum verification failed for {archive}: expected {expected}, got {actual}")]
+    ChecksumMismatch {
+        archive: String,
+        expected: String,
+        actual: String,
+    },
 }
 
 #[derive(Error, Debug)]

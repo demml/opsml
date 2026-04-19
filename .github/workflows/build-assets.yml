@@ -458,6 +458,14 @@ jobs:
           ls -lhR dist
           echo "`find dist -type f | wc -l` files"
 
+      - name: Generate checksums
+        run: |
+          find dist -type f -not -path "*/\.*" | while read file; do
+            sha256sum "$file" | awk '{print $1, "'"$(basename $file)"'"}' >> checksums.txt
+          done
+          echo "checksums.txt contents:"
+          cat checksums.txt
+
       - name: Upload files to GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -466,3 +474,4 @@ jobs:
             echo "Uploading $file to release"
             gh release upload ${{ github.event.release.tag_name }} "$file" --clobber
           done
+          gh release upload ${{ github.event.release.tag_name }} checksums.txt --clobber

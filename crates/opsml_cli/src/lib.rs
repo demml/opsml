@@ -22,6 +22,7 @@ pub use actions::{
 };
 use anyhow::Context;
 use clap::Parser;
+use rpassword;
 pub use cli::arg::DownloadCard;
 pub use cli::arg::ScouterArgs;
 use cli::commands::ScouterCommands;
@@ -100,7 +101,11 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
 
         Some(Commands::Generate { command }) => match command {
             GenerateCommands::Key(args) => {
-                generate_key(&args.password, args.rounds).context("Failed to generate key")?;
+                let password = std::env::var("OPSML_KEY_PASSWORD").unwrap_or_else(|_| {
+                    rpassword::prompt_password("Encryption password: ")
+                        .expect("Failed to read password")
+                });
+                generate_key(&password, args.rounds).context("Failed to generate key")?;
                 Ok(())
             }
         },
