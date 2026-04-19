@@ -102,7 +102,7 @@ fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> Result<RegistryTyp
             error!("Failed to extract registry type: {e}");
         })?),
         false => {
-            let registry_type = registry_type.extract::<String>().unwrap();
+            let registry_type = registry_type.extract::<String>().map_err(|e| RegistryError::Error(e.to_string()))?;
             Ok(RegistryType::from_string(&registry_type).inspect_err(|e| {
                 error!("Failed to convert string to registry type: {e}");
             })?)
@@ -782,9 +782,9 @@ impl CardRegistry {
             uid, name, space, version, max_date, tags, limit, sort_by_timestamp
         );
 
-        let name = name.map(|name| clean_string(&name)).transpose()?;
+        let name = name.map(|name| clean_string(&name));
 
-        let space = space.map(|space| clean_string(&space)).transpose()?;
+        let space = space.map(|space| clean_string(&space));
 
         let query_args = CardQueryArgs {
             uid,

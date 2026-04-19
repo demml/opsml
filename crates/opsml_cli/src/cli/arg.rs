@@ -107,14 +107,12 @@ impl IntoQueryArgs for ListCards {
         let name = self
             .name
             .clone()
-            .map(|name| clean_string(&name))
-            .transpose()?;
+            .map(|name| clean_string(&name));
 
         let space = self
             .space
             .clone()
-            .map(|space| clean_string(&space))
-            .transpose()?;
+            .map(|space| clean_string(&space));
 
         Ok(CardQueryArgs {
             registry_type,
@@ -193,14 +191,12 @@ impl IntoQueryArgs for DownloadCard {
         let name = self
             .name
             .clone()
-            .map(|name| clean_string(&name))
-            .transpose()?;
+            .map(|name| clean_string(&name));
 
         let space = self
             .space
             .clone()
-            .map(|space| clean_string(&space))
-            .transpose()?;
+            .map(|space| clean_string(&space));
 
         Ok(CardQueryArgs {
             uid: self.uid.clone(),

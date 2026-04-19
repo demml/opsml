@@ -78,8 +78,8 @@ pub fn push_skill(args: &SkillPushArgs) -> Result<(), CliError> {
         .map_err(|e| CliError::Error(e.to_string()))?;
 
     // Normalize space and name regardless of source (markdown or CLI override)
-    card.space = clean_string(args.space.as_deref().unwrap_or(&card.space))?;
-    card.name = clean_string(&card.name)?;
+    card.space = clean_string(args.space.as_deref().unwrap_or(&card.space));
+    card.name = clean_string(&card.name);
 
     if let Some(tags) = &args.tags {
         card.tags.extend(tags.iter().cloned());
@@ -107,8 +107,8 @@ pub fn push_skill(args: &SkillPushArgs) -> Result<(), CliError> {
 pub fn pull_skill(args: &SkillPullArgs) -> Result<(), CliError> {
     let (space, name) = parse_skill_identifier(&args.name, args.space.as_deref())?;
 
-    let space_clean = clean_string(&space)?;
-    let name_clean = clean_string(&name)?;
+    let space_clean = clean_string(&space);
+    let name_clean = clean_string(&name);
 
     let query_args = CardQueryArgs {
         space: Some(space_clean.clone()),
@@ -300,9 +300,9 @@ pub(crate) fn find_card_json(dir: &std::path::Path, depth: usize) -> Result<Path
 pub fn list_skills(args: &SkillListArgs) -> Result<(), CliError> {
     println!("\nListing cards from {} registry", Colorize::green("skill"));
 
-    let space = args.space.clone().map(|s| clean_string(&s)).transpose()?;
+    let space = args.space.clone().map(|s| clean_string(&s));
 
-    let name = args.name.clone().map(|n| clean_string(&n)).transpose()?;
+    let name = args.name.clone().map(|n| clean_string(&n));
 
     let query_args = CardQueryArgs {
         space,
@@ -336,8 +336,8 @@ pub fn list_skills(args: &SkillListArgs) -> Result<(), CliError> {
 #[instrument(skip_all)]
 pub fn remove_skill(args: &SkillRemoveArgs) -> Result<(), CliError> {
     let (space_raw, name_raw) = parse_skill_identifier(&args.name, args.space.as_deref())?;
-    let space = clean_string(&space_raw)?;
-    let name = clean_string(&name_raw)?;
+    let space = clean_string(&space_raw);
+    let name = clean_string(&name_raw);
 
     // 1. Remove from yaml
     let yaml_path = if args.local {
@@ -411,7 +411,7 @@ pub fn remove_skill(args: &SkillRemoveArgs) -> Result<(), CliError> {
 #[instrument(skip_all)]
 pub fn init_skill(args: &SkillInitArgs) -> Result<(), CliError> {
     let raw_name = args.name.as_deref().unwrap_or("my-skill");
-    let name = clean_string(raw_name)?;
+    let name = clean_string(raw_name);
     let name = if name.is_empty() {
         "my-skill".to_string()
     } else {

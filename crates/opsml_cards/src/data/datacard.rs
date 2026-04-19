@@ -475,7 +475,6 @@ impl DataCard {
         }
     }
 
-    #[cfg(feature = "python")]
     fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
         if let Some(ref key) = self.artifact_key {
             Ok(key.get_crypt_key()?)
@@ -484,7 +483,6 @@ impl DataCard {
         }
     }
 
-    #[cfg(feature = "python")]
     fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {
         let decrypt_key = self.get_decryption_key()?;
         let uri = self.artifact_key.as_ref().unwrap().storage_path();

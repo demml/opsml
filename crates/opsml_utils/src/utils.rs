@@ -14,6 +14,7 @@ use serde_json::Value;
 #[cfg(feature = "python")]
 use serde_json::json;
 use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
 #[cfg(feature = "python")]
 use tracing::debug;
 use uuid::Uuid;
@@ -22,6 +23,15 @@ const NAME_SPACE_PATTERN: &str = r"^[a-z0-9]+(?:[-a-z0-9]+)*/[-a-z0-9]+$";
 #[cfg(feature = "python")]
 use pythonize::depythonize;
 
+static CLEAN_STRING_RE: LazyLock<Regex> = LazyLock::new(|| {
+    let pattern = format!("[{}]", regex::escape(PUNCTUATION));
+    Regex::new(&pattern).unwrap()
+});
+
+static NAME_SPACE_RE: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(NAME_SPACE_PATTERN).unwrap()
+});
+
 /// Clean a string by removing punctuation and converting to lowercase
 ///
 /// # Arguments
@@ -29,27 +39,18 @@ use pythonize::depythonize;
 ///
 /// # Returns
 ///
-/// A `Result` containing the cleaned string or a `UtilError`
-///
-/// # Errors
-///
-/// This function will return an error if:
-/// - The regex pattern cannot be created.
-pub fn clean_string(input: &str) -> Result<String, UtilError> {
-    let pattern = format!("[{}]", regex::escape(PUNCTUATION));
-    let re = Regex::new(&pattern.to_string())?;
-    Ok(re
+/// The cleaned string with punctuation removed and converted to lowercase
+pub fn clean_string(input: &str) -> String {
+    CLEAN_STRING_RE
         .replace_all(&input.trim().to_lowercase(), "")
         .to_string()
-        .replace('_', "-"))
+        .replace('_', "-")
 }
 
 pub fn validate_name_space_pattern(name: &str, space: &str) -> Result<(), UtilError> {
     let space_name = format!("{space}/{name}");
 
-    let re = Regex::new(NAME_SPACE_PATTERN)?;
-
-    if !re.is_match(&space_name) {
+    if !NAME_SPACE_RE.is_match(&space_name) {
         return Err(UtilError::InvalidSpaceNamePattern);
     }
 
@@ -457,15 +458,15 @@ mod tests {
     fn test_remove_punctuation() {
         let text = "Hello?";
         let expected = "hello";
-        assert_eq!(clean_string(text).unwrap(), expected);
+        assert_eq!(clean_string(text), expected);
 
         let text = "Hel#lo?";
         let expected = "hello";
-        assert_eq!(clean_string(text).unwrap(), expected);
+        assert_eq!(clean_string(text), expected);
 
         let text = "Hello_World!";
         let expected = "hello-world";
-        assert_eq!(clean_string(text).unwrap(), expected);
+        assert_eq!(clean_string(text), expected);
     }
 
     #[test]

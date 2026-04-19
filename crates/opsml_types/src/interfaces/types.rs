@@ -19,6 +19,7 @@ use {
     opsml_utils::{PyHelperFuncs, deserialize_dict_field},
     pyo3::{
         IntoPyObjectExt, PyTraverseError, PyVisit,
+        exceptions::PyValueError,
         prelude::*,
         types::{PyDict, PyList, PyType},
     },
@@ -558,8 +559,8 @@ impl ExtraMetadata {
     }
 
     #[staticmethod]
-    pub fn model_validate_json(json_string: String) -> ExtraMetadata {
-        serde_json::from_str(&json_string).unwrap()
+    pub fn model_validate_json(json_string: String) -> PyResult<ExtraMetadata> {
+        serde_json::from_str(&json_string).map_err(|e| PyValueError::new_err(e.to_string()))
     }
 }
 
