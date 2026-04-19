@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { MessageNum } from '$lib/components/genai/provider/types';
-  import { Provider, isOpenAIMessage } from '$lib/components/genai/types';
+  import type { MessageNum } from '$lib/components/agent/provider/types';
+  import { Provider, isOpenAIMessage } from '$lib/components/agent/types';
   import ContentRenderer from './ContentRenderer.svelte';
   import { User, Cpu, Terminal, Wrench } from 'lucide-svelte';
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
-  import type { Prompt } from '$lib/components/genai/types';
+  import type { Prompt } from '$lib/components/agent/types';
   import PromptViewer from './PromptViewer.svelte'; // The new component
   import { MessageSquareText, X } from 'lucide-svelte';
 
