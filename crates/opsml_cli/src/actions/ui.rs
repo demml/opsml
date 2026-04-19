@@ -40,22 +40,12 @@ fn download_client() -> Result<reqwest::blocking::Client, UiError> {
         .map_err(UiError::DownloadBinaryError)
 }
 
-fn verify_checksum(
-    client: &reqwest::blocking::Client,
+fn verify_checksum_against_text(
     archive_bytes: &[u8],
     archive_name: &str,
-    version: &str,
+    checksums_text: &str,
 ) -> Result<(), UiError> {
-    let checksums_url = format!(
-        "https://github.com/{GITHUB_REPO}/releases/download/v{version}/checksums.txt"
-    );
-    let text = client
-        .get(&checksums_url)
-        .send()
-        .and_then(|r| r.text())
-        .map_err(UiError::ChecksumFetchError)?;
-
-    let expected = text
+    let expected = checksums_text
         .lines()
         .find_map(|line| {
             let mut parts = line.split_whitespace();
@@ -76,6 +66,24 @@ fn verify_checksum(
     }
 
     Ok(())
+}
+
+fn verify_checksum(
+    client: &reqwest::blocking::Client,
+    archive_bytes: &[u8],
+    archive_name: &str,
+    version: &str,
+) -> Result<(), UiError> {
+    let checksums_url = format!(
+        "https://github.com/{GITHUB_REPO}/releases/download/v{version}/checksums.txt"
+    );
+    let text = client
+        .get(&checksums_url)
+        .send()
+        .and_then(|r| r.text())
+        .map_err(UiError::ChecksumFetchError)?;
+
+    verify_checksum_against_text(archive_bytes, archive_name, &text)
 }
 
 pub fn save_process_id(process: &Child, is_ui: bool) -> Result<(), UiError> {
@@ -873,5 +881,63 @@ mod tests {
         );
 
         Ok(())
+    }
+
+    #[test]
+    fn test_is_permitted_download_url_allowed() {
+        assert!(is_permitted_download_url(
+            "https://github.com/demml/opsml/releases/download/v1.0.0/opsml-server.zip"
+        ));
+        assert!(is_permitted_download_url(
+            "https://releases.demml.io/v1.0.0/opsml-server.zip"
+        ));
+    }
+
+    #[test]
+    fn test_is_permitted_download_url_blocked() {
+        assert!(!is_permitted_download_url(
+            "https://evil.com/malware.zip"
+        ));
+        assert!(!is_permitted_download_url(
+            "http://github.com/demml/opsml/releases/download/v1.0.0/opsml.zip"
+        ));
+        assert!(!is_permitted_download_url(""));
+        assert!(!is_permitted_download_url(
+            "https://github.com/other/repo/releases/download/v1.0.0/x.zip"
+        ));
+    }
+
+    #[test]
+    fn test_verify_checksum_against_text_ok() {
+        use sha2::{Digest, Sha256};
+        let data = b"hello archive";
+        let hash = hex::encode(Sha256::digest(data));
+        let checksums_text = format!("{hash}  archive.zip\n");
+        assert!(verify_checksum_against_text(data, "archive.zip", &checksums_text).is_ok());
+    }
+
+    #[test]
+    fn test_verify_checksum_against_text_mismatch() {
+        let data = b"hello archive";
+        let checksums_text = "deadbeef  archive.zip\n".to_string();
+        let err = verify_checksum_against_text(data, "archive.zip", &checksums_text).unwrap_err();
+        assert!(matches!(err, UiError::ChecksumMismatch { .. }));
+    }
+
+    #[test]
+    fn test_verify_checksum_against_text_missing_entry() {
+        let data = b"hello archive";
+        let checksums_text = "abc123  other.zip\n".to_string();
+        let err = verify_checksum_against_text(data, "archive.zip", &checksums_text).unwrap_err();
+        assert!(matches!(err, UiError::ChecksumMissingEntry(_)));
+    }
+
+    #[test]
+    fn test_verify_checksum_against_text_dotslash_prefix() {
+        use sha2::{Digest, Sha256};
+        let data = b"dotslash archive";
+        let hash = hex::encode(Sha256::digest(data));
+        let checksums_text = format!("{hash}  ./archive.zip\n");
+        assert!(verify_checksum_against_text(data, "archive.zip", &checksums_text).is_ok());
     }
 }
