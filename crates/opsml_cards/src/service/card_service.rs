@@ -553,6 +553,16 @@ impl ServiceCard {
             version: self.version.clone(),
         }
     }
+
+    #[pyo3(name = "get_registry_card")]
+    pub fn get_registry_card_py(&self) -> Result<CardRecord, CardError> {
+        self.get_registry_card()
+    }
+
+    #[pyo3(name = "save_card")]
+    pub fn save_card_py(&self, path: PathBuf) -> Result<(), CardError> {
+        self.save_card(path)
+    }
 }
 
 #[cfg(feature = "python")]
