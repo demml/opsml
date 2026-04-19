@@ -104,15 +104,9 @@ pub struct ListCards {
 
 impl IntoQueryArgs for ListCards {
     fn into_query_args(&self, registry_type: RegistryType) -> Result<CardQueryArgs, CliError> {
-        let name = self
-            .name
-            .clone()
-            .map(|name| clean_string(&name));
+        let name = self.name.clone().map(|name| clean_string(&name));
 
-        let space = self
-            .space
-            .clone()
-            .map(|space| clean_string(&space));
+        let space = self.space.clone().map(|space| clean_string(&space));
 
         Ok(CardQueryArgs {
             registry_type,
@@ -188,15 +182,9 @@ impl DownloadCard {
 
 impl IntoQueryArgs for DownloadCard {
     fn into_query_args(&self, registry_type: RegistryType) -> Result<CardQueryArgs, CliError> {
-        let name = self
-            .name
-            .clone()
-            .map(|name| clean_string(&name));
+        let name = self.name.clone().map(|name| clean_string(&name));
 
-        let space = self
-            .space
-            .clone()
-            .map(|space| clean_string(&space));
+        let space = self.space.clone().map(|space| clean_string(&space));
 
         Ok(CardQueryArgs {
             uid: self.uid.clone(),

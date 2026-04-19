@@ -102,7 +102,9 @@ fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> Result<RegistryTyp
             error!("Failed to extract registry type: {e}");
         })?),
         false => {
-            let registry_type = registry_type.extract::<String>().map_err(|e| RegistryError::Error(e.to_string()))?;
+            let registry_type = registry_type
+                .extract::<String>()
+                .map_err(|e| RegistryError::Error(e.to_string()))?;
             Ok(RegistryType::from_string(&registry_type).inspect_err(|e| {
                 error!("Failed to convert string to registry type: {e}");
             })?)

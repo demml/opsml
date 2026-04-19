@@ -23,6 +23,8 @@ const UI_PID_FILE: &str = "opsml-ui.pid";
 const PERMITTED_DOWNLOAD_PREFIXES: &[&str] = &[
     "https://github.com/demml/opsml/",
     "https://releases.demml.io/",
+    "http://127.0.0.1",
+    "http://localhost",
 ];
 
 fn is_permitted_download_url(url: &str) -> bool {
@@ -74,9 +76,8 @@ fn verify_checksum(
     archive_name: &str,
     version: &str,
 ) -> Result<(), UiError> {
-    let checksums_url = format!(
-        "https://github.com/{GITHUB_REPO}/releases/download/v{version}/checksums.txt"
-    );
+    let checksums_url =
+        format!("https://github.com/{GITHUB_REPO}/releases/download/v{version}/checksums.txt");
     let text = client
         .get(&checksums_url)
         .send()
@@ -895,9 +896,7 @@ mod tests {
 
     #[test]
     fn test_is_permitted_download_url_blocked() {
-        assert!(!is_permitted_download_url(
-            "https://evil.com/malware.zip"
-        ));
+        assert!(!is_permitted_download_url("https://evil.com/malware.zip"));
         assert!(!is_permitted_download_url(
             "http://github.com/demml/opsml/releases/download/v1.0.0/opsml.zip"
         ));

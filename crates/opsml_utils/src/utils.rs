@@ -28,9 +28,7 @@ static CLEAN_STRING_RE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(&pattern).unwrap()
 });
 
-static NAME_SPACE_RE: LazyLock<Regex> = LazyLock::new(|| {
-    Regex::new(NAME_SPACE_PATTERN).unwrap()
-});
+static NAME_SPACE_RE: LazyLock<Regex> = LazyLock::new(|| Regex::new(NAME_SPACE_PATTERN).unwrap());
 
 /// Clean a string by removing punctuation and converting to lowercase
 ///

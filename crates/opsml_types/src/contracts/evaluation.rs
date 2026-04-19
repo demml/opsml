@@ -35,7 +35,7 @@ impl std::str::FromStr for EvaluationType {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
-            "agent" => Ok(EvaluationType::Agent),
+            "agent" | "genai" => Ok(EvaluationType::Agent),
             "other" => Ok(EvaluationType::Other),
             _ => Err(format!("Unknown EvaluationType: {}", s)),
         }

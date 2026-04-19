@@ -22,13 +22,13 @@ pub use actions::{
 };
 use anyhow::Context;
 use clap::Parser;
-use rpassword;
 pub use cli::arg::DownloadCard;
 pub use cli::arg::ScouterArgs;
 use cli::commands::ScouterCommands;
 use cli::commands::UiCommands;
 use opsml_colors::Colorize;
 use opsml_types::RegistryType;
+use rpassword;
 
 pub use actions::lock::lock_service;
 

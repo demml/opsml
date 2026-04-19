@@ -160,7 +160,6 @@ pub fn download_service_sub_cards(
             mapping.add_card_path(&card.alias, &card_path);
 
             // If modelcard or promptcard, load and process drift paths
-            #[cfg(feature = "python")]
             if card.registry_type == RegistryType::Model
                 || card.registry_type == RegistryType::Prompt
             {
@@ -303,7 +302,6 @@ async fn async_download_card(
     mapping.add_card_path(&card.alias, &card_path);
 
     // check if card has drift profiles and add them to map
-    #[cfg(feature = "python")]
     if card.registry_type == RegistryType::Model || card.registry_type == RegistryType::Prompt {
         process_drift_paths(card, &card_path, mapping)?;
     }
