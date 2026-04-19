@@ -1011,6 +1011,8 @@ impl<'de> Deserialize<'de> for ServiceCard {
                             cards = Some(map.next_value()?);
                         }
                         Field::CardObjs => {
+                            let _: serde::de::IgnoredAny = map.next_value()?;
+
                             #[cfg(feature = "python")]
                             {
                                 card_objs = None;

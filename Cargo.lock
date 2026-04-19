@@ -5120,6 +5120,7 @@ dependencies = [
  "sqlx",
  "sysinfo",
  "tabled",
+ "tempfile",
  "thiserror 2.0.18",
  "tracing",
  "utoipa",

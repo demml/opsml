@@ -558,7 +558,7 @@ impl ExtraMetadata {
     }
 
     #[staticmethod]
-    pub fn model_validate_json(json_string: String) -> ModelSaveKwargs {
+    pub fn model_validate_json(json_string: String) -> ExtraMetadata {
         serde_json::from_str(&json_string).unwrap()
     }
 }
@@ -1648,14 +1648,13 @@ impl OnnxSession {
         let providers = rt.call_method0("get_available_providers")?;
 
         let args = (bytes,);
-        if let Some(kwargs) = kwargs {
-            kwargs.set_item("providers", providers).unwrap();
-        } else {
-            let kwargs = PyDict::new(py);
-            kwargs.set_item("providers", providers).unwrap();
-        };
 
-        let session = rt.call_method("InferenceSession", args, kwargs)?.unbind();
+        let kwargs_dict = kwargs.cloned().unwrap_or_else(|| PyDict::new(py));
+        kwargs_dict.set_item("providers", providers)?;
+
+        let session = rt
+            .call_method("InferenceSession", args, Some(&kwargs_dict))?
+            .unbind();
 
         debug!("Loaded ONNX model");
 

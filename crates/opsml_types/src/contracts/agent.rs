@@ -89,7 +89,7 @@ impl AgentProvider {
 pub enum ProtocolBinding {
     JsonRpc,
     #[default]
-    #[serde(alias = "HTTP+JSON")]
+    #[serde(rename = "HTTP+JSON", alias = "HTTPJSON")]
     HttpJson,
     Grpc,
 }
@@ -98,7 +98,7 @@ impl From<&str> for ProtocolBinding {
     fn from(s: &str) -> Self {
         match s.to_uppercase().replace(&['-', ' ', '+'][..], "_").as_str() {
             "JSONRPC" => ProtocolBinding::JsonRpc,
-            "HTTP_JSON" | "HTTP+JSON" => ProtocolBinding::HttpJson,
+            "HTTP_JSON" => ProtocolBinding::HttpJson,
             "GRPC" => ProtocolBinding::Grpc,
             _ => ProtocolBinding::HttpJson, // default to HTTP+JSON if unrecognized
         }
@@ -1022,10 +1022,10 @@ impl ApiKeySecurityScheme {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct HttpAuthSecurityScheme {
-    scheme: String,
+    pub scheme: String,
     #[serde(alias = "bearer_format")]
-    bearer_format: String,
-    description: String,
+    pub bearer_format: String,
+    pub description: String,
 }
 
 impl HttpAuthSecurityScheme {
@@ -1086,7 +1086,7 @@ impl HttpAuthSecurityScheme {
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
 pub struct MtlsSecurityScheme {
-    description: String,
+    pub description: String,
 }
 
 impl MtlsSecurityScheme {
@@ -1285,7 +1285,7 @@ pub struct OAuthFlows {
     #[serde(alias = "device_code")]
     pub device_code: Option<DeviceCodeFlow>,
     pub implicit: Option<ImplicitAuthFlow>,
-    pub password: Option<PassWordAuthFlow>,
+    pub password: Option<PasswordAuthFlow>,
 }
 
 impl OAuthFlows {
@@ -1294,7 +1294,7 @@ impl OAuthFlows {
         client_credentials: Option<ClientCredentialsFlow>,
         device_code: Option<DeviceCodeFlow>,
         implicit: Option<ImplicitAuthFlow>,
-        password: Option<PassWordAuthFlow>,
+        password: Option<PasswordAuthFlow>,
     ) -> Self {
         Self {
             authorization_code,
@@ -1316,7 +1316,7 @@ impl OAuthFlows {
         client_credentials: Option<ClientCredentialsFlow>,
         device_code: Option<DeviceCodeFlow>,
         implicit: Option<ImplicitAuthFlow>,
-        password: Option<PassWordAuthFlow>,
+        password: Option<PasswordAuthFlow>,
     ) -> Self {
         Self::new(
             authorization_code,
@@ -1368,12 +1368,12 @@ impl OAuthFlows {
     }
 
     #[getter]
-    pub fn password(&self) -> Option<PassWordAuthFlow> {
+    pub fn password(&self) -> Option<PasswordAuthFlow> {
         self.password.clone()
     }
 
     #[setter]
-    pub fn set_password(&mut self, val: Option<PassWordAuthFlow>) {
+    pub fn set_password(&mut self, val: Option<PasswordAuthFlow>) {
         self.password = val;
     }
 }
@@ -1705,10 +1705,10 @@ impl ImplicitAuthFlow {
     }
 }
 
-#[cfg_attr(feature = "python", pyclass(from_py_object))]
+#[cfg_attr(feature = "python", pyclass(from_py_object, name = "PassWordAuthFlow"))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(default, rename_all = "camelCase")]
-pub struct PassWordAuthFlow {
+pub struct PasswordAuthFlow {
     #[serde(alias = "refresh_url")]
     pub refresh_url: String,
     pub scopes: HashMap<String, String>,
@@ -1716,7 +1716,7 @@ pub struct PassWordAuthFlow {
     pub token_url: String,
 }
 
-impl PassWordAuthFlow {
+impl PasswordAuthFlow {
     pub fn new(
         token_url: String,
         refresh_url: Option<String>,
@@ -1732,7 +1732,7 @@ impl PassWordAuthFlow {
 
 #[cfg(feature = "python")]
 #[pymethods]
-impl PassWordAuthFlow {
+impl PasswordAuthFlow {
     #[new]
     #[pyo3(signature = (token_url, refresh_url=None, scopes=None))]
     pub fn py_new(
@@ -2227,6 +2227,7 @@ impl AgentSpec {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile::tempdir;
 
     #[test]
     fn test_split_frontmatter_edge_cases() {
@@ -2290,5 +2291,314 @@ mod tests {
         assert_eq!(restored.license, skill.license);
         assert_eq!(restored.allowed_tools, skill.allowed_tools);
         assert_eq!(restored.body, skill.body);
+    }
+
+    fn skill_with_skill_md(dir: &std::path::Path, name: &str) -> AgentSkillStandard {
+        let skill_dir = dir.join("skills").join(name);
+        std::fs::create_dir_all(&skill_dir).unwrap();
+        std::fs::write(skill_dir.join("SKILL.md"), "# skill").unwrap();
+        AgentSkillStandard {
+            name: name.to_string(),
+            description: "A valid description.".to_string(),
+            license: None,
+            compatibility: None,
+            metadata: None,
+            allowed_tools: None,
+            skills_path: None,
+            body: None,
+        }
+    }
+
+    #[test]
+    fn test_validate_name_empty() {
+        let tmp = tempdir().unwrap();
+        let mut skill = skill_with_skill_md(tmp.path(), "my-skill");
+        skill.name = "".to_string();
+        assert!(matches!(
+            skill.validate(tmp.path()),
+            Err(AgentConfigError::FieldNameEmpty)
+        ));
+    }
+
+    #[test]
+    fn test_validate_name_too_long() {
+        let tmp = tempdir().unwrap();
+        let long_name = "a".repeat(65);
+        let mut skill = skill_with_skill_md(tmp.path(), "my-skill");
+        skill.name = long_name;
+        assert!(matches!(
+            skill.validate(tmp.path()),
+            Err(AgentConfigError::FieldNameTooLong { .. })
+        ));
+    }
+
+    #[test]
+    fn test_validate_name_uppercase() {
+        let tmp = tempdir().unwrap();
+        let mut skill = skill_with_skill_md(tmp.path(), "my-skill");
+        skill.name = "MySkill".to_string();
+        assert!(matches!(
+            skill.validate(tmp.path()),
+            Err(AgentConfigError::SkillMustBeLowercase { .. })
+        ));
+    }
+
+    #[test]
+    fn test_validate_name_leading_hyphen() {
+        let tmp = tempdir().unwrap();
+        let mut skill = skill_with_skill_md(tmp.path(), "my-skill");
+        skill.name = "-foo".to_string();
+        assert!(matches!(
+            skill.validate(tmp.path()),
+            Err(AgentConfigError::SkillNameInvalid { .. })
+        ));
+    }
+
+    #[test]
+    fn test_validate_name_trailing_hyphen() {
+        let tmp = tempdir().unwrap();
+        let mut skill = skill_with_skill_md(tmp.path(), "my-skill");
+        skill.name = "foo-".to_string();
+        assert!(matches!(
+            skill.validate(tmp.path()),
+            Err(AgentConfigError::SkillNameInvalid { .. })
+        ));
+    }
+
+    #[test]
+    fn test_validate_name_consecutive_hyphens() {
+        let tmp = tempdir().unwrap();
+        let mut skill = skill_with_skill_md(tmp.path(), "my-skill");
+        skill.name = "foo--bar".to_string();
+        assert!(matches!(
+            skill.validate(tmp.path()),
+            Err(AgentConfigError::SkillNameInvalid { .. })
+        ));
+    }
+
+    #[test]
+    fn test_validate_name_valid() {
+        let tmp = tempdir().unwrap();
+        let skill = skill_with_skill_md(tmp.path(), "my-skill-1");
+        assert!(skill.validate(tmp.path()).is_ok());
+    }
+
+    #[test]
+    fn test_validate_description_empty() {
+        let tmp = tempdir().unwrap();
+        let mut skill = skill_with_skill_md(tmp.path(), "my-skill");
+        skill.description = "".to_string();
+        assert!(matches!(
+            skill.validate(tmp.path()),
+            Err(AgentConfigError::FieldDescriptionEmpty)
+        ));
+    }
+
+    #[test]
+    fn test_validate_description_too_long() {
+        let tmp = tempdir().unwrap();
+        let mut skill = skill_with_skill_md(tmp.path(), "my-skill");
+        skill.description = "a".repeat(1025);
+        assert!(matches!(
+            skill.validate(tmp.path()),
+            Err(AgentConfigError::FieldDescriptionTooLong { .. })
+        ));
+    }
+
+    #[test]
+    fn test_validate_description_valid() {
+        let tmp = tempdir().unwrap();
+        let skill = skill_with_skill_md(tmp.path(), "my-skill");
+        assert!(skill.validate(tmp.path()).is_ok());
+    }
+
+    #[test]
+    fn test_validate_compatibility_empty() {
+        let tmp = tempdir().unwrap();
+        let mut skill = skill_with_skill_md(tmp.path(), "my-skill");
+        skill.compatibility = Some("".to_string());
+        assert!(matches!(
+            skill.validate(tmp.path()),
+            Err(AgentConfigError::FieldCompatibilityEmpty)
+        ));
+    }
+
+    #[test]
+    fn test_validate_compatibility_too_long() {
+        let tmp = tempdir().unwrap();
+        let mut skill = skill_with_skill_md(tmp.path(), "my-skill");
+        skill.compatibility = Some("a".repeat(501));
+        assert!(matches!(
+            skill.validate(tmp.path()),
+            Err(AgentConfigError::FieldCompatibilityTooLong { .. })
+        ));
+    }
+
+    #[test]
+    fn test_validate_compatibility_none_ok() {
+        let tmp = tempdir().unwrap();
+        let skill = skill_with_skill_md(tmp.path(), "my-skill");
+        assert!(skill.validate(tmp.path()).is_ok());
+    }
+
+    #[test]
+    fn test_validate_skills_path_not_found() {
+        let tmp = tempdir().unwrap();
+        let skill = AgentSkillStandard {
+            name: "my-skill".to_string(),
+            description: "desc".to_string(),
+            license: None,
+            compatibility: None,
+            metadata: None,
+            allowed_tools: None,
+            skills_path: None,
+            body: None,
+        };
+        assert!(matches!(
+            skill.validate(tmp.path()),
+            Err(AgentConfigError::SkillFileNotFound { .. })
+        ));
+    }
+
+    #[test]
+    fn test_validate_skills_path_last_dir_mismatch() {
+        let tmp = tempdir().unwrap();
+        let wrong_dir = tmp.path().join("wrong-name");
+        std::fs::create_dir_all(&wrong_dir).unwrap();
+        std::fs::write(wrong_dir.join("SKILL.md"), "# skill").unwrap();
+        let skill = AgentSkillStandard {
+            name: "my-skill".to_string(),
+            description: "desc".to_string(),
+            license: None,
+            compatibility: None,
+            metadata: None,
+            allowed_tools: None,
+            skills_path: Some(wrong_dir.clone()),
+            body: None,
+        };
+        assert!(matches!(
+            skill.validate(tmp.path()),
+            Err(AgentConfigError::LastDirectoryMustMatchSkillName { .. })
+        ));
+    }
+
+    #[test]
+    fn test_validate_skills_path_happy_path() {
+        let tmp = tempdir().unwrap();
+        let skill = skill_with_skill_md(tmp.path(), "my-skill");
+        assert!(skill.validate(tmp.path()).is_ok());
+    }
+
+    fn make_agent_spec(supported_interfaces: Vec<AgentInterface>) -> AgentSpec {
+        AgentSpec {
+            name: "test-agent".to_string(),
+            description: "desc".to_string(),
+            version: "0.0.0".to_string(),
+            supported_interfaces,
+            capabilities: AgentCapabilities::new(false, false, false, None),
+            default_input_modes: vec![],
+            default_output_modes: vec![],
+            skills: vec![],
+            provider: None,
+            documentation_url: None,
+            icon_url: None,
+            security_schemes: None,
+            security_requirements: None,
+            signatures: None,
+        }
+    }
+
+    #[test]
+    fn test_agent_spec_validate_non_empty_interfaces_passes() {
+        let tmp = tempdir().unwrap();
+        let iface = AgentInterface {
+            url: "https://example.com".to_string(),
+            protocol_binding: ProtocolBinding::HttpJson,
+            protocol_version: "0.3.0".to_string(),
+            tenant: String::new(),
+        };
+        let mut spec = make_agent_spec(vec![iface]);
+        assert!(spec.validate(tmp.path(), &None).is_ok());
+    }
+
+    #[test]
+    fn test_agent_spec_validate_empty_interfaces_no_deploy_config() {
+        let tmp = tempdir().unwrap();
+        let mut spec = make_agent_spec(vec![]);
+        assert!(matches!(
+            spec.validate(tmp.path(), &None),
+            Err(AgentConfigError::InterfaceUrlMissing)
+        ));
+    }
+
+    #[test]
+    fn test_agent_spec_validate_empty_interfaces_deploy_config_no_urls() {
+        let tmp = tempdir().unwrap();
+        let mut spec = make_agent_spec(vec![]);
+        let deploy = Some(vec![DeploymentConfig {
+            environment: "prod".to_string(),
+            provider: None,
+            location: None,
+            urls: vec![],
+            resources: None,
+            links: None,
+            healthcheck: None,
+        }]);
+        assert!(matches!(
+            spec.validate(tmp.path(), &deploy),
+            Err(AgentConfigError::InterfaceUrlMissing)
+        ));
+    }
+
+    #[test]
+    fn test_agent_spec_validate_empty_interfaces_populated_from_deploy_config() {
+        let tmp = tempdir().unwrap();
+        let mut spec = make_agent_spec(vec![]);
+        let deploy = Some(vec![DeploymentConfig {
+            environment: "prod".to_string(),
+            provider: None,
+            location: None,
+            urls: vec!["https://example.com".to_string()],
+            resources: None,
+            links: None,
+            healthcheck: None,
+        }]);
+        assert!(spec.validate(tmp.path(), &deploy).is_ok());
+        assert_eq!(spec.supported_interfaces.len(), 1);
+        assert_eq!(
+            spec.supported_interfaces[0].protocol_binding,
+            ProtocolBinding::HttpJson
+        );
+    }
+
+    #[test]
+    fn test_protocol_binding_from_str() {
+        assert_eq!(ProtocolBinding::from("JSONRPC"), ProtocolBinding::JsonRpc);
+        assert_eq!(
+            ProtocolBinding::from("HTTP_JSON"),
+            ProtocolBinding::HttpJson
+        );
+        assert_eq!(
+            ProtocolBinding::from("HTTP+JSON"),
+            ProtocolBinding::HttpJson
+        );
+        assert_eq!(ProtocolBinding::from("GRPC"), ProtocolBinding::Grpc);
+        assert_eq!(ProtocolBinding::from("unknown"), ProtocolBinding::HttpJson);
+    }
+
+    #[test]
+    fn test_protocol_binding_http_json_serialization() {
+        assert_eq!(
+            serde_json::to_string(&ProtocolBinding::HttpJson).unwrap(),
+            "\"HTTP+JSON\""
+        );
+    }
+
+    #[test]
+    fn test_protocol_binding_http_json_backwards_compat_deserialization() {
+        assert_eq!(
+            serde_json::from_str::<ProtocolBinding>("\"HTTPJSON\"").unwrap(),
+            ProtocolBinding::HttpJson
+        );
     }
 }

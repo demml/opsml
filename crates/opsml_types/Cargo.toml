@@ -32,6 +32,9 @@ sqlx = { workspace = true, optional = true }
 utoipa = { workspace = true, optional = true }
 
 
+[dev-dependencies]
+tempfile = { workspace = true }
+
 [features]
 default = []
 server = ["sqlx", "utoipa"]
