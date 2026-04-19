@@ -901,115 +901,6 @@ impl ProfileExt for ServiceCard {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_service_info_update() {
-        let mut info = ServiceInfo {
-            space: "old_space".to_string(),
-            name: "old_name".to_string(),
-            version: "1.0.0".to_string(),
-        };
-
-        let result = info.update(
-            "new_space".to_string(),
-            "new_name".to_string(),
-            "2.0.0".to_string(),
-        );
-
-        assert!(result.is_ok());
-        assert_eq!(info.space, "new_space");
-        assert_eq!(info.name, "new_name");
-        assert_eq!(info.version, "2.0.0");
-    }
-
-    #[test]
-    fn test_cardlist_to_card_entries() {
-        let cards = vec![
-            Card {
-                alias: "card1".to_string(),
-                space: "space1".to_string(),
-                name: "name1".to_string(),
-                version: Some("1.0.0".to_string()),
-                registry_type: RegistryType::Data,
-                drift: None,
-                uid: Some("uid1".to_string()),
-                version_type: None,
-            },
-            Card {
-                alias: "card2".to_string(),
-                space: "space2".to_string(),
-                name: "name2".to_string(),
-                version: Some("2.0.0".to_string()),
-                registry_type: RegistryType::Model,
-                drift: None,
-                uid: Some("uid2".to_string()),
-                version_type: None,
-            },
-        ];
-
-        let card_list = CardList::new_rs(cards);
-        let entries = card_list.to_card_entries();
-
-        assert_eq!(entries.len(), 2);
-        assert_eq!(entries[0].alias, "card1");
-        assert_eq!(entries[0].version, Some("1.0.0".to_string()));
-        assert_eq!(entries[0].uid, Some("uid1".to_string()));
-        assert_eq!(entries[0].registry_type, RegistryType::Data);
-
-        assert_eq!(entries[1].alias, "card2");
-        assert_eq!(entries[1].version, Some("2.0.0".to_string()));
-        assert_eq!(entries[1].uid, Some("uid2".to_string()));
-        assert_eq!(entries[1].registry_type, RegistryType::Model);
-    }
-
-    #[test]
-    fn test_cardlist_iter() {
-        let cards = vec![
-            Card {
-                alias: "card1".to_string(),
-                space: "space1".to_string(),
-                name: "name1".to_string(),
-                version: Some("1.0.0".to_string()),
-                registry_type: RegistryType::Data,
-                drift: None,
-                uid: Some("uid1".to_string()),
-                version_type: None,
-            },
-            Card {
-                alias: "card2".to_string(),
-                space: "space2".to_string(),
-                name: "name2".to_string(),
-                version: Some("2.0.0".to_string()),
-                registry_type: RegistryType::Model,
-                drift: None,
-                uid: Some("uid2".to_string()),
-                version_type: None,
-            },
-            Card {
-                alias: "card3".to_string(),
-                space: "space3".to_string(),
-                name: "name3".to_string(),
-                version: Some("3.0.0".to_string()),
-                registry_type: RegistryType::Experiment,
-                drift: None,
-                uid: Some("uid3".to_string()),
-                version_type: None,
-            },
-        ];
-
-        let card_list = CardList::new_rs(cards);
-        let collected: Vec<_> = card_list.iter().collect();
-
-        assert_eq!(collected.len(), 3);
-        assert_eq!(collected[0].alias, "card1");
-        assert_eq!(collected[1].alias, "card2");
-        assert_eq!(collected[2].alias, "card3");
-    }
-}
-
 impl Serialize for ServiceCard {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -1215,5 +1106,114 @@ impl<'de> Deserialize<'de> for ServiceCard {
             "service_config",
         ];
         deserializer.deserialize_struct("ServiceCard", FIELDS, ServiceCardVisitor)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_service_info_update() {
+        let mut info = ServiceInfo {
+            space: "old_space".to_string(),
+            name: "old_name".to_string(),
+            version: "1.0.0".to_string(),
+        };
+
+        let result = info.update(
+            "new_space".to_string(),
+            "new_name".to_string(),
+            "2.0.0".to_string(),
+        );
+
+        assert!(result.is_ok());
+        assert_eq!(info.space, "new_space");
+        assert_eq!(info.name, "new_name");
+        assert_eq!(info.version, "2.0.0");
+    }
+
+    #[test]
+    fn test_cardlist_to_card_entries() {
+        let cards = vec![
+            Card {
+                alias: "card1".to_string(),
+                space: "space1".to_string(),
+                name: "name1".to_string(),
+                version: Some("1.0.0".to_string()),
+                registry_type: RegistryType::Data,
+                drift: None,
+                uid: Some("uid1".to_string()),
+                version_type: None,
+            },
+            Card {
+                alias: "card2".to_string(),
+                space: "space2".to_string(),
+                name: "name2".to_string(),
+                version: Some("2.0.0".to_string()),
+                registry_type: RegistryType::Model,
+                drift: None,
+                uid: Some("uid2".to_string()),
+                version_type: None,
+            },
+        ];
+
+        let card_list = CardList::new_rs(cards);
+        let entries = card_list.to_card_entries();
+
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].alias, "card1");
+        assert_eq!(entries[0].version, Some("1.0.0".to_string()));
+        assert_eq!(entries[0].uid, Some("uid1".to_string()));
+        assert_eq!(entries[0].registry_type, RegistryType::Data);
+
+        assert_eq!(entries[1].alias, "card2");
+        assert_eq!(entries[1].version, Some("2.0.0".to_string()));
+        assert_eq!(entries[1].uid, Some("uid2".to_string()));
+        assert_eq!(entries[1].registry_type, RegistryType::Model);
+    }
+
+    #[test]
+    fn test_cardlist_iter() {
+        let cards = vec![
+            Card {
+                alias: "card1".to_string(),
+                space: "space1".to_string(),
+                name: "name1".to_string(),
+                version: Some("1.0.0".to_string()),
+                registry_type: RegistryType::Data,
+                drift: None,
+                uid: Some("uid1".to_string()),
+                version_type: None,
+            },
+            Card {
+                alias: "card2".to_string(),
+                space: "space2".to_string(),
+                name: "name2".to_string(),
+                version: Some("2.0.0".to_string()),
+                registry_type: RegistryType::Model,
+                drift: None,
+                uid: Some("uid2".to_string()),
+                version_type: None,
+            },
+            Card {
+                alias: "card3".to_string(),
+                space: "space3".to_string(),
+                name: "name3".to_string(),
+                version: Some("3.0.0".to_string()),
+                registry_type: RegistryType::Experiment,
+                drift: None,
+                uid: Some("uid3".to_string()),
+                version_type: None,
+            },
+        ];
+
+        let card_list = CardList::new_rs(cards);
+        let collected: Vec<_> = card_list.iter().collect();
+
+        assert_eq!(collected.len(), 3);
+        assert_eq!(collected[0].alias, "card1");
+        assert_eq!(collected[1].alias, "card2");
+        assert_eq!(collected[2].alias, "card3");
     }
 }
