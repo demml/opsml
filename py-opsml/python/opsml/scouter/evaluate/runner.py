@@ -75,7 +75,7 @@ class EvalOrchestrator:
                 queue=queue,
                 scenarios=scenarios,
                 agent_fn=lambda q: my_service.chat(q),
-                simulated_user_fn=lambda initial_q, response: user_llm.respond(initial_q, response),
+                simulated_user_fn=lambda initial_q, response, history: user_llm.respond(initial_q, response),
             )
             results = orch.run()
     """
