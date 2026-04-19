@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use serde_yaml;
 use std::collections::HashMap;
+use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 
@@ -36,6 +37,71 @@ fn agent_current_version() -> String {
     "0.0.0".to_string()
 }
 
+fn validate_agent_url(url: &str) -> Result<(), AgentConfigError> {
+    if url.is_empty() {
+        return Err(AgentConfigError::InvalidAgentUrl(
+            "URL cannot be empty".to_string(),
+        ));
+    }
+
+    let lower = url.to_lowercase();
+
+    if lower.starts_with("file://") || lower.starts_with("ftp://") {
+        return Err(AgentConfigError::InvalidAgentUrl(format!(
+            "URL scheme not permitted: {url}"
+        )));
+    }
+
+    if lower.starts_with("http://") {
+        let host = lower
+            .strip_prefix("http://")
+            .unwrap_or("")
+            .split('/')
+            .next()
+            .unwrap_or("")
+            .split(':')
+            .next()
+            .unwrap_or("");
+        if host != "localhost" && host != "127.0.0.1" {
+            return Err(AgentConfigError::InvalidAgentUrl(format!(
+                "Only https:// is permitted outside localhost: {url}"
+            )));
+        }
+        return Ok(());
+    }
+
+    if !lower.starts_with("https://") {
+        return Err(AgentConfigError::InvalidAgentUrl(format!(
+            "URL must use https:// scheme: {url}"
+        )));
+    }
+
+    let host = url[8..]
+        .split('/')
+        .next()
+        .unwrap_or("")
+        .split(':')
+        .next()
+        .unwrap_or("");
+
+    if let Ok(ip) = host.parse::<IpAddr>() {
+        if let IpAddr::V4(v4) = ip {
+            let [a, b, ..] = v4.octets();
+            if a == 10
+                || (a == 172 && (16..=31).contains(&b))
+                || (a == 192 && b == 168)
+                || (a == 169 && b == 254)
+            {
+                return Err(AgentConfigError::InvalidAgentUrl(format!(
+                    "Private/IMDS IP address not permitted: {url}"
+                )));
+            }
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 #[serde(rename_all = "camelCase", default)]
@@ -57,8 +123,11 @@ impl AgentProvider {
 #[pymethods]
 impl AgentProvider {
     #[new]
-    pub fn py_new(organization: Option<String>, url: Option<String>) -> Self {
-        Self::new(organization, url)
+    pub fn py_new(organization: Option<String>, url: Option<String>) -> PyResult<Self> {
+        if let Some(ref u) = url {
+            validate_agent_url(u).map_err(PyErr::from)?;
+        }
+        Ok(Self::new(organization, url))
     }
 
     #[getter]
@@ -146,8 +215,8 @@ impl AgentInterface {
         protocol_binding: Bound<'_, PyAny>,
         protocol_version: String,
         tenant: Option<String>,
-    ) -> Self {
-        // if isinstance of ProtocolBinding, extract the value, otherwise try to convert from string
+    ) -> PyResult<Self> {
+        validate_agent_url(&url).map_err(PyErr::from)?;
         let protocol_binding = if protocol_binding.is_instance_of::<ProtocolBinding>() {
             protocol_binding
                 .extract::<ProtocolBinding>()
@@ -160,12 +229,12 @@ impl AgentInterface {
                     .as_str(),
             )
         };
-        Self {
+        Ok(Self {
             url,
             protocol_binding,
             protocol_version,
             tenant: tenant.unwrap_or_default(),
-        }
+        })
     }
 
     #[getter]

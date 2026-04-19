@@ -206,6 +206,9 @@ pub enum AgentConfigError {
         "Interface count mismatch: Expected {expected} interfaces to match deployment URLs, but found {actual} interfaces"
     )]
     InterfaceCountMismatch { expected: usize, actual: usize },
+
+    #[error("Invalid agent URL: {0}")]
+    InvalidAgentUrl(String),
 }
 
 #[cfg(feature = "python")]
