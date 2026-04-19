@@ -7,7 +7,6 @@ use opsml_types::DriftProfileUri;
 use opsml_types::contracts::{CardRecord, PromptCardClientRecord};
 use opsml_types::{RegistryType, SaveName, Suffix};
 use opsml_utils::{PyHelperFuncs, get_utc_datetime};
-use potato_head::prompt_types::Prompt;
 #[cfg(feature = "python")]
 use pyo3::IntoPyObjectExt;
 #[cfg(feature = "python")]
@@ -16,6 +15,7 @@ use pyo3::prelude::*;
 use pyo3::types::PyList;
 use scouter_client::{
     AgentEvalConfig, AgentEvalProfile, AssertionTasks, DriftType, ProfileRequest, TasksFile,
+    potato_head::prelude::prompt_types::Prompt,
 };
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};

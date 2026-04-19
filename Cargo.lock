@@ -905,9 +905,9 @@ dependencies = [
 
 [[package]]
 name = "aws-sdk-sts"
-version = "1.101.0"
+version = "1.102.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab41ad64e4051ecabeea802d6a17845a91e83287e1dd249e6963ea1ba78c428a"
+checksum = "0fc35b7a14cabdad13795fbbbd26d5ddec0882c01492ceedf2af575aad5f37dd"
 dependencies = [
  "aws-credential-types",
  "aws-runtime",
@@ -1408,18 +1408,19 @@ dependencies = [
 
 [[package]]
 name = "baked-potato"
-version = "0.21.0"
-source = "git+https://github.com/demml/potatohead?branch=python-result-fix#0e0af4678576b7f58aa2b1d0f53aa38225abba80"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23aa1d2907b13a9ddeba3c80d1343c607531aeef4c5f9b2816f8e89326ba873a"
 dependencies = [
  "async-trait",
  "chrono",
  "mockito",
- "potato-agent 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-provider 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-spec 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-type 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-util 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-workflow 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
+ "potato-agent",
+ "potato-provider",
+ "potato-spec",
+ "potato-type",
+ "potato-util",
+ "potato-workflow",
  "pyo3",
  "rand 0.9.4",
  "schemars",
@@ -3601,9 +3602,9 @@ dependencies = [
 
 [[package]]
 name = "jsonschema"
-version = "0.46.0"
+version = "0.46.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "84695c6689b01384700a3d93acecbd07231ee6fff1bf22ae980b4c307e6ddfd5"
+checksum = "2d87ef9a314ee37b69ef9ab130d3159f04287dda52151b064752842065e0db2e"
 dependencies = [
  "ahash",
  "bytecount",
@@ -3876,9 +3877,9 @@ checksum = "112b39cec0b298b6c1999fee3e31427f74f676e4cb9879ed1a121b43661a4154"
 
 [[package]]
 name = "lzma-rust2"
-version = "0.15.3"
+version = "0.15.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7fa48f5024824ecd3e8282cc948bd46fbd095aed5a98939de0594601a59b4e2b"
+checksum = "1670343e58806300d87950e3401e820b519b9384281bbabfb15e3636689ffd69"
 
 [[package]]
 name = "matchit"
@@ -4577,7 +4578,7 @@ dependencies = [
  "opsml-settings",
  "opsml-types",
  "opsml-utils",
- "potato-head 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
+ "scouter-client",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -4664,7 +4665,6 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "opsml-version",
- "potato-head 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
  "pyo3",
  "pythonize",
  "scouter-client",
@@ -4817,7 +4817,6 @@ dependencies = [
  "opsml-state",
  "opsml-types",
  "opsml-utils",
- "potato-head 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
  "pyo3",
  "pythonize",
  "rand 0.9.4",
@@ -4856,7 +4855,7 @@ dependencies = [
  "opsml-state",
  "opsml-storage",
  "opsml-utils",
- "potato-head 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
+ "potato-head",
  "pyo3",
  "reqwest 0.12.28",
  "scouter-client",
@@ -5110,7 +5109,6 @@ dependencies = [
  "opsml-utils",
  "opsml-version",
  "ort",
- "potato-head 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
  "pyo3",
  "pythonize",
  "regex",
@@ -5586,9 +5584,9 @@ dependencies = [
 
 [[package]]
 name = "potato-agent"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2420eca55e1e9dbb07f37760df6684c14f1968686c5927d7a54d66097339f35d"
+checksum = "0bc5dc699a357f3c4d8b673c3ff4cdeec4f5375e73f6182833c2518d58780369"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -5596,35 +5594,10 @@ dependencies = [
  "gcloud-auth",
  "http 1.4.0",
  "jsonschema",
- "potato-provider 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-state 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-type 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-util 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "pyo3",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "token-source",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "potato-agent"
-version = "0.21.0"
-source = "git+https://github.com/demml/potatohead?branch=python-result-fix#0e0af4678576b7f58aa2b1d0f53aa38225abba80"
-dependencies = [
- "async-trait",
- "base64 0.22.1",
- "chrono",
- "gcloud-auth",
- "http 1.4.0",
- "jsonschema",
- "potato-provider 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-state 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-type 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-util 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
+ "potato-provider",
+ "potato-state",
+ "potato-type",
+ "potato-util",
  "pyo3",
  "reqwest 0.12.28",
  "serde",
@@ -5638,67 +5611,32 @@ dependencies = [
 
 [[package]]
 name = "potato-head"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93f4108114289ec203d7890480229c7b984695ceb58e911777450e2ff37ef547"
-dependencies = [
- "potato-agent 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-provider 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-spec 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-type 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-util 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-workflow 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "potato-head"
-version = "0.21.0"
-source = "git+https://github.com/demml/potatohead?branch=python-result-fix#0e0af4678576b7f58aa2b1d0f53aa38225abba80"
+checksum = "180319751d313d1253f5e063db0a37a20f79533f0e28bac12bd672d3b39fc5ea"
 dependencies = [
  "baked-potato",
- "potato-agent 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-provider 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-spec 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-type 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-util 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-workflow 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
+ "potato-agent",
+ "potato-provider",
+ "potato-spec",
+ "potato-type",
+ "potato-util",
+ "potato-workflow",
 ]
 
 [[package]]
 name = "potato-provider"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f52fd5a3eb0c17ba93de3f0a22e8f2747aec5180532fcc2d81b17778bfa5258"
+checksum = "f6f9a3390d951a980d437a11f9232dfa8bfac6f733051a6574a65548d94c1e8a"
 dependencies = [
  "base64 0.22.1",
  "gcloud-auth",
  "http 1.4.0",
- "potato-state 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-type 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-util 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potatohead-macro 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "pyo3",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "token-source",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "potato-provider"
-version = "0.21.0"
-source = "git+https://github.com/demml/potatohead?branch=python-result-fix#0e0af4678576b7f58aa2b1d0f53aa38225abba80"
-dependencies = [
- "base64 0.22.1",
- "gcloud-auth",
- "http 1.4.0",
- "potato-state 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-type 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-util 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potatohead-macro 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
+ "potato-state",
+ "potato-type",
+ "potato-util",
+ "potatohead-macro",
  "pyo3",
  "reqwest 0.12.28",
  "serde",
@@ -5711,29 +5649,13 @@ dependencies = [
 
 [[package]]
 name = "potato-spec"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a06427b7c41648c7f4b7fb70ebe043d72b02c47c323b92a8570dc136f254807e"
+checksum = "d30bea2226ea3614534dab9be8f5750f10914b3f308a2546063e4cab808dfdeb"
 dependencies = [
- "potato-agent 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-type 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-workflow 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde",
- "serde_json",
- "serde_yaml",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "potato-spec"
-version = "0.21.0"
-source = "git+https://github.com/demml/potatohead?branch=python-result-fix#0e0af4678576b7f58aa2b1d0f53aa38225abba80"
-dependencies = [
- "potato-agent 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-type 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-workflow 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
+ "potato-agent",
+ "potato-type",
+ "potato-workflow",
  "serde",
  "serde_json",
  "serde_yaml",
@@ -5744,19 +5666,9 @@ dependencies = [
 
 [[package]]
 name = "potato-state"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec7968f8f4e57ccbc9cf492896fe36b9ea7f9a057a23311d89192abbb0d92542"
-dependencies = [
- "thiserror 2.0.18",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "potato-state"
-version = "0.21.0"
-source = "git+https://github.com/demml/potatohead?branch=python-result-fix#0e0af4678576b7f58aa2b1d0f53aa38225abba80"
+checksum = "0bf8e13fb4166efa80c30e4c6f95d963c930653358cbb6e2e1a6c5836b6b9f43"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -5765,32 +5677,13 @@ dependencies = [
 
 [[package]]
 name = "potato-type"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9917b2d4ee7f25517fd99a12d47dc44a2c7e5a1fefff2c5f9acd84ceda3c504"
+checksum = "dd119d77dec04754f4786a69478f92cf926d88798f476695c23433fcddcf1ee8"
 dependencies = [
  "async-trait",
- "potato-util 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potatohead-macro 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "pyo3",
- "pythonize",
- "regex",
- "schemars",
- "serde",
- "serde_json",
- "serde_yaml",
- "thiserror 2.0.18",
- "tracing",
-]
-
-[[package]]
-name = "potato-type"
-version = "0.21.0"
-source = "git+https://github.com/demml/potatohead?branch=python-result-fix#0e0af4678576b7f58aa2b1d0f53aa38225abba80"
-dependencies = [
- "async-trait",
- "potato-util 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potatohead-macro 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
+ "potato-util",
+ "potatohead-macro",
  "pyo3",
  "pythonize",
  "regex",
@@ -5804,25 +5697,9 @@ dependencies = [
 
 [[package]]
 name = "potato-util"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "794b066bc32692952dd48b2782c885bb49f363bbb1964cda73e1bc99b533a572"
-dependencies = [
- "colored_json",
- "pyo3",
- "pythonize",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tracing",
- "uuid",
- "walkdir",
-]
-
-[[package]]
-name = "potato-util"
-version = "0.21.0"
-source = "git+https://github.com/demml/potatohead?branch=python-result-fix#0e0af4678576b7f58aa2b1d0f53aa38225abba80"
+checksum = "a9347dd955c2e2dbec8cb743cb651806bc33fdb8dabebdbddd44578b1bb31ee4"
 dependencies = [
  "colored_json",
  "pyo3",
@@ -5837,36 +5714,16 @@ dependencies = [
 
 [[package]]
 name = "potato-workflow"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f171ff584fc664fcbf83fdd6f7b3dd2bf4210ce1f9913790a5d42cb9102743e"
+checksum = "d9b06c8dbf1deee8347284e227063806a1aa58ef49fb76ad8da2ad1da965c25f"
 dependencies = [
  "chrono",
- "potato-agent 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-provider 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-state 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-type 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "potato-util 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "pyo3",
- "pythonize",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
-]
-
-[[package]]
-name = "potato-workflow"
-version = "0.21.0"
-source = "git+https://github.com/demml/potatohead?branch=python-result-fix#0e0af4678576b7f58aa2b1d0f53aa38225abba80"
-dependencies = [
- "chrono",
- "potato-agent 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-provider 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-state 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-type 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
- "potato-util 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
+ "potato-agent",
+ "potato-provider",
+ "potato-state",
+ "potato-type",
+ "potato-util",
  "pyo3",
  "pythonize",
  "serde",
@@ -5878,17 +5735,9 @@ dependencies = [
 
 [[package]]
 name = "potatohead-macro"
-version = "0.21.0"
+version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d2226d75c1f679e80ca944e81fa0563fcd3685669e4b50c09044185fc0b0231"
-dependencies = [
- "thiserror 2.0.18",
-]
-
-[[package]]
-name = "potatohead-macro"
-version = "0.21.0"
-source = "git+https://github.com/demml/potatohead?branch=python-result-fix#0e0af4678576b7f58aa2b1d0f53aa38225abba80"
+checksum = "57544b09d26a1ae94b0643e8e88d171b5bc15aca21118b8e6bb5942c79e9cc14"
 dependencies = [
  "thiserror 2.0.18",
 ]
@@ -6127,7 +5976,7 @@ dependencies = [
  "opsml-types",
  "opsml-utils",
  "opsml-version",
- "potato-head 0.21.0 (git+https://github.com/demml/potatohead?branch=python-result-fix)",
+ "potato-head",
  "pyo3",
  "reqwest 0.12.28",
  "rusty-logging",
@@ -6613,9 +6462,9 @@ dependencies = [
 
 [[package]]
 name = "referencing"
-version = "0.46.0"
+version = "0.46.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2d5554bf79f4acf770dc3193b44b2d63b348f5f7b7448a0ea1191b37b620728"
+checksum = "aee6970bf1974cd719a1f4e8bc5a8051a33740194b7246430441cff79faff66d"
 dependencies = [
  "ahash",
  "fluent-uri",
@@ -7136,7 +6985,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "scouter-client"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "arrow",
  "arrow-json",
@@ -7147,6 +6996,7 @@ dependencies = [
  "noisy_float",
  "num-traits",
  "numpy",
+ "potato-head",
  "pyo3",
  "reqwest 0.12.28",
  "scouter-dispatch",
@@ -7173,7 +7023,7 @@ dependencies = [
 [[package]]
 name = "scouter-dispatch"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "futures",
  "pyo3",
@@ -7188,7 +7038,7 @@ dependencies = [
 [[package]]
 name = "scouter-drift"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "chrono",
  "futures",
@@ -7197,7 +7047,7 @@ dependencies = [
  "ndarray",
  "num-traits",
  "numpy",
- "potato-head 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "potato-head",
  "pyo3",
  "rayon",
  "scouter-dispatch",
@@ -7214,14 +7064,14 @@ dependencies = [
 [[package]]
 name = "scouter-evaluate"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "chrono",
  "itertools 0.14.0",
  "ndarray",
  "num-traits",
  "owo-colors",
- "potato-head 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "potato-head",
  "pyo3",
  "pythonize",
  "rayon",
@@ -7242,7 +7092,7 @@ dependencies = [
 [[package]]
 name = "scouter-events"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "arrow",
  "async-trait",
@@ -7279,7 +7129,7 @@ dependencies = [
 [[package]]
 name = "scouter-http"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "pyo3",
  "reqwest 0.12.28",
@@ -7294,7 +7144,7 @@ dependencies = [
 [[package]]
 name = "scouter-macro"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "thiserror 2.0.18",
 ]
@@ -7302,7 +7152,7 @@ dependencies = [
 [[package]]
 name = "scouter-observability"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "itertools 0.14.0",
  "ndarray",
@@ -7319,7 +7169,7 @@ dependencies = [
 [[package]]
 name = "scouter-profile"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "chrono",
  "indicatif",
@@ -7341,7 +7191,7 @@ dependencies = [
 [[package]]
 name = "scouter-semver"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "pyo3",
  "semver",
@@ -7352,11 +7202,11 @@ dependencies = [
 [[package]]
 name = "scouter-settings"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "base64 0.22.1",
  "chrono",
- "potato-head 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "potato-head",
  "pyo3",
  "scouter-types",
  "serde",
@@ -7366,7 +7216,7 @@ dependencies = [
 [[package]]
 name = "scouter-state"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "thiserror 2.0.18",
  "tokio",
@@ -7376,7 +7226,7 @@ dependencies = [
 [[package]]
 name = "scouter-tonic"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "prost",
  "prost-types",
@@ -7395,7 +7245,7 @@ dependencies = [
 [[package]]
 name = "scouter-tracing"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "chrono",
  "opentelemetry",
@@ -7403,7 +7253,7 @@ dependencies = [
  "opentelemetry-proto",
  "opentelemetry-stdout",
  "opentelemetry_sdk",
- "potato-head 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "potato-head",
  "prost",
  "pyo3",
  "pyo3-async-runtimes",
@@ -7421,7 +7271,7 @@ dependencies = [
 [[package]]
 name = "scouter-types"
 version = "0.25.0"
-source = "git+https://github.com/demml/scouter?branch=main#de5c9d0d39e414627bdc3d3a3649936e0a995c79"
+source = "git+https://github.com/demml/scouter?branch=genai-semantics#48649c2d4611afbbb0e46db5bf5aeb4e76f19661"
 dependencies = [
  "arrow",
  "base64 0.22.1",
@@ -7436,7 +7286,7 @@ dependencies = [
  "opentelemetry-otlp",
  "opentelemetry-proto",
  "owo-colors",
- "potato-head 0.21.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "potato-head",
  "pyo3",
  "pythonize",
  "rayon",
@@ -8852,9 +8702,9 @@ checksum = "8e28f89b80c87b8fb0cf04ab448d5dd0dd0ade2f8891bae878de66a75a28600e"
 
 [[package]]
 name = "typenum"
-version = "1.19.0"
+version = "1.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "562d481066bde0658276a35467c4af00bdc6ee726305698a55b86e61d7ad82bb"
+checksum = "40ce102ab67701b8526c123c1bab5cbe42d7040ccfd0f64af1a385808d2f43de"
 
 [[package]]
 name = "tz-rs"
@@ -9161,11 +9011,11 @@ checksum = "ccf3ec651a847eb01de73ccad15eb7d99f80485de043efb2f370cd654f4ea44b"
 
 [[package]]
 name = "wasip2"
-version = "1.0.2+wasi-0.2.9"
+version = "1.0.3+wasi-0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9517f9239f02c069db75e65f174b3da828fe5f5b945c4dd26bd25d89c03ebcf5"
+checksum = "20064672db26d7cdc89c7798c48a0fdfac8213434a1186e5ef29fd560ae223d6"
 dependencies = [
- "wit-bindgen",
+ "wit-bindgen 0.57.1",
 ]
 
 [[package]]
@@ -9174,7 +9024,7 @@ version = "0.4.0+wasi-0.3.0-rc-2026-01-06"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5428f8bf88ea5ddc08faddef2ac4a67e390b88186c703ce6dbd955e1c145aca5"
 dependencies = [
- "wit-bindgen",
+ "wit-bindgen 0.51.0",
 ]
 
 [[package]]
@@ -9811,6 +9661,12 @@ checksum = "d7249219f66ced02969388cf2bb044a09756a083d0fab1e566056b04d9fbcaa5"
 dependencies = [
  "wit-bindgen-rust-macro",
 ]
+
+[[package]]
+name = "wit-bindgen"
+version = "0.57.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 
 [[package]]
 name = "wit-bindgen-core"

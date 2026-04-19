@@ -15,7 +15,6 @@ opsml-crypt = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-utils = { workspace = true }
 opsml-version = { workspace = true }
-potato-head = { workspace = true, optional = true }
 scouter-client = { workspace = true }
 semver = { workspace = true }
 serde_yaml = { workspace = true }
@@ -36,4 +35,4 @@ utoipa = { workspace = true, optional = true }
 [features]
 default = []
 server = ["sqlx", "utoipa"]
-python = ["dep:pyo3", "dep:pythonize", "dep:potato-head", "opsml-utils/python", "dep:ort"]
+python = ["dep:pyo3", "dep:pythonize", "opsml-utils/python", "dep:ort"]

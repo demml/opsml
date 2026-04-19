@@ -1,8 +1,6 @@
-use ::potato_head::prompt_types::*;
-use ::potato_head::PyEmbedder;
-use potato_head::{
-    EventDetails, Provider, PyAgent, PyAgentResponse, PyWorkflow, Task, TaskEvent, TaskList,
-    TaskStatus, WorkflowResult, WorkflowTask,
+use scouter_client::potato_head::prelude::{
+    prompt_types::*, EventDetails, Provider, PyAgent, PyAgentResponse, PyEmbedder, PyWorkflow,
+    Task, TaskEvent, TaskList, TaskStatus, WorkflowResult, WorkflowTask,
 };
 pub mod anthropic;
 pub mod google;
