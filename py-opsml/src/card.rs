@@ -14,7 +14,7 @@ use opsml_types::contracts::agent::{
     AgentCapabilities, AgentCardSignature, AgentExtension, AgentInterface, AgentProvider,
     AgentSkill, AgentSpec, ApiKeySecurityScheme, AuthorizationCodeFlow, ClientCredentialsFlow,
     DeviceCodeFlow, HttpAuthSecurityScheme, ImplicitAuthFlow, MtlsSecurityScheme, OAuthFlows,
-    Oauth2SecurityScheme, OpenIdConnectSecurityScheme, PassWordAuthFlow, ProtocolBinding,
+    Oauth2SecurityScheme, OpenIdConnectSecurityScheme, PasswordAuthFlow, ProtocolBinding,
     SecurityRequirement, SecurityScheme,
 };
 
@@ -63,7 +63,7 @@ pub fn add_card_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<ClientCredentialsFlow>()?;
     m.add_class::<DeviceCodeFlow>()?;
     m.add_class::<ImplicitAuthFlow>()?;
-    m.add_class::<PassWordAuthFlow>()?;
+    m.add_class::<PasswordAuthFlow>()?;
     m.add_class::<OpenIdConnectSecurityScheme>()?;
     m.add_class::<ProtocolBinding>()?;
 
