@@ -25,7 +25,7 @@ export interface PromptCard {
   eval_profile?: AgentEvalProfile;
 }
 
-export function isPromptCard(obj: any): obj is PromptCard {
+export function isPromptCard(obj: unknown): obj is PromptCard {
   return (
     obj &&
     obj.registry_type === "Prompt" &&

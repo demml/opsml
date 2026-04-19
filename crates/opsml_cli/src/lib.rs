@@ -193,3 +193,29 @@ pub fn run_cli(args: Vec<String>) -> anyhow::Result<()> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_run_cli_version() {
+        let args = vec!["opsml".to_string(), "version".to_string()];
+        let result = run_cli(args);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_run_cli_no_command() {
+        let args = vec!["opsml".to_string()];
+        let result = run_cli(args);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_run_cli_unknown_subcommand() {
+        let args = vec!["opsml".to_string(), "unknown-subcommand".to_string()];
+        let result = run_cli(args);
+        assert!(result.is_err());
+    }
+}

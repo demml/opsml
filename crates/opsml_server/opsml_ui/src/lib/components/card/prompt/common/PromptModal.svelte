@@ -17,7 +17,7 @@
   onOpenChange={(e) => (openState = e.open)}
   triggerBase="btn bg-primary-500 text-black shadow shadow-hover border-black border-2 text-sm flex items-center gap-2"
   contentBase="card p-0 bg-surface-50 border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden"
-  backdropClasses="backdrop-blur-sm bg-black/20"
+  backdropClasses="bg-black/50"
 >
   {#snippet trigger()}
     <MessageSquareText class="w-4 h-4" />

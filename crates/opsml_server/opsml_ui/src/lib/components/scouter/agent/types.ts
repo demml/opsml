@@ -58,7 +58,7 @@ export type TaskStatus = "Pending" | "Running" | "Completed" | "Failed";
 
 export interface AgentResponse {
   id: string;
-  response: any;
+  response: JsonValue;
 }
 
 export interface TaskList {
