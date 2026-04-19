@@ -28,7 +28,6 @@ use cli::commands::ScouterCommands;
 use cli::commands::UiCommands;
 use opsml_colors::Colorize;
 use opsml_types::RegistryType;
-use rpassword;
 
 pub use actions::lock::lock_service;
 
