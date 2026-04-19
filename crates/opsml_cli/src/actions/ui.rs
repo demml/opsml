@@ -269,11 +269,12 @@ fn download_binary(
         Platform::Linux(arch) => format!("opsml-server-{arch}-linux-gnu.tar.gz"),
     };
 
-    let url = match artifact_url {
-        Some(url) => url.clone(),
-        None => {
-            format!("https://github.com/{GITHUB_REPO}/releases/download/v{version}/{archive_name}")
-        }
+    let (url, use_checksum) = match artifact_url {
+        Some(url) => (url.clone(), false),
+        None => (
+            format!("https://github.com/{GITHUB_REPO}/releases/download/v{version}/{archive_name}"),
+            true,
+        ),
     };
 
     if !is_permitted_download_url(&url) {
@@ -287,7 +288,9 @@ fn download_binary(
         .and_then(|r| r.bytes())
         .map_err(UiError::DownloadBinaryError)?;
 
-    verify_checksum(&client, &bytes, &archive_name, version)?;
+    if use_checksum {
+        verify_checksum(&client, &bytes, &archive_name, version)?;
+    }
 
     let archive_path = cache_dir.join(&archive_name);
     fs::write(&archive_path, &bytes).map_err(UiError::WriteBinaryError)?;
@@ -359,10 +362,13 @@ fn download_ui_package(
     cache_dir: &Path,
     ui_artifact_url: &Option<String>,
 ) -> Result<(), UiError> {
-    let url = match ui_artifact_url {
-        Some(url) => url.clone(),
-        None => format!(
-            "https://github.com/{GITHUB_REPO}/releases/download/v{version}/{UI_ARCHIVE_NAME}"
+    let (url, use_checksum) = match ui_artifact_url {
+        Some(url) => (url.clone(), false),
+        None => (
+            format!(
+                "https://github.com/{GITHUB_REPO}/releases/download/v{version}/{UI_ARCHIVE_NAME}"
+            ),
+            true,
         ),
     };
 
@@ -379,7 +385,9 @@ fn download_ui_package(
         .and_then(|r| r.bytes())
         .map_err(UiError::DownloadBinaryError)?;
 
-    verify_checksum(&client, &bytes, UI_ARCHIVE_NAME, version)?;
+    if use_checksum {
+        verify_checksum(&client, &bytes, UI_ARCHIVE_NAME, version)?;
+    }
 
     let archive_path = cache_dir.join(UI_ARCHIVE_NAME);
     fs::write(&archive_path, &bytes).map_err(UiError::WriteBinaryError)?;

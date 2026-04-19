@@ -84,18 +84,16 @@ fn validate_agent_url(url: &str) -> Result<(), AgentConfigError> {
         .next()
         .unwrap_or("");
 
-    if let Ok(ip) = host.parse::<IpAddr>() {
-        if let IpAddr::V4(v4) = ip {
-            let [a, b, ..] = v4.octets();
-            if a == 10
-                || (a == 172 && (16..=31).contains(&b))
-                || (a == 192 && b == 168)
-                || (a == 169 && b == 254)
-            {
-                return Err(AgentConfigError::InvalidAgentUrl(format!(
-                    "Private/IMDS IP address not permitted: {url}"
-                )));
-            }
+    if let Ok(IpAddr::V4(ip)) = host.parse::<IpAddr>() {
+        let [a, b, ..] = ip.octets();
+        if a == 10
+            || (a == 172 && (16..=31).contains(&b))
+            || (a == 192 && b == 168)
+            || (a == 169 && b == 254)
+        {
+            return Err(AgentConfigError::InvalidAgentUrl(format!(
+                "Private/IMDS IP address not permitted: {url}"
+            )));
         }
     }
 
