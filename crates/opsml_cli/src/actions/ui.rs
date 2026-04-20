@@ -81,6 +81,7 @@ fn verify_checksum(
     let text = client
         .get(&checksums_url)
         .send()
+        .and_then(|r| r.error_for_status())
         .and_then(|r| r.text())
         .map_err(UiError::ChecksumFetchError)?;
 
@@ -285,6 +286,7 @@ fn download_binary(
     let bytes = client
         .get(&url)
         .send()
+        .and_then(|r| r.error_for_status())
         .and_then(|r| r.bytes())
         .map_err(UiError::DownloadBinaryError)?;
 
@@ -382,6 +384,7 @@ fn download_ui_package(
     let bytes = client
         .get(&url)
         .send()
+        .and_then(|r| r.error_for_status())
         .and_then(|r| r.bytes())
         .map_err(UiError::DownloadBinaryError)?;
 

@@ -48,7 +48,7 @@ class EvalOrchestrator:
             the default ``execute_agent`` calls it once for ``initial_query``
             and once per entry in ``predefined_turns``.  When omitted,
             subclass and override ``execute_agent`` instead.
-        simulated_user_fn: Optional callable ``(initial_query, agent_response) -> next_message``.
+        simulated_user_fn: Optional callable ``(initial_query, agent_response, history) -> next_message``.
             Used for reactive scenarios. Return a string containing
             ``scenario.termination_signal`` to end the loop. When omitted,
             subclass and override ``execute_simulated_user_turn`` instead.
