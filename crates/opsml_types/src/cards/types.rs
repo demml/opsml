@@ -1,13 +1,14 @@
 use crate::contracts::ServiceType;
 use crate::error::TypeError;
 use crate::types::RegistryType;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::path::{Path, PathBuf};
 
-#[pyclass(eq, eq_int, from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, from_py_object))]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "server", derive(sqlx::Type))]
 #[repr(i32)]
@@ -18,7 +19,7 @@ pub enum CardStatus {
     Active = 3,
 }
 
-#[pyclass(eq, eq_int, skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, skip_from_py_object))]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum CardTable {
     Data,

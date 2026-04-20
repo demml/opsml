@@ -41,13 +41,13 @@ def test_agent_provider():
 
 def test_agent_interface():
     interface = AgentInterface(
-        url="http://example.com/agent",
+        url="https://example.com/agent",
         protocol_binding=ProtocolBinding.HttpJson,
         protocol_version="1.0",
         tenant="TestTenant",
     )
 
-    assert interface.url == "http://example.com/agent"
+    assert interface.url == "https://example.com/agent"
     assert interface.protocol_binding == ProtocolBinding.HttpJson
     assert interface.protocol_version == "1.0"
     assert interface.tenant == "TestTenant"
@@ -271,7 +271,7 @@ def test_agent_card_signature():
 
 def test_agent_spec_minimal():
     interface = AgentInterface(
-        url="http://example.com/agent",
+        url="https://example.com/agent",
         protocol_binding="HTTP",
         protocol_version="1.0",
     )
@@ -316,7 +316,7 @@ def test_agent_spec_full():
     )
 
     interface = AgentInterface(
-        url="http://example.com/agent",
+        url="https://example.com/agent",
         protocol_binding="HTTP",
         protocol_version="1.0",
         tenant="test-tenant",
@@ -391,7 +391,7 @@ def test_agent_spec_full():
 
 def test_agent_spec_property_updates():
     interface = AgentInterface(
-        url="http://example.com/agent",
+        url="https://example.com/agent",
         protocol_binding="HTTP",
         protocol_version="1.0",
     )

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Provider } from '$lib/components/genai/types';
-  import type { MessageNum } from '$lib/components/genai/provider/types';
-  import type { ChatMessage } from '$lib/components/genai/provider/openai/v1/chat/request';
-  import type { MessageParam, TextBlockParam } from '$lib/components/genai/provider/anthropic/v1/request';
-  import type { GeminiContent } from '$lib/components/genai/provider/google/v1/generate/request';
+  import { Provider } from '$lib/components/agent/types';
+  import type { MessageNum } from '$lib/components/agent/provider/types';
+  import type { ChatMessage } from '$lib/components/agent/provider/openai/v1/chat/request';
+  import type { MessageParam, TextBlockParam } from '$lib/components/agent/provider/anthropic/v1/request';
+  import type { GeminiContent } from '$lib/components/agent/provider/google/v1/generate/request';
   
   // Icons
   import { FileText, Image as ImageIcon, AudioWaveform, Wrench, Terminal, Code2 } from 'lucide-svelte';
@@ -14,13 +14,13 @@
     OPENAI_CONTENT_PART_IMAGE_URL,
     OPENAI_CONTENT_PART_INPUT_AUDIO,
     OPENAI_CONTENT_PART_FILE
-  } from '$lib/components/genai/provider/openai/v1/chat/request';
+  } from '$lib/components/agent/provider/openai/v1/chat/request';
 
   import { 
     TEXT_TYPE as ANTHROPIC_TEXT, 
     IMAGE_TYPE as ANTHROPIC_IMAGE,
     TOOL_USE_TYPE as ANTHROPIC_TOOL
-  } from '$lib/components/genai/provider/anthropic/v1/request';
+  } from '$lib/components/agent/provider/anthropic/v1/request';
 
   let { message, provider } = $props<{ 
     message: MessageNum; 
@@ -58,7 +58,7 @@
         </div>
       
       {:else if part.type === OPENAI_CONTENT_PART_IMAGE_URL}
-        <div class="group relative rounded-xl border-2 border-black overflow-hidden my-2 max-w-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-surface-50">
+        <div class="group relative rounded-base border-2 border-black overflow-hidden my-2 max-w-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-surface-50">
           <div class="absolute top-2 left-2 bg-white/90 backdrop-blur border border-black px-2 py-1 rounded-md text-[10px] font-bold uppercase flex items-center gap-1 z-10">
             <ImageIcon class="w-3 h-3 text-purple-600"/>
             Image
@@ -67,7 +67,7 @@
         </div>
 
       {:else if part.type === OPENAI_CONTENT_PART_FILE}
-        <div class="flex items-center gap-3 bg-white border-2 border-black p-3 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-md my-1">
+        <div class="flex items-center gap-3 bg-white border-2 border-black p-3 rounded-base shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-md my-1">
           <div class="bg-blue-100 border-2 border-black p-2 rounded-lg">
             <FileText class="w-5 h-5 text-blue-700" />
           </div>
@@ -78,7 +78,7 @@
         </div>
       
       {:else if part.type === OPENAI_CONTENT_PART_INPUT_AUDIO}
-        <div class="flex items-center gap-3 bg-white border-2 border-black p-3 rounded-xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-md my-1">
+        <div class="flex items-center gap-3 bg-white border-2 border-black p-3 rounded-base shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-md my-1">
           <div class="bg-pink-100 border-2 border-black p-2 rounded-lg">
              <AudioWaveform class="w-5 h-5 text-pink-700" />
           </div>
@@ -105,7 +105,7 @@
           {@const src = block.source.type === 'base64' 
             ? `data:${block.source.media_type};base64,${block.source.data}`
             : block.source.url}
-          <div class="group relative rounded-xl border-2 border-black overflow-hidden my-2 max-w-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-surface-50">
+          <div class="group relative rounded-base border-2 border-black overflow-hidden my-2 max-w-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-surface-50">
              <div class="absolute top-2 left-2 bg-white/90 backdrop-blur border border-black px-2 py-1 rounded-md text-[10px] font-bold uppercase flex items-center gap-1 z-10">
               <ImageIcon class="w-3 h-3 text-purple-600"/>
               Image
@@ -114,7 +114,7 @@
           </div>
 
         {:else if block.type === ANTHROPIC_TOOL}
-          <div class="bg-surface-50 border-2 border-black rounded-xl overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] my-2 max-w-2xl">
+          <div class="bg-surface-50 border-2 border-black rounded-base overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] my-2 max-w-2xl">
             <div class="px-3 py-2 border-b-2 border-black bg-white flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <Wrench class="w-4 h-4 text-purple-600" />
@@ -131,7 +131,7 @@
     
     {:else if 'text' in message && 'type' in message}
       {@const sysMsg = asAnthropicSystem(message)}
-      <div class="flex gap-3 bg-surface-100 border-2 border-black border-dashed p-3 rounded-xl items-start opacity-75">
+      <div class="flex gap-3 bg-surface-100 border-2 border-black border-dashed p-3 rounded-base items-start opacity-75">
         <Terminal class="w-4 h-4 mt-0.5 text-slate-600 shrink-0" />
         <div class="whitespace-pre-wrap text-sm text-slate-700 font-medium font-mono leading-relaxed">
           {sysMsg.text}
@@ -149,7 +149,7 @@
         </div>
       
       {:else if 'inlineData' in part}
-        <div class="group relative rounded-xl border-2 border-black overflow-hidden my-2 max-w-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-surface-50">
+        <div class="group relative rounded-base border-2 border-black overflow-hidden my-2 max-w-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-surface-50">
            <div class="absolute top-2 left-2 bg-white/90 backdrop-blur border border-black px-2 py-1 rounded-md text-[10px] font-bold uppercase flex items-center gap-1 z-10">
               <ImageIcon class="w-3 h-3 text-purple-600"/>
               Image
@@ -162,7 +162,7 @@
         </div>
       
       {:else if 'functionCall' in part}
-         <div class="bg-surface-50 border-2 border-black rounded-xl overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] my-2 max-w-2xl">
+         <div class="bg-surface-50 border-2 border-black rounded-base overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] my-2 max-w-2xl">
             <div class="px-3 py-2 border-b-2 border-black bg-white flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <Wrench class="w-4 h-4 text-blue-600" />

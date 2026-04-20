@@ -24,7 +24,7 @@ src/routes/
     │       ├── metrics/        # Experiment metrics
     │       ├── hardware/       # Hardware stats
     │       └── monitoring/     # PSI, SPC, custom drift
-    ├── genai/                # GenAI overview
+    ├── agent/                # Agent overview
     │   ├── prompt/[registry]/...  # Prompt cards + evaluation/
     │   ├── agent/[registry]/...   # Agent cards + playground/ + evaluation/
     │   └── eval/             # Evaluation summary
@@ -127,11 +127,11 @@ Five two-column layout wrappers: `DataCardLayout`, `ModelCardLayout`, `Experimen
 ### Scouter Monitoring — `lib/components/scouter/`
 | Component | Purpose |
 |-----------|---------|
-| `genai/GenAIDashboard.svelte` | GenAI eval dashboard |
-| `genai/record/EvalRecordTable.svelte` | Record list |
-| `genai/record/EvalRecordContent.svelte` | Record detail |
-| `genai/workflow/GenAIEvalWorkflowTable.svelte` | Workflow list |
-| `genai/task/GenAITaskAccordion.svelte` | Collapsible task list |
+| `agent/AgentDashboard.svelte` | Agent eval dashboard |
+| `agent/record/EvalRecordTable.svelte` | Record list |
+| `agent/record/EvalRecordContent.svelte` | Record detail |
+| `agent/workflow/AgentEvalWorkflowTable.svelte` | Workflow list |
+| `agent/task/AgentTaskAccordion.svelte` | Collapsible task list |
 | `drift/PsiDashboard.svelte` | PSI drift monitoring |
 | `drift/SpcDashboard.svelte` | SPC monitoring |
 | `drift/CustomDashboard.svelte` | Custom metrics |
@@ -220,7 +220,7 @@ Always use this from `+page.server.ts` — never call the API directly from comp
 ### Server-side Utils
 - Card: `lib/server/card/utils.ts`
 - User: `lib/server/user/utils.ts`
-- Monitoring: `lib/server/scouter/genai/utils.ts`, `drift/utils.ts`
+- Monitoring: `lib/server/scouter/agent/utils.ts`, `drift/utils.ts`
 - Traces: `lib/server/trace/utils.ts`
 - API client: `lib/server/api/opsmlClient.ts`
 
@@ -294,7 +294,7 @@ export const load: PageServerLoad = async ({ params, fetch }) => {
 | Edit markdown | `Readme.svelte` (has CodeMirror editor) |
 | File browser | `FileTree.svelte` → `FileViewer.svelte` |
 | Chart (bar/line) | `Chart.svelte` with `groupedMetrics` |
-| GenAI monitoring | `GenAIDashboard.svelte` |
+| Agent monitoring | `AgentDashboard.svelte` |
 | Drift monitoring | `PsiDashboard`, `SpcDashboard`, or `CustomDashboard` |
 | Trace waterfall | `TraceDashboard.svelte` |
 | Dropdown select | `Dropdown.svelte` (simple) or `ComboBoxDropDown.svelte` (searchable) |

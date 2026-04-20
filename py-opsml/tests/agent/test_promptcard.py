@@ -14,9 +14,9 @@ from tests.conftest import WINDOWS_EXCLUDE
 def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
     with OpsmlTestServer():
         with LLMTestServer():
-            reg: CardRegistry[PromptCard] = CardRegistry(RegistryType.Prompt)
+            reg: CardRegistry = CardRegistry(RegistryType.Prompt)
 
-            prompt = Prompt(
+            prompt: Prompt = Prompt(
                 model="gpt-4o",
                 provider="openai",
                 messages="Hello!",
@@ -56,6 +56,7 @@ def test_promptcard_crud(reformulation_evaluation_prompt: Prompt) -> None:
 
             assert card.uid is not None
             loaded_card = reg.load_card(uid=card.uid)
+            assert isinstance(loaded_card, PromptCard)
             assert loaded_card.name == card.name
             assert loaded_card.eval_profile is not None
             assert loaded_card.version == card.version

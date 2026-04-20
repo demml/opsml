@@ -28,8 +28,8 @@ impl BaseArgs {
         uid: Option<&str>,
         registry_type: &RegistryType,
     ) -> Result<BaseArgsResult, ArgError> {
-        let name = clean_string(&Self::get_value("name", name, registry_type)?)?;
-        let space = clean_string(&Self::get_value("space", space, registry_type)?)?;
+        let name = clean_string(&Self::get_value("name", name, registry_type)?);
+        let space = clean_string(&Self::get_value("space", space, registry_type)?);
 
         let version = match version {
             Some(v) => v.to_string(),

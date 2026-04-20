@@ -5,6 +5,10 @@ edition = { workspace = true }
 repository = { workspace = true }
 description = "OpsML CLI - Command line interface for OpsML"
 
+[[bin]]
+name = "opsml"
+path = "src/main.rs"
+
 [dependencies]
 opsml-agent-cli = { workspace = true }
 opsml-cards = { workspace = true }
@@ -26,9 +30,12 @@ anyhow = { workspace = true }
 base64 = { workspace = true }
 clap = { workspace = true }
 dirs = { workspace = true }
-pyo3 = { workspace = true }
+pyo3 = { workspace = true, optional = true }
+hex = { workspace = true }
 reqwest = { workspace = true }
+rpassword = { workspace = true }
 serde = { workspace = true }
+sha2 = { workspace = true }
 serde_json = { workspace = true }
 sysinfo = { workspace = true }
 tabled = { workspace = true }
@@ -41,6 +48,10 @@ zip = { workspace = true }
 [target.'cfg(target_os = "linux")'.dependencies]
 flate2 = "1.*"
 tar = "*"
+
+[features]
+default = []
+python = ["dep:pyo3", "opsml-registry/python", "opsml-service/python"]
 
 [dev-dependencies]
 mockall = { workspace = true }

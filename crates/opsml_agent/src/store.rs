@@ -4,8 +4,9 @@ use dashmap::DashMap;
 use opsml_settings::config::AgentSettings;
 use opsml_types::contracts::{InvokeMetadata, InvokeResponse, JobStatus};
 use opsml_utils::create_uuid7;
-use potato_head::{Agent, AgentRunOutcome, AgentRunner, SessionState, SpecLoader};
-use potato_head::{LoadedSpec, PotatoSpec};
+use scouter_client::potato_head::prelude::{
+    Agent, AgentRunOutcome, AgentRunner, LoadedSpec, PotatoSpec, SessionState, SpecLoader,
+};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::path::Path;

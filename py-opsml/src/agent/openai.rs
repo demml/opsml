@@ -1,5 +1,5 @@
-use potato_head::openai_types::*;
 use pyo3::prelude::*;
+use scouter_client::potato_head::prelude::openai_types::*;
 
 pub fn add_openai_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // settings

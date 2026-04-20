@@ -14196,61 +14196,6 @@ class EvalRunner:
             config: Optional evaluation configuration.
         """
 
-AgentFn = Callable[[str], str]
-
-class EvalOrchestrator:
-    """Manages the capture lifecycle, routes scenario types, and delegates to the Rust EvalRunner.
-
-    Works out of the box — pass ``agent_fn`` and call ``run()``.
-
-    Args:
-        queue: ScouterQueue instance (source of profiles + capture lifecycle).
-        scenarios: Scenario definitions to evaluate.
-        agent_fn: Optional callable ``(query) -> response_str``.  Called once
-            for ``initial_query`` and once per ``predefined_turns`` entry.
-    """
-
-    def __init__(
-        self,
-        queue: "ScouterQueue",
-        scenarios: EvalScenarios,
-        agent_fn: Optional[AgentFn] = None,
-    ) -> None: ...
-    def execute_agent(
-        self,
-        scenario: EvalScenario,
-    ) -> str:
-        """Execute the agent for a scenario.
-
-        Default calls ``agent_fn(initial_query)`` then each
-        ``predefined_turns`` entry.  Override to customize.
-
-        Args:
-            scenario: The scenario to execute.
-
-        Returns:
-            The agent's final response string.
-        """
-
-    def on_scenario_start(self, scenario: EvalScenario) -> None:
-        """Hook called before a scenario is executed."""
-
-    def on_scenario_complete(self, scenario: EvalScenario, response: str) -> None:
-        """Hook called after a scenario is executed."""
-
-    def on_evaluation_complete(self, results: ScenarioEvalResults) -> ScenarioEvalResults:
-        """Hook called after evaluation completes. Override to post-process results."""
-
-    def run(self, config: Optional[EvaluationConfig] = None) -> ScenarioEvalResults:
-        """Execute all scenarios and return evaluation results.
-
-        Args:
-            config: Optional evaluation configuration.
-
-        Returns:
-            ScenarioEvalResults with metrics across all scenarios.
-        """
-
 ### scouter/mock.pyi ###
 class BifrostTestServer:
     def __init__(self, cleanup: bool = True) -> None: ...
@@ -14820,7 +14765,7 @@ class AgentAlertConfig:
             schedule:
                 Schedule to run monitor. Defaults to daily at midnight
             alert_condition:
-                Alert condition for a GenAI drift profile
+                Alert condition for an Agent eval profile.
 
         """
 
@@ -16071,14 +16016,14 @@ class ScouterQueue:
 
             LLM monitoring with gRPC:
                 >>> queue = ScouterQueue.from_path(
-                ...     path={"genai_eval": Path("genai_profile.json")},
+                ...     path={"agent_eval": Path("agent_profile.json")},
                 ...     transport_config=GrpcConfig(
                 ...         server_uri="http://scouter-server:50051",
                 ...         username="monitoring_user",
                 ...         password="secure_password",
                 ...     ),
                 ... )
-                >>> queue["genai_eval"].insert(
+                >>> queue["agent_eval"].insert(
                 ...     EvalRecord(context={"input": "...", "response": "..."})
                 ... )
         """
@@ -17846,14 +17791,14 @@ class AgentEvalProfile:
                 At least one task (assertion, LLM judge, or trace assertion) is required.
                 Can also be provided as a TasksFile object.
             config (Optional[AgentEvalConfig]):
-                Configuration for the GenAI drift profile containing space, name,
+                Configuration for the Agent evaluation profile containing space, name,
                 version, sample rate, and alert settings. If not provided,
                 defaults will be used.
             alias (Optional[str]):
                 Optional alias for the profile.
 
         Returns:
-            AgentEvalProfile: Configured profile ready for GenAI drift monitoring.
+            AgentEvalProfile: Configured profile ready for execution
 
         Raises:
             ProfileError: If validation fails due to:
@@ -18062,7 +18007,7 @@ class AgentEvalProfile:
         Args:
             path (Optional[Path]):
                 Optional path to save the profile. If None, saves to
-                "genai_eval_profile.json" in the current directory.
+                "agent_eval_profile.json" in the current directory.
 
         Returns:
             Path: Path where the profile was saved.
@@ -18312,7 +18257,7 @@ class Drifter:
 
         Args:
             config (AgentEvalConfig):
-                The configuration for the GenAI drift profile containing space, name,
+                The configuration for the agent evaluation profile containing space, name,
                 version, and alert settings.
             tasks (List[LLMJudgeTask | AssertionTask]):
                 List of evaluation tasks to include in the profile. Can contain
@@ -18322,7 +18267,7 @@ class Drifter:
                 Optional alias for the profile.
 
         Returns:
-            AgentEvalProfile: Configured profile ready for GenAI drift monitoring.
+            AgentEvalProfile: Configured profile ready for execution
 
         Raises:
             ProfileError: If workflow validation fails, metrics are empty when no
@@ -21125,10 +21070,10 @@ class PromptCard:
     ) -> None:
         """Initialize a AgentEvalProfile for LLM evaluation and drift detection.
 
-        LLM evaluations are run asynchronously on the scouter server.
+        Agent evaluations are run asynchronously on the scouter server.
 
         Overview:
-            GenAI evaluations are defined using assertion tasks and LLM judge tasks.
+            Agent evaluations are defined using assertion tasks and LLM judge tasks.
             Assertion tasks evaluate specific metrics based on model responses, and do not require
             the use of an LLM judge or extra call. It is recommended to use assertion tasks whenever possible
             to reduce cost and latency. LLM judge tasks leverage an additional LLM call to evaluate
@@ -21145,11 +21090,11 @@ class PromptCard:
                 a mix of LLM judge tasks, assertion tasks, trace assertion tasks, and agent assertion tasks.
 
             config (AgentEvalConfig | None):
-                The configuration for the GenAI drift profile containing space, name,
+                The configuration for the Agent eval profile containing space, name,
                 version, and alert settings.
 
         Returns:
-            AgentEvalProfile: Configured profile ready for GenAI drift monitoring.
+            AgentEvalProfile: Configured profile ready for Agent evaluation.
 
         Raises:
             ProfileError: If workflow validation fails, metrics are empty when no
@@ -26139,7 +26084,6 @@ __all__ = [
     "EqualWidthBinning",
     "EvalDataset",
     "EvalMetrics",
-    "EvalOrchestrator",
     "EvalRecord",
     "EvalResultSet",
     "EvalResults",

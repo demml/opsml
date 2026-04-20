@@ -1,4 +1,6 @@
+#[cfg(feature = "python")]
 use pyo3::IntoPyObjectExt;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -49,30 +51,24 @@ impl From<&str> for CompatibleTool {
     }
 }
 
-#[pyclass(eq, eq_int, from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, from_py_object))]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum DependencyKind {
     Skill,
     McpServer,
 }
 
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-#[pyclass(from_py_object)]
 pub struct SkillDependency {
-    #[pyo3(get, set)]
     pub name: String,
-    #[pyo3(get, set)]
     pub space: String,
-    #[pyo3(get, set)]
     pub version_req: Option<String>,
     pub kind: DependencyKind,
 }
 
-#[pymethods]
 impl SkillDependency {
-    #[new]
-    #[pyo3(signature = (name, space, kind, version_req=None))]
-    pub fn new(
+    pub fn new_rs(
         name: String,
         space: String,
         kind: DependencyKind,
@@ -84,6 +80,48 @@ impl SkillDependency {
             version_req,
             kind,
         }
+    }
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl SkillDependency {
+    #[new]
+    #[pyo3(signature = (name, space, kind, version_req=None))]
+    pub fn new(
+        name: String,
+        space: String,
+        kind: DependencyKind,
+        version_req: Option<String>,
+    ) -> Self {
+        Self::new_rs(name, space, kind, version_req)
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+    #[setter]
+    pub fn set_name(&mut self, val: String) {
+        self.name = val;
+    }
+
+    #[getter]
+    pub fn space(&self) -> String {
+        self.space.clone()
+    }
+    #[setter]
+    pub fn set_space(&mut self, val: String) {
+        self.space = val;
+    }
+
+    #[getter]
+    pub fn version_req(&self) -> Option<String> {
+        self.version_req.clone()
+    }
+    #[setter]
+    pub fn set_version_req(&mut self, val: Option<String>) {
+        self.version_req = val;
     }
 
     #[getter]

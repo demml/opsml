@@ -12,8 +12,7 @@ use crate::{
 use chrono::{DateTime, Utc};
 use opsml_colors::Colorize;
 use opsml_semver::VersionType;
-use opsml_utils::{PyHelperFuncs, get_utc_datetime};
-use pyo3::{IntoPyObjectExt, prelude::*};
+use opsml_utils::get_utc_datetime;
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -23,6 +22,11 @@ use tabled::settings::{
     object::{Columns, Rows},
 };
 use tabled::{Table, Tabled};
+
+#[cfg(feature = "python")]
+use opsml_utils::PyHelperFuncs;
+#[cfg(feature = "python")]
+use pyo3::{IntoPyObjectExt, prelude::*};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
@@ -322,8 +326,6 @@ impl AuditableRequest for QueryPageRequest {
     }
 }
 
-// ...existing code...
-
 /// Cursor for paginating through version results
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
@@ -494,7 +496,7 @@ impl AuditableRequest for CardQueryArgs {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct DataCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -532,7 +534,7 @@ impl Default for DataCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct ModelCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -577,7 +579,7 @@ impl Default for ModelCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct ExperimentCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -619,7 +621,7 @@ impl Default for ExperimentCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct AuditCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -657,7 +659,7 @@ impl Default for AuditCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct PromptCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -693,7 +695,7 @@ impl Default for PromptCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct ServiceCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -712,7 +714,7 @@ pub struct ServiceCardClientRecord {
     pub content_hash: Vec<u8>,
 }
 
-// Need to tell rust how to handle the box
+#[cfg(feature = "python")]
 impl<'py> IntoPyObject<'py> for Box<ServiceCardClientRecord> {
     type Target = PyAny;
     type Output = Bound<'py, PyAny>;
@@ -723,6 +725,7 @@ impl<'py> IntoPyObject<'py> for Box<ServiceCardClientRecord> {
     }
 }
 
+#[cfg(feature = "python")]
 impl<'a, 'py> FromPyObject<'a, 'py> for Box<ServiceCardClientRecord> {
     type Error = PyErr;
 
@@ -760,7 +763,7 @@ impl Default for ServiceCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct SkillCardClientRecord {
     pub uid: String,
     pub created_at: DateTime<Utc>,
@@ -808,33 +811,20 @@ impl Default for SkillCardClientRecord {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct SubAgentCardClientRecord {
-    #[pyo3(get, set)]
     pub uid: String,
-    #[pyo3(get, set)]
     pub created_at: DateTime<Utc>,
-    #[pyo3(get, set)]
     pub app_env: String,
-    #[pyo3(get, set)]
     pub space: String,
-    #[pyo3(get, set)]
     pub name: String,
-    #[pyo3(get, set)]
     pub version: String,
-    #[pyo3(get, set)]
     pub tags: Vec<String>,
-    #[pyo3(get, set)]
     pub opsml_version: String,
-    #[pyo3(get, set)]
     pub username: String,
-    #[pyo3(get, set)]
     pub compatible_clis: Vec<String>,
-    #[pyo3(get, set)]
     pub content_hash: Option<Vec<u8>>,
-    #[pyo3(get, set)]
     pub download_count: i64,
-    #[pyo3(get, set)]
     pub description: Option<String>,
 }
 
@@ -858,36 +848,157 @@ impl Default for SubAgentCardClientRecord {
     }
 }
 
+#[cfg(feature = "python")]
+#[pymethods]
+impl SubAgentCardClientRecord {
+    #[getter]
+    pub fn uid(&self) -> String {
+        self.uid.clone()
+    }
+
+    #[setter]
+    pub fn set_uid(&mut self, val: String) {
+        self.uid = val;
+    }
+
+    #[getter]
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+
+    #[setter]
+    pub fn set_created_at(&mut self, val: DateTime<Utc>) {
+        self.created_at = val;
+    }
+
+    #[getter]
+    pub fn app_env(&self) -> String {
+        self.app_env.clone()
+    }
+
+    #[setter]
+    pub fn set_app_env(&mut self, val: String) {
+        self.app_env = val;
+    }
+
+    #[getter]
+    pub fn space(&self) -> String {
+        self.space.clone()
+    }
+
+    #[setter]
+    pub fn set_space(&mut self, val: String) {
+        self.space = val;
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    #[setter]
+    pub fn set_name(&mut self, val: String) {
+        self.name = val;
+    }
+
+    #[getter]
+    pub fn version(&self) -> String {
+        self.version.clone()
+    }
+
+    #[setter]
+    pub fn set_version(&mut self, val: String) {
+        self.version = val;
+    }
+
+    #[getter]
+    pub fn tags(&self) -> Vec<String> {
+        self.tags.clone()
+    }
+
+    #[setter]
+    pub fn set_tags(&mut self, val: Vec<String>) {
+        self.tags = val;
+    }
+
+    #[getter]
+    pub fn opsml_version(&self) -> String {
+        self.opsml_version.clone()
+    }
+
+    #[setter]
+    pub fn set_opsml_version(&mut self, val: String) {
+        self.opsml_version = val;
+    }
+
+    #[getter]
+    pub fn username(&self) -> String {
+        self.username.clone()
+    }
+
+    #[setter]
+    pub fn set_username(&mut self, val: String) {
+        self.username = val;
+    }
+
+    #[getter]
+    pub fn compatible_clis(&self) -> Vec<String> {
+        self.compatible_clis.clone()
+    }
+
+    #[setter]
+    pub fn set_compatible_clis(&mut self, val: Vec<String>) {
+        self.compatible_clis = val;
+    }
+
+    #[getter]
+    pub fn content_hash(&self) -> Option<Vec<u8>> {
+        self.content_hash.clone()
+    }
+
+    #[setter]
+    pub fn set_content_hash(&mut self, val: Option<Vec<u8>>) {
+        self.content_hash = val;
+    }
+
+    #[getter]
+    pub fn download_count(&self) -> i64 {
+        self.download_count
+    }
+
+    #[setter]
+    pub fn set_download_count(&mut self, val: i64) {
+        self.download_count = val;
+    }
+
+    #[getter]
+    pub fn description(&self) -> Option<String> {
+        self.description.clone()
+    }
+
+    #[setter]
+    pub fn set_description(&mut self, val: Option<String>) {
+        self.description = val;
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct ToolCardClientRecord {
-    #[pyo3(get, set)]
     pub uid: String,
-    #[pyo3(get, set)]
     pub created_at: DateTime<Utc>,
-    #[pyo3(get, set)]
     pub app_env: String,
-    #[pyo3(get, set)]
     pub space: String,
-    #[pyo3(get, set)]
     pub name: String,
-    #[pyo3(get, set)]
     pub version: String,
-    #[pyo3(get, set)]
     pub tags: Vec<String>,
-    #[pyo3(get, set)]
     pub opsml_version: String,
-    #[pyo3(get, set)]
     pub username: String,
-    #[pyo3(get, set)]
     pub tool_type: String,
     // serde_json::Value does not implement IntoPyObject; expose via manual #[pymethods] getter if Python access is needed
     pub args_schema: Option<serde_json::Value>,
-    #[pyo3(get, set)]
     pub content_hash: Option<Vec<u8>>,
-    #[pyo3(get, set)]
     pub download_count: i64,
-    #[pyo3(get, set)]
     pub description: Option<String>,
 }
 
@@ -912,9 +1023,143 @@ impl Default for ToolCardClientRecord {
     }
 }
 
+#[cfg(feature = "python")]
+#[pymethods]
+impl ToolCardClientRecord {
+    #[getter]
+    pub fn uid(&self) -> String {
+        self.uid.clone()
+    }
+
+    #[setter]
+    pub fn set_uid(&mut self, val: String) {
+        self.uid = val;
+    }
+
+    #[getter]
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+
+    #[setter]
+    pub fn set_created_at(&mut self, val: DateTime<Utc>) {
+        self.created_at = val;
+    }
+
+    #[getter]
+    pub fn app_env(&self) -> String {
+        self.app_env.clone()
+    }
+
+    #[setter]
+    pub fn set_app_env(&mut self, val: String) {
+        self.app_env = val;
+    }
+
+    #[getter]
+    pub fn space(&self) -> String {
+        self.space.clone()
+    }
+
+    #[setter]
+    pub fn set_space(&mut self, val: String) {
+        self.space = val;
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    #[setter]
+    pub fn set_name(&mut self, val: String) {
+        self.name = val;
+    }
+
+    #[getter]
+    pub fn version(&self) -> String {
+        self.version.clone()
+    }
+
+    #[setter]
+    pub fn set_version(&mut self, val: String) {
+        self.version = val;
+    }
+
+    #[getter]
+    pub fn tags(&self) -> Vec<String> {
+        self.tags.clone()
+    }
+
+    #[setter]
+    pub fn set_tags(&mut self, val: Vec<String>) {
+        self.tags = val;
+    }
+
+    #[getter]
+    pub fn opsml_version(&self) -> String {
+        self.opsml_version.clone()
+    }
+
+    #[setter]
+    pub fn set_opsml_version(&mut self, val: String) {
+        self.opsml_version = val;
+    }
+
+    #[getter]
+    pub fn username(&self) -> String {
+        self.username.clone()
+    }
+
+    #[setter]
+    pub fn set_username(&mut self, val: String) {
+        self.username = val;
+    }
+
+    #[getter]
+    pub fn tool_type(&self) -> String {
+        self.tool_type.clone()
+    }
+
+    #[setter]
+    pub fn set_tool_type(&mut self, val: String) {
+        self.tool_type = val;
+    }
+
+    #[getter]
+    pub fn content_hash(&self) -> Option<Vec<u8>> {
+        self.content_hash.clone()
+    }
+
+    #[setter]
+    pub fn set_content_hash(&mut self, val: Option<Vec<u8>>) {
+        self.content_hash = val;
+    }
+
+    #[getter]
+    pub fn download_count(&self) -> i64 {
+        self.download_count
+    }
+
+    #[setter]
+    pub fn set_download_count(&mut self, val: i64) {
+        self.download_count = val;
+    }
+
+    #[getter]
+    pub fn description(&self) -> Option<String> {
+        self.description.clone()
+    }
+
+    #[setter]
+    pub fn set_description(&mut self, val: Option<String>) {
+        self.description = val;
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", content = "data")]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub enum CardRecord {
     Data(DataCardClientRecord),
     Model(ModelCardClientRecord),
@@ -927,13 +1172,7 @@ pub enum CardRecord {
     Tool(ToolCardClientRecord),
 }
 
-#[pymethods]
 impl CardRecord {
-    pub fn __str__(&self) -> String {
-        PyHelperFuncs::__str__(self)
-    }
-
-    #[getter]
     pub fn uid(&self) -> &str {
         match self {
             Self::Data(card) => &card.uid,
@@ -948,7 +1187,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn created_at(&self) -> DateTime<Utc> {
         match self {
             Self::Data(card) => card.created_at,
@@ -963,7 +1201,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn app_env(&self) -> &str {
         match self {
             Self::Data(card) => card.app_env.as_ref(),
@@ -978,7 +1215,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn name(&self) -> &str {
         match self {
             Self::Data(card) => card.name.as_ref(),
@@ -993,7 +1229,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn space(&self) -> &str {
         match self {
             Self::Data(card) => card.space.as_ref(),
@@ -1008,7 +1243,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn version(&self) -> &str {
         match self {
             Self::Data(card) => card.version.as_ref(),
@@ -1023,7 +1257,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn tags(&self) -> &Vec<String> {
         static EMPTY_TAGS: Vec<String> = Vec::new();
         match self {
@@ -1039,7 +1272,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn datacard_uids(&self) -> Option<Vec<&str>> {
         match self {
             Self::Data(card) => Some(vec![&card.uid]),
@@ -1054,7 +1286,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn modelcard_uids(&self) -> Option<Vec<&str>> {
         match self {
             Self::Data(_) => None,
@@ -1071,7 +1302,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn promptcard_uids(&self) -> Option<Vec<&str>> {
         match self {
             Self::Data(_) => None,
@@ -1086,7 +1316,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn experimentcard_uids(&self) -> Option<Vec<&str>> {
         match self {
             Self::Data(card) => card.experimentcard_uid.as_deref().map(|uid| vec![uid]),
@@ -1106,7 +1335,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn auditcard_uid(&self) -> Option<&str> {
         match self {
             Self::Data(card) => card.auditcard_uid.as_deref(),
@@ -1121,7 +1349,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn interface_type(&self) -> Option<String> {
         match self {
             Self::Data(card) => Some(card.interface_type.to_string()),
@@ -1136,7 +1363,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn data_type(&self) -> Option<String> {
         match self {
             Self::Data(card) => Some(card.data_type.to_string()),
@@ -1151,7 +1377,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn model_type(&self) -> Option<String> {
         match self {
             Self::Data(_) => None,
@@ -1166,7 +1391,6 @@ impl CardRecord {
         }
     }
 
-    #[getter]
     pub fn task_type(&self) -> Option<String> {
         match self {
             Self::Data(_) => None,
@@ -1180,9 +1404,7 @@ impl CardRecord {
             Self::Tool(_) => None,
         }
     }
-}
 
-impl CardRecord {
     pub fn cards(&self) -> Option<Vec<CardEntry>> {
         match self {
             Self::Data(_) => None,
@@ -1304,6 +1526,94 @@ impl CardRecord {
     }
 }
 
+#[cfg(feature = "python")]
+#[pymethods]
+impl CardRecord {
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+
+    #[getter(uid)]
+    pub fn py_uid(&self) -> &str {
+        self.uid()
+    }
+
+    #[getter(created_at)]
+    pub fn py_created_at(&self) -> DateTime<Utc> {
+        self.created_at()
+    }
+
+    #[getter(app_env)]
+    pub fn py_app_env(&self) -> &str {
+        self.app_env()
+    }
+
+    #[getter(name)]
+    pub fn py_name(&self) -> &str {
+        self.name()
+    }
+
+    #[getter(space)]
+    pub fn py_space(&self) -> &str {
+        self.space()
+    }
+
+    #[getter(version)]
+    pub fn py_version(&self) -> &str {
+        self.version()
+    }
+
+    #[getter(tags)]
+    pub fn py_tags(&self) -> &Vec<String> {
+        self.tags()
+    }
+
+    #[getter(datacard_uids)]
+    pub fn py_datacard_uids(&self) -> Option<Vec<&str>> {
+        self.datacard_uids()
+    }
+
+    #[getter(modelcard_uids)]
+    pub fn py_modelcard_uids(&self) -> Option<Vec<&str>> {
+        self.modelcard_uids()
+    }
+
+    #[getter(promptcard_uids)]
+    pub fn py_promptcard_uids(&self) -> Option<Vec<&str>> {
+        self.promptcard_uids()
+    }
+
+    #[getter(experimentcard_uids)]
+    pub fn py_experimentcard_uids(&self) -> Option<Vec<&str>> {
+        self.experimentcard_uids()
+    }
+
+    #[getter(auditcard_uid)]
+    pub fn py_auditcard_uid(&self) -> Option<&str> {
+        self.auditcard_uid()
+    }
+
+    #[getter(interface_type)]
+    pub fn py_interface_type(&self) -> Option<String> {
+        self.interface_type()
+    }
+
+    #[getter(data_type)]
+    pub fn py_data_type(&self) -> Option<String> {
+        self.data_type()
+    }
+
+    #[getter(model_type)]
+    pub fn py_model_type(&self) -> Option<String> {
+        self.model_type()
+    }
+
+    #[getter(task_type)]
+    pub fn py_task_type(&self) -> Option<String> {
+        self.task_type()
+    }
+}
+
 /// Sort cards by their semver
 /// # Arguments
 /// * `cards` - A mutable reference to a vector of CardRecord
@@ -1361,11 +1671,13 @@ struct ToolCardTableEntry {
     uid: String,
 }
 
+#[cfg(feature = "python")]
 #[pyclass(skip_from_py_object)]
 struct CardListIter {
     inner: std::vec::IntoIter<CardRecord>,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl CardListIter {
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
@@ -1378,74 +1690,13 @@ impl CardListIter {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[pyclass(skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
 pub struct CardList {
-    #[pyo3(get)]
     pub cards: Vec<CardRecord>,
 }
 
-#[pymethods]
 impl CardList {
-    pub fn __str__(&self) -> String {
-        PyHelperFuncs::__str__(self)
-    }
-
-    pub fn __getitem__(&self, index: usize) -> Option<CardRecord> {
-        self.cards.get(index).cloned()
-    }
-
-    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<CardListIter>> {
-        let iter = CardListIter {
-            inner: slf.cards.clone().into_iter(),
-        };
-        Py::new(slf.py(), iter)
-    }
-
-    pub fn __len__(&self) -> usize {
-        self.cards.len()
-    }
-
-    pub fn as_table(&self) {
-        let entries: Vec<CardTableEntry> = self
-            .cards
-            .iter()
-            .map(|card| {
-                let created_at = card.created_at().to_string();
-                let name = card.name();
-                let space = card.space();
-                let version = card.version();
-                let uid = card.uid();
-
-                CardTableEntry {
-                    created_at,
-                    name: name.to_string(),
-                    space: space.to_string(),
-                    version: version.to_string(),
-                    uid: Colorize::purple(uid),
-                }
-            })
-            .collect();
-
-        let mut table = Table::new(entries);
-
-        table.with(Style::sharp());
-        table.modify(
-            Rows::new(0..1),
-            (
-                Format::content(Colorize::green),
-                Alignment::center(),
-                Color::BOLD,
-            ),
-        );
-
-        println!("{}", &table);
-    }
-
-    pub fn as_skill_table(&self) {
-        println!("{}", self.render_skill_table());
-    }
-
-    fn render_skill_table(&self) -> String {
+    pub fn render_skill_table(&self) -> String {
         let entries: Vec<SkillCardTableEntry> = self
             .cards
             .iter()
@@ -1481,11 +1732,7 @@ impl CardList {
         table.to_string()
     }
 
-    pub fn as_subagent_table(&self) {
-        println!("{}", self.render_subagent_table());
-    }
-
-    fn render_subagent_table(&self) -> String {
+    pub fn render_subagent_table(&self) -> String {
         let entries: Vec<SubAgentCardTableEntry> = self
             .cards
             .iter()
@@ -1521,11 +1768,7 @@ impl CardList {
         table.to_string()
     }
 
-    pub fn as_tool_table(&self) {
-        println!("{}", self.render_tool_table());
-    }
-
-    fn render_tool_table(&self) -> String {
+    pub fn render_tool_table(&self) -> String {
         let entries: Vec<ToolCardTableEntry> = self
             .cards
             .iter()
@@ -1560,6 +1803,95 @@ impl CardList {
             ),
         );
         table.to_string()
+    }
+
+    pub fn as_table(&self) {
+        let entries: Vec<CardTableEntry> = self
+            .cards
+            .iter()
+            .map(|card| {
+                let created_at = card.created_at().to_string();
+                CardTableEntry {
+                    created_at,
+                    name: card.name().to_string(),
+                    space: card.space().to_string(),
+                    version: card.version().to_string(),
+                    uid: Colorize::purple(card.uid()),
+                }
+            })
+            .collect();
+
+        let mut table = Table::new(entries);
+        table.with(Style::sharp());
+        table.modify(
+            Rows::new(0..1),
+            (
+                Format::content(Colorize::green),
+                Alignment::center(),
+                Color::BOLD,
+            ),
+        );
+        println!("{}", &table);
+    }
+
+    pub fn as_skill_table(&self) {
+        println!("{}", self.render_skill_table());
+    }
+
+    pub fn as_subagent_table(&self) {
+        println!("{}", self.render_subagent_table());
+    }
+
+    pub fn as_tool_table(&self) {
+        println!("{}", self.render_tool_table());
+    }
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl CardList {
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+
+    #[getter]
+    pub fn cards(&self) -> Vec<CardRecord> {
+        self.cards.clone()
+    }
+
+    pub fn __getitem__(&self, index: usize) -> Option<CardRecord> {
+        self.cards.get(index).cloned()
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyResult<Py<CardListIter>> {
+        let iter = CardListIter {
+            inner: slf.cards.clone().into_iter(),
+        };
+        Py::new(slf.py(), iter)
+    }
+
+    pub fn __len__(&self) -> usize {
+        self.cards.len()
+    }
+
+    #[pyo3(name = "as_table")]
+    pub fn py_as_table(&self) {
+        self.as_table();
+    }
+
+    #[pyo3(name = "as_skill_table")]
+    pub fn py_as_skill_table(&self) {
+        self.as_skill_table();
+    }
+
+    #[pyo3(name = "as_subagent_table")]
+    pub fn py_as_subagent_table(&self) {
+        self.as_subagent_table();
+    }
+
+    #[pyo3(name = "as_tool_table")]
+    pub fn py_as_tool_table(&self) {
+        self.as_tool_table();
     }
 }
 

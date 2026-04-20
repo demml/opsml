@@ -1,7 +1,8 @@
 use crate::BaseArgs;
 use crate::error::CardError;
 use crate::skill::error::SkillError;
-use crate::traits::{OpsmlCard, ProfileExt};
+use crate::traits::OpsmlCard;
+use crate::traits::ProfileExt;
 use chrono::{DateTime, Utc};
 use opsml_types::contracts::CardRecord;
 use opsml_types::contracts::SkillCardClientRecord;
@@ -9,10 +10,14 @@ use opsml_types::contracts::agent::AgentSkillStandard;
 use opsml_types::contracts::skill::SkillDependency;
 use opsml_types::{RegistryType, SaveName, Suffix};
 use opsml_utils::PyHelperFuncs;
+#[cfg(feature = "python")]
 use opsml_utils::depythonize_object_to_value;
 use opsml_utils::get_utc_datetime;
+#[cfg(feature = "python")]
 use pyo3::IntoPyObjectExt;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
 use pythonize;
 use scouter_client::ProfileRequest;
 use serde::de::DeserializeOwned;
@@ -103,51 +108,29 @@ pub fn parse_skill_markdown(
     )
 }
 
-#[pyclass(skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct SkillCard {
     pub skill: AgentSkillStandard,
     pub dependencies: Vec<SkillDependency>,
-
-    #[pyo3(get, set)]
     pub space: String,
-
-    #[pyo3(get, set)]
     pub name: String,
-
-    #[pyo3(get, set)]
     pub version: String,
-
-    #[pyo3(get, set)]
     pub uid: String,
-
-    #[pyo3(get, set)]
     pub tags: Vec<String>,
-
     pub input_schema: Option<serde_json::Value>,
-
-    #[pyo3(get, set)]
     pub compatible_tools: Vec<String>,
-
-    #[pyo3(get, set)]
     pub app_env: String,
-
-    #[pyo3(get)]
     pub is_card: bool,
-
-    #[pyo3(get)]
     pub opsml_version: String,
-
-    #[pyo3(get, set)]
     pub created_at: DateTime<Utc>,
-
-    #[pyo3(get)]
     pub registry_type: RegistryType,
 
     #[serde(skip)]
     pub source_dir: Option<PathBuf>, // CLI-only; not exposed to Python or serialized to the registry.
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl SkillCard {
     #[new]
@@ -239,6 +222,125 @@ impl SkillCard {
         Ok(())
     }
 
+    #[getter]
+    pub fn space(&self) -> String {
+        self.space.clone()
+    }
+    #[setter]
+    pub fn set_space(&mut self, val: String) {
+        self.space = val;
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+    #[setter]
+    pub fn set_name(&mut self, val: String) {
+        self.name = val;
+    }
+
+    #[getter]
+    pub fn version(&self) -> String {
+        self.version.clone()
+    }
+    #[setter]
+    pub fn set_version(&mut self, val: String) {
+        self.version = val;
+    }
+
+    #[getter]
+    pub fn uid(&self) -> String {
+        self.uid.clone()
+    }
+    #[setter]
+    pub fn set_uid(&mut self, val: String) {
+        self.uid = val;
+    }
+
+    #[getter]
+    pub fn tags(&self) -> Vec<String> {
+        self.tags.clone()
+    }
+    #[setter]
+    pub fn set_tags(&mut self, val: Vec<String>) {
+        self.tags = val;
+    }
+
+    #[getter]
+    pub fn compatible_tools(&self) -> Vec<String> {
+        self.compatible_tools.clone()
+    }
+    #[setter]
+    pub fn set_compatible_tools(&mut self, val: Vec<String>) {
+        self.compatible_tools = val;
+    }
+
+    #[getter]
+    pub fn app_env(&self) -> String {
+        self.app_env.clone()
+    }
+    #[setter]
+    pub fn set_app_env(&mut self, val: String) {
+        self.app_env = val;
+    }
+
+    #[getter]
+    pub fn is_card(&self) -> bool {
+        self.is_card
+    }
+
+    #[getter]
+    pub fn opsml_version(&self) -> String {
+        self.opsml_version.clone()
+    }
+
+    #[getter]
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+    #[setter]
+    pub fn set_created_at(&mut self, val: DateTime<Utc>) {
+        self.created_at = val;
+    }
+
+    #[getter]
+    pub fn registry_type(&self) -> RegistryType {
+        self.registry_type.clone()
+    }
+
+    #[staticmethod]
+    pub fn from_markdown(path: PathBuf) -> Result<Self, SkillError> {
+        let content = std::fs::read_to_string(&path)?;
+        parse_skill_markdown(&content, Some(&path))
+    }
+
+    #[pyo3(name = "to_markdown")]
+    pub fn py_to_markdown(&self) -> Result<String, SkillError> {
+        self.to_markdown()
+    }
+
+    #[pyo3(signature = (path))]
+    pub fn save(&mut self, path: PathBuf) -> Result<(), SkillError> {
+        self.save_card(path)
+    }
+
+    pub fn add_tags(&mut self, tags: Vec<String>) {
+        self.tags.extend(tags);
+    }
+
+    pub fn __str__(&self) -> String {
+        PyHelperFuncs::__str__(self)
+    }
+
+    #[pyo3(name = "get_registry_card")]
+    pub fn get_registry_card_py(&self) -> Result<CardRecord, CardError> {
+        let record = self.get_registry_card()?;
+        Ok(record)
+    }
+}
+
+impl SkillCard {
     pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
         let record = SkillCardClientRecord {
             uid: self.uid.clone(),
@@ -259,7 +361,6 @@ impl SkillCard {
             input_schema: self.input_schema.clone(),
             body: self.skill.body.clone(),
         };
-
         Ok(CardRecord::Skill(record))
     }
 
@@ -270,17 +371,20 @@ impl SkillCard {
         Ok(hasher.finalize().to_vec())
     }
 
-    #[staticmethod]
-    pub fn from_markdown(path: PathBuf) -> Result<Self, SkillError> {
-        let content = std::fs::read_to_string(&path)?;
-        parse_skill_markdown(&content, Some(&path))
+    pub fn model_validate_json(json_string: String) -> Result<SkillCard, SkillError> {
+        Ok(serde_json::from_str(&json_string).inspect_err(|e| {
+            error!("Failed to validate json: {e}");
+        })?)
+    }
+
+    pub fn from_path(path: PathBuf) -> Result<Self, SkillError> {
+        deserialize_from_path(path)
     }
 
     pub fn to_markdown(&self) -> Result<String, SkillError> {
         Ok(self.skill.to_markdown()?)
     }
 
-    #[pyo3(signature = (path), name = "save")]
     pub fn save_card(&mut self, path: PathBuf) -> Result<(), SkillError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         PyHelperFuncs::save_to_json(&mut *self, card_save_path.as_path())?;
@@ -301,29 +405,6 @@ impl SkillCard {
         Ok(())
     }
 
-    #[staticmethod]
-    #[pyo3(signature = (json_string))]
-    pub fn model_validate_json(json_string: String) -> Result<SkillCard, SkillError> {
-        Ok(serde_json::from_str(&json_string).inspect_err(|e| {
-            error!("Failed to validate json: {e}");
-        })?)
-    }
-
-    #[staticmethod]
-    pub fn from_path(path: PathBuf) -> Result<Self, SkillError> {
-        deserialize_from_path(path)
-    }
-
-    pub fn add_tags(&mut self, tags: Vec<String>) {
-        self.tags.extend(tags);
-    }
-
-    pub fn __str__(&self) -> String {
-        PyHelperFuncs::__str__(self)
-    }
-}
-
-impl SkillCard {
     #[allow(clippy::too_many_arguments)]
     pub fn new_rs(
         skill: AgentSkillStandard,
@@ -422,7 +503,7 @@ impl ProfileExt for SkillCard {
     }
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "python"))]
 mod tests {
     use super::*;
 

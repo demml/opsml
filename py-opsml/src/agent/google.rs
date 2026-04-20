@@ -1,5 +1,5 @@
-use potato_head::google_types::*;
 use pyo3::prelude::*;
+use scouter_client::potato_head::prelude::google_types::*;
 
 pub fn add_google_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // request types

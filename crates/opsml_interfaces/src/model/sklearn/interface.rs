@@ -1,6 +1,6 @@
+use crate::DataProcessor;
 use crate::ModelInterfaceSaveMetadata;
 use crate::OnnxSession;
-use crate::base::DataProcessor;
 use crate::base::ModelInterfaceMetadata;
 use crate::error::ModelInterfaceError;
 use crate::model::ModelInterface;
@@ -327,10 +327,10 @@ impl SklearnModel {
         interface.interface_type = metadata.interface_type.clone();
 
         // convert onnx session to to Py<OnnxSession>
-        interface.onnx_session = metadata
-            .onnx_session
-            .as_ref()
-            .map(|session| Py::new(py, session.clone()).unwrap());
+        interface.onnx_session = match &metadata.onnx_session {
+            Some(session) => Some(Py::new(py, session.clone())?),
+            None => None,
+        };
 
         let interface = Py::new(py, (sklearn_interface, interface))?.into_bound_py_any(py)?;
         Ok(interface)

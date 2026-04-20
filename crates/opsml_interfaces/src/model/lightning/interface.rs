@@ -3,11 +3,12 @@ use crate::OnnxSession;
 use crate::base::{ModelInterfaceMetadata, ModelInterfaceSaveMetadata, parse_save_kwargs};
 use crate::data::DataInterface;
 use crate::data::generate_feature_schema;
-use crate::error::{ModelInterfaceError, OnnxError};
+use crate::error::ModelInterfaceError;
 use crate::model::ModelInterface;
 use crate::model::torch::TorchSampleData;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
+use opsml_types::error::OnnxError;
 use opsml_types::{
     CommonKwargs, DataType, ModelInterfaceType, ModelType, SaveName, Suffix, TaskType,
 };
@@ -335,11 +336,7 @@ impl LightningModel {
 
         if load_kwargs.load_onnx {
             debug!("Loading ONNX model");
-            let onnx_path = path.join(
-                &metadata
-                    .onnx_model_uri
-                    .ok_or_else(|| OnnxError::NoOnnxFile)?,
-            );
+            let onnx_path = path.join(&metadata.onnx_model_uri.ok_or(OnnxError::NoOnnxFile)?);
             self_.load_onnx_model(py, &onnx_path, load_kwargs.onnx_kwargs(py))?;
         }
 

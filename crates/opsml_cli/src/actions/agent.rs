@@ -46,8 +46,8 @@ pub fn push_agent(args: &AgentPushArgs) -> Result<(), CliError> {
     let mut card: opsml_cards::SubAgentCard =
         parse_subagent_markdown(&content).map_err(|e| CliError::Error(e.to_string()))?;
 
-    card.space = clean_string(args.space.as_deref().unwrap_or(&card.space))?;
-    card.name = clean_string(&card.name)?;
+    card.space = clean_string(args.space.as_deref().unwrap_or(&card.space));
+    card.name = clean_string(&card.name);
 
     if let Some(tags) = &args.tags {
         card.tags.extend(tags.iter().cloned());
@@ -71,8 +71,8 @@ pub fn push_agent(args: &AgentPushArgs) -> Result<(), CliError> {
 pub fn pull_agent(args: &AgentPullArgs) -> Result<(), CliError> {
     let (space, name) = parse_agent_identifier(&args.name, args.space.as_deref())?;
 
-    let space_clean = clean_string(&space)?;
-    let name_clean = clean_string(&name)?;
+    let space_clean = clean_string(&space);
+    let name_clean = clean_string(&name);
 
     let query_args = CardQueryArgs {
         space: Some(space_clean.clone()),
@@ -132,8 +132,8 @@ pub fn list_agents(args: &AgentListArgs) -> Result<(), CliError> {
         Colorize::green("subagent")
     );
 
-    let space = args.space.clone().map(|s| clean_string(&s)).transpose()?;
-    let name = args.name.clone().map(|n| clean_string(&n)).transpose()?;
+    let space = args.space.clone().map(|s| clean_string(&s));
+    let name = args.name.clone().map(|n| clean_string(&n));
 
     let query_args = CardQueryArgs {
         space,
@@ -157,7 +157,7 @@ pub fn list_agents(args: &AgentListArgs) -> Result<(), CliError> {
 #[instrument(skip_all)]
 pub fn init_agent(args: &AgentInitArgs) -> Result<(), CliError> {
     let raw_name = args.name.as_deref().unwrap_or("my-agent");
-    let name = clean_string(raw_name)?;
+    let name = clean_string(raw_name);
     let name = if name.is_empty() {
         "my-agent".to_string()
     } else {

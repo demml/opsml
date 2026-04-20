@@ -1,5 +1,5 @@
-use crate::error::OnnxError;
-use crate::model::onnx::OnnxSession;
+use crate::OnnxSession;
+use opsml_types::error::OnnxError;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use tracing::debug;
@@ -27,16 +27,11 @@ impl TensorFlowOnnxConverter {
         model: &Bound<'py, PyAny>,
         kwargs: Option<&Bound<'py, PyDict>>,
     ) -> Result<OnnxSession, OnnxError> {
-        let tf_onnx = py
-            .import("tf2onnx")
-            .map_err(|e| OnnxError::ImportError(e.to_string()))?
-            .getattr("convert")?;
+        let tf_onnx = py.import("tf2onnx")?.getattr("convert")?;
 
         debug!("Step 1: Converting tensorflow model to ONNX");
 
-        let onnx_tuple = tf_onnx
-            .call_method("from_keras", (model,), kwargs)
-            .map_err(|e| OnnxError::PyOnnxConversionError(e.to_string()))?;
+        let onnx_tuple = tf_onnx.call_method("from_keras", (model,), kwargs)?;
 
         let model_proto = onnx_tuple.get_item(0)?;
 

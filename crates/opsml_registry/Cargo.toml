@@ -14,7 +14,7 @@ opsml-cards = { workspace = true }
 opsml-client = { workspace = true }
 opsml-colors = { workspace = true }
 opsml-crypt = { workspace = true }
-opsml-interfaces = { workspace = true }
+opsml-interfaces = { workspace = true, optional = true }
 opsml-types = { workspace = true }
 opsml-semver = { workspace = true }
 opsml-settings = { workspace = true }
@@ -22,7 +22,7 @@ opsml-sql = { workspace = true, optional = true }
 opsml-state = { workspace = true }
 opsml-storage = { workspace = true }
 opsml-utils = { workspace = true }
-pyo3 = { workspace = true }
+pyo3 = { workspace = true, optional = true }
 reqwest = { workspace = true }
 serde_json = { workspace = true }
 serde = { workspace = true }
@@ -39,3 +39,4 @@ tracing = { workspace = true }
 [features]
 default = []
 server = ["opsml-sql", "sqlx", "semver", "opsml-storage/server"]
+python = ["dep:pyo3", "opsml-interfaces", "opsml-cards/python", "opsml-types/python"]

@@ -1,4 +1,6 @@
+#[cfg(feature = "python")]
 use opsml_utils::PyHelperFuncs;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -6,7 +8,7 @@ use std::fmt::Display;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(eq, eq_int, from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, from_py_object))]
 pub enum McpTransport {
     #[serde(alias = "HTTP", alias = "http")]
     Http,
@@ -25,7 +27,7 @@ impl Display for McpTransport {
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(eq, eq_int, from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, from_py_object))]
 pub enum McpCapability {
     #[serde(alias = "RESOURCES", alias = "resources")]
     Resources,
@@ -47,23 +49,38 @@ impl Display for McpCapability {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct McpConfig {
-    #[pyo3(get)]
     pub capabilities: Vec<McpCapability>,
-    #[pyo3(get)]
     pub transport: McpTransport,
 }
 
-#[pymethods]
 impl McpConfig {
-    #[new]
-    pub fn new(capabilities: Vec<McpCapability>, transport: McpTransport) -> Self {
+    pub fn new_rs(capabilities: Vec<McpCapability>, transport: McpTransport) -> Self {
         McpConfig {
             capabilities,
             transport,
         }
     }
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl McpConfig {
+    #[new]
+    pub fn new(capabilities: Vec<McpCapability>, transport: McpTransport) -> Self {
+        Self::new_rs(capabilities, transport)
+    }
+
+    #[getter]
+    pub fn capabilities(&self) -> Vec<McpCapability> {
+        self.capabilities.clone()
+    }
+    #[getter]
+    pub fn transport(&self) -> McpTransport {
+        self.transport.clone()
+    }
+
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
@@ -71,38 +88,66 @@ impl McpConfig {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
 pub struct McpServer {
-    #[pyo3(get)]
     pub space: String,
-    #[pyo3(get)]
     pub name: String,
-    #[pyo3(get)]
     pub version: String,
-    #[pyo3(get)]
     pub environment: String,
-    #[pyo3(get)]
     pub urls: Vec<String>,
-    #[pyo3(get)]
     pub tags: Vec<String>,
-    #[pyo3(get)]
     pub config: McpConfig,
-    #[pyo3(get)]
     pub description: Option<String>,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl McpServer {
+    #[getter]
+    pub fn space(&self) -> String {
+        self.space.clone()
+    }
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+    #[getter]
+    pub fn version(&self) -> String {
+        self.version.clone()
+    }
+    #[getter]
+    pub fn environment(&self) -> String {
+        self.environment.clone()
+    }
+    #[getter]
+    pub fn urls(&self) -> Vec<String> {
+        self.urls.clone()
+    }
+    #[getter]
+    pub fn tags(&self) -> Vec<String> {
+        self.tags.clone()
+    }
+    #[getter]
+    pub fn config(&self) -> McpConfig {
+        self.config.clone()
+    }
+    #[getter]
+    pub fn description(&self) -> Option<String> {
+        self.description.clone()
+    }
+
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
 }
 
+#[cfg(feature = "python")]
 #[pyclass(skip_from_py_object)]
 struct McpIter {
     inner: std::vec::IntoIter<McpServer>,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl McpIter {
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
@@ -116,10 +161,12 @@ impl McpIter {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
 pub struct McpServers {
     pub servers: Vec<McpServer>,
 }
+
+#[cfg(feature = "python")]
 #[pymethods]
 impl McpServers {
     pub fn __getitem__(&self, index: usize) -> Option<McpServer> {

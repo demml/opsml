@@ -1,5 +1,5 @@
-use potato_head::anthropic_types::*;
 use pyo3::prelude::*;
+use scouter_client::potato_head::prelude::anthropic_types::*;
 
 pub fn add_anthropic_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // request types

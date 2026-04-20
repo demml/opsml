@@ -9,6 +9,7 @@ use opsml_semver::VersionType;
 use opsml_service::service::DEFAULT_SERVICE_FILENAME;
 use opsml_types::{RegistryType, contracts::CardQueryArgs};
 use opsml_utils::clean_string;
+#[cfg(feature = "python")]
 use pyo3::{pyclass, pymethods};
 use scouter_client::DriftType;
 
@@ -103,17 +104,9 @@ pub struct ListCards {
 
 impl IntoQueryArgs for ListCards {
     fn into_query_args(&self, registry_type: RegistryType) -> Result<CardQueryArgs, CliError> {
-        let name = self
-            .name
-            .clone()
-            .map(|name| clean_string(&name))
-            .transpose()?;
+        let name = self.name.clone().map(|name| clean_string(&name));
 
-        let space = self
-            .space
-            .clone()
-            .map(|space| clean_string(&space))
-            .transpose()?;
+        let space = self.space.clone().map(|space| clean_string(&space));
 
         Ok(CardQueryArgs {
             registry_type,
@@ -130,7 +123,7 @@ impl IntoQueryArgs for ListCards {
 }
 
 #[derive(Args, Clone)]
-#[pyclass(skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
 pub struct DownloadCard {
     /// Card space
     #[arg(long = "space")]
@@ -153,6 +146,7 @@ pub struct DownloadCard {
     pub write_dir: String,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl DownloadCard {
     /// Create a new DownloadCard
@@ -188,17 +182,9 @@ impl DownloadCard {
 
 impl IntoQueryArgs for DownloadCard {
     fn into_query_args(&self, registry_type: RegistryType) -> Result<CardQueryArgs, CliError> {
-        let name = self
-            .name
-            .clone()
-            .map(|name| clean_string(&name))
-            .transpose()?;
+        let name = self.name.clone().map(|name| clean_string(&name));
 
-        let space = self
-            .space
-            .clone()
-            .map(|space| clean_string(&space))
-            .transpose()?;
+        let space = self.space.clone().map(|space| clean_string(&space));
 
         Ok(CardQueryArgs {
             uid: self.uid.clone(),
@@ -220,17 +206,13 @@ pub struct LaunchServer {
 
 #[derive(Args)]
 pub struct KeyArgs {
-    /// Password to use for the key
-    #[arg(long = "key")]
-    pub password: String,
-
     /// Number of rounds to use for the key
     #[arg(long = "rounds", default_value = "100000")]
     pub rounds: u32,
 }
 
 #[derive(Args, Clone)]
-#[pyclass(skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
 pub struct ScouterArgs {
     /// Space name
     #[arg(long = "space")]
@@ -256,6 +238,7 @@ pub struct ScouterArgs {
     pub deactivate_others: bool,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl ScouterArgs {
     /// Convert the ScouterArgs to a CardQueryArgs

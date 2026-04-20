@@ -4,11 +4,12 @@ use crate::OnnxSession;
 use crate::base::{ModelInterfaceSaveMetadata, parse_save_kwargs};
 use crate::data::DataInterface;
 use crate::data::generate_feature_schema;
-use crate::error::{ModelInterfaceError, OnnxError};
+use crate::error::ModelInterfaceError;
 use crate::model::ModelInterface;
 use crate::model::tensorflow::TensorFlowSampleData;
 use crate::types::{FeatureSchema, ProcessorType};
 use crate::{DataProcessor, ModelLoadKwargs, ModelSaveKwargs};
+use opsml_types::error::OnnxError;
 use opsml_types::{CommonKwargs, SaveName, Suffix};
 use opsml_types::{DataType, ModelInterfaceType, ModelType, TaskType};
 use pyo3::IntoPyObjectExt;
@@ -278,12 +279,13 @@ impl TensorFlowModel {
             save_kwargs,
         };
 
-        let onnx_session = {
-            self_.onnx_session.as_ref().map(|sess| {
-                let sess = sess.bind(py);
+        let onnx_session = match self_.onnx_session {
+            Some(ref session) => {
+                let sess = session.bind(py);
                 // extract OnnxSession from py object
-                sess.extract::<OnnxSession>().unwrap()
-            })
+                Some(sess.extract::<OnnxSession>()?)
+            }
+            None => None,
         };
 
         let metadata = ModelInterfaceMetadata::new(

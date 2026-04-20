@@ -16,7 +16,7 @@ pub struct CreateEvaluationResponse {
 #[derive(Debug, Serialize, Deserialize, Default)]
 #[cfg_attr(feature = "server", derive(sqlx::Type))]
 pub enum EvaluationType {
-    GenAI,
+    Agent,
     #[default]
     Other,
 }
@@ -24,7 +24,7 @@ pub enum EvaluationType {
 impl Display for EvaluationType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            EvaluationType::GenAI => write!(f, "GenAI"),
+            EvaluationType::Agent => write!(f, "Agent"),
             EvaluationType::Other => write!(f, "Other"),
         }
     }
@@ -34,9 +34,9 @@ impl std::str::FromStr for EvaluationType {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "GenAI" => Ok(EvaluationType::GenAI),
-            "Other" => Ok(EvaluationType::Other),
+        match s.to_lowercase().as_str() {
+            "agent" | "genai" => Ok(EvaluationType::Agent),
+            "other" => Ok(EvaluationType::Other),
             _ => Err(format!("Unknown EvaluationType: {}", s)),
         }
     }

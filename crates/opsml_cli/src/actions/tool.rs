@@ -47,8 +47,8 @@ pub fn push_tool(args: &ToolPushArgs) -> Result<(), CliError> {
     let mut card: opsml_cards::ToolCard =
         parse_tool_markdown(&content).map_err(|e| CliError::Error(e.to_string()))?;
 
-    card.space = clean_string(args.space.as_deref().unwrap_or(&card.space))?;
-    card.name = clean_string(&card.name)?;
+    card.space = clean_string(args.space.as_deref().unwrap_or(&card.space));
+    card.name = clean_string(&card.name);
 
     if let Some(tags) = &args.tags {
         card.tags.extend(tags.iter().cloned());
@@ -72,8 +72,8 @@ pub fn push_tool(args: &ToolPushArgs) -> Result<(), CliError> {
 pub fn pull_tool(args: &ToolPullArgs) -> Result<(), CliError> {
     let (space, name) = parse_tool_identifier(&args.name, args.space.as_deref())?;
 
-    let space_clean = clean_string(&space)?;
-    let name_clean = clean_string(&name)?;
+    let space_clean = clean_string(&space);
+    let name_clean = clean_string(&name);
 
     let query_args = CardQueryArgs {
         space: Some(space_clean),
@@ -153,8 +153,8 @@ pub fn pull_tool(args: &ToolPullArgs) -> Result<(), CliError> {
 pub fn list_tools(args: &ToolListArgs) -> Result<(), CliError> {
     println!("\nListing cards from {} registry", Colorize::green("tool"));
 
-    let space = args.space.clone().map(|s| clean_string(&s)).transpose()?;
-    let name = args.name.clone().map(|n| clean_string(&n)).transpose()?;
+    let space = args.space.clone().map(|s| clean_string(&s));
+    let name = args.name.clone().map(|n| clean_string(&n));
 
     let query_args = CardQueryArgs {
         space,
@@ -188,7 +188,7 @@ pub fn list_tools(args: &ToolListArgs) -> Result<(), CliError> {
 #[instrument(skip_all)]
 pub fn init_tool(args: &ToolInitArgs) -> Result<(), CliError> {
     let raw_name = args.name.as_deref().unwrap_or("my-tool");
-    let name = clean_string(raw_name)?;
+    let name = clean_string(raw_name);
     let name = if name.is_empty() {
         "my-tool".to_string()
     } else {

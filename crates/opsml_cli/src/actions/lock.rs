@@ -13,6 +13,7 @@ use opsml_toml::{LockArtifact, LockFile};
 use opsml_types::IntegratedService;
 use opsml_types::contracts::{CardVariant, ServiceType};
 use opsml_types::{RegistryType, contracts::CardRecord};
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use scouter_client::{DriftType, ProfileStatusRequest};
 use std::collections::HashSet;
@@ -363,8 +364,8 @@ pub fn install_service_from_spec(
 /// * `write_path` - Optional PathBuf to override write directory
 /// # Returns
 /// * `Result<(), CliError>`
-#[pyfunction]
-#[pyo3(signature = (path, write_path=None))]
+#[cfg_attr(feature = "python", pyfunction)]
+#[cfg_attr(feature = "python", pyo3(signature = (path, write_path=None)))]
 pub fn install_service(path: PathBuf, write_path: Option<PathBuf>) -> Result<(), CliError> {
     debug!("Installing service from lock file");
 
@@ -440,7 +441,7 @@ pub fn install_service_locally(path: PathBuf, write_path: Option<PathBuf>) -> Re
 }
 
 /// Will create an `opsml.lock` file based on the service configuration specified within the opsmlspec.yaml file.
-#[pyfunction]
+#[cfg_attr(feature = "python", pyfunction)]
 pub fn lock_service(path: PathBuf) -> Result<(), CliError> {
     debug!("Locking service with path: {:?}", path);
     let mut spec = OpsmlServiceSpec::from_path(&path).inspect_err(|e| {
@@ -450,7 +451,7 @@ pub fn lock_service(path: PathBuf) -> Result<(), CliError> {
     let service_artifact = lock_service_card(&mut spec).inspect_err(|e| {
         error!("Failed to lock service card: {:?}", e);
     })?;
-
+    //
     let mut artifacts = vec![service_artifact];
 
     // For workflow services, also resolve step CardRefs into lock artifacts
@@ -466,6 +467,7 @@ pub fn lock_service(path: PathBuf) -> Result<(), CliError> {
     let lock_file = LockFile {
         artifact: artifacts,
     };
+
     lock_file.write(&spec.root_path)?;
 
     Ok(())

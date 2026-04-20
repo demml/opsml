@@ -1,36 +1,38 @@
 use crate::error::CardError;
-use crate::model::error::interface_error;
-use crate::utils::BaseArgs;
 use chrono::{DateTime, Utc};
-use opsml_crypt::decrypt_directory;
-use opsml_interfaces::base::DriftProfileMap;
-use opsml_interfaces::{
-    CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, SklearnModel, TorchModel,
-    XGBoostModel,
-};
-use opsml_interfaces::{ModelInterface, TensorFlowModel};
-use opsml_interfaces::{ModelInterfaceMetadata, ModelLoadKwargs, ModelSaveKwargs};
-use opsml_interfaces::{OnnxModel, OnnxSession, error::ModelInterfaceError};
-use opsml_storage::storage_client;
 use opsml_types::contracts::{ArtifactKey, CardRecord, ModelCardClientRecord};
-use opsml_types::{
-    DataType, ModelInterfaceType, ModelType, RegistryType, SaveName, Suffix, TaskType,
-};
-use opsml_utils::{PyHelperFuncs, create_tmp_path, extract_py_attr, get_utc_datetime};
-use pyo3::IntoPyObjectExt;
-use pyo3::prelude::*;
-use pyo3::types::{PyDict, PyList};
-use pyo3::{PyTraverseError, PyVisit};
+use opsml_types::interfaces::ModelInterfaceMetadata;
+use opsml_types::{RegistryType, SaveName, Suffix};
+use opsml_utils::PyHelperFuncs;
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
 };
-
 use std::fmt;
-use std::path::{Path, PathBuf};
-use tracing::{debug, error, instrument};
+use std::path::PathBuf;
+use tracing::error;
 
+#[cfg(feature = "python")]
+use {
+    crate::model::error::interface_error,
+    crate::utils::BaseArgs,
+    opsml_crypt::decrypt_directory,
+    opsml_interfaces::{
+        CatBoostModel, HuggingFaceModel, LightGBMModel, LightningModel, ModelInterface,
+        ModelLoadKwargs, ModelSaveKwargs, OnnxModel, OnnxSession, SklearnModel, TensorFlowModel,
+        TorchModel, XGBoostModel, base::DriftProfileMap, error::ModelInterfaceError,
+    },
+    opsml_storage::storage_client,
+    opsml_types::{DataType, ModelInterfaceType, ModelType, TaskType},
+    opsml_utils::{create_tmp_path, extract_py_attr, get_utc_datetime},
+    pyo3::types::{PyDict, PyList},
+    pyo3::{IntoPyObjectExt, PyTraverseError, PyVisit, prelude::*},
+    std::path::Path,
+    tracing::{debug, instrument},
+};
+
+#[cfg(feature = "python")]
 fn interface_from_metadata<'py>(
     py: Python<'py>,
     metadata: &ModelInterfaceMetadata,
@@ -49,21 +51,16 @@ fn interface_from_metadata<'py>(
     }
 }
 
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct ModelCardMetadata {
-    #[pyo3(get, set)]
     pub datacard_uid: Option<String>,
-
-    #[pyo3(get, set)]
     pub experimentcard_uid: Option<String>,
-
-    #[pyo3(get, set)]
     pub auditcard_uid: Option<String>,
-
     pub interface_metadata: ModelInterfaceMetadata,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl ModelCardMetadata {
     #[new]
@@ -81,52 +78,62 @@ impl ModelCardMetadata {
         }
     }
 
+    #[getter]
+    pub fn datacard_uid(&self) -> Option<&str> {
+        self.datacard_uid.as_deref()
+    }
+
+    #[setter]
+    pub fn set_datacard_uid(&mut self, val: Option<String>) {
+        self.datacard_uid = val;
+    }
+
+    #[getter]
+    pub fn experimentcard_uid(&self) -> Option<&str> {
+        self.experimentcard_uid.as_deref()
+    }
+
+    #[setter]
+    pub fn set_experimentcard_uid(&mut self, val: Option<String>) {
+        self.experimentcard_uid = val;
+    }
+
+    #[getter]
+    pub fn auditcard_uid(&self) -> Option<&str> {
+        self.auditcard_uid.as_deref()
+    }
+
+    #[setter]
+    pub fn set_auditcard_uid(&mut self, val: Option<String>) {
+        self.auditcard_uid = val;
+    }
+
     pub fn __str__(&self) -> String {
         PyHelperFuncs::__str__(self)
     }
 }
 
-#[pyclass(skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
 pub struct ModelCard {
-    #[pyo3(get, set)]
+    #[cfg(feature = "python")]
     pub interface: Option<Py<PyAny>>,
 
-    #[pyo3(get, set)]
     pub space: String,
-
-    #[pyo3(get, set)]
     pub name: String,
-
-    #[pyo3(get, set)]
     pub version: String,
-
-    #[pyo3(get, set)]
     pub uid: String,
-
-    #[pyo3(get, set)]
     pub tags: Vec<String>,
-
-    #[pyo3(get, set)]
     pub metadata: ModelCardMetadata,
-
-    #[pyo3(get)]
     pub registry_type: RegistryType,
-
-    #[pyo3(get, set)]
     pub app_env: String,
-
-    #[pyo3(get, set)]
     pub created_at: DateTime<Utc>,
-
-    #[pyo3(get)]
     pub is_card: bool,
-
-    #[pyo3(get)]
     pub opsml_version: String,
 
     artifact_key: Option<ArtifactKey>,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl ModelCard {
     #[new]
@@ -164,7 +171,6 @@ impl ModelCard {
 
         let mut metadata = metadata.unwrap_or_default();
 
-        // if metadata.datacard_uid is None, set it to datacard_uid
         if metadata.datacard_uid.is_none() {
             metadata.datacard_uid = datacard_uid.map(|s| s.to_string());
         }
@@ -189,6 +195,101 @@ impl ModelCard {
             is_card: true,
             opsml_version: opsml_version::version(),
         })
+    }
+
+    #[getter]
+    pub fn space(&self) -> String {
+        self.space.clone()
+    }
+
+    #[setter]
+    pub fn set_space(&mut self, val: String) {
+        self.space = val;
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    #[setter]
+    pub fn set_name(&mut self, val: String) {
+        self.name = val;
+    }
+
+    #[getter]
+    pub fn version(&self) -> String {
+        self.version.clone()
+    }
+
+    #[setter]
+    pub fn set_version(&mut self, val: String) {
+        self.version = val;
+    }
+
+    #[getter]
+    pub fn uid(&self) -> String {
+        self.uid.clone()
+    }
+
+    #[setter]
+    pub fn set_uid(&mut self, val: String) {
+        self.uid = val;
+    }
+
+    #[getter]
+    pub fn tags(&self) -> Vec<String> {
+        self.tags.clone()
+    }
+
+    #[setter]
+    pub fn set_tags(&mut self, val: Vec<String>) {
+        self.tags = val;
+    }
+
+    #[getter]
+    pub fn metadata(&self) -> ModelCardMetadata {
+        self.metadata.clone()
+    }
+
+    #[setter]
+    pub fn set_metadata(&mut self, val: ModelCardMetadata) {
+        self.metadata = val;
+    }
+
+    #[getter]
+    pub fn registry_type(&self) -> RegistryType {
+        self.registry_type.clone()
+    }
+
+    #[getter]
+    pub fn app_env(&self) -> String {
+        self.app_env.clone()
+    }
+
+    #[setter]
+    pub fn set_app_env(&mut self, val: String) {
+        self.app_env = val;
+    }
+
+    #[getter]
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+
+    #[setter]
+    pub fn set_created_at(&mut self, val: DateTime<Utc>) {
+        self.created_at = val;
+    }
+
+    #[getter]
+    pub fn is_card(&self) -> bool {
+        self.is_card
+    }
+
+    #[getter]
+    pub fn opsml_version(&self) -> String {
+        self.opsml_version.clone()
     }
 
     #[getter]
@@ -279,8 +380,6 @@ impl ModelCard {
         path: PathBuf,
         save_kwargs: Option<ModelSaveKwargs>,
     ) -> Result<(), CardError> {
-        // save model interface
-        // if option raise error
         let model = self
             .interface
             .as_ref()
@@ -293,17 +392,14 @@ impl ModelCard {
                 error!("Failed to save model interface: {e}");
             })?;
 
-        // extract into ModelInterfaceMetadata
         let interface_metadata = metadata
             .extract::<ModelInterfaceMetadata>()
             .inspect_err(|e| {
                 error!("Failed to extract metadata: {e}");
             })?;
 
-        // update metadata
         self.metadata.interface_metadata = interface_metadata;
 
-        // save modelcard
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         PyHelperFuncs::save_to_json(&self, &card_save_path)?;
 
@@ -324,7 +420,6 @@ impl ModelCard {
             p
         } else {
             let tmp_path = create_tmp_path()?;
-            // download assets
             self.download_all_artifacts(&tmp_path)?;
             tmp_path
         };
@@ -335,8 +430,6 @@ impl ModelCard {
             .save_metadata
             .clone()
             .into_bound_py_any(py)?;
-
-        // load model interface
 
         let interface = self.interface.as_ref().unwrap().bind(py);
 
@@ -362,14 +455,13 @@ impl ModelCard {
         load_kwargs: Option<ModelLoadKwargs>,
         interface: Option<&Bound<'py, PyAny>>,
     ) -> Result<Self, CardError> {
-        // Load the Card json first in order to get it's metadata
         let card_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         let json_string = std::fs::read_to_string(&card_path).inspect_err(|e| {
             error!("Failed to read card json: {e}");
         })?;
 
         let mut card =
-            ModelCard::model_validate_json(py, json_string, interface).inspect_err(|e| {
+            ModelCard::model_validate_json_py(py, json_string, interface).inspect_err(|e| {
                 error!("Failed to validate ModelCard: {e}");
             })?;
 
@@ -391,45 +483,15 @@ impl ModelCard {
     }
 
     #[staticmethod]
-    #[pyo3(signature = (json_string, interface=None))]
-    pub fn model_validate_json(
+    #[pyo3(name = "model_validate_json", signature = (json_string, interface=None))]
+    pub fn model_validate_json_py(
         py: Python,
         json_string: String,
         interface: Option<&Bound<'_, PyAny>>,
     ) -> Result<ModelCard, CardError> {
-        let mut card: ModelCard = serde_json::from_str(&json_string).inspect_err(|e| {
-            error!("Failed to validate json: {e}");
-        })?;
-
+        let mut card = ModelCard::model_validate_json(json_string)?;
         card.load_interface(py, interface)?;
-
         Ok(card)
-    }
-
-    /// Helper function to get the drift profile path from the metadata.
-    /// This function will return an error if the no drift profile map is found or
-    /// if the alias is not found in the map.
-    ///
-    /// # Arguments
-    /// * `alias` - The alias of the drift profile to get the path for.
-    ///
-    /// # Returns
-    /// * `Result<PathBuf, CardError>` - The path to the drift profile.
-    pub fn drift_profile_path(&self, alias: &str) -> Result<PathBuf, CardError> {
-        // Use as_ref() to avoid unwrapping the Option
-        let map = self
-            .metadata
-            .interface_metadata
-            .save_metadata
-            .drift_profile_uri_map
-            .as_ref()
-            .ok_or(CardError::DriftProfileNotFoundInMap)?;
-
-        // Get the profile directly without checking contains_key first
-        map.get(alias)
-            .ok_or(CardError::DriftProfileNotFoundInMap)
-            // Use clone only at the final return point
-            .map(|profile| profile.uri.clone())
     }
 
     pub fn __str__(&self) -> String {
@@ -447,49 +509,16 @@ impl ModelCard {
         self.interface = None;
     }
 
-    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
-        let record = ModelCardClientRecord {
-            app_env: self.app_env.clone(),
-            created_at: self.created_at,
-            space: self.space.clone(),
-            name: self.name.clone(),
-            version: self.version.clone(),
-            uid: self.uid.clone(),
-            tags: self.tags.clone(),
-            datacard_uid: self.metadata.datacard_uid.clone(),
-            data_type: self.metadata.interface_metadata.data_type.to_string(),
-            model_type: self.metadata.interface_metadata.model_type.to_string(),
-            experimentcard_uid: self.metadata.experimentcard_uid.clone(),
-            auditcard_uid: self.metadata.auditcard_uid.clone(),
-            interface_type: self.metadata.interface_metadata.interface_type.to_string(),
-            task_type: self.metadata.interface_metadata.task_type.to_string(),
-            opsml_version: self.opsml_version.clone(),
-            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
-        };
-
-        Ok(CardRecord::Model(record))
-    }
-
-    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
-        let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        PyHelperFuncs::save_to_json(self, &card_save_path)?;
-
-        Ok(())
-    }
-
     /// Get the model from the interface if available.
     /// This will result in an error if the interface is not set and
     /// the model is not available.
     #[getter]
     pub fn model<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, CardError> {
         if let Some(interface) = self.interface.as_ref() {
-            // get property "model" from interface
             let model = interface.bind(py).getattr("model")?;
 
-            // check if model is None
             if model.is_none() {
                 Err(CardError::ModelNotSetError)
-            // return model
             } else {
                 Ok(model)
             }
@@ -502,14 +531,11 @@ impl ModelCard {
     fn update_drift_config_args(&self, py: Python) -> Result<(), CardError> {
         let interface = self.interface.as_ref().unwrap().bind(py);
         let drift_profiles = interface.getattr("drift_profile")?;
-        // downcast to list
         let drift_profiles = drift_profiles.cast::<DriftProfileMap>()?;
 
-        // if drift_profiles is empty, return
         if drift_profiles.call_method0("is_empty")?.extract::<bool>()? {
             Ok(())
         } else {
-            // set new config args from card and update all profiles
             let config_args = PyDict::new(py);
             config_args.set_item("name", &self.name)?;
             config_args.set_item("space", &self.space)?;
@@ -520,6 +546,40 @@ impl ModelCard {
             Ok(())
         }
     }
+
+    /// Helper function to get the drift profile path from the metadata.
+    /// This function will return an error if no drift profile map is found or
+    /// if the alias is not found in the map.
+    ///
+    /// # Arguments
+    /// * `alias` - The alias of the drift profile to get the path for.
+    ///
+    /// # Returns
+    /// * `Result<PathBuf, CardError>` - The path to the drift profile.
+    #[cfg(feature = "python")]
+    pub fn drift_profile_path(&self, alias: &str) -> Result<PathBuf, CardError> {
+        let map = self
+            .metadata
+            .interface_metadata
+            .save_metadata
+            .drift_profile_uri_map
+            .as_ref()
+            .ok_or(CardError::DriftProfileNotFoundInMap)?;
+
+        map.get(alias)
+            .ok_or(CardError::DriftProfileNotFoundInMap)
+            .map(|profile| profile.uri.clone())
+    }
+
+    #[pyo3(name = "get_registry_card")]
+    pub fn get_registry_card_py(&self) -> Result<CardRecord, CardError> {
+        self.get_registry_card()
+    }
+
+    #[pyo3(name = "save_card")]
+    pub fn save_card_py(&self, path: PathBuf) -> Result<(), CardError> {
+        self.save_card(path)
+    }
 }
 
 impl ModelCard {
@@ -527,20 +587,93 @@ impl ModelCard {
         self.artifact_key = Some(key);
     }
 
+    pub fn model_validate_json(json_string: String) -> Result<ModelCard, CardError> {
+        serde_json::from_str(&json_string).map_err(|e| {
+            error!("Failed to validate json: {e}");
+            CardError::from(e)
+        })
+    }
+
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
+        let (
+            data_type,
+            model_type,
+            interface_type,
+            task_type,
+            datacard_uid,
+            experimentcard_uid,
+            auditcard_uid,
+        ) = (
+            self.metadata.interface_metadata.data_type.to_string(),
+            self.metadata.interface_metadata.model_type.to_string(),
+            self.metadata.interface_metadata.interface_type.to_string(),
+            self.metadata.interface_metadata.task_type.to_string(),
+            self.metadata.datacard_uid.clone(),
+            self.metadata.experimentcard_uid.clone(),
+            self.metadata.auditcard_uid.clone(),
+        );
+
+        let record = ModelCardClientRecord {
+            app_env: self.app_env.clone(),
+            created_at: self.created_at,
+            space: self.space.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+            uid: self.uid.clone(),
+            tags: self.tags.clone(),
+            datacard_uid,
+            experimentcard_uid,
+            auditcard_uid,
+            data_type,
+            model_type,
+            interface_type,
+            task_type,
+            opsml_version: self.opsml_version.clone(),
+            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+        };
+
+        Ok(CardRecord::Model(record))
+    }
+
+    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
+        let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
+        PyHelperFuncs::save_to_json(self, &card_save_path)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "python")]
+    fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
+        if let Some(ref key) = self.artifact_key {
+            Ok(key.get_crypt_key()?)
+        } else {
+            Err(CardError::DecryptionKeyNotFoundError)
+        }
+    }
+
+    #[cfg(feature = "python")]
+    fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {
+        let decrypt_key = self.get_decryption_key()?;
+        let uri = self.artifact_key.as_ref().unwrap().storage_path();
+
+        storage_client()?.get(lpath, &uri, true)?;
+
+        decrypt_directory(lpath, &decrypt_key)?;
+
+        Ok(())
+    }
+
+    #[cfg(feature = "python")]
     fn load_interface(
         &mut self,
         py: Python,
         interface: Option<&Bound<'_, PyAny>>,
     ) -> Result<(), CardError> {
         if let Some(interface) = interface {
-            // this for custom interfaces (uninstantiated)
-
             let interface = interface
                 .call_method1("from_metadata", (self.metadata.interface_metadata.clone(),))?;
 
             self.set_interface(&interface)
         } else {
-            // match interface type
             let interface = interface_from_metadata(py, &self.metadata.interface_metadata)?;
             self.set_interface(&interface)
         }
@@ -554,7 +687,6 @@ impl Serialize for ModelCard {
     {
         let mut state = serializer.serialize_struct("ModelCard", 11)?;
 
-        // set session to none
         state.serialize_field("name", &self.name)?;
         state.serialize_field("space", &self.space)?;
         state.serialize_field("version", &self.version)?;
@@ -570,6 +702,7 @@ impl Serialize for ModelCard {
     }
 }
 
+#[cfg(feature = "python")]
 impl FromPyObject<'_, '_> for ModelCard {
     type Error = PyErr;
     fn extract(ob: Borrowed<'_, '_, PyAny>) -> PyResult<Self> {
@@ -639,7 +772,6 @@ impl<'de> Deserialize<'de> for ModelCard {
             where
                 V: MapAccess<'de>,
             {
-                let mut interface = None;
                 let mut name = None;
                 let mut space = None;
                 let mut version = None;
@@ -656,7 +788,7 @@ impl<'de> Deserialize<'de> for ModelCard {
                     match key {
                         Field::Interface => {
                             let _interface: Option<serde_json::Value> = map.next_value()?;
-                            interface = None; // Default to None always (Py<PyAny>)
+                            // Always None — Py<PyAny> is not deserializable
                         }
                         Field::Name => {
                             name = Some(map.next_value()?);
@@ -664,7 +796,6 @@ impl<'de> Deserialize<'de> for ModelCard {
                         Field::Space => {
                             space = Some(map.next_value()?);
                         }
-
                         Field::Version => {
                             version = Some(map.next_value()?);
                         }
@@ -711,7 +842,8 @@ impl<'de> Deserialize<'de> for ModelCard {
                     opsml_version.ok_or_else(|| de::Error::missing_field("opsml_version"))?;
 
                 Ok(ModelCard {
-                    interface,
+                    #[cfg(feature = "python")]
+                    interface: None,
                     name,
                     space,
                     version,
@@ -743,25 +875,5 @@ impl<'de> Deserialize<'de> for ModelCard {
             "opsml_version",
         ];
         deserializer.deserialize_struct("ModelCard", FIELDS, ModelCardVisitor)
-    }
-}
-
-impl ModelCard {
-    fn get_decryption_key(&self) -> Result<Vec<u8>, CardError> {
-        if let Some(ref key) = self.artifact_key {
-            Ok(key.get_crypt_key()?)
-        } else {
-            Err(CardError::DecryptionKeyNotFoundError)
-        }
-    }
-    fn download_all_artifacts(&mut self, lpath: &Path) -> Result<(), CardError> {
-        let decrypt_key = self.get_decryption_key()?;
-        let uri = self.artifact_key.as_ref().unwrap().storage_path();
-
-        storage_client()?.get(lpath, &uri, true)?;
-
-        decrypt_directory(lpath, &decrypt_key)?;
-
-        Ok(())
     }
 }

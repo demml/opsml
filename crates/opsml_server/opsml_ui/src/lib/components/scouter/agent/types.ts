@@ -16,8 +16,8 @@ import type {
 } from "../types";
 import type { DateTime, JsonValue } from "$lib/types";
 // shared LLM provider lib — intentionally kept as 'genai'
-import type { Prompt, Provider } from "$lib/components/genai/types";
-import type { MessageNum } from "$lib/components/genai/provider/types";
+import type { Prompt, Provider } from "$lib/components/agent/types";
+import type { MessageNum } from "$lib/components/agent/provider/types";
 
 export enum Status {
   All = "All",
@@ -58,7 +58,7 @@ export type TaskStatus = "Pending" | "Running" | "Completed" | "Failed";
 
 export interface AgentResponse {
   id: string;
-  response: any;
+  response: JsonValue;
 }
 
 export interface TaskList {

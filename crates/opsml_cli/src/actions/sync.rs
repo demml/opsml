@@ -116,8 +116,8 @@ fn sync_one_layer(
     for skill_ref in &yaml.skills {
         // Normalize space/name so cache keys, manifest keys, and file paths match
         // what remove_skill produces (which also calls clean_string).
-        let space = clean_string(&skill_ref.space)?;
-        let name = clean_string(&skill_ref.name)?;
+        let space = clean_string(&skill_ref.space);
+        let name = clean_string(&skill_ref.name);
 
         let cache_key = if is_global {
             format!("global/{}/{}", space, name)

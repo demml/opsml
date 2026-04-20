@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PromptHelper, type Prompt } from '$lib/components/genai/types';
+  import { PromptHelper, type Prompt } from '$lib/components/agent/types';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
   import MessageBubble from './MessageBubble.svelte';
   import { Eye, Code, Copy, Check } from 'lucide-svelte';
@@ -92,7 +92,7 @@
             </div>
           </div>
         {:else}
-          <div class="w-full h-32 flex items-center justify-center border-2 border-dashed border-gray-400 rounded-base bg-gray-50 text-gray-400 font-bold">
+          <div class="w-full h-32 flex items-center justify-center border-2 border-dashed border-black/30 bg-surface-50 text-slate-400 rounded-base font-bold">
             No conversation messages found.
           </div>
         {/if}

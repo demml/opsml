@@ -4,13 +4,14 @@ use chrono::{DateTime, Utc};
 use opsml_crypt::decrypt_directory;
 use opsml_storage::storage_client;
 use opsml_types::cards::{CardStatus, ExperimentEvalMetrics};
+#[cfg(feature = "python")]
+use opsml_types::cards::{Metrics, Parameters};
 use opsml_types::contracts::{CardRecord, ExperimentCardClientRecord};
 use opsml_types::{
-    RegistryType, SaveName, Suffix,
-    cards::{ComputeEnvironment, Metrics, Parameters},
-    contracts::ArtifactKey,
+    RegistryType, SaveName, Suffix, cards::ComputeEnvironment, contracts::ArtifactKey,
 };
 use opsml_utils::{PyHelperFuncs, get_utc_datetime};
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use serde_json;
 use std::path::PathBuf;
@@ -22,146 +23,89 @@ use serde::{
     ser::SerializeStruct,
 };
 
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
 pub struct UidMetadata {
-    #[pyo3(get, set)]
     pub datacard_uids: Vec<String>,
-
-    #[pyo3(get, set)]
     pub modelcard_uids: Vec<String>,
-
-    #[pyo3(get, set)]
     pub promptcard_uids: Vec<String>,
-
-    #[pyo3(get, set)]
     pub service_card_uids: Vec<String>,
-
-    #[pyo3(get, set)]
     pub experimentcard_uids: Vec<String>,
 }
 
-#[pyclass(skip_from_py_object)]
-pub struct ExperimentCard {
-    #[pyo3(get, set)]
-    pub space: String,
+#[cfg(feature = "python")]
+#[pymethods]
+impl UidMetadata {
+    #[getter]
+    pub fn datacard_uids(&self) -> Vec<String> {
+        self.datacard_uids.clone()
+    }
+    #[setter]
+    pub fn set_datacard_uids(&mut self, val: Vec<String>) {
+        self.datacard_uids = val;
+    }
 
-    #[pyo3(get, set)]
-    pub name: String,
+    #[getter]
+    pub fn modelcard_uids(&self) -> Vec<String> {
+        self.modelcard_uids.clone()
+    }
+    #[setter]
+    pub fn set_modelcard_uids(&mut self, val: Vec<String>) {
+        self.modelcard_uids = val;
+    }
 
-    #[pyo3(get, set)]
-    pub version: String,
+    #[getter]
+    pub fn promptcard_uids(&self) -> Vec<String> {
+        self.promptcard_uids.clone()
+    }
+    #[setter]
+    pub fn set_promptcard_uids(&mut self, val: Vec<String>) {
+        self.promptcard_uids = val;
+    }
 
-    #[pyo3(get, set)]
-    pub uid: String,
+    #[getter]
+    pub fn service_card_uids(&self) -> Vec<String> {
+        self.service_card_uids.clone()
+    }
+    #[setter]
+    pub fn set_service_card_uids(&mut self, val: Vec<String>) {
+        self.service_card_uids = val;
+    }
 
-    #[pyo3(get, set)]
-    pub tags: Vec<String>,
-
-    #[pyo3(get, set)]
-    pub uids: UidMetadata,
-
-    #[pyo3(get)]
-    pub compute_environment: ComputeEnvironment,
-
-    #[pyo3(get)]
-    pub registry_type: RegistryType,
-
-    #[pyo3(get, set)]
-    pub app_env: String,
-
-    #[pyo3(get, set)]
-    pub created_at: DateTime<Utc>,
-
-    #[pyo3(get)]
-    pub subexperiment: bool,
-
-    #[pyo3(get)]
-    pub opsml_version: String,
-
-    #[pyo3(get)]
-    pub is_card: bool,
-
-    #[pyo3(get, set)]
-    eval_metrics: ExperimentEvalMetrics,
-
-    artifact_key: Option<ArtifactKey>,
-
-    #[pyo3(get, set)]
-    status: CardStatus,
+    #[getter]
+    pub fn experimentcard_uids(&self) -> Vec<String> {
+        self.experimentcard_uids.clone()
+    }
+    #[setter]
+    pub fn set_experimentcard_uids(&mut self, val: Vec<String>) {
+        self.experimentcard_uids = val;
+    }
 }
 
-#[pymethods]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
+pub struct ExperimentCard {
+    pub space: String,
+    pub name: String,
+    pub version: String,
+    pub uid: String,
+    pub tags: Vec<String>,
+    pub uids: UidMetadata,
+    pub compute_environment: ComputeEnvironment,
+    pub registry_type: RegistryType,
+    pub app_env: String,
+    pub created_at: DateTime<Utc>,
+    pub subexperiment: bool,
+    pub opsml_version: String,
+    pub is_card: bool,
+    pub eval_metrics: ExperimentEvalMetrics,
+    pub artifact_key: Option<ArtifactKey>,
+    pub status: CardStatus,
+}
+
+// Pure-Rust methods — no Python types in signatures.
 impl ExperimentCard {
-    #[new]
-    #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (space=None, name=None, version=None, uid=None, tags=None))]
-    pub fn new(
-        py: Python,
-        space: Option<&str>,
-        name: Option<&str>,
-        version: Option<&str>,
-        uid: Option<&str>,
-        tags: Option<Vec<String>>,
-    ) -> Result<Self, CardError> {
-        let registry_type = RegistryType::Experiment;
-        let tags = tags.unwrap_or_default();
-
-        let base_args = BaseArgs::create_args(name, space, version, uid, &registry_type)?;
-
-        Ok(Self {
-            space: base_args.0,
-            name: base_args.1,
-            version: base_args.2,
-            uid: base_args.3,
-            tags,
-            registry_type,
-            artifact_key: None,
-            app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
-            created_at: get_utc_datetime(),
-            compute_environment: ComputeEnvironment::new(py)?,
-            uids: UidMetadata::default(),
-            subexperiment: false,
-            is_card: true,
-            opsml_version: opsml_version::version(),
-            eval_metrics: ExperimentEvalMetrics::default(),
-            status: CardStatus::Active,
-        })
-    }
-
-    #[pyo3(signature = (names = None))]
-    pub fn get_parameters(
-        &self,
-        py: Python,
-        names: Option<Vec<String>>,
-    ) -> Result<Parameters, CardError> {
-        // a little nested import here
-        // It would be preferable to use "get_experiment_parameters" from opsml_experiment
-        // but opsml_experiment relies on opsml_registry which relies on opsml_cards
-        // thus, it would create a circular dependency. We can always revisit this later
-        let func = py
-            .import("opsml.experiment")?
-            .getattr("get_experiment_parameters")?;
-
-        let parameters = func.call1((&self.uid, names))?.extract::<Parameters>()?;
-
-        Ok(parameters)
-    }
-
-    #[pyo3(signature = (names = None))]
-    pub fn get_metrics(
-        &self,
-        py: Python,
-        names: Option<Vec<String>>,
-    ) -> Result<Metrics, CardError> {
-        // get the experiment registry
-        let func = py
-            .import("opsml.experiment")?
-            .getattr("get_experiment_metrics")?;
-
-        let memory_metrics = func.call1((&self.uid, names))?.extract::<Metrics>()?;
-
-        Ok(memory_metrics)
+    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
+        self.artifact_key = Some(key);
     }
 
     pub fn add_subexperiment_experiment(&mut self, uid: &str) {
@@ -206,24 +150,19 @@ impl ExperimentCard {
         Ok(CardRecord::Experiment(record))
     }
 
-    #[pyo3(signature = (path))]
-    pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
+    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
         let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
         PyHelperFuncs::save_to_json(self, &card_save_path)?;
-
         Ok(())
     }
 
-    #[staticmethod]
-    #[pyo3(signature = (json_string))]
     pub fn model_validate_json(json_string: String) -> Result<ExperimentCard, CardError> {
         Ok(serde_json::from_str(&json_string).inspect_err(|e| {
             error!("Failed to validate json: {}", e);
         })?)
     }
 
-    #[pyo3(signature = (path=None))]
-    pub fn list_artifacts(&self, path: Option<PathBuf>) -> Result<Vec<String>, CardError> {
+    pub fn list_artifacts_rs(&self, path: Option<PathBuf>) -> Result<Vec<String>, CardError> {
         let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
 
         let rpath = match path {
@@ -235,7 +174,6 @@ impl ExperimentCard {
             error!("Failed to list artifacts: {e}");
         })?;
 
-        // iterate through and remove storage_path if it exists
         let storage_path_str = storage_path.into_os_string().into_string().map_err(|_| {
             error!("Failed to convert storage path to string");
             CardError::IntoStringError
@@ -252,18 +190,15 @@ impl ExperimentCard {
         Ok(files)
     }
 
-    #[pyo3(signature = (path=None, lpath=None))]
-    pub fn download_artifacts(
+    pub fn download_artifacts_rs(
         &self,
         path: Option<PathBuf>,
         lpath: Option<PathBuf>,
     ) -> Result<(), CardError> {
         let storage_path = self.artifact_key.as_ref().unwrap().storage_path();
 
-        // if lpath is None, download to "artifacts" directory
         let mut lpath = lpath.unwrap_or_else(|| PathBuf::from("artifacts"));
 
-        // assert that lpath exists, if not create it
         if !lpath.exists() {
             std::fs::create_dir_all(&lpath).inspect_err(|e| {
                 error!("Failed to create directory: {e}");
@@ -274,11 +209,9 @@ impl ExperimentCard {
             lpath = lpath.join(path);
             storage_path.join(SaveName::Artifacts).join(path)
         } else {
-            // download everything to "artifacts" directory
             storage_path.join(SaveName::Artifacts)
         };
 
-        // if rpath has an extension, set recursive to false
         let recursive = rpath.extension().is_none();
 
         storage_client()?
@@ -300,6 +233,108 @@ impl ExperimentCard {
         Ok(())
     }
 
+    pub fn new_rs(
+        space: Option<&str>,
+        name: Option<&str>,
+        version: Option<&str>,
+        uid: Option<&str>,
+        tags: Option<Vec<String>>,
+    ) -> Result<Self, CardError> {
+        let registry_type = RegistryType::Experiment;
+        let tags = tags.unwrap_or_default();
+        let base_args = BaseArgs::create_args(name, space, version, uid, &registry_type)?;
+
+        Ok(Self {
+            space: base_args.0,
+            name: base_args.1,
+            version: base_args.2,
+            uid: base_args.3,
+            tags,
+            registry_type,
+            artifact_key: None,
+            app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
+            created_at: get_utc_datetime(),
+            compute_environment: ComputeEnvironment::new_rs()?,
+            uids: UidMetadata::default(),
+            subexperiment: false,
+            is_card: true,
+            opsml_version: opsml_version::version(),
+            eval_metrics: ExperimentEvalMetrics::default(),
+            status: CardStatus::Active,
+        })
+    }
+}
+
+// Python-facing methods — all contain Python types or delegate to pure-Rust with Python API names.
+#[cfg(feature = "python")]
+#[pymethods]
+impl ExperimentCard {
+    #[new]
+    #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (space=None, name=None, version=None, uid=None, tags=None))]
+    pub fn new(
+        py: Python,
+        space: Option<&str>,
+        name: Option<&str>,
+        version: Option<&str>,
+        uid: Option<&str>,
+        tags: Option<Vec<String>>,
+    ) -> Result<Self, CardError> {
+        let registry_type = RegistryType::Experiment;
+        let tags = tags.unwrap_or_default();
+
+        let base_args = BaseArgs::create_args(name, space, version, uid, &registry_type)?;
+
+        Ok(Self {
+            space: base_args.0,
+            name: base_args.1,
+            version: base_args.2,
+            uid: base_args.3,
+            tags,
+            registry_type,
+            artifact_key: None,
+            app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
+            created_at: get_utc_datetime(),
+            compute_environment: ComputeEnvironment::new(py)?,
+            uids: UidMetadata::default(),
+            subexperiment: false,
+            is_card: true,
+            opsml_version: opsml_version::version(),
+            eval_metrics: ExperimentEvalMetrics::default(),
+            status: CardStatus::Active,
+        })
+    }
+
+    #[pyo3(signature = (names = None))]
+    pub fn get_parameters(
+        &self,
+        py: Python,
+        names: Option<Vec<String>>,
+    ) -> Result<Parameters, CardError> {
+        let func = py
+            .import("opsml.experiment")?
+            .getattr("get_experiment_parameters")?;
+
+        let parameters = func.call1((&self.uid, names))?.extract::<Parameters>()?;
+
+        Ok(parameters)
+    }
+
+    #[pyo3(signature = (names = None))]
+    pub fn get_metrics(
+        &self,
+        py: Python,
+        names: Option<Vec<String>>,
+    ) -> Result<Metrics, CardError> {
+        let func = py
+            .import("opsml.experiment")?
+            .getattr("get_experiment_metrics")?;
+
+        let memory_metrics = func.call1((&self.uid, names))?.extract::<Metrics>()?;
+
+        Ok(memory_metrics)
+    }
+
     /// Download a specific artifact
     #[pyo3(signature = (path, lpath=None))]
     pub fn download_artifact(
@@ -308,9 +343,6 @@ impl ExperimentCard {
         path: PathBuf,
         lpath: Option<PathBuf>,
     ) -> Result<(), CardError> {
-        // Same as above, we need to use a registry to get the experiment artifact
-        // In the future we could consider adding a global registry to app_state if needed,
-        // But I prefer not to
         let func = py
             .import("opsml.experiment")?
             .getattr("download_artifact")?;
@@ -319,11 +351,187 @@ impl ExperimentCard {
 
         Ok(())
     }
-}
 
-impl ExperimentCard {
-    pub fn set_artifact_key(&mut self, key: ArtifactKey) {
-        self.artifact_key = Some(key);
+    // Getters/setters for all fields previously declared with #[pyo3(get, set)] or #[pyo3(get)].
+
+    #[getter]
+    pub fn space(&self) -> String {
+        self.space.clone()
+    }
+    #[setter]
+    pub fn set_space(&mut self, val: String) {
+        self.space = val;
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+    #[setter]
+    pub fn set_name(&mut self, val: String) {
+        self.name = val;
+    }
+
+    #[getter]
+    pub fn version(&self) -> String {
+        self.version.clone()
+    }
+    #[setter]
+    pub fn set_version(&mut self, val: String) {
+        self.version = val;
+    }
+
+    #[getter]
+    pub fn uid(&self) -> String {
+        self.uid.clone()
+    }
+    #[setter]
+    pub fn set_uid(&mut self, val: String) {
+        self.uid = val;
+    }
+
+    #[getter]
+    pub fn tags(&self) -> Vec<String> {
+        self.tags.clone()
+    }
+    #[setter]
+    pub fn set_tags(&mut self, val: Vec<String>) {
+        self.tags = val;
+    }
+
+    #[getter]
+    pub fn uids<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, CardError> {
+        use pyo3::IntoPyObjectExt;
+        Ok(self.uids.clone().into_bound_py_any(py)?)
+    }
+    #[setter]
+    pub fn set_uids(&mut self, val: &Bound<'_, PyAny>) -> Result<(), CardError> {
+        self.uids = val.extract::<UidMetadata>()?;
+        Ok(())
+    }
+
+    #[getter]
+    pub fn compute_environment<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> Result<Bound<'py, PyAny>, CardError> {
+        use pyo3::IntoPyObjectExt;
+        Ok(self.compute_environment.clone().into_bound_py_any(py)?)
+    }
+
+    #[getter]
+    pub fn registry_type(&self) -> RegistryType {
+        self.registry_type.clone()
+    }
+
+    #[getter]
+    pub fn app_env(&self) -> String {
+        self.app_env.clone()
+    }
+    #[setter]
+    pub fn set_app_env(&mut self, val: String) {
+        self.app_env = val;
+    }
+
+    #[getter]
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+    #[setter]
+    pub fn set_created_at(&mut self, val: DateTime<Utc>) {
+        self.created_at = val;
+    }
+
+    #[getter]
+    pub fn subexperiment(&self) -> bool {
+        self.subexperiment
+    }
+
+    #[getter]
+    pub fn opsml_version(&self) -> String {
+        self.opsml_version.clone()
+    }
+
+    #[getter]
+    pub fn is_card(&self) -> bool {
+        self.is_card
+    }
+
+    #[getter]
+    pub fn eval_metrics<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, CardError> {
+        use pyo3::IntoPyObjectExt;
+        Ok(self.eval_metrics.clone().into_bound_py_any(py)?)
+    }
+    #[setter]
+    pub fn set_eval_metrics(&mut self, val: &Bound<'_, PyAny>) -> Result<(), CardError> {
+        self.eval_metrics = val.extract::<ExperimentEvalMetrics>()?;
+        Ok(())
+    }
+
+    #[getter]
+    pub fn status<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, CardError> {
+        use pyo3::IntoPyObjectExt;
+        Ok(self.status.clone().into_bound_py_any(py)?)
+    }
+    #[setter]
+    pub fn set_status(&mut self, val: &Bound<'_, PyAny>) -> Result<(), CardError> {
+        self.status = val.extract::<CardStatus>()?;
+        Ok(())
+    }
+
+    #[pyo3(signature = (path))]
+    pub fn save(&mut self, path: PathBuf) -> Result<(), CardError> {
+        self.save_card(path)
+    }
+
+    #[staticmethod]
+    #[pyo3(name = "model_validate_json", signature = (json_string))]
+    pub fn py_model_validate_json(json_string: String) -> Result<ExperimentCard, CardError> {
+        ExperimentCard::model_validate_json(json_string)
+    }
+
+    #[pyo3(signature = (path=None))]
+    pub fn list_artifacts(&self, path: Option<PathBuf>) -> Result<Vec<String>, CardError> {
+        self.list_artifacts_rs(path)
+    }
+
+    #[pyo3(signature = (path=None, lpath=None))]
+    pub fn download_artifacts(
+        &self,
+        path: Option<PathBuf>,
+        lpath: Option<PathBuf>,
+    ) -> Result<(), CardError> {
+        self.download_artifacts_rs(path, lpath)
+    }
+
+    #[pyo3(name = "get_registry_card")]
+    pub fn get_registry_card_py(&self) -> Result<CardRecord, CardError> {
+        self.get_registry_card()
+    }
+
+    #[pyo3(name = "add_modelcard_uid")]
+    pub fn add_modelcard_uid_py(&mut self, uid: &str) {
+        self.add_modelcard_uid(uid);
+    }
+
+    #[pyo3(name = "add_datacard_uid")]
+    pub fn add_datacard_uid_py(&mut self, uid: &str) {
+        self.add_datacard_uid(uid);
+    }
+
+    #[pyo3(name = "add_promptcard_uid")]
+    pub fn add_promptcard_uid_py(&mut self, uid: &str) {
+        self.add_promptcard_uid(uid);
+    }
+
+    #[pyo3(name = "add_service_card_uid")]
+    pub fn add_service_card_uid_py(&mut self, uid: &str) {
+        self.add_service_card_uid(uid);
+    }
+
+    #[pyo3(name = "save_card")]
+    pub fn save_card_py(&self, path: PathBuf) -> Result<(), CardError> {
+        self.save_card(path)
     }
 }
 
@@ -334,7 +542,6 @@ impl Serialize for ExperimentCard {
     {
         let mut state = serializer.serialize_struct("ExperimentCard", 15)?;
 
-        // set session to none
         state.serialize_field("name", &self.name)?;
         state.serialize_field("space", &self.space)?;
         state.serialize_field("version", &self.version)?;
@@ -416,7 +623,6 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                         Field::Space => {
                             space = Some(map.next_value()?);
                         }
-
                         Field::Version => {
                             version = Some(map.next_value()?);
                         }
@@ -426,7 +632,6 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                         Field::Tags => {
                             tags = Some(map.next_value()?);
                         }
-
                         Field::RegistryType => {
                             registry_type = Some(map.next_value()?);
                         }
@@ -442,7 +647,6 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                         Field::Uids => {
                             uids = Some(map.next_value()?);
                         }
-
                         Field::Subexperiment => {
                             subexperiment = Some(map.next_value()?);
                         }
@@ -474,7 +678,6 @@ impl<'de> Deserialize<'de> for ExperimentCard {
                 let compute_environment = compute_environment
                     .ok_or_else(|| de::Error::missing_field("compute_environment"))?;
                 let uids = uids.ok_or_else(|| de::Error::missing_field("uids"))?;
-
                 let subexperiment =
                     subexperiment.ok_or_else(|| de::Error::missing_field("subexperiment"))?;
                 let is_card = is_card.ok_or_else(|| de::Error::missing_field("is_card"))?;
@@ -527,6 +730,7 @@ impl<'de> Deserialize<'de> for ExperimentCard {
     }
 }
 
+#[cfg(feature = "python")]
 impl FromPyObject<'_, '_> for ExperimentCard {
     type Error = PyErr;
     fn extract(ob: Borrowed<'_, '_, PyAny>) -> PyResult<Self> {

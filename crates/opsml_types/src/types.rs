@@ -1,5 +1,6 @@
 use crate::contracts::ServiceType;
 use crate::error::TypeError;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
 use serde::{Deserialize, Deserializer, Serialize};
 use std::ffi::OsStr;
@@ -9,7 +10,7 @@ use std::path::{Path, PathBuf};
 
 pub const MAX_FILE_SIZE: usize = 1024 * 1024 * 1024 * 50;
 
-#[pyclass(eq, eq_int, from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, from_py_object))]
 #[derive(Debug, Eq, Hash, PartialEq, Clone, Serialize, Default)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum RegistryType {
@@ -90,6 +91,7 @@ impl Display for RegistryType {
         }
     }
 }
+
 impl RegistryType {
     pub fn from_string(s: &str) -> Result<Self, TypeError> {
         match s {
@@ -156,7 +158,7 @@ pub enum PlotType {
     Bar,
 }
 
-#[pyclass(eq, eq_int, skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, skip_from_py_object))]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
 pub enum StorageType {
@@ -166,7 +168,7 @@ pub enum StorageType {
     Azure,
 }
 
-#[pyclass(eq, eq_int, skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, skip_from_py_object))]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum SqlType {
     Postgres,
@@ -174,7 +176,7 @@ pub enum SqlType {
     MySql,
 }
 
-#[pyclass(eq, eq_int, skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, skip_from_py_object))]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum RegistryMode {
     #[default]
@@ -191,7 +193,7 @@ impl Display for RegistryMode {
     }
 }
 
-#[pyclass(eq, eq_int, skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, skip_from_py_object))]
 #[derive(Debug, PartialEq, Clone)]
 pub enum UriNames {
     TrainedModelUri,
@@ -212,9 +214,7 @@ pub enum UriNames {
     OnnxConfigUri,
 }
 
-#[pymethods]
 impl UriNames {
-    #[staticmethod]
     pub fn from_string(s: &str) -> Option<Self> {
         match s {
             "trained_model_uri" => Some(UriNames::TrainedModelUri),
@@ -259,7 +259,22 @@ impl UriNames {
     }
 }
 
-#[pyclass(eq, eq_int, skip_from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl UriNames {
+    #[staticmethod]
+    #[pyo3(name = "from_string")]
+    pub fn _py_from_string(s: &str) -> Option<Self> {
+        Self::from_string(s)
+    }
+
+    #[pyo3(name = "as_string")]
+    pub fn _py_as_string(&self) -> &str {
+        self.as_string()
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, skip_from_py_object))]
 #[derive(Debug, PartialEq, Clone, Deserialize, Serialize)]
 pub enum CommonKwargs {
     IsPipeline,
@@ -289,9 +304,7 @@ pub enum CommonKwargs {
     SampleDataInterfaceType,
 }
 
-#[pymethods]
 impl CommonKwargs {
-    #[staticmethod]
     pub fn from_string(s: &str) -> Option<Self> {
         match s {
             "is_pipeline" => Some(CommonKwargs::IsPipeline),
@@ -360,7 +373,22 @@ impl Display for CommonKwargs {
     }
 }
 
-#[pyclass(eq, eq_int, from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl CommonKwargs {
+    #[staticmethod]
+    #[pyo3(name = "from_string")]
+    pub fn _py_from_string(s: &str) -> Option<Self> {
+        Self::from_string(s)
+    }
+
+    #[pyo3(name = "as_string")]
+    pub fn _py_as_string(&self) -> &str {
+        self.as_string()
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, from_py_object))]
 #[derive(Debug, PartialEq, Clone)]
 pub enum SaveName {
     Card,
@@ -395,9 +423,7 @@ pub enum SaveName {
     Evaluation,
 }
 
-#[pymethods]
 impl SaveName {
-    #[staticmethod]
     pub fn from_string(s: &str) -> Option<Self> {
         match s {
             "card" => Some(SaveName::Card),
@@ -468,10 +494,6 @@ impl SaveName {
             SaveName::Evaluation => "evaluation",
         }
     }
-
-    pub fn __str__(&self) -> String {
-        self.to_string()
-    }
 }
 
 impl Display for SaveName {
@@ -517,14 +539,32 @@ impl AsRef<Path> for SaveName {
     }
 }
 
-// impl PathBuf: From<SaveName>
 impl From<SaveName> for PathBuf {
     fn from(save_name: SaveName) -> Self {
         PathBuf::from(save_name.as_ref())
     }
 }
 
-#[pyclass(eq, eq_int, from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl SaveName {
+    #[staticmethod]
+    #[pyo3(name = "from_string")]
+    pub fn _py_from_string(s: &str) -> Option<Self> {
+        Self::from_string(s)
+    }
+
+    #[pyo3(name = "as_string")]
+    pub fn _py_as_string(&self) -> &str {
+        self.as_string()
+    }
+
+    pub fn __str__(&self) -> String {
+        self.to_string()
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, from_py_object))]
 #[derive(Debug, PartialEq, Clone)]
 pub enum Suffix {
     Onnx,
@@ -548,9 +588,7 @@ pub enum Suffix {
     Md,
 }
 
-#[pymethods]
 impl Suffix {
-    #[staticmethod]
     pub fn from_string(s: &str) -> Option<Self> {
         match s {
             "onnx" => Some(Suffix::Onnx),
@@ -599,10 +637,6 @@ impl Suffix {
             Suffix::Md => "md",
         }
     }
-
-    pub fn __str__(&self) -> String {
-        self.to_string()
-    }
 }
 
 impl Display for Suffix {
@@ -617,16 +651,33 @@ impl AsRef<OsStr> for Suffix {
     }
 }
 
-#[pyclass(eq, eq_int, skip_from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl Suffix {
+    #[staticmethod]
+    #[pyo3(name = "from_string")]
+    pub fn _py_from_string(s: &str) -> Option<Self> {
+        Self::from_string(s)
+    }
+
+    #[pyo3(name = "as_string")]
+    pub fn _py_as_string(&self) -> &str {
+        self.as_string()
+    }
+
+    pub fn __str__(&self) -> String {
+        self.to_string()
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, skip_from_py_object))]
 #[derive(Debug, PartialEq, Clone)]
 pub enum ArtifactClass {
     Data,
     Other,
 }
 
-#[pymethods]
 impl ArtifactClass {
-    #[staticmethod]
     pub fn from_string(s: &str) -> Option<Self> {
         match s {
             "data" => Some(ArtifactClass::Data),
@@ -643,7 +694,22 @@ impl ArtifactClass {
     }
 }
 
-#[pyclass(eq, eq_int, skip_from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl ArtifactClass {
+    #[staticmethod]
+    #[pyo3(name = "from_string")]
+    pub fn _py_from_string(s: &str) -> Option<Self> {
+        Self::from_string(s)
+    }
+
+    #[pyo3(name = "as_string")]
+    pub fn _py_as_string(&self) -> &str {
+        self.as_string()
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, skip_from_py_object))]
 #[derive(Debug, PartialEq, Clone)]
 pub enum PresignableTypes {
     Jpeg,
@@ -662,9 +728,7 @@ pub enum PresignableTypes {
     Yaml,
 }
 
-#[pymethods]
 impl PresignableTypes {
-    #[staticmethod]
     pub fn from_string(s: &str) -> Option<Self> {
         match s {
             ".jpeg" => Some(PresignableTypes::Jpeg),
@@ -705,7 +769,22 @@ impl PresignableTypes {
     }
 }
 
-#[pyclass(eq, eq_int, from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl PresignableTypes {
+    #[staticmethod]
+    #[pyo3(name = "from_string")]
+    pub fn _py_from_string(s: &str) -> Option<Self> {
+        Self::from_string(s)
+    }
+
+    #[pyo3(name = "as_string")]
+    pub fn _py_as_string(&self) -> &str {
+        self.as_string()
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, from_py_object))]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Default)]
 pub enum DataType {
     Pandas,
@@ -767,30 +846,25 @@ impl Display for DataType {
 
 pub type BaseArgsType = (String, String, String, String);
 
-#[pyclass(eq, skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, skip_from_py_object))]
 #[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum InterfaceType {
     Data,
     Model,
 }
 
-#[pyclass(skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
 pub struct SaverPath {
-    #[pyo3(get)]
-    path: PathBuf,
+    pub path: PathBuf,
 }
 
-#[pymethods]
 impl SaverPath {
-    #[new]
-    #[pyo3(signature = (parent, child=None, filename=None, extension=None))]
     pub fn new(
         parent: PathBuf,
         child: Option<PathBuf>,
         filename: Option<SaveName>,
         extension: Option<Suffix>,
     ) -> Self {
-        // if child_path is not none, append it to the parent path and create all directories if they do not exist
         let mut build_path = match &child {
             Some(child) => {
                 let mut path = parent.clone();
@@ -803,7 +877,6 @@ impl SaverPath {
             None => parent.clone(),
         };
 
-        // if file_name is not none, append it to the parent path with the extension
         if let Some(file_name) = filename {
             build_path.push(file_name);
             if let Some(extension) = extension {
@@ -812,6 +885,26 @@ impl SaverPath {
         }
 
         SaverPath { path: build_path }
+    }
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl SaverPath {
+    #[new]
+    #[pyo3(signature = (parent, child=None, filename=None, extension=None))]
+    pub fn py_new(
+        parent: PathBuf,
+        child: Option<PathBuf>,
+        filename: Option<SaveName>,
+        extension: Option<Suffix>,
+    ) -> Self {
+        Self::new(parent, child, filename, extension)
+    }
+
+    #[getter]
+    pub fn path(&self) -> PathBuf {
+        self.path.clone()
     }
 }
 

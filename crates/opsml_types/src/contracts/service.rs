@@ -5,19 +5,22 @@ use crate::contracts::potato::PotatoAgentConfig;
 use crate::contracts::workflow::WorkflowSpec;
 use crate::error::{AgentConfigError, TypeError};
 use opsml_semver::VersionType;
-use opsml_utils::extract_py_attr;
-use pyo3::IntoPyObjectExt;
-use pyo3::prelude::*;
-
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::path::{Path, PathBuf};
 use tracing::error;
 
+#[cfg(feature = "python")]
+use opsml_utils::extract_py_attr;
+#[cfg(feature = "python")]
+use pyo3::IntoPyObjectExt;
+#[cfg(feature = "python")]
+use pyo3::prelude::*;
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq, Hash, Default)]
 #[cfg_attr(feature = "utoipa", derive(utoipa::ToSchema))]
-#[pyclass(eq, eq_int, from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, eq_int, from_py_object))]
 pub enum ServiceType {
     #[default]
     #[serde(alias = "API", alias = "api")]
@@ -40,6 +43,7 @@ impl Display for ServiceType {
         }
     }
 }
+
 impl From<String> for ServiceType {
     fn from(s: String) -> Self {
         match s.to_lowercase().as_str() {
@@ -47,10 +51,11 @@ impl From<String> for ServiceType {
             "mcp" => ServiceType::Mcp,
             "agent" => ServiceType::Agent,
             "workflow" => ServiceType::Workflow,
-            _ => ServiceType::Api, // default to Api if unknown
+            _ => ServiceType::Api,
         }
     }
 }
+
 impl From<&str> for ServiceType {
     fn from(s: &str) -> Self {
         match s.to_lowercase().as_str() {
@@ -58,26 +63,21 @@ impl From<&str> for ServiceType {
             "mcp" => ServiceType::Mcp,
             "agent" => ServiceType::Agent,
             "workflow" => ServiceType::Workflow,
-            _ => ServiceType::Api, // default to Api if unknown
+            _ => ServiceType::Api,
         }
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct ServiceMetadata {
-    #[pyo3(get)]
     pub description: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[pyo3(get)]
     pub language: Option<String>,
-    #[pyo3(get)]
     pub tags: Vec<String>,
 }
 
-#[pymethods]
 impl ServiceMetadata {
-    #[new]
     pub fn new(description: String, language: Option<String>, tags: Option<Vec<String>>) -> Self {
         ServiceMetadata {
             description,
@@ -87,21 +87,44 @@ impl ServiceMetadata {
     }
 }
 
+#[cfg(feature = "python")]
+#[pymethods]
+impl ServiceMetadata {
+    #[new]
+    pub fn py_new(
+        description: String,
+        language: Option<String>,
+        tags: Option<Vec<String>>,
+    ) -> Self {
+        Self::new(description, language, tags)
+    }
+
+    #[getter]
+    pub fn description(&self) -> String {
+        self.description.clone()
+    }
+
+    #[getter]
+    pub fn language(&self) -> Option<String> {
+        self.language.clone()
+    }
+
+    #[getter]
+    pub fn tags(&self) -> Vec<String> {
+        self.tags.clone()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct GpuConfig {
     #[serde(rename = "type")]
-    #[pyo3(get)]
     pub gpu_type: String,
-    #[pyo3(get)]
     pub count: u32,
-    #[pyo3(get)]
     pub memory: String,
 }
 
-#[pymethods]
 impl GpuConfig {
-    #[new]
     pub fn new(gpu_type: String, count: u32, memory: String) -> Self {
         GpuConfig {
             gpu_type,
@@ -111,23 +134,41 @@ impl GpuConfig {
     }
 }
 
+#[cfg(feature = "python")]
+#[pymethods]
+impl GpuConfig {
+    #[new]
+    pub fn py_new(gpu_type: String, count: u32, memory: String) -> Self {
+        Self::new(gpu_type, count, memory)
+    }
+
+    #[getter]
+    pub fn gpu_type(&self) -> String {
+        self.gpu_type.clone()
+    }
+
+    #[getter]
+    pub fn count(&self) -> u32 {
+        self.count
+    }
+
+    #[getter]
+    pub fn memory(&self) -> String {
+        self.memory.clone()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct Resources {
-    #[pyo3(get)]
     pub cpu: u32,
-    #[pyo3(get)]
     pub memory: String,
-    #[pyo3(get)]
     pub storage: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[pyo3(get)]
     pub gpu: Option<GpuConfig>,
 }
 
-#[pymethods]
 impl Resources {
-    #[new]
     pub fn new(cpu: u32, memory: String, storage: String, gpu: Option<GpuConfig>) -> Self {
         Resources {
             cpu,
@@ -138,44 +179,64 @@ impl Resources {
     }
 }
 
+#[cfg(feature = "python")]
+#[pymethods]
+impl Resources {
+    #[new]
+    pub fn py_new(cpu: u32, memory: String, storage: String, gpu: Option<GpuConfig>) -> Self {
+        Self::new(cpu, memory, storage, gpu)
+    }
+
+    #[getter]
+    pub fn cpu(&self) -> u32 {
+        self.cpu
+    }
+
+    #[getter]
+    pub fn memory(&self) -> String {
+        self.memory.clone()
+    }
+
+    #[getter]
+    pub fn storage(&self) -> String {
+        self.storage.clone()
+    }
+
+    #[getter]
+    pub fn gpu(&self) -> Option<GpuConfig> {
+        self.gpu.clone()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct DeploymentConfig {
     /// The environment this deployment config applies to (e.g. "production", "staging", "dev")
-    #[pyo3(get)]
     pub environment: String,
 
     /// The provider to deploy to (e.g. "aws", "gcp", "azure", "local")
-    #[pyo3(get)]
     pub provider: Option<String>,
 
     /// The location/region to deploy to (e.g. ["us-east-1", "us-west-2"] for AWS)
-    #[pyo3(get)]
     pub location: Option<Vec<String>>,
 
     /// Base URLs where the service is deployed and accessible
     /// Example: ["https://api.example.com", "https://api.example.com/v2"]
-    #[pyo3(get)]
     #[serde(alias = "endpoints")]
     pub urls: Vec<String>,
 
     /// The resource requirements for this deployment config
-    #[pyo3(get)]
     pub resources: Option<Resources>,
 
     /// Additional links related to this deployment (e.g. monitoring dashboard, logs, etc.)
-    #[pyo3(get)]
     pub links: Option<HashMap<String, String>>,
 
     /// Health check endpoint path (relative to base URL)
     /// Example: "/health" or "/api/v1/health"
-    #[pyo3(get)]
     pub healthcheck: Option<String>,
 }
-#[pymethods]
+
 impl DeploymentConfig {
-    #[new]
-    #[pyo3(signature = (environment, provider=None, location=None, urls=None, resources=None, links=None, healthcheck=None))]
     pub fn new(
         environment: String,
         provider: Option<String>,
@@ -197,22 +258,78 @@ impl DeploymentConfig {
     }
 }
 
+#[cfg(feature = "python")]
+#[pymethods]
+impl DeploymentConfig {
+    #[new]
+    #[pyo3(signature = (environment, provider=None, location=None, urls=None, resources=None, links=None, healthcheck=None))]
+    pub fn py_new(
+        environment: String,
+        provider: Option<String>,
+        location: Option<Vec<String>>,
+        urls: Option<Vec<String>>,
+        resources: Option<Resources>,
+        links: Option<HashMap<String, String>>,
+        healthcheck: Option<String>,
+    ) -> Self {
+        Self::new(
+            environment,
+            provider,
+            location,
+            urls,
+            resources,
+            links,
+            healthcheck,
+        )
+    }
+
+    #[getter]
+    pub fn environment(&self) -> String {
+        self.environment.clone()
+    }
+
+    #[getter]
+    pub fn provider(&self) -> Option<String> {
+        self.provider.clone()
+    }
+
+    #[getter]
+    pub fn location(&self) -> Option<Vec<String>> {
+        self.location.clone()
+    }
+
+    #[getter]
+    pub fn urls(&self) -> Vec<String> {
+        self.urls.clone()
+    }
+
+    #[getter]
+    pub fn resources(&self) -> Option<Resources> {
+        self.resources.clone()
+    }
+
+    #[getter]
+    pub fn links(&self) -> Option<HashMap<String, String>> {
+        self.links.clone()
+    }
+
+    #[getter]
+    pub fn healthcheck(&self) -> Option<String> {
+        self.healthcheck.clone()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq)]
-#[pyclass(eq, from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, from_py_object))]
 pub struct DriftConfig {
     #[serde(default)]
-    #[pyo3(get)]
     pub active: bool,
     #[serde(default)]
-    #[pyo3(get)]
     pub deactivate_others: bool,
-    #[pyo3(get)]
     pub drift_type: Vec<String>,
 }
 
-#[pymethods]
 impl DriftConfig {
-    #[new]
     pub fn new(active: bool, deactivate_others: bool, drift_type: Vec<String>) -> Self {
         DriftConfig {
             active,
@@ -222,37 +339,53 @@ impl DriftConfig {
     }
 }
 
-#[pyclass(eq, from_py_object)]
+#[cfg(feature = "python")]
+#[pymethods]
+impl DriftConfig {
+    #[new]
+    pub fn py_new(active: bool, deactivate_others: bool, drift_type: Vec<String>) -> Self {
+        Self::new(active, deactivate_others, drift_type)
+    }
+
+    #[getter]
+    pub fn active(&self) -> bool {
+        self.active
+    }
+
+    #[getter]
+    pub fn deactivate_others(&self) -> bool {
+        self.deactivate_others
+    }
+
+    #[getter]
+    pub fn drift_type(&self) -> Vec<String> {
+        self.drift_type.clone()
+    }
+}
+
+#[cfg_attr(feature = "python", pyclass(eq, from_py_object))]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CardPath {
-    #[pyo3(get)]
     pub alias: String,
     #[serde(alias = "type")]
-    #[pyo3(get)]
     pub registry_type: RegistryType,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[pyo3(get)]
     pub drift: Option<DriftConfig>,
-    #[pyo3(get)]
     pub path: PathBuf,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[pyo3(get)]
     pub version_type: Option<VersionType>,
 }
 
 impl CardPath {
     pub fn validate(&mut self, root_path: &Path) -> Result<(), TypeError> {
-        // drift only supports model and prompt registry
         let has_drift = self.drift.is_some();
         let is_model_or_prompt =
             self.registry_type == RegistryType::Model || self.registry_type == RegistryType::Prompt;
 
-        // Only allow drift configuration for model cards
         if has_drift && !is_model_or_prompt {
             return Err(TypeError::InvalidConfiguration);
         }
 
-        // validate that the path exists and is a file
         let full_path = if self.path.is_absolute() {
             self.path.clone()
         } else {
@@ -266,6 +399,35 @@ impl CardPath {
             )));
         }
         Ok(())
+    }
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl CardPath {
+    #[getter]
+    pub fn alias(&self) -> String {
+        self.alias.clone()
+    }
+
+    #[getter]
+    pub fn registry_type(&self) -> RegistryType {
+        self.registry_type.clone()
+    }
+
+    #[getter]
+    pub fn drift(&self) -> Option<DriftConfig> {
+        self.drift.clone()
+    }
+
+    #[getter]
+    pub fn path(&self) -> PathBuf {
+        self.path.clone()
+    }
+
+    #[getter]
+    pub fn version_type(&self) -> Option<VersionType> {
+        self.version_type.clone()
     }
 }
 
@@ -293,101 +455,23 @@ mod version_deserializer {
 }
 
 /// Lock a service card by registering it if it doesn't have a uid, or validating it if it does
-#[pyclass(eq, from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, from_py_object))]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct Card {
-    #[pyo3(get)]
     pub alias: String,
     #[serde(default, skip_serializing_if = "String::is_empty")]
-    #[pyo3(get)]
     pub space: String,
-    #[pyo3(get)]
     pub name: String,
     #[serde(default, deserialize_with = "version_deserializer::deserialize")]
-    #[pyo3(get)]
     pub version: Option<String>,
     #[serde(alias = "type")]
-    #[pyo3(get)]
     pub registry_type: RegistryType,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[pyo3(get)]
     pub drift: Option<DriftConfig>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[pyo3(get)]
     pub uid: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[pyo3(get)]
     pub version_type: Option<VersionType>,
-}
-
-#[pymethods]
-impl Card {
-    #[new]
-    #[pyo3(signature = (alias, registry_type=None, space=None, name=None, version=None, uid=None, card=None, drift=None, version_type=None))]
-    #[allow(clippy::too_many_arguments)]
-    pub fn new(
-        alias: String,
-        registry_type: Option<RegistryType>,
-        space: Option<&str>,
-        name: Option<&str>,
-        version: Option<&str>,
-        uid: Option<&str>,
-        card: Option<Bound<'_, PyAny>>,
-        drift: Option<DriftConfig>,
-        version_type: Option<VersionType>,
-    ) -> Result<Self, TypeError> {
-        // If card object is provided, extract all attributes from it
-        if let Some(card) = card {
-            let registry_type = extract_py_attr::<RegistryType>(&card, "registry_type")?;
-
-            let uid = extract_py_attr::<Option<String>>(&card, "uid")?;
-
-            let name = extract_py_attr::<String>(&card, "name")?;
-
-            let space = extract_py_attr::<String>(&card, "space")?;
-
-            let version = extract_py_attr::<String>(&card, "version")?;
-
-            return Ok(Card {
-                space,
-                name,
-                version: Some(version),
-                uid,
-                registry_type,
-                alias,
-                drift,
-                version_type,
-            });
-        }
-
-        let registry_type = match registry_type {
-            Some(registry_type) => registry_type,
-            None => {
-                error!("Registry type is required unless a registered card is provided");
-                return Err(TypeError::MissingRegistryTypeError);
-            }
-        };
-
-        // Validate that either (space AND name) OR uid is provided
-        let has_space_and_name = space.is_some() && name.is_some();
-        let has_uid = uid.is_some();
-
-        if !has_space_and_name && !has_uid {
-            error!("Either both space and name, or uid must be provided");
-            return Err(TypeError::MissingServiceCardArgsError);
-        }
-
-        Ok(Card {
-            space: space.map(String::from).unwrap_or_default(),
-            name: name.map(String::from).unwrap_or_default(),
-            version: version.map(String::from),
-            uid: uid.map(String::from),
-            registry_type,
-            alias,
-            drift,
-            version_type,
-        })
-    }
 }
 
 impl Card {
@@ -416,12 +500,10 @@ impl Card {
 
     /// Validate the card configuration to ensure drift is only used for model cards
     pub fn validate(&mut self, service_space: &str) -> Result<(), TypeError> {
-        // drift only supports model and prompt registry
         let has_drift = self.drift.is_some();
         let is_model_or_prompt =
             self.registry_type == RegistryType::Model || self.registry_type == RegistryType::Prompt;
 
-        // Only allow drift configuration for model cards
         if has_drift && !is_model_or_prompt {
             return Err(TypeError::InvalidConfiguration);
         }
@@ -441,6 +523,111 @@ impl Card {
     }
 }
 
+#[cfg(feature = "python")]
+#[pymethods]
+impl Card {
+    #[new]
+    #[pyo3(signature = (alias, registry_type=None, space=None, name=None, version=None, uid=None, card=None, drift=None, version_type=None))]
+    #[allow(clippy::too_many_arguments)]
+    pub fn py_new(
+        alias: String,
+        registry_type: Option<RegistryType>,
+        space: Option<&str>,
+        name: Option<&str>,
+        version: Option<&str>,
+        uid: Option<&str>,
+        card: Option<Bound<'_, PyAny>>,
+        drift: Option<DriftConfig>,
+        version_type: Option<VersionType>,
+    ) -> Result<Self, TypeError> {
+        if let Some(card) = card {
+            let registry_type = extract_py_attr::<RegistryType>(&card, "registry_type")?;
+            let uid = extract_py_attr::<Option<String>>(&card, "uid")?;
+            let name = extract_py_attr::<String>(&card, "name")?;
+            let space = extract_py_attr::<String>(&card, "space")?;
+            let version = extract_py_attr::<String>(&card, "version")?;
+
+            return Ok(Card {
+                space,
+                name,
+                version: Some(version),
+                uid,
+                registry_type,
+                alias,
+                drift,
+                version_type,
+            });
+        }
+
+        let registry_type = match registry_type {
+            Some(registry_type) => registry_type,
+            None => {
+                error!("Registry type is required unless a registered card is provided");
+                return Err(TypeError::MissingRegistryTypeError);
+            }
+        };
+
+        let has_space_and_name = space.is_some() && name.is_some();
+        let has_uid = uid.is_some();
+
+        if !has_space_and_name && !has_uid {
+            error!("Either both space and name, or uid must be provided");
+            return Err(TypeError::MissingServiceCardArgsError);
+        }
+
+        Ok(Card {
+            space: space.map(String::from).unwrap_or_default(),
+            name: name.map(String::from).unwrap_or_default(),
+            version: version.map(String::from),
+            uid: uid.map(String::from),
+            registry_type,
+            alias,
+            drift,
+            version_type,
+        })
+    }
+
+    #[getter]
+    pub fn alias(&self) -> String {
+        self.alias.clone()
+    }
+
+    #[getter]
+    pub fn space(&self) -> String {
+        self.space.clone()
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
+    #[getter]
+    pub fn version(&self) -> Option<String> {
+        self.version.clone()
+    }
+
+    #[getter]
+    pub fn registry_type(&self) -> RegistryType {
+        self.registry_type.clone()
+    }
+
+    #[getter]
+    pub fn drift(&self) -> Option<DriftConfig> {
+        self.drift.clone()
+    }
+
+    #[getter]
+    pub fn uid(&self) -> Option<String> {
+        self.uid.clone()
+    }
+
+    #[getter]
+    pub fn version_type(&self) -> Option<VersionType> {
+        self.version_type.clone()
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum CardVariant {
@@ -449,13 +636,6 @@ pub enum CardVariant {
 }
 
 impl CardVariant {
-    pub fn to_bound_py_any<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, TypeError> {
-        match self {
-            CardVariant::Card(args) => Ok(args.clone().into_bound_py_any(py)?),
-            CardVariant::Path(path) => Ok(path.clone().into_bound_py_any(py)?),
-        }
-    }
-
     pub fn set_space(&mut self, service_space: &str) {
         if let CardVariant::Card(args) = self {
             args.set_space(service_space);
@@ -480,7 +660,7 @@ impl CardVariant {
     pub fn space(&self) -> &str {
         match self {
             CardVariant::Card(args) => &args.space,
-            CardVariant::Path(_) => "missing", // space is not available for path variant until we load the card content at runtime
+            CardVariant::Path(_) => "missing",
         }
     }
 
@@ -506,6 +686,16 @@ impl CardVariant {
     }
 }
 
+#[cfg(feature = "python")]
+impl CardVariant {
+    pub fn to_bound_py_any<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, TypeError> {
+        match self {
+            CardVariant::Card(args) => Ok(args.clone().into_bound_py_any(py)?),
+            CardVariant::Path(path) => Ok(path.clone().into_bound_py_any(py)?),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(untagged)]
 pub enum AgentConfig {
@@ -514,19 +704,6 @@ pub enum AgentConfig {
 }
 
 impl AgentConfig {
-    pub fn to_a2a_card<'py>(
-        &self,
-        py: Python<'py>,
-    ) -> Result<Bound<'py, AgentSpec>, AgentConfigError> {
-        match self {
-            AgentConfig::Spec(spec) => {
-                let agent_card = Py::new(py, spec.as_ref().clone())?;
-                let bound_card = agent_card.bind(py).clone();
-                Ok(bound_card)
-            }
-            AgentConfig::Path(_) => Err(AgentConfigError::InvalidAgentConfig),
-        }
-    }
     pub fn resolve(self, root_path: &Path) -> Result<Self, AgentConfigError> {
         match self {
             AgentConfig::Spec(spec) => Ok(AgentConfig::Spec(spec)),
@@ -551,29 +728,42 @@ impl AgentConfig {
         root_path: &Path,
         deploy_config: &Option<Vec<DeploymentConfig>>,
     ) -> Result<(), AgentConfigError> {
-        // validates the agent configuration
         match self {
             AgentConfig::Spec(spec) => {
                 spec.validate(root_path, deploy_config)?;
                 Ok(())
             }
-            AgentConfig::Path(_) => Err(AgentConfigError::InvalidAgentConfig), // Path should have been resolved at this point
+            AgentConfig::Path(_) => Err(AgentConfigError::InvalidAgentConfig),
+        }
+    }
+}
+
+#[cfg(feature = "python")]
+impl AgentConfig {
+    pub fn to_a2a_card<'py>(
+        &self,
+        py: Python<'py>,
+    ) -> Result<Bound<'py, AgentSpec>, AgentConfigError> {
+        match self {
+            AgentConfig::Spec(spec) => {
+                let agent_card = Py::new(py, spec.as_ref().clone())?;
+                let bound_card = agent_card.bind(py).clone();
+                Ok(bound_card)
+            }
+            AgentConfig::Path(_) => Err(AgentConfigError::InvalidAgentConfig),
         }
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default)]
-#[pyclass(from_py_object)]
+#[cfg_attr(feature = "python", pyclass(from_py_object))]
 pub struct ServiceConfig {
-    #[pyo3(get)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub version: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cards: Option<Vec<CardVariant>>,
-    #[pyo3(get)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub write_dir: Option<String>,
-    #[pyo3(get)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub mcp: Option<McpConfig>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -592,31 +782,24 @@ impl ServiceConfig {
         service_type: &ServiceType,
         deployment_config: &Option<Vec<DeploymentConfig>>,
     ) -> Result<(), TypeError> {
-        // validate cards and set space if not provided
         if let Some(cards) = &mut self.cards {
             for card in cards {
                 card.validate(service_space, root_path)?;
             }
         }
 
-        // MCP services must have MCP config
         if service_type == &ServiceType::Mcp && self.mcp.is_none() {
             return Err(TypeError::MissingMCPConfig);
         }
 
-        // Agent services must have agent config
         if service_type == &ServiceType::Agent && self.agent.is_none() {
             return Err(AgentConfigError::MissingAgentConfig.into());
         }
 
-        // Validate agent config if present
         if let Some(agent_config) = &mut self.agent {
-            // currently validates:
-            // 1. Agent Skills (if provided)
             agent_config.validate(root_path, deployment_config)?;
         }
 
-        // Workflow services must have a workflow config, and it must be a valid DAG
         if service_type == &ServiceType::Workflow {
             if let Some(wf) = &self.workflow {
                 wf.validate()?;
@@ -631,7 +814,6 @@ impl ServiceConfig {
     }
 
     pub fn resolve(&mut self, root_path: &Path) -> Result<(), AgentConfigError> {
-        // resolve agent config if it's a path
         if let Some(agent_config) = self.agent.take() {
             self.agent = Some(agent_config.resolve(root_path)?);
         }
@@ -639,10 +821,11 @@ impl ServiceConfig {
     }
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl ServiceConfig {
     #[new]
-    pub fn new(
+    pub fn py_new(
         version: Option<String>,
         cards: Option<Vec<Bound<'_, PyAny>>>,
         write_dir: Option<String>,
@@ -651,7 +834,6 @@ impl ServiceConfig {
     ) -> Result<Self, TypeError> {
         let agent_config = agent.map(|spec| AgentConfig::Spec(Box::new(spec)));
 
-        // iterate over cards and convert to CardVariant
         let cards = if let Some(cards) = cards {
             let mut card_variants = Vec::new();
             for card in cards {
@@ -680,6 +862,21 @@ impl ServiceConfig {
             potato: None,
             workflow: None,
         })
+    }
+
+    #[getter]
+    pub fn version(&self) -> Option<String> {
+        self.version.clone()
+    }
+
+    #[getter]
+    pub fn write_dir(&self) -> Option<String> {
+        self.write_dir.clone()
+    }
+
+    #[getter]
+    pub fn mcp(&self) -> Option<McpConfig> {
+        self.mcp.clone()
     }
 
     #[getter]

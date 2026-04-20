@@ -28,12 +28,12 @@ Teams use OpsML to bring structure and governance to AI systems: consistent vers
 ## What OpsML Covers
 
 - **Traditional ML** — version and track datasets, models, and experiments with full artifact lineage
-- **GenAI** — manage and version prompts across providers (OpenAI, Anthropic, etc.) with `PromptCard`
+- **Agentic** — manage and version prompts, create, register, and evaluate agents across providers (OpenAI, Anthropic, etc.) with spec driven prompts and agent definitions
 - **Agents** — register, version, and govern agents with `AgentCard`; define specs in YAML and manage the full lifecycle via CLI
 - **Services** — bundle cards (models + prompts + agents) into versioned `ServiceCard` deployments with a YAML spec + CLI lock/install workflow
 - **Monitoring** — drift detection and data profiling via [Scouter](https://github.com/demml/scouter)
-- **Observability** *(beta)* — OpenTelemetry trace ingestion and span visualization for any instrumented service, not just agents
-- **Evaluations** *(beta)* — offline and online GenAI evaluation tied to versioned prompt cards
+- **Observability** — OpenTelemetry trace ingestion and span visualization for any instrumented service, not just agents
+- **Evaluations** — offline and online GenAI evaluation tied to versioned prompt cards
 
 ## Status
 

@@ -1,6 +1,7 @@
 // This module contains utility functions for the opsml_cli crate.
 use crate::error::CliError;
-use opsml_cards::{PromptCard, ServiceCard};
+use opsml_cards::PromptCard;
+use opsml_cards::ServiceCard;
 pub use opsml_registry::utils::validate_service_cards;
 use opsml_registry::{CardRegistries, CardRegistry};
 use opsml_semver::VersionType;
@@ -160,6 +161,7 @@ pub fn register_service_card(
     space: &str,
     name: &str,
 ) -> Result<(ServiceCard, bool), CliError> {
+    // Step 1: Process cards with paths and register them, updating the spec in-place
     process_cards(spec, registries)?;
 
     let registry = registries.get_registry(&RegistryType::from(&spec.service_type));

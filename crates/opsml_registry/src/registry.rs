@@ -1,37 +1,59 @@
 use crate::error::RegistryError;
 use crate::registries::card::OpsmlCardRegistry;
+use crate::utils::upload_card_artifacts;
 use crate::utils::verify_card_rs;
-use crate::utils::{check_if_card, download_card, upload_card_artifacts, verify_card};
+#[cfg(feature = "python")]
+use crate::utils::{check_if_card, download_card, verify_card};
+#[cfg(feature = "python")]
 use crate::utils::{upload_drift_profile_map, upload_profile};
+#[cfg(feature = "python")]
 use const_format::concatcp;
-use opsml_cards::traits::{OpsmlCard, ProfileExt};
+use opsml_cards::traits::OpsmlCard;
+use opsml_cards::traits::ProfileExt;
 use opsml_colors::Colorize;
-use opsml_interfaces::{DriftArgs, SaveKwargs};
+#[cfg(feature = "python")]
+use opsml_interfaces::SaveKwargs;
 use opsml_semver::VersionType;
 use opsml_types::*;
-use opsml_types::{cards::CardTable, contracts::*};
-use opsml_utils::{clean_string, unwrap_pystring};
+use opsml_types::{DriftArgs, cards::CardTable, contracts::*};
+use opsml_utils::clean_string;
+#[cfg(feature = "python")]
+use opsml_utils::unwrap_pystring;
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
 use scouter_client::SCOUTER_TAG_PREFIX;
+#[cfg(feature = "python")]
 use scouter_client::try_set_span_attribute;
 use std::path::PathBuf;
 use tempfile::TempDir;
 use tracing::{debug, error, instrument};
 
+#[cfg(feature = "python")]
 const MODEL_KEY_ATTR: &str = "card.model.uid";
+#[cfg(feature = "python")]
 const PROMPT_KEY_ATTR: &str = "card.prompt.uid";
+#[cfg(feature = "python")]
 const SERVICE_KEY_ATTR: &str = "card.service.uid";
+#[cfg(feature = "python")]
 const EXPERIMENT_KEY_ATTR: &str = "card.experiment.uid";
+#[cfg(feature = "python")]
 const DATA_KEY_ATTR: &str = "card.data.uid";
 
 // combined patterns
+#[cfg(feature = "python")]
 const DATA_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", DATA_KEY_ATTR);
+#[cfg(feature = "python")]
 const EXPERIMENT_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", EXPERIMENT_KEY_ATTR);
+#[cfg(feature = "python")]
 const SERVICE_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", SERVICE_KEY_ATTR);
+#[cfg(feature = "python")]
 const PROMPT_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", PROMPT_KEY_ATTR);
+#[cfg(feature = "python")]
 const MODEL_TAG: &str = concatcp!(SCOUTER_TAG_PREFIX, ".", MODEL_KEY_ATTR);
 
 /// Set uid as a tag on the current active span
+#[cfg(feature = "python")]
 fn set_attribute_by_registry_type(
     py: Python<'_>,
     registry_type: &RegistryType,
@@ -51,6 +73,7 @@ fn set_attribute_by_registry_type(
 }
 
 /// Helper struct to hold parameters for card registration
+#[cfg(feature = "python")]
 #[derive(Debug)]
 struct CardRegistrationParams<'py> {
     card: &'py Bound<'py, PyAny>,
@@ -72,13 +95,16 @@ struct CardRegistrationParams<'py> {
 ///
 /// # Errors
 /// * `OpsmlError` - Error
+#[cfg(feature = "python")]
 fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> Result<RegistryType, RegistryError> {
     match registry_type.is_instance_of::<RegistryType>() {
         true => Ok(registry_type.extract::<RegistryType>().inspect_err(|e| {
             error!("Failed to extract registry type: {e}");
         })?),
         false => {
-            let registry_type = registry_type.extract::<String>().unwrap();
+            let registry_type = registry_type
+                .extract::<String>()
+                .map_err(|e| RegistryError::Error(e.to_string()))?;
             Ok(RegistryType::from_string(&registry_type).inspect_err(|e| {
                 error!("Failed to convert string to registry type: {e}");
             })?)
@@ -86,15 +112,16 @@ fn extract_registry_type(registry_type: &Bound<'_, PyAny>) -> Result<RegistryTyp
     }
 }
 
-#[pyclass(skip_from_py_object)]
-#[pyo3(module = "opsml.card")]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
+#[cfg_attr(feature = "python", pyo3(module = "opsml.card"))]
 #[derive(Clone)]
 pub struct CardRegistry {
-    registry_type: RegistryType,
-    table_name: String,
+    pub registry_type: RegistryType,
+    pub table_name: String,
     pub registry: OpsmlCardRegistry,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl CardRegistry {
     /// Create new CardRegistry
@@ -128,16 +155,18 @@ impl CardRegistry {
     }
 
     #[getter]
-    pub fn table_name(&self) -> &str {
-        &self.table_name
+    pub fn table_name(&self) -> String {
+        self.table_name.clone()
     }
 
     #[getter]
-    pub fn mode(&self) -> RegistryMode {
+    #[pyo3(name = "mode")]
+    pub fn py_mode(&self) -> RegistryMode {
         self.registry.mode()
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[pyo3(name = "list_cards")]
     #[pyo3(signature = (
         uid=None,
         space=None,
@@ -149,7 +178,7 @@ impl CardRegistry {
         limit=100
     ))]
     #[instrument(skip_all)]
-    pub fn list_cards(
+    pub fn py_list_cards(
         &self,
         uid: Option<String>,
         space: Option<String>,
@@ -160,30 +189,16 @@ impl CardRegistry {
         sort_by_timestamp: Option<bool>,
         limit: i32,
     ) -> Result<CardList, RegistryError> {
-        debug!(
-            "Listing cards - {:?} - {:?} - {:?} - {:?} - {:?} - {:?} - {:?} - {:?}",
-            uid, name, space, version, max_date, tags, limit, sort_by_timestamp
-        );
-
-        let name = name.map(|name| clean_string(&name)).transpose()?;
-
-        let space = space.map(|space| clean_string(&space)).transpose()?;
-
-        let query_args = CardQueryArgs {
+        self.list_cards(
             uid,
-            name,
             space,
+            name,
             version,
             max_date,
             tags,
-            limit: Some(limit),
             sort_by_timestamp,
-            registry_type: self.registry_type.clone(),
-        };
-
-        let cards = self.registry.list_cards(&query_args)?;
-
-        Ok(CardList { cards })
+            limit,
+        )
     }
 
     #[pyo3(signature = (card, version_type=VersionType::Minor, pre_tag=None, build_tag=None, save_kwargs=None))]
@@ -277,6 +292,7 @@ impl CardRegistry {
     }
 }
 
+#[cfg(feature = "python")]
 impl CardRegistry {
     /// Rolls back card registration if card update or save fails
     /// This will delete the card from the registry and remove any existing artifacts
@@ -746,6 +762,49 @@ impl CardRegistry {
         })
     }
 
+    pub fn mode(&self) -> RegistryMode {
+        self.registry.mode()
+    }
+
+    #[instrument(skip_all)]
+    #[allow(clippy::too_many_arguments)]
+    pub fn list_cards(
+        &self,
+        uid: Option<String>,
+        space: Option<String>,
+        name: Option<String>,
+        version: Option<String>,
+        max_date: Option<String>,
+        tags: Option<Vec<String>>,
+        sort_by_timestamp: Option<bool>,
+        limit: i32,
+    ) -> Result<CardList, RegistryError> {
+        debug!(
+            "Listing cards - {:?} - {:?} - {:?} - {:?} - {:?} - {:?} - {:?} - {:?}",
+            uid, name, space, version, max_date, tags, limit, sort_by_timestamp
+        );
+
+        let name = name.map(|name| clean_string(&name));
+
+        let space = space.map(|space| clean_string(&space));
+
+        let query_args = CardQueryArgs {
+            uid,
+            name,
+            space,
+            version,
+            max_date,
+            tags,
+            limit: Some(limit),
+            sort_by_timestamp,
+            registry_type: self.registry_type.clone(),
+        };
+
+        let cards = self.registry.list_cards(&query_args)?;
+
+        Ok(CardList { cards })
+    }
+
     #[instrument(skip_all)]
     pub fn register_card_rs<T>(
         &self,
@@ -771,11 +830,30 @@ impl CardRegistry {
         if !create_response.deduplicated
             && let Err(e) = self.update_card_and_save_rs(card, &create_response)
         {
-            Self::rollback_card(&self.registry, &create_response)?;
+            Self::rollback_card_rs(&self.registry, &create_response)?;
             return Err(e);
         }
 
         debug!("Successfully registered card");
+        Ok(())
+    }
+
+    fn rollback_card_rs(
+        registry: &OpsmlCardRegistry,
+        card: &CreateCardResponse,
+    ) -> Result<(), RegistryError> {
+        let request = DeleteCardRequest {
+            uid: card.key.uid.clone(),
+            space: card.space.clone(),
+            registry_type: card.key.registry_type.clone(),
+        };
+
+        error!(
+            "Rolling back card - {} - {}/{} - v{}",
+            card.key.uid, card.space, card.name, card.version
+        );
+        registry.delete_card(request)?;
+
         Ok(())
     }
 
@@ -921,7 +999,7 @@ impl CardRegistry {
         println!(
             "{} - {} - {}/{} - v{}",
             Colorize::green("Registered card"),
-            Colorize::purple(&self.registry_type().to_string()),
+            Colorize::purple(&self.registry_type.to_string()),
             response.space,
             response.name,
             response.version
@@ -929,10 +1007,7 @@ impl CardRegistry {
 
         debug!(
             "Successfully registered card - {} - {}/{} - v{}",
-            self.registry_type(),
-            response.space,
-            response.name,
-            response.version
+            self.registry_type, response.space, response.name, response.version
         );
 
         Ok(response)
@@ -948,57 +1023,20 @@ impl CardRegistry {
     }
 }
 
-#[pyclass(skip_from_py_object)]
-#[pyo3(module = "opsml.card")]
+#[cfg_attr(feature = "python", pyclass(skip_from_py_object))]
+#[cfg_attr(feature = "python", pyo3(module = "opsml.card"))]
 #[derive(Clone)]
 pub struct CardRegistries {
-    #[pyo3(get)]
     pub experiment: CardRegistry,
-
-    #[pyo3(get)]
     pub model: CardRegistry,
-
-    #[pyo3(get)]
     pub data: CardRegistry,
-
-    #[pyo3(get)]
     pub prompt: CardRegistry,
-
-    #[pyo3(get)]
     pub service: CardRegistry,
-
-    #[pyo3(get)]
     pub mcp: CardRegistry,
-
-    #[pyo3(get)]
     pub agent: CardRegistry,
 }
 
 impl CardRegistries {
-    pub fn get_registry(&self, registry_type: &RegistryType) -> &CardRegistry {
-        match registry_type {
-            RegistryType::Experiment => &self.experiment,
-            RegistryType::Model => &self.model,
-            RegistryType::Data => &self.data,
-            RegistryType::Prompt => &self.prompt,
-            RegistryType::Service => &self.service,
-            RegistryType::Mcp => &self.mcp,
-            RegistryType::Agent => &self.agent,
-            _ => &self.model, // default to model registry
-        }
-    }
-}
-
-#[pymethods]
-impl CardRegistries {
-    /// Create new CardRegistries
-    /// CardRegistries is a primary interface that provides access to the inner workings of the
-    /// opsml registry system. The new method allows user to instantiate the registries from python
-    /// using the __init__ method. Given that the registries are instantiated in python and some of the
-    /// inner working require an async runtime, the new method will create a new tokio runtime into an Arc so that
-    /// it can be shared, cloned and used across the different registries in order to prevent deadlocks.
-    #[new]
-    #[instrument(skip_all)]
     pub fn new() -> Result<Self, RegistryError> {
         let experiment = CardRegistry::rust_new(&RegistryType::Experiment)?;
         let model = CardRegistry::rust_new(&RegistryType::Model)?;
@@ -1017,5 +1055,69 @@ impl CardRegistries {
             mcp,
             agent,
         })
+    }
+
+    pub fn get_registry(&self, registry_type: &RegistryType) -> &CardRegistry {
+        match registry_type {
+            RegistryType::Experiment => &self.experiment,
+            RegistryType::Model => &self.model,
+            RegistryType::Data => &self.data,
+            RegistryType::Prompt => &self.prompt,
+            RegistryType::Service => &self.service,
+            RegistryType::Mcp => &self.mcp,
+            RegistryType::Agent => &self.agent,
+            _ => &self.model, // default to model registry
+        }
+    }
+}
+
+#[cfg(feature = "python")]
+#[pymethods]
+impl CardRegistries {
+    /// Create new CardRegistries
+    /// CardRegistries is a primary interface that provides access to the inner workings of the
+    /// opsml registry system. The new method allows user to instantiate the registries from python
+    /// using the __init__ method. Given that the registries are instantiated in python and some of the
+    /// inner working require an async runtime, the new method will create a new tokio runtime into an Arc so that
+    /// it can be shared, cloned and used across the different registries in order to prevent deadlocks.
+    #[new]
+    #[instrument(skip_all)]
+    pub fn py_new() -> Result<Self, RegistryError> {
+        Self::new()
+    }
+
+    #[getter]
+    pub fn experiment(&self) -> CardRegistry {
+        self.experiment.clone()
+    }
+
+    #[getter]
+    pub fn model(&self) -> CardRegistry {
+        self.model.clone()
+    }
+
+    #[getter]
+    pub fn data(&self) -> CardRegistry {
+        self.data.clone()
+    }
+
+    #[getter]
+    pub fn prompt(&self) -> CardRegistry {
+        self.prompt.clone()
+    }
+
+    #[getter]
+    pub fn service(&self) -> CardRegistry {
+        self.service.clone()
+    }
+
+    #[getter]
+    pub fn mcp(&self) -> CardRegistry {
+        self.mcp.clone()
+    }
+
+    #[getter]
+    pub fn agent(&self) -> CardRegistry {
+        self.agent.clone()
     }
 }

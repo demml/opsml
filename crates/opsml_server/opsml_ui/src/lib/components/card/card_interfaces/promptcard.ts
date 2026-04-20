@@ -1,5 +1,5 @@
 import { RegistryType } from "$lib/utils";
-import type { Prompt } from "$lib/components/genai/types";
+import type { Prompt } from "$lib/components/agent/types";
 import type { DriftProfileUri } from "$lib/components/scouter/types";
 import type { AgentEvalProfile } from "$lib/components/scouter/agent/types";
 
@@ -25,7 +25,7 @@ export interface PromptCard {
   eval_profile?: AgentEvalProfile;
 }
 
-export function isPromptCard(obj: any): obj is PromptCard {
+export function isPromptCard(obj: unknown): obj is PromptCard {
   return (
     obj &&
     obj.registry_type === "Prompt" &&

@@ -1,11 +1,16 @@
 use crate::error::CardError;
-use crate::traits::{OpsmlCard, ProfileExt};
+use crate::traits::OpsmlCard;
+use crate::traits::ProfileExt;
 use crate::utils::BaseArgs;
+#[cfg(feature = "python")]
 use crate::{DataCard, ExperimentCard, ModelCard, PromptCard};
 use chrono::{DateTime, Utc};
+#[cfg(feature = "python")]
 use opsml_interfaces::{DataLoadKwargs, ModelLoadKwargs};
 use opsml_service::OpsmlServiceSpec;
-use opsml_types::contracts::{AgentSpec, Card, CardEntry, ServiceConfig};
+#[cfg(feature = "python")]
+use opsml_types::contracts::AgentSpec;
+use opsml_types::contracts::{Card, CardEntry, ServiceConfig};
 use opsml_types::{
     RegistryType, SaveName, Suffix,
     contracts::{
@@ -13,26 +18,37 @@ use opsml_types::{
     },
 };
 use opsml_utils::PyHelperFuncs;
+#[cfg(feature = "python")]
 use pyo3::IntoPyObjectExt;
+#[cfg(feature = "python")]
 use pyo3::PyTraverseError;
+#[cfg(feature = "python")]
 use pyo3::PyVisit;
+#[cfg(feature = "python")]
 use pyo3::{prelude::*, types::PyDict};
+use scouter_client::ProfileRequest;
 use serde::{
     Deserialize, Deserializer, Serialize, Serializer,
     de::{self, MapAccess, Visitor},
     ser::SerializeStruct,
 };
 use sha2::{Digest, Sha256};
+#[cfg(feature = "python")]
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use tracing::{debug, error, instrument};
+use tracing::error;
+#[cfg(feature = "python")]
+use tracing::{debug, instrument};
 
+#[cfg(feature = "python")]
 type PyBoundAny<'py> = Bound<'py, PyAny>;
+#[cfg(feature = "python")]
 type OptionalPyBound<'py> = Option<PyBoundAny<'py>>;
+#[cfg(feature = "python")]
 type ExtractedKwargs<'py> = (OptionalPyBound<'py>, OptionalPyBound<'py>);
 
 #[derive(PartialEq, Debug, Clone)]
-#[pyclass(eq, from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, from_py_object))]
 pub struct ServiceInfo {
     pub space: String,
     pub name: String,
@@ -53,11 +69,13 @@ impl ServiceInfo {
     }
 }
 
+#[cfg(feature = "python")]
 #[pyclass(skip_from_py_object)]
 struct CardListIter {
     inner: std::vec::IntoIter<Card>,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl CardListIter {
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
@@ -76,13 +94,13 @@ impl CardListIter {
 ///
 /// # Attributes
 /// * `cards`: A vector of `Card` objects
-#[pyclass(eq, skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(eq, get_all, skip_from_py_object))]
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 pub struct CardList {
-    #[pyo3(get)]
     pub cards: Vec<Card>,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl CardList {
     fn __iter__(slf: PyRef<'_, Self>) -> Result<Py<CardListIter>, CardError> {
@@ -142,57 +160,31 @@ impl CardList {
 
 /// ServiceCard is a collection of cards that can be associated and loaded in one call
 /// aka a ServiceCard. We use ServiceCard for consistency with developing "Applications".
-#[pyclass(subclass, skip_from_py_object)]
+#[cfg_attr(feature = "python", pyclass(subclass, skip_from_py_object))]
 #[derive(Debug)]
 pub struct ServiceCard {
-    #[pyo3(get, set)]
     pub space: String,
-
-    #[pyo3(get, set)]
     pub name: String,
-
-    #[pyo3(get, set)]
     pub version: String,
-
-    #[pyo3(get, set)]
     pub uid: String,
-
-    #[pyo3(get, set)]
     pub created_at: DateTime<Utc>,
-
-    #[pyo3(get)]
     pub cards: CardList,
-
-    #[pyo3(get)]
     pub opsml_version: String,
-
-    #[pyo3(get, set)]
     pub app_env: String,
-
-    #[pyo3(get)]
     pub is_card: bool,
-
-    #[pyo3(get)]
     pub registry_type: RegistryType,
 
+    #[cfg(feature = "python")]
     pub card_objs: HashMap<String, Py<PyAny>>,
 
-    #[pyo3(get, set)]
     pub experimentcard_uid: Option<String>,
-
-    #[pyo3(get)]
     pub service_type: ServiceType,
-
-    #[pyo3(get)]
     pub metadata: Option<ServiceMetadata>,
-
-    #[pyo3(get)]
     pub deploy: Option<Vec<DeploymentConfig>>,
-
-    #[pyo3(get)]
     pub service_config: Option<ServiceConfig>,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl ServiceCard {
     /// Create a new ServiceCard from the provided arguments
@@ -243,6 +235,109 @@ impl ServiceCard {
             deploy: spec.deploy,
             service_config: spec.service,
         })
+    }
+
+    #[getter]
+    pub fn space(&self) -> String {
+        self.space.clone()
+    }
+    #[setter]
+    pub fn set_space(&mut self, val: String) {
+        self.space = val;
+    }
+
+    #[getter]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+    #[setter]
+    pub fn set_name(&mut self, val: String) {
+        self.name = val;
+    }
+
+    #[getter]
+    pub fn version(&self) -> String {
+        self.version.clone()
+    }
+    #[setter]
+    pub fn set_version(&mut self, val: String) {
+        self.version = val;
+    }
+
+    #[getter]
+    pub fn uid(&self) -> String {
+        self.uid.clone()
+    }
+    #[setter]
+    pub fn set_uid(&mut self, val: String) {
+        self.uid = val;
+    }
+
+    #[getter]
+    pub fn created_at(&self) -> DateTime<Utc> {
+        self.created_at
+    }
+    #[setter]
+    pub fn set_created_at(&mut self, val: DateTime<Utc>) {
+        self.created_at = val;
+    }
+
+    #[getter]
+    pub fn cards(&self) -> CardList {
+        self.cards.clone()
+    }
+
+    #[getter]
+    pub fn opsml_version(&self) -> String {
+        self.opsml_version.clone()
+    }
+
+    #[getter]
+    pub fn app_env(&self) -> String {
+        self.app_env.clone()
+    }
+    #[setter]
+    pub fn set_app_env(&mut self, val: String) {
+        self.app_env = val;
+    }
+
+    #[getter]
+    pub fn is_card(&self) -> bool {
+        self.is_card
+    }
+
+    #[getter]
+    pub fn registry_type(&self) -> RegistryType {
+        self.registry_type.clone()
+    }
+
+    #[getter]
+    pub fn experimentcard_uid(&self) -> Option<String> {
+        self.experimentcard_uid.clone()
+    }
+    #[setter]
+    pub fn set_experimentcard_uid(&mut self, val: Option<String>) {
+        self.experimentcard_uid = val;
+    }
+
+    #[getter]
+    pub fn service_type(&self) -> ServiceType {
+        self.service_type.clone()
+    }
+
+    #[getter]
+    pub fn metadata(&self) -> Option<ServiceMetadata> {
+        self.metadata.clone()
+    }
+
+    #[getter]
+    pub fn deploy(&self) -> Option<Vec<DeploymentConfig>> {
+        self.deploy.clone()
+    }
+
+    #[getter]
+    pub fn service_config(&self) -> Option<ServiceConfig> {
+        self.service_config.clone()
     }
 
     #[getter]
@@ -304,20 +399,9 @@ impl ServiceCard {
         Ok(())
     }
 
-    #[pyo3(signature = (path), name = "save")]
-    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
-        let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        PyHelperFuncs::save_to_json(self, &card_save_path)?;
-
-        Ok(())
-    }
-
-    #[staticmethod]
-    #[pyo3(signature = (json_string))]
-    pub fn model_validate_json(json_string: String) -> Result<ServiceCard, CardError> {
-        Ok(serde_json::from_str(&json_string).inspect_err(|e| {
-            error!("Failed to validate json: {e}");
-        })?)
+    #[pyo3(signature = (path))]
+    pub fn save(&self, path: PathBuf) -> Result<(), CardError> {
+        self.save_card(path)
     }
 
     fn __traverse__(&self, visit: PyVisit) -> Result<(), PyTraverseError> {
@@ -329,44 +413,6 @@ impl ServiceCard {
 
     fn __clear__(&mut self) {
         self.card_objs.clear();
-    }
-
-    /// Calculate a content hash for the service card based on its JSON representation. This can be used to detect changes in the card's content.
-    /// This is needed for cli work to compare current state vs previous state of the card.
-    pub fn calculate_content_hash(&self) -> Result<Vec<u8>, CardError> {
-        let mut hasher = Sha256::new();
-        let mut service_json = serde_json::to_value(self)?;
-
-        // remove runtime-generated fields from the JSON before hashing (created_at)
-        if let Some(obj) = service_json.as_object_mut() {
-            obj.remove("created_at");
-            obj.remove("uid");
-        }
-        hasher.update(serde_json::to_string(&service_json)?.as_bytes());
-        Ok(hasher.finalize().to_vec())
-    }
-
-    /// Get the registry card for the service card
-    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
-        let record = ServiceCardClientRecord {
-            created_at: self.created_at,
-            app_env: self.app_env.clone(),
-            space: self.space.clone(),
-            name: self.name.clone(),
-            version: self.version.clone(),
-            uid: self.uid.clone(),
-            cards: self.cards.to_card_entries(),
-            opsml_version: self.opsml_version.clone(),
-            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
-            service_type: self.service_type.clone(),
-            metadata: self.metadata.clone(),
-            deployment: self.deploy.clone(),
-            service_config: self.service_config.clone(),
-            tags: self.metadata.as_ref().map_or(vec![], |m| m.tags.clone()),
-            content_hash: self.calculate_content_hash()?,
-        };
-
-        Ok(CardRecord::Service(Box::new(record)))
     }
 
     /// enable __getitem__ for ServiceCard alias calls
@@ -507,8 +553,19 @@ impl ServiceCard {
             version: self.version.clone(),
         }
     }
+
+    #[pyo3(name = "get_registry_card")]
+    pub fn get_registry_card_py(&self) -> Result<CardRecord, CardError> {
+        self.get_registry_card()
+    }
+
+    #[pyo3(name = "save_card")]
+    pub fn save_card_py(&self, path: PathBuf) -> Result<(), CardError> {
+        self.save_card(path)
+    }
 }
 
+#[cfg(feature = "python")]
 impl ServiceCard {
     #[instrument(skip_all)]
     pub fn from_path_rs(
@@ -572,14 +629,6 @@ impl ServiceCard {
 
         Ok(card_obj)
     }
-    pub fn load_service_json(path: &Path) -> Result<ServiceCard, CardError> {
-        let service_path = path.join(SaveName::Card).with_extension(Suffix::Json);
-        let json_string = std::fs::read_to_string(service_path).inspect_err(|e| {
-            error!("Failed to read file: {e}");
-        })?;
-        Self::model_validate_json(json_string)
-    }
-
     fn extract_kwargs<'py>(
         py: Python<'py>,
         kwargs: Option<&Bound<'py, PyDict>>,
@@ -630,7 +679,7 @@ impl ServiceCard {
         load_kwargs: Option<Bound<'_, PyAny>>,
     ) -> Result<Py<PyAny>, CardError> {
         let mut card_obj =
-            DataCard::model_validate_json(py, card_json.to_string(), interface.as_ref())?;
+            DataCard::model_validate_json_py(py, card_json.to_string(), interface.as_ref())?;
         let kwargs = load_kwargs.and_then(|kwargs| kwargs.extract::<DataLoadKwargs>().ok());
 
         card_obj
@@ -653,7 +702,7 @@ impl ServiceCard {
         load_kwargs: Option<Bound<'_, PyAny>>,
     ) -> Result<Py<PyAny>, CardError> {
         let mut card_obj =
-            ModelCard::model_validate_json(py, card_json.to_string(), interface.as_ref())?;
+            ModelCard::model_validate_json_py(py, card_json.to_string(), interface.as_ref())?;
         let kwargs = load_kwargs.and_then(|kwargs| kwargs.extract::<ModelLoadKwargs>().ok());
 
         card_obj
@@ -681,6 +730,59 @@ impl ServiceCard {
 }
 
 impl ServiceCard {
+    pub fn save_card(&self, path: PathBuf) -> Result<(), CardError> {
+        let card_save_path = path.join(SaveName::Card).with_extension(Suffix::Json);
+        PyHelperFuncs::save_to_json(self, &card_save_path)?;
+        Ok(())
+    }
+
+    pub fn calculate_content_hash(&self) -> Result<Vec<u8>, CardError> {
+        let mut hasher = Sha256::new();
+        let mut service_json = serde_json::to_value(self)?;
+
+        if let Some(obj) = service_json.as_object_mut() {
+            obj.remove("created_at");
+            obj.remove("uid");
+        }
+        hasher.update(serde_json::to_string(&service_json)?.as_bytes());
+        Ok(hasher.finalize().to_vec())
+    }
+
+    pub fn get_registry_card(&self) -> Result<CardRecord, CardError> {
+        let record = ServiceCardClientRecord {
+            created_at: self.created_at,
+            app_env: self.app_env.clone(),
+            space: self.space.clone(),
+            name: self.name.clone(),
+            version: self.version.clone(),
+            uid: self.uid.clone(),
+            cards: self.cards.to_card_entries(),
+            opsml_version: self.opsml_version.clone(),
+            username: std::env::var("OPSML_USERNAME").unwrap_or_else(|_| "guest".to_string()),
+            service_type: self.service_type.clone(),
+            metadata: self.metadata.clone(),
+            deployment: self.deploy.clone(),
+            service_config: self.service_config.clone(),
+            tags: self.metadata.as_ref().map_or(vec![], |m| m.tags.clone()),
+            content_hash: self.calculate_content_hash()?,
+        };
+        Ok(CardRecord::Service(Box::new(record)))
+    }
+
+    pub fn model_validate_json(json_string: String) -> Result<ServiceCard, CardError> {
+        Ok(serde_json::from_str(&json_string).inspect_err(|e| {
+            error!("Failed to validate json: {e}");
+        })?)
+    }
+
+    pub fn load_service_json(path: &Path) -> Result<ServiceCard, CardError> {
+        let service_path = path.join(SaveName::Card).with_extension(Suffix::Json);
+        let json_string = std::fs::read_to_string(service_path).inspect_err(|e| {
+            error!("Failed to read file: {e}");
+        })?;
+        Self::model_validate_json(json_string)
+    }
+
     /// Helper function for creating ServiceCard from within Rust. Used in the CLI lock command.
     pub fn rust_new(
         space: String,
@@ -705,6 +807,7 @@ impl ServiceCard {
             created_at: Utc::now(),
             cards: CardList::new_rs(cards),
             opsml_version: opsml_version::version(),
+            #[cfg(feature = "python")]
             card_objs: HashMap::new(),
             app_env: std::env::var("APP_ENV").unwrap_or_else(|_| "dev".to_string()),
             is_card: true,
@@ -787,7 +890,7 @@ impl OpsmlCard for ServiceCard {
 }
 
 impl ProfileExt for ServiceCard {
-    fn get_profile_request(&self) -> Result<scouter_client::ProfileRequest, CardError> {
+    fn get_profile_request(&self) -> Result<ProfileRequest, CardError> {
         Err(CardError::ProfileNotSupportedError(
             "ServiceCard does not support profiling".to_string(),
         ))
@@ -871,6 +974,7 @@ impl<'de> Deserialize<'de> for ServiceCard {
                 let mut created_at = None;
                 let mut opsml_version = None;
                 let mut cards = None;
+                #[cfg(feature = "python")]
                 let mut card_objs = None;
                 let mut app_env = None;
                 let mut is_card = None;
@@ -907,7 +1011,12 @@ impl<'de> Deserialize<'de> for ServiceCard {
                             cards = Some(map.next_value()?);
                         }
                         Field::CardObjs => {
-                            card_objs = None;
+                            let _: serde::de::IgnoredAny = map.next_value()?;
+
+                            #[cfg(feature = "python")]
+                            {
+                                card_objs = None;
+                            }
                         }
                         Field::AppEnv => {
                             app_env = Some(map.next_value()?);
@@ -945,6 +1054,7 @@ impl<'de> Deserialize<'de> for ServiceCard {
                 let opsml_version =
                     opsml_version.ok_or_else(|| de::Error::missing_field("opsml_version"))?;
                 let cards = cards.ok_or_else(|| de::Error::missing_field("cards"))?;
+                #[cfg(feature = "python")]
                 let card_objs = card_objs.unwrap_or_else(HashMap::new);
                 let app_env = app_env.ok_or_else(|| de::Error::missing_field("app_env"))?;
                 let is_card = is_card.unwrap_or(true);
@@ -963,6 +1073,7 @@ impl<'de> Deserialize<'de> for ServiceCard {
                     created_at,
                     cards,
                     opsml_version,
+                    #[cfg(feature = "python")]
                     card_objs,
                     is_card,
                     app_env,
@@ -995,5 +1106,114 @@ impl<'de> Deserialize<'de> for ServiceCard {
             "service_config",
         ];
         deserializer.deserialize_struct("ServiceCard", FIELDS, ServiceCardVisitor)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_service_info_update() {
+        let mut info = ServiceInfo {
+            space: "old_space".to_string(),
+            name: "old_name".to_string(),
+            version: "1.0.0".to_string(),
+        };
+
+        let result = info.update(
+            "new_space".to_string(),
+            "new_name".to_string(),
+            "2.0.0".to_string(),
+        );
+
+        assert!(result.is_ok());
+        assert_eq!(info.space, "new_space");
+        assert_eq!(info.name, "new_name");
+        assert_eq!(info.version, "2.0.0");
+    }
+
+    #[test]
+    fn test_cardlist_to_card_entries() {
+        let cards = vec![
+            Card {
+                alias: "card1".to_string(),
+                space: "space1".to_string(),
+                name: "name1".to_string(),
+                version: Some("1.0.0".to_string()),
+                registry_type: RegistryType::Data,
+                drift: None,
+                uid: Some("uid1".to_string()),
+                version_type: None,
+            },
+            Card {
+                alias: "card2".to_string(),
+                space: "space2".to_string(),
+                name: "name2".to_string(),
+                version: Some("2.0.0".to_string()),
+                registry_type: RegistryType::Model,
+                drift: None,
+                uid: Some("uid2".to_string()),
+                version_type: None,
+            },
+        ];
+
+        let card_list = CardList::new_rs(cards);
+        let entries = card_list.to_card_entries();
+
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].alias, "card1");
+        assert_eq!(entries[0].version, Some("1.0.0".to_string()));
+        assert_eq!(entries[0].uid, Some("uid1".to_string()));
+        assert_eq!(entries[0].registry_type, RegistryType::Data);
+
+        assert_eq!(entries[1].alias, "card2");
+        assert_eq!(entries[1].version, Some("2.0.0".to_string()));
+        assert_eq!(entries[1].uid, Some("uid2".to_string()));
+        assert_eq!(entries[1].registry_type, RegistryType::Model);
+    }
+
+    #[test]
+    fn test_cardlist_iter() {
+        let cards = vec![
+            Card {
+                alias: "card1".to_string(),
+                space: "space1".to_string(),
+                name: "name1".to_string(),
+                version: Some("1.0.0".to_string()),
+                registry_type: RegistryType::Data,
+                drift: None,
+                uid: Some("uid1".to_string()),
+                version_type: None,
+            },
+            Card {
+                alias: "card2".to_string(),
+                space: "space2".to_string(),
+                name: "name2".to_string(),
+                version: Some("2.0.0".to_string()),
+                registry_type: RegistryType::Model,
+                drift: None,
+                uid: Some("uid2".to_string()),
+                version_type: None,
+            },
+            Card {
+                alias: "card3".to_string(),
+                space: "space3".to_string(),
+                name: "name3".to_string(),
+                version: Some("3.0.0".to_string()),
+                registry_type: RegistryType::Experiment,
+                drift: None,
+                uid: Some("uid3".to_string()),
+                version_type: None,
+            },
+        ];
+
+        let card_list = CardList::new_rs(cards);
+        let collected: Vec<_> = card_list.iter().collect();
+
+        assert_eq!(collected.len(), 3);
+        assert_eq!(collected[0].alias, "card1");
+        assert_eq!(collected[1].alias, "card2");
+        assert_eq!(collected[2].alias, "card3");
     }
 }
