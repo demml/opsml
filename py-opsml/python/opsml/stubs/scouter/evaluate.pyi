@@ -1,9 +1,9 @@
 #### begin imports ####
+# ty:ignore[unresolved-import]
 
 from pathlib import Path
 from typing import (
     Any,
-    Callable,
     Dict,
     Iterator,
     List,
@@ -2271,6 +2271,20 @@ class ScenarioResult:
     def task_results(self) -> List["TaskSummary"]:
         """Per-task pass/fail summaries for this scenario."""
 
+    @property
+    def traces(self) -> List["TraceSpan"]:
+        """Trace spans captured during this scenario's execution."""
+
+    def traces_as_table(self) -> None:
+        """Print a summary table of trace spans to stdout."""
+
+    def trace_detail(self, span_name: str) -> None:
+        """Print attributes and events for matching span(s).
+
+        Values longer than 200 characters are truncated in the table.
+        Access ``self.traces[i].attributes`` directly for full values.
+        """
+
     def __str__(self) -> str:
         """Return a pretty-printed JSON string representation."""
 
@@ -2594,10 +2608,10 @@ class EvalScenario:
         Populate ``predefined_turns`` with follow-up queries (executed in order
         after ``initial_query``). Leave empty for single-turn evaluation.
 
-    ReAct / simulated-user scenarios:
-        ``simulated_user_persona`` and ``termination_signal`` are placeholder
-        fields for future ReAct support. Setting them has no effect in the
-        current implementation.
+    Interactive scenarios:
+        Set ``simulated_user_persona`` and ``termination_signal`` to enable
+        interactive evaluation with a simulated user driving multi-turn
+        conversations.
 
     Args:
         initial_query (str):
@@ -2615,9 +2629,9 @@ class EvalScenario:
             Scripted follow-up queries for multi-turn scenarios (executed in
             order after ``initial_query``).
         simulated_user_persona (Optional[str]):
-            Placeholder for future ReAct simulated-user support. No effect now.
+            Persona description for the simulated user in interactive scenarios.
         termination_signal (Optional[str]):
-            Placeholder for future ReAct termination detection. No effect now.
+            String that signals the simulated user wants to end the conversation.
         max_turns (int):
             Maximum number of turns for multi-turn evaluation. Defaults to 10.
         metadata (Optional[Dict[str, Any]]):
@@ -2679,8 +2693,8 @@ class EvalScenario:
     def is_multi_turn(self) -> bool:
         """Return True when ``predefined_turns`` is non-empty."""
 
-    def is_reactive(self) -> bool:
-        """Return True when ``simulated_user_persona`` is set (ReAct placeholder)."""
+    def is_interactive(self) -> bool:
+        """Return True when ``simulated_user_persona`` is set (interactive scenario)."""
 
     @property
     def id(self) -> str:
@@ -2702,13 +2716,13 @@ class EvalScenario:
     def predefined_turns(self, value: List[str]) -> None: ...
     @property
     def simulated_user_persona(self) -> Optional[str]:
-        """Simulated user persona string (ReAct placeholder)."""
+        """Simulated user persona string for interactive scenarios."""
 
     @simulated_user_persona.setter
     def simulated_user_persona(self, value: Optional[str]) -> None: ...
     @property
     def termination_signal(self) -> Optional[str]:
-        """Termination signal string (ReAct placeholder)."""
+        """Termination signal string for interactive scenarios."""
 
     @termination_signal.setter
     def termination_signal(self, value: Optional[str]) -> None: ...

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
-from .._opsml import (
+from ..._opsml import (
     DatasetClient,
     DatasetProducer,
     QueryResult,

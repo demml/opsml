@@ -11,17 +11,19 @@ from ..._opsml import (
     ScenarioEvalResults,
 )
 from ..queue import ScouterQueue
-from ..tracing import flush_tracer
+from ..tracing import (
+    disable_local_span_capture,
+    enable_local_span_capture,
+    flush_tracer,
+)
 from ..tracing import get_tracer as _get_tracer
-
-try:
-    from ..._opsml import disable_local_span_capture, enable_local_span_capture
-except ImportError:
-    enable_local_span_capture = None  # type: ignore[assignment]
-    disable_local_span_capture = None  # type: ignore[assignment]
 
 # Baggage key injected into each scenario span so ScouterQueue can tag EvalRecords by scenario.
 SCENARIO_TAG_BAGGAGE_KEY = "scouter.eval.scenario_id"
+# Scenario wrapper spans carry infrastructure metadata only. Setting an explicit
+# scouter.entity* attribute (non-string) suppresses default entity auto-tagging
+# so per-agent active_profile selection remains authoritative.
+SCENARIO_WRAPPER_ENTITY_SUPPRESS_ATTR = {"scouter.entity.suppressed": True}
 
 AgentFn = Callable[[str], Any]
 # (initial_query, agent_response, history) -> next user message or termination signal
@@ -48,8 +50,8 @@ class EvalOrchestrator:
             the default ``execute_agent`` calls it once for ``initial_query``
             and once per entry in ``predefined_turns``.  When omitted,
             subclass and override ``execute_agent`` instead.
-        simulated_user_fn: Optional callable ``(initial_query, agent_response, history) -> next_message``.
-            Used for reactive scenarios. Return a string containing
+        simulated_user_fn: Optional callable ``(initial_query, agent_response) -> next_message``.
+            Used for interactive scenarios. Return a string containing
             ``scenario.termination_signal`` to end the loop. When omitted,
             subclass and override ``execute_simulated_user_turn`` instead.
 
@@ -69,13 +71,13 @@ class EvalOrchestrator:
                 def execute_agent(self, scenario):
                     return self.my_agent.chat(scenario.initial_query)
 
-        Reactive scenario with simulated user::
+        Interactive scenario with simulated user::
 
             orch = EvalOrchestrator(
                 queue=queue,
                 scenarios=scenarios,
                 agent_fn=lambda q: my_service.chat(q),
-                simulated_user_fn=lambda initial_q, response, history: user_llm.respond(initial_q, response),
+                simulated_user_fn=lambda initial_q, response: user_llm.respond(initial_q, response),
             )
             results = orch.run()
     """
@@ -124,7 +126,7 @@ class EvalOrchestrator:
         return response
 
     def execute_agent_turn(self, scenario: EvalScenario, message: str) -> Any:
-        """Execute one agent turn in a reactive loop.
+        """Execute one agent turn in an interactive loop.
 
         Default: calls ``agent_fn(message)``. Override for frameworks that
         need the full scenario context or manage their own session state.
@@ -149,7 +151,7 @@ class EvalOrchestrator:
         agent_response: Any,
         history: List[Dict[str, Any]],
     ) -> str:
-        """Generate the next user message in a reactive loop.
+        """Generate the next user message in an interactive loop.
 
         Given the original intent, the agent's latest response, and all prior
         exchanges, decide whether to ask a follow-up or signal completion by
@@ -198,8 +200,8 @@ class EvalOrchestrator:
         ``context_path`` expressions navigate against via ``"response.<field>"``.
 
         ``history`` is a list of ``{"user": str, "agent": Any}`` dicts for all
-        exchanges in the scenario. For non-reactive scenarios it is always
-        empty ``[]``. For reactive scenarios it contains every turn up to (but
+        exchanges in the scenario. For non-interactive scenarios it is always
+        empty ``[]``. For interactive scenarios it contains every turn up to (but
         not including) the final agent response.
 
         Default: returns ``response`` unchanged (backward compatible).
@@ -227,6 +229,7 @@ class EvalOrchestrator:
             span_ctx = eval_tracer.start_as_current_span(
                 f"scouter.eval.scenario.{scenario.id}",
                 baggage=[{SCENARIO_TAG_BAGGAGE_KEY: scenario.id}],
+                attributes=SCENARIO_WRAPPER_ENTITY_SUPPRESS_ATTR,
             )
         except Exception:  # noqa: BLE001 pylint: disable=broad-except
             return self.execute_agent(scenario)
@@ -240,6 +243,7 @@ class EvalOrchestrator:
             span_ctx = eval_tracer.start_as_current_span(
                 f"scouter.eval.scenario.{scenario.id}",
                 baggage=[{SCENARIO_TAG_BAGGAGE_KEY: scenario.id}],
+                attributes=SCENARIO_WRAPPER_ENTITY_SUPPRESS_ATTR,
             )
         except Exception:  # noqa: BLE001 pylint: disable=broad-except
             return self.execute_agent_turn(scenario, message)
@@ -259,8 +263,8 @@ class EvalOrchestrator:
             scenario=scenario,
         )
 
-    def _execute_reactive(self, scenario: EvalScenario) -> Any:
-        """Run a reactive agent↔simulated-user loop.
+    def _execute_interactive(self, scenario: EvalScenario) -> Any:
+        """Run an interactive agent↔simulated-user loop.
 
         The agent is a black box: it receives a message and returns a response,
         managing its own session state internally. The simulated user drives
@@ -311,8 +315,8 @@ class EvalOrchestrator:
             for scenario in self._scenarios.scenarios:
                 self.on_scenario_start(scenario)
 
-                if scenario.is_reactive():
-                    response = self._execute_reactive(scenario)
+                if scenario.is_interactive():
+                    response = self._execute_interactive(scenario)
                 else:
                     response = self._execute_with_baggage(scenario)
                     scenario_response = self.build_scenario_response(scenario, response, [])

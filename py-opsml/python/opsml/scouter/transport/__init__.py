@@ -1,5 +1,13 @@
 # mypy: disable-error-code="attr-defined"
-from ..._opsml import GrpcConfig, HttpConfig, KafkaConfig, RabbitMQConfig, RedisConfig
+
+from ..._opsml import (
+    GrpcConfig,
+    HttpConfig,
+    KafkaConfig,
+    MockConfig,
+    RabbitMQConfig,
+    RedisConfig,
+)
 
 __all__ = [
     "HttpConfig",
@@ -7,4 +15,5 @@ __all__ = [
     "RabbitMQConfig",
     "RedisConfig",
     "GrpcConfig",
+    "MockConfig",
 ]

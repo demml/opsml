@@ -67,6 +67,8 @@ from . import (
     observe,
     profile,
     queue,
+    service_map,
+    trace,
     tracing,
     transport,
     types,
@@ -87,6 +89,8 @@ __all__ = [
     "transport",
     "types",
     "util",
+    "service_map",
+    "trace",
     # top-level imports
     "Drifter",
     "SpcDriftConfig",

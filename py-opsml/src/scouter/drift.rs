@@ -32,11 +32,11 @@ pub fn add_drift_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Agent Evals
     m.add_class::<AgentEvalConfig>()?;
     m.add_class::<AgentEvalProfile>()?;
+    m.add_class::<EvalRecord>()?;
     m.add_class::<LLMJudgeTask>()?;
     m.add_class::<AssertionTask>()?;
     m.add_class::<ComparisonOperator>()?;
 
-    // Traces
     m.add_class::<TraceAssertion>()?;
     m.add_class::<TraceAssertionTask>()?;
     m.add_class::<AggregationType>()?;
@@ -46,6 +46,16 @@ pub fn add_drift_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<AssertionResults>()?;
     m.add_class::<TasksFile>()?;
     m.add_function(wrap_pyfunction!(execute_trace_assertion_tasks, m)?)?;
+
+    // Request assertions
+    m.add_class::<TokenUsage>()?;
+    m.add_class::<AgentAssertion>()?;
+    m.add_class::<AgentAssertionTask>()?;
+    m.add_function(wrap_pyfunction!(execute_agent_assertion_tasks, m)?)?;
+
+    // Attribute filter / multi-response
+    m.add_class::<AttributeFilterTask>()?;
+    m.add_class::<MultiResponseMode>()?;
 
     Ok(())
 }

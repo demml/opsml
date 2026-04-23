@@ -1,10 +1,9 @@
 use pyo3::prelude::*;
 use scouter_client::{
-    execute_agent_assertion_tasks, AgentAssertion, AgentAssertionTask, AlignedEvalResult,
-    ComparisonResults, EvalDataset, EvalMetrics, EvalResultSet, EvalResults, EvalRunner,
-    EvalScenario, EvalScenarios, EvalSet, EvalTaskResult, EvaluationConfig, EvaluationTaskType,
-    MissingTask, ScenarioComparisonResults, ScenarioDelta, ScenarioEvalResults, ScenarioResult,
-    TaskComparison, TokenUsage, WorkflowComparison,
+    AlignedEvalResult, ComparisonResults, EvalDataset, EvalMetrics, EvalResultSet, EvalResults,
+    EvalRunner, EvalScenario, EvalScenarios, EvalSet, EvalTaskResult, EvaluationConfig,
+    EvaluationTaskType, MissingTask, ScenarioComparisonResults, ScenarioDelta, ScenarioEvalResults,
+    ScenarioResult, TaskComparison, TaskSummary, WorkflowComparison,
 };
 
 pub fn add_evaluate_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -23,17 +22,16 @@ pub fn add_evaluate_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<WorkflowComparison>()?;
     m.add_class::<EvaluationTaskType>()?;
     m.add_class::<EvalScenario>()?;
+
     m.add_class::<EvalMetrics>()?;
     m.add_class::<ScenarioResult>()?;
     m.add_class::<ScenarioDelta>()?;
     m.add_class::<ScenarioEvalResults>()?;
     m.add_class::<ScenarioComparisonResults>()?;
+
     m.add_class::<EvalScenarios>()?;
     m.add_class::<EvalRunner>()?;
-    m.add_class::<AgentAssertion>()?;
-    m.add_class::<AgentAssertionTask>()?;
-    m.add_class::<TokenUsage>()?;
-    m.add_function(wrap_pyfunction!(execute_agent_assertion_tasks, m)?)?;
+    m.add_class::<TaskSummary>()?;
 
     Ok(())
 }
