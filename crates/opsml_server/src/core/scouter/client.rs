@@ -35,6 +35,23 @@ pub enum Routes {
     TraceSpans,
     TraceMetrics,
     TagEntity,
+    // Trace extensions
+    TraceSpansFilters,
+    // Profile extensions
+    Profiles,
+    // Observability
+    ObservabilityMetrics,
+    // GenAI
+    GenAiTokenMetrics,
+    GenAiOperations,
+    GenAiModels,
+    GenAiAgents,
+    GenAiTools,
+    GenAiErrors,
+    GenAiSpans,
+    GenAiConversation,
+    GenAiAgentMetrics,
+    GenAiToolMetrics,
 }
 
 impl Routes {
@@ -70,6 +87,27 @@ impl Routes {
             Routes::TraceSpans => "scouter/trace/spans",
             Routes::TraceMetrics => "scouter/trace/metrics",
             Routes::TagEntity => "scouter/tags/entity",
+
+            // Trace extensions
+            Routes::TraceSpansFilters => "scouter/trace/spans/filters",
+
+            // Profile extensions
+            Routes::Profiles => "scouter/profiles",
+
+            // Observability
+            Routes::ObservabilityMetrics => "scouter/observability/metrics",
+
+            // GenAI
+            Routes::GenAiTokenMetrics => "scouter/genai/metrics/tokens",
+            Routes::GenAiOperations => "scouter/genai/metrics/operations",
+            Routes::GenAiModels => "scouter/genai/metrics/models",
+            Routes::GenAiAgents => "scouter/genai/metrics/agents",
+            Routes::GenAiTools => "scouter/genai/metrics/tools",
+            Routes::GenAiErrors => "scouter/genai/metrics/errors",
+            Routes::GenAiSpans => "scouter/genai/spans",
+            Routes::GenAiConversation => "scouter/genai/conversation",
+            Routes::GenAiAgentMetrics => "scouter/genai/agent/metrics",
+            Routes::GenAiToolMetrics => "scouter/genai/tool/metrics",
         }
     }
 }
@@ -199,6 +237,11 @@ impl ScouterApiClient {
                     .await?
             }
             RequestType::Post => {
+                let url = if let Some(query_string) = query_string {
+                    format!("{url}?{query_string}")
+                } else {
+                    url
+                };
                 self.client
                     .post(url)
                     .headers(headers)
@@ -208,6 +251,11 @@ impl ScouterApiClient {
                     .await?
             }
             RequestType::Put => {
+                let url = if let Some(query_string) = query_string {
+                    format!("{url}?{query_string}")
+                } else {
+                    url
+                };
                 self.client
                     .put(url)
                     .headers(headers)

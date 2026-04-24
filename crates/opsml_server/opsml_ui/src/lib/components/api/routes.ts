@@ -48,6 +48,24 @@ export enum RoutePaths {
   TRACE_METRICS = "/opsml/api/scouter/trace/metrics",
   TRACE_SPANS = "/opsml/api/scouter/trace/spans",
   ENTITY_ID_TAGS = "/opsml/api/scouter/tags/entity",
+  // Observability
+  OBSERVABILITY_METRICS = "/opsml/api/scouter/observability/metrics",
+  // Trace extensions
+  TRACE_SPANS_FILTERS = "/opsml/api/scouter/trace/spans/filters",
+  // Profile extensions
+  PROFILE_GET = "/opsml/api/scouter/profile",
+  PROFILES_LIST = "/opsml/api/scouter/profiles",
+  // GenAI
+  GENAI_TOKEN_METRICS = "/opsml/api/scouter/genai/metrics/tokens",
+  GENAI_OPERATIONS = "/opsml/api/scouter/genai/metrics/operations",
+  GENAI_MODELS = "/opsml/api/scouter/genai/metrics/models",
+  GENAI_AGENTS = "/opsml/api/scouter/genai/metrics/agents",
+  GENAI_TOOLS = "/opsml/api/scouter/genai/metrics/tools",
+  GENAI_ERRORS = "/opsml/api/scouter/genai/metrics/errors",
+  GENAI_SPANS = "/opsml/api/scouter/genai/spans",
+  GENAI_CONVERSATION = "/opsml/api/scouter/genai/conversation",
+  GENAI_AGENT_METRICS = "/opsml/api/scouter/genai/agent/metrics",
+  GENAI_TOOL_METRICS = "/opsml/api/scouter/genai/tool/metrics",
 
   // Experiment
   EXPERIMENT_METRICS = "/opsml/api/experiment/metrics",
@@ -122,6 +140,20 @@ export enum ServerPaths {
   TRACE_SPANS = "/api/scouter/observability/trace/spans",
   TRACE_PAGE = "/api/scouter/observability/trace",
   ENTITY_ID_TAGS = "/api/scouter/tags/entity",
+  // GenAI
+  GENAI_TOKEN_METRICS = "/api/scouter/genai/metrics/tokens",
+  GENAI_OPERATIONS = "/api/scouter/genai/metrics/operations",
+  GENAI_MODELS = "/api/scouter/genai/metrics/models",
+  GENAI_AGENTS = "/api/scouter/genai/metrics/agents",
+  GENAI_TOOLS = "/api/scouter/genai/metrics/tools",
+  GENAI_ERRORS = "/api/scouter/genai/metrics/errors",
+  GENAI_SPANS = "/api/scouter/genai/spans",
+  GENAI_CONVERSATION = "/api/scouter/genai/conversation",
+  GENAI_AGENT_METRICS = "/api/scouter/genai/agent/metrics",
+  GENAI_TOOL_METRICS = "/api/scouter/genai/tool/metrics",
+  OBSERVABILITY_METRICS = "/api/scouter/observability/metrics",
+  TRACE_SPANS_FILTERS = "/api/scouter/trace/spans/filters",
+  PROFILES_LIST = "/api/scouter/profiles",
 
   EXPERIMENT_GROUPED_METRICS = "/api/card/experiment/metrics/grouped",
   DATA_PROFILE = "/api/card/data/profile",

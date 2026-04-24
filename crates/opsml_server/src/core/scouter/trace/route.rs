@@ -243,6 +243,76 @@ pub async fn trace_metrics(
     }
 }
 
+/// Get trace spans from filters
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/trace/spans/filters",
+    request_body(content = inline(serde_json::Value), description = "Trace filter request for spans"),
+    responses(
+        (status = 200, description = "Trace spans matching filters", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
+#[instrument(skip_all)]
+pub async fn get_trace_spans_from_filters(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(req): Json<TraceFilters>,
+) -> Result<Json<TraceSpansResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter", None)
+    })?;
+
+    let response = state
+        .scouter_client
+        .request(
+            scouter::Routes::TraceSpansFilters,
+            RequestType::Post,
+            Some(serde_json::to_value(&req).map_err(|e| {
+                error!("Failed to serialize trace filter request: {e}");
+                internal_server_error(e, "Failed to serialize trace filter request", None)
+            })?),
+            None,
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get trace spans from filters: {e}");
+            internal_server_error(e, "Failed to get trace spans from filters", None)
+        })?;
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<TraceSpansResponse>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {e}");
+                internal_server_error(e, "Failed to parse scouter response", None)
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse scouter error response", None)
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
 pub async fn get_scouter_trace_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -257,6 +327,10 @@ pub async fn get_scouter_trace_router(prefix: &str) -> Result<Router<Arc<AppStat
             .route(
                 &format!("{prefix}/scouter/trace/metrics"),
                 post(trace_metrics),
+            )
+            .route(
+                &format!("{prefix}/scouter/trace/spans/filters"),
+                post(get_trace_spans_from_filters),
             )
     }));
 

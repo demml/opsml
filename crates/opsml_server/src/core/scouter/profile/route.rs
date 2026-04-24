@@ -9,7 +9,7 @@ use crate::core::state::AppState;
 use anyhow::{Context, Result};
 use axum::{
     Extension, Json, Router,
-    extract::State,
+    extract::{Query, State},
     http::StatusCode,
     routing::{post, put},
 };
@@ -410,6 +410,151 @@ pub async fn profile_exists(
     Ok(Json(exists))
 }
 
+/// Get a single drift profile from scouter
+#[utoipa::path(
+    get,
+    path = "/opsml/api/scouter/profile",
+    params(
+        ("name" = String, Query, description = "Profile name"),
+        ("space" = String, Query, description = "Space"),
+        ("version" = String, Query, description = "Version"),
+        ("drift_type" = String, Query, description = "Drift type"),
+    ),
+    responses(
+        (status = 200, description = "Drift profile", body = inline(serde_json::Value)),
+        (status = 404, description = "Not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
+#[instrument(skip_all)]
+pub async fn get_drift_profile(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Query(params): Query<GetProfileRequest>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter", None)
+    })?;
+
+    let query_string = serde_qs::to_string(&params).map_err(|e| {
+        error!("Failed to serialize query string: {e}");
+        internal_server_error(e, "Failed to serialize query string", None)
+    })?;
+
+    let response = state
+        .scouter_client
+        .request(
+            scouter::Routes::Profile,
+            RequestType::Get,
+            None,
+            Some(query_string),
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get drift profile: {e}");
+            internal_server_error(e, "Failed to get drift profile", None)
+        })?;
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<serde_json::Value>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {e}");
+                internal_server_error(e, "Failed to parse scouter response", None)
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse scouter error response", None)
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
+/// List drift profiles from scouter
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/profiles",
+    request_body(content = inline(serde_json::Value), description = "List profiles request"),
+    responses(
+        (status = 200, description = "Listed profiles", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
+#[instrument(skip_all)]
+pub async fn list_drift_profiles(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(body): Json<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter", None)
+    })?;
+
+    let response = state
+        .scouter_client
+        .request(
+            scouter::Routes::Profiles,
+            RequestType::Post,
+            Some(body),
+            None,
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to list drift profiles: {e}");
+            internal_server_error(e, "Failed to list drift profiles", None)
+        })?;
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<serde_json::Value>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {e}");
+                internal_server_error(e, "Failed to parse scouter response", None)
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse scouter error response", None)
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
 /// Get drift  profiles for UI
 /// UI will make a request to return all profiles for a given card
 /// The card is identified by parent drift path.
@@ -506,11 +651,17 @@ pub async fn get_scouter_profile_router(prefix: &str) -> Result<Router<Arc<AppSt
         Router::new()
             .route(
                 &format!("{prefix}/scouter/profile"),
-                post(insert_drift_profile).put(update_drift_profile),
+                post(insert_drift_profile)
+                    .put(update_drift_profile)
+                    .get(get_drift_profile),
             )
             .route(
                 &format!("{prefix}/scouter/profile/ui"),
                 post(get_drift_profiles_for_ui),
+            )
+            .route(
+                &format!("{prefix}/scouter/profiles"),
+                post(list_drift_profiles),
             )
             .route(
                 &format!("{prefix}/scouter/profile/status"),
