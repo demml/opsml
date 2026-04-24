@@ -11,6 +11,7 @@
     ...tasks.assertion,
     ...tasks.judge,
     ...tasks.trace,
+    ...tasks.agent,
   ]);
 
   const totalCount = $derived(allTasks.length);
@@ -21,6 +22,7 @@
     if (tasks.assertion.length) parts.push(`${tasks.assertion.length} Assertion`);
     if (tasks.judge.length) parts.push(`${tasks.judge.length} LLM Judge`);
     if (tasks.trace.length) parts.push(`${tasks.trace.length} Trace`);
+    if (tasks.agent.length) parts.push(`${tasks.agent.length} Agent`);
     return parts.join(' · ');
   });
 </script>

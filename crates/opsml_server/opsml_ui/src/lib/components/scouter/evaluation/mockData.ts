@@ -17,6 +17,7 @@ import type {
 } from "$lib/components/scouter/agent/types";
 import { Status } from "$lib/components/scouter/agent/types";
 import type {
+  AgentAssertionTask,
   AssertionTask,
   LLMJudgeTask,
   TraceAssertionTask,
@@ -170,10 +171,30 @@ const traceTasks: TraceAssertionTask[] = [
   },
 ];
 
+const agentTasks: AgentAssertionTask[] = [
+  {
+    id: "check_tool_sequence",
+    assertion: {
+      ToolCallSequence: {
+        names: ["classify_intent", "fetch_kb_answer"],
+      },
+    },
+    operator: "Contains",
+    expected_value: "fetch_kb_answer",
+    description: "Verify the expected tool orchestration occurred",
+    depends_on: ["check_response_format"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: null,
+  },
+];
+
 const assertionTasksObj: AssertionTasks = {
   assertion: assertionTasks,
   judge: judgeTasks,
   trace: traceTasks,
+  agent: agentTasks,
 };
 
 // ── Eval profile ──────────────────────────────────────────────────────────────
@@ -208,6 +229,7 @@ export function buildMockAgentEvalProfile(): AgentEvalProfile {
       "check_confidence_score",
       "judge_response_quality",
       "check_trace_latency",
+      "check_tool_sequence",
     ],
     scouter_version: "0.6.0",
   };

@@ -9,6 +9,7 @@
     Assertion: 'Assertion',
     LLMJudge: 'LLM Judge',
     TraceAssertion: 'Trace Assertion',
+    AgentAssertion: 'Agent Assertion',
     Conditional: 'Conditional',
     HumanValidation: 'Human Validation',
   };
@@ -17,6 +18,7 @@
     Assertion: 'bg-primary-100 text-primary-900 border-primary-800',
     LLMJudge: 'bg-secondary-100 text-secondary-900 border-secondary-800',
     TraceAssertion: 'bg-tertiary-100 text-tertiary-900 border-tertiary-800',
+    AgentAssertion: 'bg-warning-100 text-warning-900 border-warning-800',
     Conditional: 'bg-warning-100 text-warning-900 border-warning-800',
     HumanValidation: 'bg-error-100 text-error-800 border-error-800',
   };
@@ -25,6 +27,7 @@
     Assertion: ClipboardList,
     LLMJudge: Brain,
     TraceAssertion: Layers,
+    AgentAssertion: Brain,
     Conditional: GitBranch,
     HumanValidation: ClipboardList,
   };

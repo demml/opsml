@@ -1,10 +1,17 @@
 <script lang="ts">
-  import { getAssertion, type EvalTaskResult } from '../task';
+  import {
+    getAssertion,
+    isAgentAssertionValue,
+    isTraceAssertionValue,
+    type AgentAssertion,
+    type EvalTaskResult,
+    type TraceAssertion,
+  } from '../task';
   import { Info, Activity, AlertCircle, GitBranch, CheckCircle2, XCircle, TrendingUp, MessageSquareText } from 'lucide-svelte';
   import Pill from '$lib/components/utils/Pill.svelte';
   import ComparisonView from './ComparisonView.svelte';
-  import type { TraceAssertion } from '../task';
   import TraceAssertionPill from './TraceAssertionPill.svelte';
+  import AgentAssertionPill from './AgentAssertionPill.svelte';
   import type { AgentEvalProfile } from '../types';
   import { AgentEvalProfileHelper } from '../utils';
   import PromptModal from '$lib/components/card/prompt/common/PromptModal.svelte';
@@ -17,15 +24,16 @@
   const active_task: EvalTaskResult = $derived(task);
   const assertion = $derived(getAssertion(task));
 
-  const isTraceAssertion = $derived(
-    typeof assertion !== 'string' && assertion !== null
-  );
+  const isTraceAssertion = $derived(isTraceAssertionValue(assertion));
+  const isAgentAssertion = $derived(isAgentAssertionValue(assertion));
 
-  const fieldPath = $derived(
-    typeof assertion === 'string' || assertion === null
-      ? assertion
-      : null
-  );
+  const fieldPath = $derived.by((): string | null => {
+    if (isTraceAssertionValue(assertion) || isAgentAssertionValue(assertion)) {
+      return null;
+    }
+
+    return assertion;
+  });
 
   const judgeTask = $derived(
     active_task.task_type === 'LLMJudge'
@@ -136,7 +144,7 @@
     </section>
 
     <!-- Assertion Target -->
-    {#if active_task.task_type === 'Assertion' || active_task.task_type === 'TraceAssertion' || active_task.task_type === 'LLMJudge'}
+    {#if active_task.task_type === 'Assertion' || active_task.task_type === 'TraceAssertion' || active_task.task_type === 'LLMJudge' || active_task.task_type === 'AgentAssertion'}
       <section>
         <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
           <Activity class="w-4 h-4 text-primary-500" />
@@ -145,6 +153,8 @@
         <div class="flex flex-wrap gap-2">
           {#if isTraceAssertion}
             <TraceAssertionPill assertion={assertion as TraceAssertion} />
+          {:else if isAgentAssertion}
+            <AgentAssertionPill assertion={assertion as AgentAssertion} />
           {:else if fieldPath}
             <Pill key="Field Path" value={fieldPath} textSize="text-xs" />
           {:else}

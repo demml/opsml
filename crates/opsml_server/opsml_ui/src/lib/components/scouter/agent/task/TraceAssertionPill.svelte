@@ -1,5 +1,9 @@
 <script lang="ts">
-  import type { TraceAssertion, SpanFilter } from '../task';
+  import type {
+    AttributeFilterTask,
+    SpanFilter,
+    TraceAssertion,
+  } from '../task';
   import { Activity, Filter, Hash, Clock, Database } from 'lucide-svelte';
 
   let { assertion } = $props<{
@@ -162,6 +166,18 @@
       };
     }
 
+    if ('AttributeFilter' in assertion) {
+      const { key, task, mode } = assertion.AttributeFilter;
+      return {
+        icon: Filter,
+        label: 'Attribute Filter',
+        value: `${key} [${mode}] → ${formatAttributeFilterTask(task)}`,
+        bgColor: 'bg-warning-100',
+        textColor: 'text-warning-900',
+        borderColor: 'border-warning-800'
+      };
+    }
+
     return {
       icon: Activity,
       label: 'Unknown',
@@ -190,6 +206,19 @@
     if ('And' in filter) return `AND(${filter.And.filters.length} filters)`;
     if ('Or' in filter) return `OR(${filter.Or.filters.length} filters)`;
     return 'unknown filter';
+  }
+
+  function formatAttributeFilterTask(task: AttributeFilterTask): string {
+    if ('Assertion' in task) {
+      return `Assertion(${task.Assertion.context_path ?? 'root'})`;
+    }
+
+    if ('AgentAssertion' in task) {
+      const key = Object.keys(task.AgentAssertion.assertion)[0];
+      return `AgentAssertion(${key ?? 'unknown'})`;
+    }
+
+    return 'unknown task';
   }
 
   const IconComponent = $derived(display.icon);

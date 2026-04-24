@@ -1,5 +1,5 @@
 // shared LLM provider lib — intentionally kept as 'genai'
-import type { Prompt } from "$lib/components/agent/types";
+import type { Prompt, Provider } from "$lib/components/agent/types";
 import type { JsonValue } from "$lib/types";
 
 /**
@@ -61,7 +61,8 @@ export type EvaluationTaskType =
   | "LLMJudge"
   | "Conditional"
   | "HumanValidation"
-  | "TraceAssertion";
+  | "TraceAssertion"
+  | "AgentAssertion";
 
 /**
  * Result of an assertion execution.
@@ -104,6 +105,8 @@ export interface LLMJudgeTask {
   result?: AssertionResult;
 }
 
+export type MultiResponseMode = "Any" | "All";
+
 /**
  * Represents a node in the execution graph.
  */
@@ -144,7 +147,8 @@ export interface AgentEvalWorkflowResult {
  */
 export type Assertion =
   | { FieldPath: string | null }
-  | { TraceAssertion: TraceAssertion };
+  | { TraceAssertion: TraceAssertion }
+  | { AgentAssertion: AgentAssertion };
 
 /**
  * Maps to EvalTaskResult struct.
@@ -176,12 +180,15 @@ export interface EvalTaskResult {
  */
 export function getAssertion(
   result: EvalTaskResult,
-): string | null | TraceAssertion {
+): string | null | TraceAssertion | AgentAssertion {
   if ("FieldPath" in result.assertion) {
     return result.assertion.FieldPath;
   }
   if ("TraceAssertion" in result.assertion) {
     return result.assertion.TraceAssertion;
+  }
+  if ("AgentAssertion" in result.assertion) {
+    return result.assertion.AgentAssertion;
   }
   throw new Error("Invalid Assertion variant");
 }
@@ -234,12 +241,57 @@ export type TraceAssertion =
   | { TraceErrorCount: {} }
   | { TraceServiceCount: {} }
   | { TraceMaxDepth: {} }
-  | { TraceAttribute: { attribute_key: string } };
+  | { TraceAttribute: { attribute_key: string } }
+  | {
+      AttributeFilter: {
+        key: string;
+        task: AttributeFilterTask;
+        mode: MultiResponseMode;
+      };
+    };
+
+export type AgentAssertion =
+  | { ToolCalled: { name: string } }
+  | { ToolNotCalled: { name: string } }
+  | { ToolCalledWithArgs: { name: string; arguments: JsonValue } }
+  | { ToolCallSequence: { names: string[] } }
+  | { ToolCallCount: { name: string | null } }
+  | { ToolArgument: { name: string; argument_key: string } }
+  | { ToolResult: { name: string } }
+  | { ResponseContent: {} }
+  | { ResponseModel: {} }
+  | { ResponseFinishReason: {} }
+  | { ResponseInputTokens: {} }
+  | { ResponseOutputTokens: {} }
+  | { ResponseTotalTokens: {} }
+  | { ResponseField: { path: string } };
+
+export interface AgentAssertionTask {
+  id: string;
+  assertion: AgentAssertion;
+  operator: ComparisonOperator;
+  expected_value: JsonValue;
+  description: string | null;
+  depends_on: string[];
+  task_type: EvaluationTaskType;
+  result?: AssertionResult;
+  condition: boolean;
+  provider: Provider | null;
+  context_path: string | null;
+}
+
+export type AttributeFilterTask =
+  | { Assertion: AssertionTask }
+  | { AgentAssertion: AgentAssertionTask };
 
 /**
  * Union of all evaluation task types.
  */
-export type AnyTask = AssertionTask | LLMJudgeTask | TraceAssertionTask;
+export type AnyTask =
+  | AssertionTask
+  | LLMJudgeTask
+  | TraceAssertionTask
+  | AgentAssertionTask;
 
 /**
  * Assertion task for distributed trace validation.
@@ -258,4 +310,66 @@ export interface TraceAssertionTask {
 
 export function isAssertionTask(task: AnyTask): task is AssertionTask {
   return task.task_type === "Assertion";
+}
+
+const TRACE_ASSERTION_KEYS = new Set<string>([
+  "SpanSequence",
+  "SpanSet",
+  "SpanCount",
+  "SpanExists",
+  "SpanAttribute",
+  "SpanDuration",
+  "SpanAggregation",
+  "TraceDuration",
+  "TraceSpanCount",
+  "TraceErrorCount",
+  "TraceServiceCount",
+  "TraceMaxDepth",
+  "TraceAttribute",
+  "AttributeFilter",
+]);
+
+const AGENT_ASSERTION_KEYS = new Set<string>([
+  "ToolCalled",
+  "ToolNotCalled",
+  "ToolCalledWithArgs",
+  "ToolCallSequence",
+  "ToolCallCount",
+  "ToolArgument",
+  "ToolResult",
+  "ResponseContent",
+  "ResponseModel",
+  "ResponseFinishReason",
+  "ResponseInputTokens",
+  "ResponseOutputTokens",
+  "ResponseTotalTokens",
+  "ResponseField",
+]);
+
+export function isTraceAssertionTask(task: AnyTask): task is TraceAssertionTask {
+  return task.task_type === "TraceAssertion";
+}
+
+export function isAgentAssertionTask(task: AnyTask): task is AgentAssertionTask {
+  return task.task_type === "AgentAssertion";
+}
+
+export function isTraceAssertionValue(
+  assertion: string | null | TraceAssertion | AgentAssertion,
+): assertion is TraceAssertion {
+  if (typeof assertion !== "object" || assertion === null) {
+    return false;
+  }
+
+  return Object.keys(assertion).some((key) => TRACE_ASSERTION_KEYS.has(key));
+}
+
+export function isAgentAssertionValue(
+  assertion: string | null | TraceAssertion | AgentAssertion,
+): assertion is AgentAssertion {
+  if (typeof assertion !== "object" || assertion === null) {
+    return false;
+  }
+
+  return Object.keys(assertion).some((key) => AGENT_ASSERTION_KEYS.has(key));
 }

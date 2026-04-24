@@ -12,7 +12,12 @@ import type { TimeRange } from "$lib/components/trace/types";
 import type { DriftType } from "../types";
 import type { DriftProfile } from "../utils";
 import type { BinnedMetrics } from "../custom/types";
-import type { AssertionTask, LLMJudgeTask, TraceAssertionTask } from "./task";
+import type {
+  AgentAssertionTask,
+  AssertionTask,
+  LLMJudgeTask,
+  TraceAssertionTask,
+} from "./task";
 
 export async function getServerEvalRecordPage(
   fetch: typeof globalThis.fetch,
@@ -167,5 +172,15 @@ export class AgentEvalProfileHelper {
     id: string,
   ): TraceAssertionTask | null {
     return profile.tasks.trace.find((task) => task.id === id) ?? null;
+  }
+
+  /**
+   * Get AgentAssertionTask by task ID from the profile.
+   */
+  static getAgentAssertionById(
+    profile: AgentEvalProfile,
+    id: string,
+  ): AgentAssertionTask | null {
+    return profile.tasks.agent.find((task) => task.id === id) ?? null;
   }
 }
