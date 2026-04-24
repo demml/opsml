@@ -1,0 +1,9 @@
+version = "3.0.0"
+
+[[artifact]]
+space = "opsml"
+name = "interactive-support-agent"
+version = "0.0.0"
+uid = "undefined"
+write_dir = "opsml_service"
+registry_type = "agent"

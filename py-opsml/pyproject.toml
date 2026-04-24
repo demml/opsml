@@ -32,6 +32,12 @@ sklearn_onnx = [
     "opsml[onnx,onnxruntime]",
 ]
 
+opentelemetry = [
+    "opentelemetry-sdk>=1.36.0, <1.39.0",
+    "opentelemetry-exporter-otlp-proto-common",
+    "opentelemetry-instrumentation",
+]
+
 [dependency-groups]
 dev = [
     "fastapi>=0.115.0,<1.0.0",
@@ -64,11 +70,11 @@ dev = [
     "tomli-w>=1.2.0",
     "seaborn>=0.13.2",
     "a2a-sdk>=0.3.22",
-    "google-adk>=1.25.0",
-    "opentelemetry-sdk>=1.37.0",
-    "opentelemetry-exporter-otlp-proto-common>=1.37.0",
-    "google-adk>=1.23.0",
-    "opentelemetry-instrumentation>=0.58b0",
+    "google-adk>=1.27.2",
+    "openinference-instrumentation-crewai>=1.1.2",
+    "openai-agents>=0.14.4",
+    "opentelemetry-instrumentation-openai-agents-v2>=0.1.0",
+    "crewai>=0.118.0",
 ]
 
 docs = [
@@ -162,4 +168,4 @@ features = ["pyo3/extension-module", "pyo3/abi3-py39"]
 opsml = "opsml.cli:run_opsml_cli"
 
 [tool.uv]
-package = true
+package = false

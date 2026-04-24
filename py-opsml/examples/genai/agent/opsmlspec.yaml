@@ -1,0 +1,45 @@
+name: "interactive-support-agent"
+space: "opsml"
+type: Agent
+
+metadata:
+  description: "Interactive support agent for evaluation examples"
+  language: "python"
+  tags: ["interactive", "evaluation", "support"]
+
+service:
+  cards:
+    - alias: support_prompt
+      path: "prompts/support_agent.yaml"
+      registry_type: prompt
+
+  agent:
+    version: "0.3.0"
+    capabilities:
+      streaming: false
+      push_notifications: false
+      extended_agent_card: false
+    default_output_modes: ["text/plain"]
+    default_input_modes: ["text/plain"]
+    description: "A practical assistant that asks clarifying questions and provides actionable guidance."
+    name: "Interactive Support Agent"
+    skills:
+      - format: a2a
+        id: "interactive_support"
+        name: "Interactive Support"
+        description: "Provides iterative, clarification-driven support for any topic."
+        input_modes: ["text/plain"]
+        output_modes: ["text/plain"]
+        tags: ["support", "interactive"]
+        examples:
+          - "Help me plan a weeknight dinner"
+          - "My API call times out intermittently"
+    supported_interfaces:
+      - protocol_binding: "HTTP+JSON"
+        protocol_version: "0.3.0"
+        url: "http://localhost:8888"
+
+deploy:
+  - environment: "development"
+    urls: ["http://localhost:8888"]
+    healthcheck: "/health"

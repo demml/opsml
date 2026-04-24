@@ -476,7 +476,15 @@ impl AppState {
     /// * `attributes` - The attributes to use with the ScouterQueue. If not provided, will attempt to use attributes from existing queue if it exists
     /// * `kwargs` - Additional keyword arguments to pass to the ScouterInstrumentor.instrument() method
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (transport_config=None, exporter=None, batch_config=None, sample_ratio=None, attributes=None, **kwargs))]
+    #[pyo3(signature = (
+        transport_config=None,
+        exporter=None,
+        batch_config=None,
+        sample_ratio=None,
+        attributes=None,
+        eval_profiles=None,
+        propagate_baggage=None,
+        **kwargs))]
     pub fn instrument(
         &self,
         py: Python,
@@ -485,6 +493,8 @@ impl AppState {
         batch_config: Option<Py<BatchConfig>>,
         sample_ratio: Option<f64>,
         attributes: Option<Bound<'_, PyAny>>,
+        eval_profiles: Option<Bound<'_, PyAny>>,
+        propagate_baggage: Option<bool>,
         kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<(), AppError> {
         let instrumentor = py
@@ -538,6 +548,8 @@ impl AppState {
         instrument_kwargs.set_item("sample_ratio", sample_ratio)?;
         instrument_kwargs.set_item("scouter_queue", scouter_queue)?;
         instrument_kwargs.set_item("attributes", attributes.clone())?;
+        instrument_kwargs.set_item("eval_profiles", eval_profiles)?;
+        instrument_kwargs.set_item("propagate_baggage", propagate_baggage)?;
 
         // call instrumentor with provided arguments and kwargs
         let _instrumented = instrumentor.call_method("instrument", (), Some(&instrument_kwargs))?;
