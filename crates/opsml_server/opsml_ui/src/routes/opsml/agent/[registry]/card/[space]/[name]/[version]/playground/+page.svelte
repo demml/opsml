@@ -7,7 +7,7 @@
   import type { DeploymentConfig } from '$lib/components/card/card_interfaces/servicecard';
 
   let { data }: PageProps = $props();
-  let service: ServiceCard = data.metadata;
+  let service = data.metadata as ServiceCard;
   let agentSpec: AgentSpec | undefined = service.service_config.agent;
   let deploymentConfig: DeploymentConfig[] | undefined = service.deploy;
   
@@ -40,4 +40,3 @@
       deploymentConfig={deploymentConfig}
     />
 {/if}
-

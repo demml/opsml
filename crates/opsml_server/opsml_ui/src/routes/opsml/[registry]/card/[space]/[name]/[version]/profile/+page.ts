@@ -5,6 +5,7 @@ import { getSortedFeatureNames } from "$lib/components/card/data/utils";
 import { getRegistryPath, RegistryType } from "$lib/utils";
 import type { PageLoad } from "./$types";
 import { getDataProfile } from "$lib/components/card/data/getDataProfile";
+import type { DataCard } from "$lib/components/card/card_interfaces/datacard";
 
 export const load: PageLoad = async ({ parent, fetch }) => {
   const { registryType, metadata } = await parent();
@@ -18,9 +19,11 @@ export const load: PageLoad = async ({ parent, fetch }) => {
     );
   }
 
-  let dataProfile = metadata.metadata.interface_metadata.save_metadata
+  const dataCard = metadata as DataCard;
+
+  let dataProfile = dataCard.metadata.interface_metadata.save_metadata
     ?.data_profile_uri
-    ? await getDataProfile(fetch, metadata)
+    ? await getDataProfile(fetch, dataCard)
     : undefined;
 
   // get sorted feature names from dataProfile.features

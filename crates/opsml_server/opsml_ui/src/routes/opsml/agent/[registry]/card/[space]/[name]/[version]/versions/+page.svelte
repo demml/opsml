@@ -8,7 +8,6 @@
   </script>
 
   <VersionPage
-    metadata={data.metadata}
     registry={data.registryType}
     versionPage={data.versionPage}
     cardRegistryStats={data.versionStats}

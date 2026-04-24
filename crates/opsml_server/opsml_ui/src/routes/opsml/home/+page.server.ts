@@ -27,7 +27,12 @@ export const load: PageServerLoad = async ({ fetch }) => {
     return { cards, stats };
   } catch {
     return {
-      cards: [],
+      cards: {
+        modelcards: [],
+        datacards: [],
+        experimentcards: [],
+        promptcards: [],
+      },
       stats: { nbrModels: 0, nbrData: 0, nbrPrompts: 0, nbrExperiments: 0 },
     };
   }

@@ -1,6 +1,5 @@
-import type { RequestHandler } from "../$types";
 import { getVersionPage } from "$lib/server/card/utils";
-import { json } from "@sveltejs/kit";
+import { json, type RequestHandler } from "@sveltejs/kit";
 
 /** Get a page of versions for a registry item using cursor-based pagination */
 export const POST: RequestHandler = async ({ request, fetch }) => {
@@ -11,7 +10,7 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
     space,
     name,
     cursor,
-    limit
+    limit,
   );
   return json(response);
 };
