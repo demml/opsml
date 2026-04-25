@@ -10,7 +10,7 @@
   let scouterEnabled = $derived(uiSettingsStore.scouterEnabled);
 </script>
 
-{#if scouterEnabled}
+{#if scouterEnabled || data.mockMode}
   {#if data.status === 'error' || data.status === 'not_found'}
     <TraceErrorView
       message={data.errorMessage}

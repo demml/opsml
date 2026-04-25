@@ -7,6 +7,7 @@
     import { ToastProvider } from '@skeletonlabs/skeleton-svelte';
     import { uiSettingsStore } from "$lib/components/settings/settings.svelte";
     import { themeStore } from "$lib/components/settings/theme.svelte";
+    import { devMockStore } from "$lib/components/settings/mockMode.svelte";
 
     let { data, children } = $props();
     let show = $state(false);
@@ -15,6 +16,7 @@
     onMount(() => {
         uiSettingsStore.initialize(data.settings);
         themeStore.initialize(data.settings?.theme_preference, data.username);
+        devMockStore.initialize(Boolean(data.devMockEnabled));
         setTimeout(() => {
           show = true;
         }, 50);
@@ -24,6 +26,7 @@
     // on each navigation, so data.settings always reflects latest state.
     afterNavigate(() => {
         uiSettingsStore.initialize(data.settings);
+        devMockStore.initialize(Boolean(data.devMockEnabled));
     });
 
 

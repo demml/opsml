@@ -11,6 +11,10 @@ import {
   getCookie,
   calculateTimeRange,
 } from "$lib/components/trace/utils";
+import {
+  getMockTraceMetrics,
+  getMockTracePage,
+} from "$lib/components/trace/mockData";
 import { getEvalProfileOrUid } from "$lib/components/card/card_interfaces/enum";
 import type { CardMetadata } from "$lib/server/card/layout";
 import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
@@ -22,6 +26,7 @@ export const ssr = false;
 export const load: PageLoad = async ({ fetch, depends, parent }) => {
   const parentData = await parent();
   const metadata = parentData.metadata as CardMetadata;
+  const useMockFallback = Boolean(parentData.devMockEnabled);
 
   try {
     depends("trace:data");
@@ -51,13 +56,22 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       entity_uid: entity_uid,
     };
 
-    let traceMetrics = await getServerTraceMetrics(fetch, metricsRequest);
-    let tracePage = await getServerTracePage(fetch, {
-      start_time: startTime,
-      end_time: endTime,
-      limit: 50,
-      entity_uid: entity_uid,
-    });
+    let traceMetrics = useMockFallback
+      ? getMockTraceMetrics(metricsRequest)
+      : await getServerTraceMetrics(fetch, metricsRequest);
+    let tracePage = useMockFallback
+      ? getMockTracePage({
+          start_time: startTime,
+          end_time: endTime,
+          limit: 50,
+          entity_uid: entity_uid,
+        })
+      : await getServerTracePage(fetch, {
+          start_time: startTime,
+          end_time: endTime,
+          limit: 50,
+          entity_uid: entity_uid,
+        });
 
     if (!tracePage.items || tracePage.items.length === 0) {
       let filters: TraceFilters = {
@@ -75,6 +89,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
         errorMessage:
           "No traces found for the selected time range. Try adjusting your time range or check if your application is generating traces.",
         initialFilters: initialFilters,
+        mockMode: useMockFallback,
       };
     }
     let traceFilter: TraceFilters = {
@@ -93,6 +108,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       trace_page: tracePage,
       trace_metrics: traceMetrics,
       initialFilters,
+      mockMode: useMockFallback,
     };
   } catch (error) {
     console.error("Error loading trace data:", error);
@@ -133,6 +149,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       status: "error" as const,
       errorMessage,
       initialFilters,
+      mockMode: false,
     };
   }
 };

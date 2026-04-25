@@ -11,8 +11,8 @@
   page={data.page}
   selectedName={data.selectedName} 
   selectedSpace={data.selectedSpace}
+  mockMode={data.mockMode}
 />
-
 
 
 

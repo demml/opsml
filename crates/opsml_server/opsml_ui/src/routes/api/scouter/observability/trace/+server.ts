@@ -1,16 +1,15 @@
 import { type RequestHandler, json } from "@sveltejs/kit";
-import { dev } from "$app/environment";
 import type {
   TraceFilters,
   TracePaginationResponse,
 } from "$lib/components/trace/types";
 import { getTracePage } from "$lib/server/trace/utils";
+import { isDevMockEnabled } from "$lib/server/mock/mode";
 
-export const POST: RequestHandler = async ({ request, fetch }) => {
+export const POST: RequestHandler = async ({ request, fetch, cookies }) => {
   const filters: TraceFilters = await request.json();
 
-  // DEV ONLY: static mock data. This branch is dead in production builds.
-  if (dev) {
+  if (isDevMockEnabled(cookies)) {
     const { getMockTracePage } = await import("$lib/server/trace/mockData");
     return json({ response: getMockTracePage(filters), error: null });
   }

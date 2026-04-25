@@ -7,11 +7,16 @@
 
   let { tasks }: { tasks: AssertionTasks } = $props();
 
+  const assertionTasks = $derived(tasks.assertion ?? []);
+  const judgeTasks = $derived(tasks.judge ?? []);
+  const traceTasks = $derived(tasks.trace ?? []);
+  const agentTasks = $derived(tasks.agent ?? []);
+
   const allTasks = $derived<AnyTask[]>([
-    ...tasks.assertion,
-    ...tasks.judge,
-    ...tasks.trace,
-    ...tasks.agent,
+    ...assertionTasks,
+    ...judgeTasks,
+    ...traceTasks,
+    ...agentTasks,
   ]);
 
   const totalCount = $derived(allTasks.length);
@@ -19,10 +24,10 @@
 
   const breakdownLabel = $derived(() => {
     const parts: string[] = [];
-    if (tasks.assertion.length) parts.push(`${tasks.assertion.length} Assertion`);
-    if (tasks.judge.length) parts.push(`${tasks.judge.length} LLM Judge`);
-    if (tasks.trace.length) parts.push(`${tasks.trace.length} Trace`);
-    if (tasks.agent.length) parts.push(`${tasks.agent.length} Agent`);
+    if (assertionTasks.length) parts.push(`${assertionTasks.length} Assertion`);
+    if (judgeTasks.length) parts.push(`${judgeTasks.length} LLM Judge`);
+    if (traceTasks.length) parts.push(`${traceTasks.length} Trace`);
+    if (agentTasks.length) parts.push(`${agentTasks.length} Agent`);
     return parts.join(' · ');
   });
 </script>
@@ -47,8 +52,8 @@
         {/snippet}
 
         {#snippet panel()}
-          <div class="overflow-x-auto bg-white border-black">
-            <div class="flex gap-3 p-4 w-max min-w-full">
+          <div class="bg-white border-black overflow-hidden">
+            <div class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-3 p-4">
               {#each allTasks as task (task.id)}
                 <AgentTaskCard {task} />
               {/each}

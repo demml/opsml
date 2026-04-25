@@ -12,16 +12,39 @@ import {
   getServerTraceSpans,
   getServerTracePage,
 } from "$lib/components/trace/utils";
+import {
+  getMockTracePage,
+  getMockTraceSpans,
+} from "$lib/components/trace/mockData";
 
 export const load: PageLoad = async ({ parent }) => {
-  const { metadata, registryType, settings } = await parent();
+  const { metadata, registryType, settings, devMockEnabled } = await parent();
+  const useMockFallback = Boolean(devMockEnabled);
 
   if (!settings?.scouter_enabled) {
+    if (useMockFallback) {
+      const tracePage = getMockTracePage({
+        entity_uid: metadata.uid,
+      });
+      const trace = tracePage.items[0] ?? null;
+      const spans = trace
+        ? getMockTraceSpans({ trace_id: trace.trace_id })
+        : null;
+
+      return {
+        trace,
+        spans,
+        errorMessage: "none",
+        mockMode: true,
+      };
+    }
+
     return {
       trace: null,
       spans: null,
       type: "not_found" as const,
       errorMessage: "Scouter is not enabled.",
+      mockMode: false,
     };
   }
 
@@ -43,12 +66,30 @@ export const load: PageLoad = async ({ parent }) => {
       await getScouterServerEntityIdFromTags(fetch, request);
 
     if (response.entity_id.length === 0) {
+      if (useMockFallback) {
+        const tracePage = getMockTracePage({
+          entity_uid: metadata.uid,
+        });
+        const trace = tracePage.items[0] ?? null;
+        const spans = trace
+          ? getMockTraceSpans({ trace_id: trace.trace_id })
+          : null;
+
+        return {
+          trace,
+          spans,
+          errorMessage: "none",
+          mockMode: true,
+        };
+      }
+
       return {
         trace: null,
         spans: null,
         type: "not_found" as const,
         errorMessage:
           "No trace found for this card. Ensure that the application is generating traces with the correct tags.",
+        mockMode: false,
       };
     }
 
@@ -66,8 +107,24 @@ export const load: PageLoad = async ({ parent }) => {
       trace: tracePage.items[0],
       spans: spansDetails,
       errorMessage: "none",
+      mockMode: false,
     };
   } catch (error) {
+    if (useMockFallback) {
+      const tracePage = getMockTracePage({
+        entity_uid: metadata.uid,
+      });
+      const trace = tracePage.items[0] ?? null;
+      const spans = trace ? getMockTraceSpans({ trace_id: trace.trace_id }) : null;
+
+      return {
+        trace,
+        spans,
+        errorMessage: "none",
+        mockMode: true,
+      };
+    }
+
     console.error("Error loading span data:", error);
 
     let errorMessage =
@@ -99,6 +156,7 @@ export const load: PageLoad = async ({ parent }) => {
       trace: null,
       spans: null,
       type: "error" as const,
+      mockMode: false,
     };
   }
 };

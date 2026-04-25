@@ -8,11 +8,11 @@ import {
   getSortedDriftTypes,
 } from "$lib/components/scouter/dashboard/utils";
 import { driftTypeFromString } from "$lib/components/scouter/types";
-import { dev } from "$app/environment";
 
 export const load: LayoutLoad = async ({ parent, fetch, url }) => {
   const parentData = await parent();
-  const { registryType, metadata, settings } = parentData;
+  const { registryType, metadata, settings, devMockEnabled } = parentData;
+  const useMockFallback = Boolean(devMockEnabled);
 
   if (registryType !== RegistryType.Model) {
     throw redirect(
@@ -22,7 +22,7 @@ export const load: LayoutLoad = async ({ parent, fetch, url }) => {
   }
 
   if (!settings?.scouter_enabled) {
-    if (dev) {
+    if (useMockFallback) {
       const { getMockMonitoringProfiles, getMockDriftTypes } =
         await import("$lib/components/scouter/monitoring/mockData");
       const profiles = getMockMonitoringProfiles();
@@ -56,6 +56,31 @@ export const load: LayoutLoad = async ({ parent, fetch, url }) => {
 
   const profiles = await getProfilesFromMetadata(fetch, metadata, registryType);
   const driftTypes = getSortedDriftTypes(profiles);
+
+  if (useMockFallback && driftTypes.length === 0) {
+    const { getMockMonitoringProfiles, getMockDriftTypes } =
+      await import("$lib/components/scouter/monitoring/mockData");
+    const mockProfiles = getMockMonitoringProfiles();
+    const mockDriftTypes = getMockDriftTypes();
+    const currentDriftType = driftTypeFromString(
+      url.pathname.split("/").pop() || "",
+    );
+
+    if (!currentDriftType || !mockDriftTypes.includes(currentDriftType)) {
+      throw redirect(
+        303,
+        `/opsml/${getRegistryPath(registryType)}/card/${metadata.space}/${metadata.name}/${metadata.version}/monitoring/${mockDriftTypes[0].toLowerCase()}`,
+      );
+    }
+
+    return {
+      registryType,
+      metadata,
+      profiles: mockProfiles,
+      driftTypes: mockDriftTypes,
+      mockMode: true,
+    };
+  }
 
   if (driftTypes.length === 0) {
     throw redirect(

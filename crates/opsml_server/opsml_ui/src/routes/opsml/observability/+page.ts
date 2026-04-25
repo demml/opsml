@@ -14,9 +14,10 @@ import {
 
 export const ssr = false;
 
-export const load: PageLoad = async ({ fetch, depends }) => {
+export const load: PageLoad = async ({ fetch, depends, parent }) => {
   try {
     depends("trace:data");
+    const { devMockEnabled } = await parent();
 
     const selectedRange = getCookie("trace_range") || "15min";
 
@@ -53,6 +54,7 @@ export const load: PageLoad = async ({ fetch, depends }) => {
         errorMessage:
           "No traces found for the selected time range. Try adjusting your time range or check if your application is generating traces.",
         initialFilters: initialFilters,
+        mockMode: Boolean(devMockEnabled),
       };
     }
     let traceFilter: TraceFilters = {
@@ -70,6 +72,7 @@ export const load: PageLoad = async ({ fetch, depends }) => {
       trace_page: tracePage,
       trace_metrics: traceMetrics,
       initialFilters,
+      mockMode: Boolean(devMockEnabled),
     };
   } catch (error) {
     console.error("Error loading trace data:", error);
@@ -110,6 +113,7 @@ export const load: PageLoad = async ({ fetch, depends }) => {
       status: "error" as const,
       errorMessage,
       initialFilters,
+      mockMode: false,
     };
   }
 };

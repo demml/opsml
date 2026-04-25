@@ -6,9 +6,11 @@ import { getRegistryPath, RegistryType } from "$lib/utils";
 import type { PageLoad } from "./$types";
 import { getDataProfile } from "$lib/components/card/data/getDataProfile";
 import type { DataCard } from "$lib/components/card/card_interfaces/datacard";
+import { buildMockDataProfile } from "$lib/components/mock/opsmlMockData";
 
 export const load: PageLoad = async ({ parent, fetch }) => {
-  const { registryType, metadata } = await parent();
+  const { registryType, metadata, devMockEnabled } = await parent();
+  const useMockFallback = Boolean(devMockEnabled);
 
   if (registryType !== RegistryType.Data) {
     throw redirect(
@@ -23,8 +25,12 @@ export const load: PageLoad = async ({ parent, fetch }) => {
 
   let dataProfile = dataCard.metadata.interface_metadata.save_metadata
     ?.data_profile_uri
-    ? await getDataProfile(fetch, dataCard)
+    ? await getDataProfile(fetch, dataCard).catch(() => undefined)
     : undefined;
+
+  if (!dataProfile && useMockFallback) {
+    dataProfile = buildMockDataProfile();
+  }
 
   // get sorted feature names from dataProfile.features
   let featureNames: string[] = [];
@@ -33,5 +39,5 @@ export const load: PageLoad = async ({ parent, fetch }) => {
     featureNames = getSortedFeatureNames(dataProfile);
   }
 
-  return { dataProfile, featureNames };
+  return { dataProfile, featureNames, mockMode: !dataCard.metadata.interface_metadata.save_metadata?.data_profile_uri && useMockFallback };
 };

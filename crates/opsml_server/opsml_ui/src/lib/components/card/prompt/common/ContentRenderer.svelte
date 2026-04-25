@@ -44,52 +44,64 @@
   function asGemini(m: MessageNum): GeminiContent {
     return m as GeminiContent;
   }
+
+  function isOpenAIStringContent(
+    content: ChatMessage["content"],
+  ): content is string {
+    return typeof content === "string";
+  }
 </script>
 
 <div class="flex flex-col gap-3 w-full">
   
   {#if provider === Provider.OpenAI}
     {@const openaiMsg = asOpenAI(message)}
-    {#each openaiMsg.content as part}
-      
-      {#if part.type === OPENAI_CONTENT_PART_TEXT}
-        <div class="whitespace-pre-wrap text-sm text-primary-950 font-medium font-mono leading-relaxed">
-          {part.text}
-        </div>
-      
-      {:else if part.type === OPENAI_CONTENT_PART_IMAGE_URL}
-        <div class="group relative rounded-base border-2 border-black overflow-hidden my-2 max-w-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-surface-50">
-          <div class="absolute top-2 left-2 bg-white/90 backdrop-blur border border-black px-2 py-1 rounded-md text-[10px] font-bold uppercase flex items-center gap-1 z-10">
-            <ImageIcon class="w-3 h-3 text-purple-600"/>
-            Image
-          </div>
-          <img src={part.image_url.url} alt="User upload" class="w-full h-auto" />
-        </div>
+    {#if isOpenAIStringContent(openaiMsg.content)}
+      <div class="whitespace-pre-wrap break-words text-sm text-primary-950 font-medium font-mono leading-relaxed">
+        {openaiMsg.content}
+      </div>
+    {:else}
+      {#each openaiMsg.content as part}
 
-      {:else if part.type === OPENAI_CONTENT_PART_FILE}
-        <div class="flex items-center gap-3 bg-white border-2 border-black p-3 rounded-base shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-md my-1">
-          <div class="bg-blue-100 border-2 border-black p-2 rounded-lg">
-            <FileText class="w-5 h-5 text-blue-700" />
+        {#if part.type === OPENAI_CONTENT_PART_TEXT}
+          <div class="whitespace-pre-wrap break-words text-sm text-primary-950 font-medium font-mono leading-relaxed">
+            {part.text}
           </div>
-          <div class="flex flex-col overflow-hidden">
-            <span class="text-xs font-black uppercase text-slate-500 tracking-wider">Uploaded File</span>
-            <span class="font-mono text-sm font-bold text-slate-900 truncate">{part.file.filename || 'Unknown File'}</span>
-          </div>
-        </div>
-      
-      {:else if part.type === OPENAI_CONTENT_PART_INPUT_AUDIO}
-        <div class="flex items-center gap-3 bg-white border-2 border-black p-3 rounded-base shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-md my-1">
-          <div class="bg-pink-100 border-2 border-black p-2 rounded-lg">
-             <AudioWaveform class="w-5 h-5 text-pink-700" />
-          </div>
-          <div class="flex flex-col">
-            <span class="text-xs font-black uppercase text-slate-500 tracking-wider">Input Audio</span>
-            <span class="font-mono text-sm font-bold text-slate-900 uppercase">{part.input_audio.format} Format</span>
-          </div>
-        </div>
-      {/if}
 
-    {/each}
+        {:else if part.type === OPENAI_CONTENT_PART_IMAGE_URL}
+          <div class="group relative rounded-base border-2 border-black overflow-hidden my-2 max-w-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-surface-50">
+            <div class="absolute top-2 left-2 bg-white/90 backdrop-blur border border-black px-2 py-1 rounded-md text-[10px] font-bold uppercase flex items-center gap-1 z-10">
+              <ImageIcon class="w-3 h-3 text-purple-600"/>
+              Image
+            </div>
+            <img src={part.image_url.url} alt="User upload" class="w-full h-auto" />
+          </div>
+
+        {:else if part.type === OPENAI_CONTENT_PART_FILE}
+          <div class="flex items-center gap-3 bg-white border-2 border-black p-3 rounded-base shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-md my-1">
+            <div class="bg-blue-100 border-2 border-black p-2 rounded-lg">
+              <FileText class="w-5 h-5 text-blue-700" />
+            </div>
+            <div class="flex flex-col overflow-hidden">
+              <span class="text-xs font-black uppercase text-slate-500 tracking-wider">Uploaded File</span>
+              <span class="font-mono text-sm font-bold text-slate-900 truncate">{part.file.filename || 'Unknown File'}</span>
+            </div>
+          </div>
+
+        {:else if part.type === OPENAI_CONTENT_PART_INPUT_AUDIO}
+          <div class="flex items-center gap-3 bg-white border-2 border-black p-3 rounded-base shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] max-w-md my-1">
+            <div class="bg-pink-100 border-2 border-black p-2 rounded-lg">
+               <AudioWaveform class="w-5 h-5 text-pink-700" />
+            </div>
+            <div class="flex flex-col">
+              <span class="text-xs font-black uppercase text-slate-500 tracking-wider">Input Audio</span>
+              <span class="font-mono text-sm font-bold text-slate-900 uppercase">{part.input_audio.format} Format</span>
+            </div>
+          </div>
+        {/if}
+
+      {/each}
+    {/if}
 
   {:else if provider === Provider.Anthropic}
     {#if 'content' in message}
@@ -97,7 +109,7 @@
       {#each anthropicMsg.content as block}
         
         {#if block.type === ANTHROPIC_TEXT}
-          <div class="whitespace-pre-wrap text-sm text-primary-950 font-medium font-mono leading-relaxed">
+          <div class="whitespace-pre-wrap break-words text-sm text-primary-950 font-medium font-mono leading-relaxed">
             {block.text}
           </div>
         
@@ -133,7 +145,7 @@
       {@const sysMsg = asAnthropicSystem(message)}
       <div class="flex gap-3 bg-surface-100 border-2 border-black border-dashed p-3 rounded-base items-start opacity-75">
         <Terminal class="w-4 h-4 mt-0.5 text-slate-600 shrink-0" />
-        <div class="whitespace-pre-wrap text-sm text-slate-700 font-medium font-mono leading-relaxed">
+        <div class="whitespace-pre-wrap break-words text-sm text-slate-700 font-medium font-mono leading-relaxed">
           {sysMsg.text}
         </div>
       </div>
@@ -144,7 +156,7 @@
     {#each geminiMsg.parts as part}
       
       {#if 'text' in part}
-        <div class="whitespace-pre-wrap text-sm text-primary-950 font-medium font-mono leading-relaxed">
+        <div class="whitespace-pre-wrap break-words text-sm text-primary-950 font-medium font-mono leading-relaxed">
           {part.text}
         </div>
       

@@ -10,7 +10,6 @@ import type {
   Card,
 } from "$lib/components/card/card_interfaces/servicecard";
 import { RoutePaths } from "$lib/components/api/routes";
-import { dev } from "$app/environment";
 
 /** Fetch a single prompt card's full metadata using a relative-path fetch call. */
 async function fetchPromptCardMetadata(
@@ -37,14 +36,20 @@ async function fetchPromptCardMetadata(
 
 export const load: LayoutLoad = async ({ parent, fetch }) => {
   const parentData = await parent();
-  const { registryType, metadata, promptCardsWithEval, settings } = parentData;
+  const {
+    registryType,
+    metadata,
+    promptCardsWithEval,
+    settings,
+    devMockEnabled,
+  } = parentData;
 
-  const mockMode = dev && !settings?.scouter_enabled;
+  const mockMode = Boolean(devMockEnabled);
 
   // ── Agent registry: collect all associated prompt cards that have eval profiles ──
   if (registryType === RegistryType.Agent) {
     if (promptCardsWithEval.length === 0) {
-      if (dev) {
+      if (mockMode) {
         const { buildMockAgentEvalProfile } =
           await import("$lib/components/scouter/evaluation/mockData");
         const mockProfile = buildMockAgentEvalProfile();
@@ -98,7 +103,7 @@ export const load: LayoutLoad = async ({ parent, fetch }) => {
   const eval_profile = metadata.eval_profile;
 
   if (!eval_profile) {
-    if (dev) {
+    if (mockMode) {
       const { buildMockAgentEvalProfile } =
         await import("$lib/components/scouter/evaluation/mockData");
       return {

@@ -84,6 +84,12 @@ function buildBinnedMetric(
 
 // ── Task definitions ──────────────────────────────────────────────────────────
 
+type MockDefinitionTask =
+  | AssertionTask
+  | LLMJudgeTask
+  | TraceAssertionTask
+  | AgentAssertionTask;
+
 const assertionTasks: AssertionTask[] = [
   {
     id: "check_response_format",
@@ -114,6 +120,17 @@ const assertionTasks: AssertionTask[] = [
     operator: "GreaterThanOrEqual",
     expected_value: 0.6,
     description: "Confidence score must be at least 0.6",
+    depends_on: ["check_response_format"],
+    task_type: "Assertion",
+    condition: true,
+  },
+  {
+    id: "check_response_text_not_empty",
+    context_path: "response.text",
+    item_context_path: null,
+    operator: "IsNotEmpty",
+    expected_value: true,
+    description: "The final assistant response should not be empty",
     depends_on: ["check_response_format"],
     task_type: "Assertion",
     condition: true,
@@ -160,12 +177,231 @@ const judgeTasks: LLMJudgeTask[] = [
 
 const traceTasks: TraceAssertionTask[] = [
   {
-    id: "check_trace_latency",
+    id: "trace_span_sequence_core",
+    assertion: {
+      SpanSequence: {
+        span_names: [
+          "orchestrate_request",
+          "classify_intent",
+          "fetch_kb_answer",
+          "compose_response",
+        ],
+      },
+    },
+    operator: "Equals",
+    expected_value: true,
+    description: "The core agent workflow should emit the expected span order",
+    depends_on: [],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_span_set_required",
+    assertion: {
+      SpanSet: {
+        span_names: ["classify_intent", "fetch_kb_answer", "compose_response"],
+      },
+    },
+    operator: "ContainsAll",
+    expected_value: ["classify_intent", "fetch_kb_answer", "compose_response"],
+    description: "Required workflow spans must all be present in the trace",
+    depends_on: ["trace_span_sequence_core"],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_span_count_llm",
+    assertion: {
+      SpanCount: {
+        filter: { ByNamePattern: { pattern: "llm.*" } },
+      },
+    },
+    operator: "GreaterThanOrEqual",
+    expected_value: 2,
+    description: "At least two LLM-related spans should be emitted",
+    depends_on: ["trace_span_sequence_core"],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_span_exists_tool",
+    assertion: {
+      SpanExists: {
+        filter: { ByName: { name: "fetch_kb_answer" } },
+      },
+    },
+    operator: "Equals",
+    expected_value: true,
+    description: "Tool invocation span should exist for knowledge-base lookups",
+    depends_on: ["trace_span_sequence_core"],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_span_attribute_provider",
+    assertion: {
+      SpanAttribute: {
+        filter: { ByName: { name: "llm.call" } },
+        attribute_key: "gen_ai.request.model",
+      },
+    },
+    operator: "Contains",
+    expected_value: "gpt-4o",
+    description: "LLM call span should expose the configured provider model",
+    depends_on: ["trace_span_sequence_core"],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_span_duration_tool",
+    assertion: {
+      SpanDuration: {
+        filter: { ByName: { name: "fetch_kb_answer" } },
+      },
+    },
+    operator: "LessThan",
+    expected_value: 1200,
+    description: "Tool lookup span should stay within the latency budget",
+    depends_on: ["trace_span_exists_tool"],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_span_aggregation_tokens",
+    assertion: {
+      SpanAggregation: {
+        filter: { ByName: { name: "llm.call" } },
+        attribute_key: "gen_ai.usage.total_tokens",
+        aggregation: "Average",
+      },
+    },
+    operator: "LessThanOrEqual",
+    expected_value: 2000,
+    description: "Average total-token usage for the LLM span should remain bounded",
+    depends_on: ["trace_span_attribute_provider"],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_duration_total",
     assertion: { TraceDuration: {} },
     operator: "LessThan",
     expected_value: 5000,
-    description: "End-to-end trace duration must be under 5 000 ms",
-    depends_on: [],
+    description: "End-to-end trace duration must stay under 5 000 ms",
+    depends_on: ["trace_span_sequence_core"],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_span_count_total",
+    assertion: { TraceSpanCount: {} },
+    operator: "GreaterThanOrEqual",
+    expected_value: 8,
+    description: "A healthy orchestration should emit multiple spans across services",
+    depends_on: ["trace_span_sequence_core"],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_error_count",
+    assertion: { TraceErrorCount: {} },
+    operator: "Equals",
+    expected_value: 0,
+    description: "Workflow traces should not contain error spans",
+    depends_on: ["trace_span_sequence_core"],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_service_count",
+    assertion: { TraceServiceCount: {} },
+    operator: "GreaterThanOrEqual",
+    expected_value: 2,
+    description: "Trace should traverse at least two services during orchestration",
+    depends_on: ["trace_span_sequence_core"],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_max_depth",
+    assertion: { TraceMaxDepth: {} },
+    operator: "LessThanOrEqual",
+    expected_value: 4,
+    description: "Nested span depth should remain understandable and shallow",
+    depends_on: ["trace_span_sequence_core"],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_attribute_workflow",
+    assertion: {
+      TraceAttribute: {
+        attribute_key: "workflow.name",
+      },
+    },
+    operator: "Equals",
+    expected_value: "agent-eval-workflow",
+    description: "Workflow name should be stamped on the root trace metadata",
+    depends_on: ["trace_span_sequence_core"],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_attribute_filter_assertion",
+    assertion: {
+      AttributeFilter: {
+        key: "gen_ai.response.finish_reason",
+        mode: "Any",
+        task: {
+          Assertion: {
+            id: "nested_trace_finish_reason",
+            context_path: null,
+            item_context_path: null,
+            operator: "Equals",
+            expected_value: "stop",
+            description: "Finish reason should be the standard stop token",
+            depends_on: [],
+            task_type: "Assertion",
+            condition: true,
+          },
+        },
+      },
+    },
+    operator: "Contains",
+    expected_value: "stop",
+    description: "Trace attribute filters should support nested assertion tasks",
+    depends_on: ["trace_span_attribute_provider"],
+    task_type: "TraceAssertion",
+    condition: true,
+  },
+  {
+    id: "trace_attribute_filter_agent",
+    assertion: {
+      AttributeFilter: {
+        key: "tool.name",
+        mode: "All",
+        task: {
+          AgentAssertion: {
+            id: "nested_trace_tool_name",
+            assertion: {
+              ToolCalled: { name: "fetch_kb_answer" },
+            },
+            operator: "Equals",
+            expected_value: true,
+            description: "Every tool.name attribute should map to the expected tool",
+            depends_on: [],
+            task_type: "AgentAssertion",
+            condition: true,
+            provider: Provider.OpenAI,
+            context_path: null,
+          },
+        },
+      },
+    },
+    operator: "Contains",
+    expected_value: "fetch_kb_answer",
+    description: "Trace attribute filters should also support nested agent assertions",
+    depends_on: ["trace_span_exists_tool"],
     task_type: "TraceAssertion",
     condition: true,
   },
@@ -173,7 +409,62 @@ const traceTasks: TraceAssertionTask[] = [
 
 const agentTasks: AgentAssertionTask[] = [
   {
-    id: "check_tool_sequence",
+    id: "agent_tool_called_classify",
+    assertion: {
+      ToolCalled: {
+        name: "classify_intent",
+      },
+    },
+    operator: "Equals",
+    expected_value: true,
+    description: "Intent classifier tool should be invoked during orchestration",
+    depends_on: ["check_response_format"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: "response.tools",
+  },
+  {
+    id: "agent_tool_not_called_fallback",
+    assertion: {
+      ToolNotCalled: {
+        name: "fallback_answer",
+      },
+    },
+    operator: "Equals",
+    expected_value: true,
+    description: "Fallback tool should not be used for normal knowledge-base requests",
+    depends_on: ["agent_tool_called_classify"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: "response.tools",
+  },
+  {
+    id: "agent_tool_called_with_args",
+    assertion: {
+      ToolCalledWithArgs: {
+        name: "fetch_kb_answer",
+        arguments: {
+          query: "return policy for electronics",
+          customer_id: "customer_7842",
+        },
+      },
+    },
+    operator: "Equals",
+    expected_value: {
+      query: "return policy for electronics",
+      customer_id: "customer_7842",
+    },
+    description: "Knowledge-base tool should be invoked with the expected arguments",
+    depends_on: ["agent_tool_called_classify"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: "response.tools",
+  },
+  {
+    id: "agent_tool_call_sequence",
     assertion: {
       ToolCallSequence: {
         names: ["classify_intent", "fetch_kb_answer"],
@@ -186,7 +477,156 @@ const agentTasks: AgentAssertionTask[] = [
     task_type: "AgentAssertion",
     condition: true,
     provider: Provider.OpenAI,
-    context_path: null,
+    context_path: "response.tools",
+  },
+  {
+    id: "agent_tool_call_count",
+    assertion: {
+      ToolCallCount: {
+        name: null,
+      },
+    },
+    operator: "GreaterThanOrEqual",
+    expected_value: 2,
+    description: "The workflow should perform at least two tool calls",
+    depends_on: ["agent_tool_call_sequence"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: "response.tools",
+  },
+  {
+    id: "agent_tool_argument_customer_id",
+    assertion: {
+      ToolArgument: {
+        name: "fetch_kb_answer",
+        argument_key: "customer_id",
+      },
+    },
+    operator: "Equals",
+    expected_value: "customer_7842",
+    description: "The customer ID argument should flow through to the tool call",
+    depends_on: ["agent_tool_called_with_args"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: "response.tools",
+  },
+  {
+    id: "agent_tool_result_fetch",
+    assertion: {
+      ToolResult: {
+        name: "fetch_kb_answer",
+      },
+    },
+    operator: "Contains",
+    expected_value: "30 days",
+    description: "Tool result payload should contain the expected return-policy snippet",
+    depends_on: ["agent_tool_called_with_args"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: "response.tools",
+  },
+  {
+    id: "agent_response_content",
+    assertion: {
+      ResponseContent: {},
+    },
+    operator: "Contains",
+    expected_value: "30 days",
+    description: "Final response text should mention the return-policy answer",
+    depends_on: ["check_response_text_not_empty"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: "response.text",
+  },
+  {
+    id: "agent_response_model",
+    assertion: {
+      ResponseModel: {},
+    },
+    operator: "Equals",
+    expected_value: "gpt-4o",
+    description: "Rendered response metadata should expose the correct model name",
+    depends_on: ["check_response_format"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: "response.metadata.model",
+  },
+  {
+    id: "agent_response_finish_reason",
+    assertion: {
+      ResponseFinishReason: {},
+    },
+    operator: "Equals",
+    expected_value: "stop",
+    description: "The response should complete with the standard stop reason",
+    depends_on: ["check_response_format"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: "response.metadata.finish_reason",
+  },
+  {
+    id: "agent_response_input_tokens",
+    assertion: {
+      ResponseInputTokens: {},
+    },
+    operator: "GreaterThan",
+    expected_value: 200,
+    description: "Prompt token count should exceed the minimum expected size",
+    depends_on: ["agent_response_model"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: "response.metadata.usage.input_tokens",
+  },
+  {
+    id: "agent_response_output_tokens",
+    assertion: {
+      ResponseOutputTokens: {},
+    },
+    operator: "GreaterThan",
+    expected_value: 100,
+    description: "Completion token count should exceed the minimum expected size",
+    depends_on: ["agent_response_model"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: "response.metadata.usage.output_tokens",
+  },
+  {
+    id: "agent_response_total_tokens",
+    assertion: {
+      ResponseTotalTokens: {},
+    },
+    operator: "GreaterThan",
+    expected_value: 300,
+    description: "Total token count should include both prompt and completion usage",
+    depends_on: ["agent_response_input_tokens", "agent_response_output_tokens"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: "response.metadata.usage.total_tokens",
+  },
+  {
+    id: "agent_response_field_intent",
+    assertion: {
+      ResponseField: {
+        path: "response.intent",
+      },
+    },
+    operator: "Equals",
+    expected_value: "faq",
+    description: "Response field assertions should be able to reach nested response keys",
+    depends_on: ["check_intent_label"],
+    task_type: "AgentAssertion",
+    condition: true,
+    provider: Provider.OpenAI,
+    context_path: "response.intent",
   },
 ];
 
@@ -196,6 +636,51 @@ const assertionTasksObj: AssertionTasks = {
   trace: traceTasks,
   agent: agentTasks,
 };
+
+const allMockTasks: MockDefinitionTask[] = [
+  ...assertionTasks,
+  ...judgeTasks,
+  ...traceTasks,
+  ...agentTasks,
+];
+
+const mockStageTaskIds: string[][] = [
+  assertionTasks.map((task) => task.id),
+  judgeTasks.map((task) => task.id),
+  traceTasks.map((task) => task.id),
+  agentTasks.map((task) => task.id),
+];
+
+const mockStageByTaskId = new Map<string, number>(
+  mockStageTaskIds.flatMap((taskIds, stageIndex) =>
+    taskIds.map((taskId) => [taskId, stageIndex] as const),
+  ),
+);
+
+const failureScenarios: string[][] = [
+  [],
+  ["check_confidence_score", "trace_error_count"],
+  ["judge_response_quality", "agent_response_finish_reason"],
+  [
+    "trace_attribute_filter_agent",
+    "agent_tool_called_with_args",
+    "agent_response_field_intent",
+  ],
+  ["trace_service_count", "agent_tool_not_called_fallback"],
+  [
+    "trace_span_duration_tool",
+    "agent_response_total_tokens",
+    "check_response_text_not_empty",
+  ],
+];
+
+function isMockTraceTask(task: MockDefinitionTask): task is TraceAssertionTask {
+  return task.task_type === "TraceAssertion";
+}
+
+function isMockAgentTask(task: MockDefinitionTask): task is AgentAssertionTask {
+  return task.task_type === "AgentAssertion";
+}
 
 // ── Eval profile ──────────────────────────────────────────────────────────────
 
@@ -223,14 +708,7 @@ export function buildMockAgentEvalProfile(): AgentEvalProfile {
   return {
     config,
     tasks: assertionTasksObj,
-    task_ids: [
-      "check_response_format",
-      "check_intent_label",
-      "check_confidence_score",
-      "judge_response_quality",
-      "check_trace_latency",
-      "check_tool_sequence",
-    ],
+    task_ids: allMockTasks.map((task) => task.id),
     scouter_version: "0.6.0",
   };
 }
@@ -312,61 +790,34 @@ function buildEvalRecords(): EvalRecord[] {
 // ── Workflow results ──────────────────────────────────────────────────────────
 
 function buildExecutionPlan(): ExecutionPlan {
-  const nodes: Record<string, ExecutionNode> = {
-    check_response_format: {
-      id: "check_response_format",
-      stage: 0,
-      parents: [],
-      children: [
-        "check_intent_label",
-        "check_confidence_score",
-        "judge_response_quality",
-      ],
-    },
-    check_intent_label: {
-      id: "check_intent_label",
-      stage: 1,
-      parents: ["check_response_format"],
+  const nodes: Record<string, ExecutionNode> = {};
+
+  for (const task of allMockTasks) {
+    nodes[task.id] = {
+      id: task.id,
+      stage: mockStageByTaskId.get(task.id) ?? 0,
+      parents: [...task.depends_on],
       children: [],
-    },
-    check_confidence_score: {
-      id: "check_confidence_score",
-      stage: 1,
-      parents: ["check_response_format"],
-      children: [],
-    },
-    judge_response_quality: {
-      id: "judge_response_quality",
-      stage: 1,
-      parents: ["check_response_format"],
-      children: [],
-    },
-    check_trace_latency: {
-      id: "check_trace_latency",
-      stage: 2,
-      parents: [],
-      children: [],
-    },
-  };
+    };
+  }
+
+  for (const task of allMockTasks) {
+    for (const parentId of task.depends_on) {
+      if (nodes[parentId]) {
+        nodes[parentId].children.push(task.id);
+      }
+    }
+  }
 
   return {
-    stages: [
-      ["check_response_format"],
-      [
-        "check_intent_label",
-        "check_confidence_score",
-        "judge_response_quality",
-      ],
-      ["check_trace_latency"],
-    ],
+    stages: mockStageTaskIds.map((stageTaskIds) => [...stageTaskIds]),
     nodes,
   };
 }
 
 function buildWorkflowResult(index: number): AgentEvalWorkflowResult {
-  const totalTasks = 5;
-  const failedVariants = [0, 0, 0, 1, 0, 2, 0, 1];
-  const failedTasks = failedVariants[index % failedVariants.length];
+  const failedTasks = failureScenarios[index % failureScenarios.length]?.length ?? 0;
+  const totalTasks = allMockTasks.length;
   const passedTasks = totalTasks - failedTasks;
   const passRate = parseFloat((passedTasks / totalTasks).toFixed(2));
 
@@ -399,127 +850,365 @@ function recordIndex(record_uid: string): number {
 
 /**
  * Builds a realistic EvalTaskResult[] for a given workflow's record_uid.
- * Mirrors the 5 tasks defined in buildMockAgentEvalProfile() / buildExecutionPlan().
+ * Mirrors the full task catalog defined in buildMockAgentEvalProfile() / buildExecutionPlan().
  */
 export function buildMockEvalTasks(record_uid: string): EvalTaskResult[] {
   const idx = recordIndex(record_uid);
-  const base = iso(-(idx + 1) * 3 * 60_000 + 2_000);
-  const failedVariants = [0, 0, 0, 1, 0, 2, 0, 1];
-  const failedCount = failedVariants[idx % failedVariants.length];
+  const baseMs = NOW - (idx + 1) * 3 * 60_000 + 2_000;
+  const createdAt = new Date(baseMs).toISOString();
+  const failedTaskIds = new Set(
+    failureScenarios[idx % failureScenarios.length] ?? [],
+  );
 
-  // confidence score passes unless failedCount >= 1
-  const confidencePass = failedCount < 1;
-  const confidenceVal = confidencePass
-    ? parseFloat((0.65 + (idx % 5) * 0.07).toFixed(2))
-    : 0.45;
+  return allMockTasks.map((task, taskIndex) => {
+    const passed = !failedTaskIds.has(task.id);
+    const { actual, value, message } = getMockTaskOutcome(task, passed);
+    const startTime = new Date(baseMs + taskIndex * 110).toISOString();
+    const endTime = new Date(baseMs + taskIndex * 110 + 80).toISOString();
 
-  // judge score passes unless failedCount >= 2
-  const judgePass = failedCount < 2;
-  const judgeVal = judgePass ? 4.0 : 2.0;
+    return {
+      created_at: createdAt,
+      start_time: startTime,
+      end_time: endTime,
+      record_uid,
+      entity_id: 42,
+      entity_uid: "mock-eval-uid-0001",
+      task_id: task.id,
+      task_type: task.task_type,
+      passed,
+      value,
+      assertion: getMockAssertionPayload(task),
+      operator: task.operator,
+      expected: task.expected_value,
+      actual,
+      message,
+      condition: task.condition,
+      stage: mockStageByTaskId.get(task.id) ?? 0,
+    };
+  });
+}
 
-  const tasks: EvalTaskResult[] = [
-    {
-      created_at: base,
-      start_time: iso(-(idx + 1) * 3 * 60_000 + 2_000),
-      end_time: iso(-(idx + 1) * 3 * 60_000 + 2_080),
-      record_uid,
-      entity_id: 42,
-      entity_uid: "mock-eval-uid-0001",
-      task_id: "check_response_format",
-      task_type: "Assertion",
-      passed: true,
-      value: 1.0,
-      assertion: { FieldPath: "response" },
-      operator: "IsJson",
-      expected: true,
-      actual: true,
-      message: "Response is valid JSON",
-      condition: true,
-      stage: 0,
-    },
-    {
-      created_at: base,
-      start_time: iso(-(idx + 1) * 3 * 60_000 + 2_100),
-      end_time: iso(-(idx + 1) * 3 * 60_000 + 2_160),
-      record_uid,
-      entity_id: 42,
-      entity_uid: "mock-eval-uid-0001",
-      task_id: "check_intent_label",
-      task_type: "Assertion",
-      passed: true,
-      value: 1.0,
-      assertion: { FieldPath: "response.intent" },
-      operator: "ContainsAny",
-      expected: ["greeting", "faq", "complaint", "purchase", "support"],
-      actual: idx % 3 === 0 ? "faq" : idx % 3 === 1 ? "support" : "purchase",
-      message: "Intent label is one of the known categories",
-      condition: true,
-      stage: 1,
-    },
-    {
-      created_at: base,
-      start_time: iso(-(idx + 1) * 3 * 60_000 + 2_100),
-      end_time: iso(-(idx + 1) * 3 * 60_000 + 2_200),
-      record_uid,
-      entity_id: 42,
-      entity_uid: "mock-eval-uid-0001",
-      task_id: "check_confidence_score",
-      task_type: "Assertion",
-      passed: confidencePass,
-      value: confidenceVal,
-      assertion: { FieldPath: "response.confidence" },
-      operator: "GreaterThanOrEqual",
-      expected: 0.6,
-      actual: confidenceVal,
-      message: confidencePass
-        ? `Confidence ${confidenceVal} >= 0.6`
-        : `Confidence ${confidenceVal} is below threshold 0.6`,
-      condition: true,
-      stage: 1,
-    },
-    {
-      created_at: base,
-      start_time: iso(-(idx + 1) * 3 * 60_000 + 2_200),
-      end_time: iso(-(idx + 1) * 3 * 60_000 + 2_650),
-      record_uid,
-      entity_id: 42,
-      entity_uid: "mock-eval-uid-0001",
-      task_id: "judge_response_quality",
-      task_type: "LLMJudge",
-      passed: judgePass,
-      value: judgeVal,
-      assertion: { FieldPath: "response.text" },
-      operator: "GreaterThanOrEqual",
-      expected: 3,
-      actual: judgeVal,
-      message: judgePass
-        ? `Quality score ${judgeVal} meets threshold`
-        : `Quality score ${judgeVal} is below threshold 3`,
-      condition: true,
-      stage: 1,
-    },
-    {
-      created_at: base,
-      start_time: iso(-(idx + 1) * 3 * 60_000 + 2_700),
-      end_time: iso(-(idx + 1) * 3 * 60_000 + 2_780),
-      record_uid,
-      entity_id: 42,
-      entity_uid: "mock-eval-uid-0001",
-      task_id: "check_trace_latency",
-      task_type: "TraceAssertion",
-      passed: true,
-      value: 950 + idx * 20,
-      assertion: { TraceAssertion: { TraceDuration: {} } },
-      operator: "LessThan",
-      expected: 5000,
-      actual: 950 + idx * 20,
-      message: `Trace duration ${950 + idx * 20}ms < 5000ms`,
-      condition: true,
-      stage: 2,
-    },
-  ];
+function getMockAssertionPayload(task: MockDefinitionTask): EvalTaskResult["assertion"] {
+  if (isMockTraceTask(task)) {
+    return { TraceAssertion: task.assertion };
+  }
 
-  return tasks;
+  if (isMockAgentTask(task)) {
+    return { AgentAssertion: task.assertion };
+  }
+
+  return { FieldPath: "context_path" in task ? task.context_path : null };
+}
+
+function getMockTaskOutcome(
+  task: MockDefinitionTask,
+  passed: boolean,
+): Pick<EvalTaskResult, "actual" | "value" | "message"> {
+  switch (task.id) {
+    case "check_response_format":
+      return {
+        actual: passed ? true : "```not-json```",
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Response is valid JSON"
+          : "Response payload is not valid JSON",
+      };
+    case "check_intent_label":
+      return {
+        actual: passed ? "faq" : "unknown",
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Intent label is one of the known categories"
+          : "Intent label is not part of the approved taxonomy",
+      };
+    case "check_confidence_score":
+      return {
+        actual: passed ? 0.82 : 0.42,
+        value: passed ? 0.82 : 0.42,
+        message: passed
+          ? "Confidence score exceeds the minimum threshold"
+          : "Confidence score is below the minimum threshold",
+      };
+    case "check_response_text_not_empty":
+      return {
+        actual: passed
+          ? "Customers can return electronics within 30 days of purchase."
+          : "",
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Assistant returned a non-empty answer"
+          : "Assistant returned an empty response body",
+      };
+    case "judge_response_quality":
+      return {
+        actual: passed ? 4 : 2,
+        value: passed ? 4 : 2,
+        message: passed
+          ? "LLM judge score meets the quality bar"
+          : "LLM judge score fell below the quality bar",
+      };
+    case "trace_span_sequence_core":
+      return {
+        actual: passed
+          ? [
+              "orchestrate_request",
+              "classify_intent",
+              "fetch_kb_answer",
+              "compose_response",
+            ]
+          : ["orchestrate_request", "fetch_kb_answer", "compose_response"],
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Core spans were emitted in the expected order"
+          : "Trace span order deviated from the expected workflow",
+      };
+    case "trace_span_set_required":
+      return {
+        actual: passed
+          ? ["classify_intent", "fetch_kb_answer", "compose_response"]
+          : ["classify_intent", "compose_response"],
+        value: passed ? 1 : 0,
+        message: passed
+          ? "All required workflow spans were present"
+          : "One or more required workflow spans were missing",
+      };
+    case "trace_span_count_llm":
+      return {
+        actual: passed ? 3 : 1,
+        value: passed ? 3 : 1,
+        message: passed
+          ? "LLM span count meets the expected minimum"
+          : "Too few LLM spans were recorded",
+      };
+    case "trace_span_exists_tool":
+      return {
+        actual: passed,
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Tool invocation span exists in the trace"
+          : "Expected tool span was not found in the trace",
+      };
+    case "trace_span_attribute_provider":
+      return {
+        actual: passed ? "gpt-4o" : "claude-sonnet",
+        value: passed ? 1 : 0,
+        message: passed
+          ? "LLM span exposes the expected provider model"
+          : "LLM span exposes the wrong provider model",
+      };
+    case "trace_span_duration_tool":
+      return {
+        actual: passed ? 640 : 1850,
+        value: passed ? 640 : 1850,
+        message: passed
+          ? "Tool span duration stayed within budget"
+          : "Tool span duration exceeded the latency budget",
+      };
+    case "trace_span_aggregation_tokens":
+      return {
+        actual: passed ? 1420 : 2890,
+        value: passed ? 1420 : 2890,
+        message: passed
+          ? "Average token aggregation is within the budget"
+          : "Average token aggregation exceeds the budget",
+      };
+    case "trace_duration_total":
+      return {
+        actual: passed ? 1820 : 6320,
+        value: passed ? 1820 : 6320,
+        message: passed
+          ? "End-to-end trace duration is within budget"
+          : "End-to-end trace duration exceeded the budget",
+      };
+    case "trace_span_count_total":
+      return {
+        actual: passed ? 11 : 4,
+        value: passed ? 11 : 4,
+        message: passed
+          ? "Trace emitted the expected number of spans"
+          : "Trace emitted too few spans",
+      };
+    case "trace_error_count":
+      return {
+        actual: passed ? 0 : 2,
+        value: passed ? 0 : 2,
+        message: passed
+          ? "No error spans were recorded"
+          : "Trace contains unexpected error spans",
+      };
+    case "trace_service_count":
+      return {
+        actual: passed ? 3 : 1,
+        value: passed ? 3 : 1,
+        message: passed
+          ? "Trace covers multiple services as expected"
+          : "Trace did not traverse enough services",
+      };
+    case "trace_max_depth":
+      return {
+        actual: passed ? 3 : 7,
+        value: passed ? 3 : 7,
+        message: passed
+          ? "Trace nesting depth is within the readability target"
+          : "Trace nesting depth is deeper than expected",
+      };
+    case "trace_attribute_workflow":
+      return {
+        actual: passed ? "agent-eval-workflow" : "chat-session",
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Trace attribute contains the expected workflow name"
+          : "Trace attribute contains the wrong workflow name",
+      };
+    case "trace_attribute_filter_assertion":
+      return {
+        actual: passed ? ["stop", "stop"] : ["length", "content_filter"],
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Attribute filter assertion matched the finish reason values"
+          : "Attribute filter assertion found unexpected finish reasons",
+      };
+    case "trace_attribute_filter_agent":
+      return {
+        actual: passed ? ["fetch_kb_answer", "fetch_kb_answer"] : ["fallback_answer"],
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Nested agent assertion matched the filtered tool attributes"
+          : "Nested agent assertion did not match the filtered tool attributes",
+      };
+    case "agent_tool_called_classify":
+      return {
+        actual: passed,
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Intent classification tool was called"
+          : "Intent classification tool was not called",
+      };
+    case "agent_tool_not_called_fallback":
+      return {
+        actual: passed ? false : true,
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Fallback tool was correctly skipped"
+          : "Fallback tool was called unexpectedly",
+      };
+    case "agent_tool_called_with_args":
+      return {
+        actual: passed
+          ? {
+              query: "return policy for electronics",
+              customer_id: "customer_7842",
+            }
+          : {
+              query: "shipping policy",
+              customer_id: "customer_7842",
+            },
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Tool arguments matched the expected request payload"
+          : "Tool arguments did not match the expected request payload",
+      };
+    case "agent_tool_call_sequence":
+      return {
+        actual: passed
+          ? ["classify_intent", "fetch_kb_answer"]
+          : ["fetch_kb_answer", "classify_intent"],
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Tool calls occurred in the expected sequence"
+          : "Tool call ordering deviated from the expected sequence",
+      };
+    case "agent_tool_call_count":
+      return {
+        actual: passed ? 3 : 1,
+        value: passed ? 3 : 1,
+        message: passed
+          ? "Workflow executed enough tool calls"
+          : "Workflow executed too few tool calls",
+      };
+    case "agent_tool_argument_customer_id":
+      return {
+        actual: passed ? "customer_7842" : "customer_0000",
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Customer ID argument propagated correctly"
+          : "Customer ID argument did not propagate correctly",
+      };
+    case "agent_tool_result_fetch":
+      return {
+        actual: passed
+          ? "Return window: 30 days for electronics"
+          : "No matching policy article found",
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Tool result contained the expected policy text"
+          : "Tool result did not contain the expected policy text",
+      };
+    case "agent_response_content":
+      return {
+        actual: passed
+          ? "Customers can return electronics within 30 days of purchase."
+          : "I am not sure about that policy.",
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Response content contains the expected answer"
+          : "Response content did not contain the expected answer",
+      };
+    case "agent_response_model":
+      return {
+        actual: passed ? "gpt-4o" : "gpt-4o-mini",
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Response metadata reports the expected model"
+          : "Response metadata reports the wrong model",
+      };
+    case "agent_response_finish_reason":
+      return {
+        actual: passed ? "stop" : "length",
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Finish reason matched the expected stop token"
+          : "Finish reason did not match the expected stop token",
+      };
+    case "agent_response_input_tokens":
+      return {
+        actual: passed ? 412 : 120,
+        value: passed ? 412 : 120,
+        message: passed
+          ? "Input token count exceeded the minimum threshold"
+          : "Input token count was below the minimum threshold",
+      };
+    case "agent_response_output_tokens":
+      return {
+        actual: passed ? 148 : 32,
+        value: passed ? 148 : 32,
+        message: passed
+          ? "Output token count exceeded the minimum threshold"
+          : "Output token count was below the minimum threshold",
+      };
+    case "agent_response_total_tokens":
+      return {
+        actual: passed ? 560 : 152,
+        value: passed ? 560 : 152,
+        message: passed
+          ? "Total token count exceeded the minimum threshold"
+          : "Total token count was below the minimum threshold",
+      };
+    case "agent_response_field_intent":
+      return {
+        actual: passed ? "faq" : "unknown",
+        value: passed ? 1 : 0,
+        message: passed
+          ? "Nested response field matched the expected value"
+          : "Nested response field did not match the expected value",
+      };
+    default:
+      return {
+        actual: passed,
+        value: passed ? 1 : 0,
+        message: passed ? `${task.id} passed` : `${task.id} failed`,
+      };
+  }
 }
 
 // ── Alerts ────────────────────────────────────────────────────────────────────

@@ -65,7 +65,7 @@ export type ContentPart =
 
 export interface ChatMessage {
   role: "system" | "user" | "assistant" | "tool" | "developer";
-  content: ContentPart[];
+  content: string | ContentPart[];
   name?: string;
 }
 

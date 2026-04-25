@@ -3,6 +3,11 @@ import {
   getRecentCards,
   type HomePageStats,
 } from "$lib/components/home/utils.server";
+import {
+  buildMockHomeData,
+  isRecentCardsEmpty,
+} from "$lib/components/mock/opsmlMockData";
+import { isDevMockEnabled } from "$lib/server/mock/mode";
 import type { PageServerLoad } from "./$types";
 
 async function get_registry_stats(
@@ -18,14 +23,25 @@ async function get_registry_stats(
   };
 }
 
-export const load: PageServerLoad = async ({ fetch }) => {
+export const load: PageServerLoad = async ({ fetch, cookies }) => {
+  const useMockFallback = isDevMockEnabled(cookies);
+
   try {
     const [cards, stats] = await Promise.all([
       getRecentCards(fetch),
       get_registry_stats(fetch),
     ]);
-    return { cards, stats };
+
+    if (useMockFallback && isRecentCardsEmpty(cards)) {
+      return { ...buildMockHomeData(), mockMode: true };
+    }
+
+    return { cards, stats, mockMode: false };
   } catch {
+    if (useMockFallback) {
+      return { ...buildMockHomeData(), mockMode: true };
+    }
+
     return {
       cards: {
         modelcards: [],
@@ -34,6 +50,7 @@ export const load: PageServerLoad = async ({ fetch }) => {
         promptcards: [],
       },
       stats: { nbrModels: 0, nbrData: 0, nbrPrompts: 0, nbrExperiments: 0 },
+      mockMode: false,
     };
   }
 };

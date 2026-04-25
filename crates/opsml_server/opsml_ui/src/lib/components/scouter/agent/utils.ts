@@ -161,7 +161,7 @@ export class AgentEvalProfileHelper {
     profile: AgentEvalProfile,
     id: string,
   ): AssertionTask | null {
-    return profile.tasks.assertion.find((task) => task.id === id) ?? null;
+    return profile.tasks.assertion?.find((task) => task.id === id) ?? null;
   }
 
   /**
@@ -171,7 +171,7 @@ export class AgentEvalProfileHelper {
     profile: AgentEvalProfile,
     id: string,
   ): TraceAssertionTask | null {
-    return profile.tasks.trace.find((task) => task.id === id) ?? null;
+    return profile.tasks.trace?.find((task) => task.id === id) ?? null;
   }
 
   /**
@@ -181,6 +181,6 @@ export class AgentEvalProfileHelper {
     profile: AgentEvalProfile,
     id: string,
   ): AgentAssertionTask | null {
-    return profile.tasks.agent.find((task) => task.id === id) ?? null;
+    return profile.tasks.agent?.find((task) => task.id === id) ?? null;
   }
 }
