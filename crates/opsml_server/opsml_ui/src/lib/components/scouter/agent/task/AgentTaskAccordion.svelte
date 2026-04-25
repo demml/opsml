@@ -53,7 +53,7 @@
 
         {#snippet panel()}
           <div class="bg-white border-black overflow-hidden">
-            <div class="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-3 p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 p-3">
               {#each allTasks as task (task.id)}
                 <AgentTaskCard {task} />
               {/each}
