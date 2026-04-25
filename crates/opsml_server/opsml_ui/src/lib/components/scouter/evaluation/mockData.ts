@@ -173,6 +173,30 @@ const judgeTasks: LLMJudgeTask[] = [
     condition: true,
     description: "LLM judge rates response quality on a 1–5 scale",
   },
+  {
+    id: "judge_response_quality_success",
+    prompt: mockJudgePrompt,
+    context_path: "response.text",
+    expected_value: 4,
+    operator: "GreaterThanOrEqual",
+    task_type: "LLMJudge",
+    depends_on: ["check_response_format"],
+    max_retries: 2,
+    condition: true,
+    description: "Mock success LLM judge task for theme validation",
+  },
+  {
+    id: "judge_response_quality_failure",
+    prompt: mockJudgePrompt,
+    context_path: "response.text",
+    expected_value: 4,
+    operator: "GreaterThanOrEqual",
+    task_type: "LLMJudge",
+    depends_on: ["check_response_format"],
+    max_retries: 2,
+    condition: true,
+    description: "Mock failure LLM judge task for theme validation",
+  },
 ];
 
 const traceTasks: TraceAssertionTask[] = [
@@ -674,6 +698,28 @@ const failureScenarios: string[][] = [
   ],
 ];
 
+const forcedPassedTaskIds = new Set<string>([
+  "judge_response_quality_success",
+]);
+
+const forcedFailedTaskIds = new Set<string>([
+  "judge_response_quality_failure",
+]);
+
+/**
+ * Subset of tasks flagged as conditional in dev mocks.
+ * This keeps TaskDetailView themes varied (conditional / passed / failed)
+ * instead of every task rendering as conditional.
+ */
+const conditionalMockTaskIds = new Set<string>([
+  "check_response_format",
+  "judge_response_quality",
+  "trace_span_sequence_core",
+  "trace_attribute_filter_agent",
+  "agent_tool_called_search",
+  "agent_response_field_intent",
+]);
+
 function isMockTraceTask(task: MockDefinitionTask): task is TraceAssertionTask {
   return task.task_type === "TraceAssertion";
 }
@@ -816,7 +862,14 @@ function buildExecutionPlan(): ExecutionPlan {
 }
 
 function buildWorkflowResult(index: number): AgentEvalWorkflowResult {
-  const failedTasks = failureScenarios[index % failureScenarios.length]?.length ?? 0;
+  const scenarioFailedTaskIds = new Set(
+    failureScenarios[index % failureScenarios.length] ?? [],
+  );
+  for (const taskId of forcedFailedTaskIds) {
+    scenarioFailedTaskIds.add(taskId);
+  }
+
+  const failedTasks = scenarioFailedTaskIds.size;
   const totalTasks = allMockTasks.length;
   const passedTasks = totalTasks - failedTasks;
   const passRate = parseFloat((passedTasks / totalTasks).toFixed(2));
@@ -861,7 +914,11 @@ export function buildMockEvalTasks(record_uid: string): EvalTaskResult[] {
   );
 
   return allMockTasks.map((task, taskIndex) => {
-    const passed = !failedTaskIds.has(task.id);
+    const passed = forcedPassedTaskIds.has(task.id)
+      ? true
+      : forcedFailedTaskIds.has(task.id)
+        ? false
+        : !failedTaskIds.has(task.id);
     const { actual, value, message } = getMockTaskOutcome(task, passed);
     const startTime = new Date(baseMs + taskIndex * 110).toISOString();
     const endTime = new Date(baseMs + taskIndex * 110 + 80).toISOString();
@@ -882,7 +939,7 @@ export function buildMockEvalTasks(record_uid: string): EvalTaskResult[] {
       expected: task.expected_value,
       actual,
       message,
-      condition: task.condition,
+      condition: conditionalMockTaskIds.has(task.id),
       stage: mockStageByTaskId.get(task.id) ?? 0,
     };
   });
@@ -946,6 +1003,18 @@ function getMockTaskOutcome(
         message: passed
           ? "LLM judge score meets the quality bar"
           : "LLM judge score fell below the quality bar",
+      };
+    case "judge_response_quality_success":
+      return {
+        actual: 5,
+        value: 5,
+        message: "LLM judge success mock scored above threshold",
+      };
+    case "judge_response_quality_failure":
+      return {
+        actual: 2,
+        value: 2,
+        message: "LLM judge failure mock scored below threshold",
       };
     case "trace_span_sequence_core":
       return {
