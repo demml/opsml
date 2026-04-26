@@ -15,6 +15,16 @@ export const load: PageServerLoad = async ({ parent, fetch, url, cookies }) => {
   const basePath = `${tableName}/${metadata.space}/${metadata.name}/v${metadata.version}`;
   const viewPath = url.searchParams.get("view");
 
+  if (useMockFallback) {
+    return {
+      fileTree: buildMockFileTree(basePath),
+      basePath,
+      viewPath,
+      rawFile: viewPath ? buildMockRawFile(viewPath) : null,
+      mockMode: true,
+    };
+  }
+
   try {
     const fileTree = await getFileTree(fetch, basePath);
 

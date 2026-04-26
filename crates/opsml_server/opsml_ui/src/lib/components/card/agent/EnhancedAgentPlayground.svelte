@@ -7,15 +7,17 @@
     agentSpec,
     agentName,
     deploymentConfig,
+    mockMode = false,
     fullscreen = false
   } = $props<{
     agentSpec: AgentSpec;
     deploymentConfig?: DeploymentConfig[];
     agentName: string;
+    mockMode?: boolean;
     fullscreen?: boolean;
   }>();
 </script>
 
 <div class="border-2 border-black shadow bg-surface-50 flex flex-col {fullscreen ? 'h-screen' : 'mx-auto w-11/12 my-6 min-h-[600px]'}">
-  <AgentPlaygroundContent {agentSpec} {agentName} {deploymentConfig} showCloseButton={false} />
+  <AgentPlaygroundContent {agentSpec} {agentName} {deploymentConfig} {mockMode} showCloseButton={false} />
 </div>

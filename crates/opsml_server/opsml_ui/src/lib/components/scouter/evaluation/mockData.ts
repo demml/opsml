@@ -34,6 +34,7 @@ import { AlertThreshold } from "$lib/components/scouter/types";
 import { DriftType, EntityType } from "$lib/components/scouter/types";
 import { Provider, ResponseType } from "$lib/components/agent/types";
 import type { Prompt } from "$lib/components/agent/types";
+import type { MessageNum } from "$lib/components/agent/provider/types";
 import type {
   BinnedMetrics,
   BinnedMetric,
@@ -137,6 +138,19 @@ const assertionTasks: AssertionTask[] = [
   },
 ];
 
+const mockJudgeMessages: MessageNum[] = [
+  {
+    role: "developer",
+    content:
+      "You are an expert LLM judge. Evaluate the quality and relevance of the assistant's response on a scale of 1 to 5, where 1 is very poor and 5 is excellent. Return only the numeric score.",
+  },
+  {
+    role: "user",
+    content:
+      "Context: {{context}}\n\nAssistant response: {{response.text}}\n\nRate the response quality (1-5):",
+  },
+];
+
 const mockJudgePrompt: Prompt = {
   provider: Provider.OpenAI,
   model: "gpt-4o",
@@ -145,19 +159,8 @@ const mockJudgePrompt: Prompt = {
   response_type: ResponseType.Score,
   request: {
     model: "gpt-4o",
-    messages: [
-      {
-        role: "developer",
-        content:
-          "You are an expert LLM judge. Evaluate the quality and relevance of the assistant's response on a scale of 1 to 5, where 1 is very poor and 5 is excellent. Return only the numeric score.",
-      } as any,
-      {
-        role: "user",
-        content:
-          "Context: {{context}}\n\nAssistant response: {{response.text}}\n\nRate the response quality (1–5):",
-      } as any,
-    ],
-  } as any,
+    messages: mockJudgeMessages,
+  },
 };
 
 const judgeTasks: LLMJudgeTask[] = [
@@ -171,7 +174,7 @@ const judgeTasks: LLMJudgeTask[] = [
     depends_on: ["check_response_format"],
     max_retries: 2,
     condition: true,
-    description: "LLM judge rates response quality on a 1–5 scale",
+    description: "LLM judge rates response quality on a 1-5 scale",
   },
   {
     id: "judge_response_quality_success",
@@ -795,15 +798,16 @@ const RECORD_STATUSES: Status[] = [
   Status.Pending,
 ];
 
-function buildEvalRecord(index: number): EvalRecord {
+function buildEvalRecord(index: number, entityUid = "mock-eval-uid-0001"): EvalRecord {
   const createdAt = iso(-(index + 1) * 3 * 60_000);
   const status = RECORD_STATUSES[index % RECORD_STATUSES.length];
   const isProcessed = status === Status.Processed || status === Status.Failed;
+  const recordUid = `${entityUid}-rec-${String(index + 1).padStart(4, "0")}`;
 
   return {
     record_id: `rec-${String(index + 1).padStart(4, "0")}`,
     created_at: createdAt,
-    uid: "mock-eval-uid-0001",
+    uid: recordUid,
     context: {
       input: `User query #${index + 1}: What is your return policy for electronics?`,
       response: {
@@ -823,14 +827,14 @@ function buildEvalRecord(index: number): EvalRecord {
       : null,
     processing_duration: isProcessed ? 1500 + index * 100 : null,
     entity_id: 42,
-    entity_uid: "mock-eval-uid-0001",
+    entity_uid: entityUid,
     status,
     entity_type: EntityType.Agent,
   };
 }
 
-function buildEvalRecords(): EvalRecord[] {
-  return Array.from({ length: 10 }, (_, i) => buildEvalRecord(i));
+function buildEvalRecords(entityUid = "mock-eval-uid-0001"): EvalRecord[] {
+  return Array.from({ length: 10 }, (_, i) => buildEvalRecord(i, entityUid));
 }
 
 // ── Workflow results ──────────────────────────────────────────────────────────
@@ -861,7 +865,7 @@ function buildExecutionPlan(): ExecutionPlan {
   };
 }
 
-function buildWorkflowResult(index: number): AgentEvalWorkflowResult {
+function buildWorkflowResult(index: number, entityUid = "mock-eval-uid-0001"): AgentEvalWorkflowResult {
   const scenarioFailedTaskIds = new Set(
     failureScenarios[index % failureScenarios.length] ?? [],
   );
@@ -876,9 +880,9 @@ function buildWorkflowResult(index: number): AgentEvalWorkflowResult {
 
   return {
     id: 2000 + index,
-    record_uid: `rec-${String(index + 1).padStart(4, "0")}`,
+    record_uid: `${entityUid}-rec-${String(index + 1).padStart(4, "0")}`,
     entity_id: 42,
-    entity_uid: "mock-eval-uid-0001",
+    entity_uid: entityUid,
     created_at: iso(-(index + 1) * 3 * 60_000 + 2_000),
     total_tasks: totalTasks,
     passed_tasks: passedTasks,
@@ -889,8 +893,8 @@ function buildWorkflowResult(index: number): AgentEvalWorkflowResult {
   };
 }
 
-function buildWorkflowResults(): AgentEvalWorkflowResult[] {
-  return Array.from({ length: 8 }, (_, i) => buildWorkflowResult(i));
+function buildWorkflowResults(entityUid = "mock-eval-uid-0001"): AgentEvalWorkflowResult[] {
+  return Array.from({ length: 8 }, (_, i) => buildWorkflowResult(i, entityUid));
 }
 
 // ── Eval task results ─────────────────────────────────────────────────────────
@@ -1287,6 +1291,23 @@ function buildDriftAlerts(): DriftAlertPaginationResponse {
     created_at: iso(-15 * 60_000),
     entity_name: "pass_rate",
     alert: {
+      [DriftType.Spc]: {
+        feature: "pass_rate",
+        kind: "AllGood",
+        zone: "NotApplicable",
+      },
+      [DriftType.Psi]: {
+        feature: "pass_rate",
+        drift: 0.04,
+        threshold: 0.2,
+      },
+      [DriftType.Custom]: {
+        metric_name: "pass_rate",
+        baseline_value: 0.8,
+        observed_value: 0.72,
+        delta: null,
+        alert_threshold: AlertThreshold.Below,
+      },
       [DriftType.Agent]: {
         metric_name: "pass_rate",
         baseline_value: 0.8,
@@ -1294,7 +1315,7 @@ function buildDriftAlerts(): DriftAlertPaginationResponse {
         delta: null,
         alert_threshold: AlertThreshold.Below,
       },
-    } as any,
+    },
     id: 9001,
     active: true,
   };
@@ -1321,13 +1342,13 @@ export function getMockAgentMonitoringPageData(
   profile.config.uid = uid;
 
   const records: EvalRecordPaginationResponse = {
-    items: buildEvalRecords(),
+    items: buildEvalRecords(uid),
     has_next: false,
     has_previous: false,
   };
 
   const workflows: AgentEvalWorkflowPaginationResponse = {
-    items: buildWorkflowResults(),
+    items: buildWorkflowResults(uid),
     has_next: false,
     has_previous: false,
   };

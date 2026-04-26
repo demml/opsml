@@ -38,6 +38,13 @@ export async function loadCardLayout(
   fetch: typeof globalThis.fetch,
   useMockFallback = false,
 ): Promise<CardLayoutData> {
+  if (useMockFallback) {
+    return {
+      ...buildMockCardLayout(registryType, space, name, version),
+      mockMode: true,
+    };
+  }
+
   try {
     const metadata = (await getCardMetadata(
       space,
@@ -85,6 +92,10 @@ export async function loadCard(
   fetch: typeof globalThis.fetch,
   useMockFallback = false,
 ): Promise<CardMetadata> {
+  if (useMockFallback) {
+    return buildMockCardMetadata(registryType, space, name, version);
+  }
+
   try {
     const metadata = await getCardMetadata(
       space,

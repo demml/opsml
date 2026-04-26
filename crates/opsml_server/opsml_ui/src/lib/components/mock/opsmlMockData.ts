@@ -1,4 +1,5 @@
 import { Provider, ResponseType, type Prompt } from "$lib/components/agent/types";
+import type { MessageNum } from "$lib/components/agent/provider/types";
 import type { AgentSpec } from "$lib/components/card/agent/types";
 import type {
   DataCard,
@@ -15,13 +16,13 @@ import type {
   ExperimentCard,
   Metric,
   Parameter,
-  Parameters,
 } from "$lib/components/card/card_interfaces/experimentcard";
 import type { ModelCard } from "$lib/components/card/card_interfaces/modelcard";
 import {
   DataType as ModelDataType,
   ModelInterfaceType,
   ModelType,
+  ProcessorType,
   TaskType,
   type DataProcessor,
   type ModelInterfaceMetadata,
@@ -42,16 +43,13 @@ import {
   ServiceType,
 } from "$lib/components/card/card_interfaces/servicecard";
 import type {
-  ArtifactType,
   Experiment,
   GroupedMetrics,
   UiHardwareMetrics,
 } from "$lib/components/card/experiment/types";
 import type { DataProfile } from "$lib/components/card/data/types";
 import type {
-  CardCursor,
   CardSummary,
-  QueryPageResponse,
   RegistryPageReturn,
   RegistryStatsResponse,
   VersionPageResponse,
@@ -102,6 +100,18 @@ function buildFeatureSchema(): FeatureSchema {
 }
 
 function buildMockPrompt(name: string): Prompt {
+  const messages: MessageNum[] = [
+    {
+      role: "developer",
+      content: `You are the ${name} prompt. Return concise structured analysis.`,
+    },
+    {
+      role: "user",
+      content:
+        "Analyze the customer interaction and summarize the next best action.",
+    },
+  ];
+
   return {
     provider: Provider.OpenAI,
     model: "gpt-4o",
@@ -110,18 +120,8 @@ function buildMockPrompt(name: string): Prompt {
     response_type: ResponseType.Pydantic,
     request: {
       model: "gpt-4o",
-      messages: [
-        {
-          role: "developer",
-          content: `You are the ${name} prompt. Return concise structured analysis.`,
-        } as any,
-        {
-          role: "user",
-          content:
-            "Analyze the customer interaction and summarize the next best action.",
-        } as any,
-      ],
-    } as any,
+      messages,
+    },
   };
 }
 
@@ -583,7 +583,7 @@ function buildMockModelCard(
     normalize: {
       name: "normalize",
       uri: `mock://${space}/${name}/normalize.pkl`,
-      type: "preprocessor" as any,
+      type: ProcessorType.Preprocessor,
     },
   };
 
@@ -733,6 +733,23 @@ function buildMockServiceCard(
     service_config: serviceConfig,
     tags: metadata.tags,
   };
+}
+
+export function buildMockAgentPromptCards(
+  space: string,
+  cards: LinkedCard[] = buildLinkedCards(space).cards,
+): PromptCard[] {
+  const promptCards = cards
+    .filter((card) => card.registry_type.toLowerCase() === "prompt")
+    .map((card) =>
+      buildMockPromptCard(card.space, card.name, card.version),
+    );
+
+  if (promptCards.length > 0) {
+    return promptCards;
+  }
+
+  return [buildMockPromptCard(space, "mock-intent-classifier", "1.0.0")];
 }
 
 export function buildMockCardMetadata(

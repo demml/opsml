@@ -21,8 +21,8 @@
   } from "./filters/filterState.svelte";
   import ModeTabs from "./ModeTabs.svelte";
   import TimeRangeFilter from "./TimeRangeFilter.svelte";
-  import TraceCharts from "./TraceCharts.svelte";
-  import TraceTable from "./TraceTable.svelte";
+  import TraceCharts from "$lib/components/trace/TraceCharts.svelte";
+  import TraceTable from "$lib/components/trace/TraceTable.svelte";
   import {
     calculateTimeRange,
     getServerTraceFacets,

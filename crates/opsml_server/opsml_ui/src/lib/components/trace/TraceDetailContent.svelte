@@ -171,7 +171,7 @@
     <button
       type="button"
       onclick={() => (topCollapsed = !topCollapsed)}
-      class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-black uppercase tracking-wide border-2 border-black bg-surface-50 hover:bg-warning-200 rounded-base shadow-small transition-colors duration-100"
+      class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-black uppercase tracking-wide border-2 border-black bg-surface-50 text-primary-800 hover:bg-warning-200 rounded-base shadow-small transition-colors duration-100"
       aria-label={topCollapsed ? "Expand top panel" : "Collapse top panel"}
       title={topCollapsed ? "Expand top panel" : "Collapse top panel"}
     >

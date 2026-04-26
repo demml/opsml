@@ -16,6 +16,7 @@ Follow these repo-specific rules:
 - Reuse the BFF shape already in the app. If a component needs backend access, prefer an internal SvelteKit `/routes/api/...` endpoint plus a server helper instead of calling the Rust backend directly from the browser.
 - Reuse route constants from `src/lib/components/api/routes.ts` before introducing new path strings.
 - Preserve OpsML theme tokens and brutalist interaction patterns. Do not introduce arbitrary hex colors, soft shadows, glassmorphism, or generic grayscale borders.
+- Use `primary-*`, `secondary-*`, and `tertiary-*` for neutral UI categories. Reserve `success-*`, `warning-*`, and `error-*` for actual state, feedback, risk, or failure semantics.
 - Keep types close to the feature unless they are clearly shared by multiple areas.
 - Preserve the current auth flow in `src/hooks.server.ts` and `src/lib/server/auth/validateToken.ts`.
 

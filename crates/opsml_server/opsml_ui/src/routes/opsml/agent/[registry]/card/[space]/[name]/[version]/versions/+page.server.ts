@@ -10,8 +10,16 @@ export const load: PageServerLoad = async ({ parent, fetch, cookies }) => {
   const { metadata, registryType } = await parent();
   const useMockFallback = isDevMockEnabled(cookies);
 
+  if (useMockFallback) {
+    return {
+      versionPage: buildMockVersionPage(metadata.space, metadata.name),
+      versionStats: buildMockVersionStats(),
+      mockMode: true,
+    };
+  }
+
   try {
-    let [versionPage, versionStats] = await Promise.all([
+    const [versionPage, versionStats] = await Promise.all([
       getVersionPage(fetch, registryType, metadata.space, metadata.name),
       getRegistryStats(fetch, registryType, metadata.name, [metadata.space]),
     ]);

@@ -26,6 +26,13 @@ Do not introduce:
 - `opsml-theme.css` defines color scales and theme variables
 - `src/app.css` defines font, shadow, interaction, and utility patterns
 
+## Palette Semantics
+- Use `primary-*`, `secondary-*`, and `tertiary-*` for neutral categories such as metadata, tags, linked resources, schemas, parameters, extras, and configuration.
+- Reserve `success-*` for actual positive state or completion feedback.
+- Reserve `warning-*` for caution, risk, pending/degraded state, or user attention.
+- Reserve `error-*` for failures, destructive outcomes, validation errors, or errored runtime state.
+- Do not color neutral section icons with `success-*`, `warning-*`, or `error-*` just to add variety.
+
 ## Styling rules by context
 - Dense dashboards and tables:
   - favor clear structure, small shadows, restrained backgrounds

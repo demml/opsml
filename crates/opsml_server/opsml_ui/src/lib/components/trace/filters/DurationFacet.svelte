@@ -32,7 +32,7 @@
       step="1"
       bind:value={localMin}
       placeholder="min ms"
-      class="w-full px-2 py-1 text-xs font-mono border-2 border-black bg-white rounded-base"
+      class="w-full px-2 py-1 text-xs font-mono border-2 border-black bg-white text-primary-800 rounded-base"
     />
     <span class="text-xs text-gray-500">-</span>
     <input
@@ -41,7 +41,7 @@
       step="1"
       bind:value={localMax}
       placeholder="max ms"
-      class="w-full px-2 py-1 text-xs font-mono border-2 border-black bg-white rounded-base"
+      class="w-full px-2 py-1 text-xs font-mono border-2 border-black bg-white text-primary-800 rounded-base"
     />
   </div>
   <div class="flex items-center gap-2">
@@ -55,7 +55,7 @@
     <button
       type="button"
       onclick={clear}
-      class="px-2 py-1 text-xs font-bold border-2 border-black bg-surface-50 rounded-base shadow-small"
+      class="px-2 py-1 text-xs font-bold border-2 border-black bg-surface-50 text-primary-800 rounded-base shadow-small"
     >
       Clear
     </button>

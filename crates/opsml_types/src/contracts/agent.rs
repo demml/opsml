@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use serde_yaml;
 use std::collections::HashMap;
+#[cfg(feature = "python")]
 use std::net::IpAddr;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
@@ -37,6 +38,7 @@ fn agent_current_version() -> String {
     "0.0.0".to_string()
 }
 
+#[cfg(feature = "python")]
 fn validate_agent_url(url: &str) -> Result<(), AgentConfigError> {
     if url.is_empty() {
         return Err(AgentConfigError::InvalidAgentUrl(

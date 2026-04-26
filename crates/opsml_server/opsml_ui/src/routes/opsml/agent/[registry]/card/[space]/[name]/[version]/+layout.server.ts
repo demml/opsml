@@ -7,6 +7,7 @@ import type {
   ServiceCard,
 } from "$lib/components/card/card_interfaces/servicecard";
 import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
+import { buildMockAgentPromptCards } from "$lib/components/mock/opsmlMockData";
 
 async function setup_agent_layout(
   card: ServiceCard,
@@ -14,6 +15,12 @@ async function setup_agent_layout(
   useMockFallback: boolean,
 ): Promise<PromptCard[]> {
   const associatedCards: Card[] = card.cards?.cards ?? [];
+
+  if (useMockFallback) {
+    return buildMockAgentPromptCards(card.space, associatedCards).filter(
+      (card) => !!card.eval_profile,
+    );
+  }
 
   const promptCardResults = (await Promise.all(
     associatedCards
@@ -37,15 +44,14 @@ async function setup_agent_layout(
   return promptCardsWithEval;
 }
 
-// @ts-ignore
 export const load: LayoutServerLoad = async ({ params, parent, fetch, cookies }) => {
   const { registryType } = await parent();
   const { space, name, version } = params;
   const useMockFallback = isDevMockEnabled(cookies);
 
-  let genAIRegistryType = registryType as RegistryType;
+  const genAIRegistryType = registryType as RegistryType;
 
-  let cardLayout = await loadCardLayout(
+  const cardLayout = await loadCardLayout(
     genAIRegistryType,
     space,
     name,

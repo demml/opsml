@@ -70,13 +70,13 @@
   </FacetSection>
 
   <FacetSection label="Errors only">
-    <label class="flex items-center gap-2 text-xs cursor-pointer">
+    <label class="flex items-center gap-2 text-xs text-primary-800 cursor-pointer">
       <input
         type="checkbox"
         checked={filters.filters.has_errors === true}
         onchange={(event) =>
           onToggleErrors((event.currentTarget as HTMLInputElement).checked)}
-        class="w-4 h-4 border-2 border-black"
+        class="w-4 h-4 border-2 border-black bg-surface-50 accent-primary-500"
       />
       <span class="font-mono">Show only errored traces</span>
     </label>

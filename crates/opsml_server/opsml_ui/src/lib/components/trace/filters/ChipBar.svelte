@@ -52,7 +52,7 @@
     <button
       type="button"
       onclick={() => (menuOpen = !menuOpen)}
-      class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold border-2 border-dashed border-black bg-surface-100 hover:bg-warning-200 rounded-base shadow-small transition-colors duration-100"
+      class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold border-2 border-dashed border-black bg-secondary-500 text-secondary-950 hover:bg-secondary-400 rounded-base shadow-small transition-colors duration-100"
     >
       <Plus class="w-3 h-3" />
       Add filter

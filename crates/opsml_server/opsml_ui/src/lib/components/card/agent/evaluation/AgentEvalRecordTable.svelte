@@ -77,7 +77,7 @@
   const gridLayout = "grid-template-columns: 140px 80px 140px 100px 1fr 140px 140px 100px;";
 </script>
 
-<div class="pt-2 h-full flex flex-col min-h-0">
+<div class="pt-2 h-full flex flex-col min-h-0 transition-opacity duration-200 {isRefreshing ? 'opacity-60 pointer-events-none' : ''}">
   <div class="border-2 border-black rounded-base bg-white flex flex-col h-full max-h-[500px] overflow-hidden">
 
     <div class="overflow-auto flex-1 w-full relative">
@@ -104,7 +104,7 @@
 
           <!-- Rows -->
           <div class="bg-white w-full">
-            {#each records as record, i}
+            {#each records as record, i (`${record._evalPath}-${record.uid}-${record.record_id}`)}
               <button
                 class="grid gap-3 items-center w-full px-4 py-3 border-b border-gray-200 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-100 cursor-pointer text-left group"
                 style={gridLayout}
@@ -176,14 +176,14 @@
     {#if records.length > 0}
       <div class="border-t-2 border-black bg-gray-50 p-2 flex justify-center gap-2 items-center">
         <button
-          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
+          class="btn bg-surface-50 text-primary-800 disabled:text-primary-400 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
           onclick={() => onPageChange('previous')}
           disabled={!hasPrevious}
         >
           <ArrowLeft class="w-4 h-4" color="currentColor"/>
         </button>
         <button
-          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
+          class="btn bg-surface-50 text-primary-800 disabled:text-primary-400 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
           onclick={() => onPageChange('next')}
           disabled={!hasNext}
         >
