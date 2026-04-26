@@ -15,8 +15,8 @@ export function createStackedTraceCountChart(
   );
 
   const theme = getChartTheme();
-  const successColor = getCssVar("--chart-series-2", "rgba(95, 214, 141, 0.85)");
-  const errorColor = getCssVar("--chart-series-6", "rgba(254, 108, 107, 0.9)");
+  const successColor = getCssVar("--chart-trace-success", "rgba(95, 214, 141, 0.85)");
+  const errorColor = getCssVar("--chart-trace-error", "rgba(254, 108, 107, 0.9)");
 
   const isMultiDay = (() => {
     if (labels.length < 2) return false;

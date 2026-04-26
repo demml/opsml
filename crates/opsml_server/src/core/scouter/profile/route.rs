@@ -20,13 +20,11 @@ use opsml_sql::traits::ArtifactLogicTrait;
 use opsml_types::api::RequestType;
 use opsml_types::contracts::Operation;
 use opsml_types::contracts::ResourceType;
-use opsml_types::contracts::{
-    DriftProfileRequest, ListProfilesRequest, ListedProfile, UpdateProfileRequest,
-};
+use opsml_types::contracts::{DriftProfileRequest, UpdateProfileRequest};
 
 use scouter_client::{
-    DriftProfile, GetProfileRequest, ProfileRequest, ProfileStatusRequest,
-    RegisteredProfileResponse, ScouterResponse, ScouterServerError,
+    DriftProfile, GetProfileRequest, ListProfilesRequest, ListedProfile, ProfileRequest,
+    ProfileStatusRequest, RegisteredProfileResponse, ScouterResponse, ScouterServerError,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;

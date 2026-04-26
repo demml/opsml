@@ -17,8 +17,8 @@ use opsml_types::api::RequestType;
 use tracing::debug;
 
 use scouter_client::{
-    ScouterServerError, TraceFilters, TraceMetricsRequest, TraceMetricsResponse,
-    TracePaginationResponse, TraceRequest, TraceSpansResponse,
+    ScouterServerError, TraceMetricsResponse, TracePaginationResponse, TraceRequest,
+    TraceSpansResponse,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
@@ -40,7 +40,7 @@ use tracing::{error, instrument};
 pub async fn get_paginated_traces(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Json(req): Json<TraceFilters>,
+    Json(req): Json<serde_json::Value>,
 ) -> Result<Json<TracePaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !state.scouter_client.is_enabled() {
         return Err((
@@ -61,10 +61,7 @@ pub async fn get_paginated_traces(
         .request(
             scouter::Routes::TracePage,
             RequestType::Post,
-            Some(serde_json::to_value(&req).map_err(|e| {
-                error!("Failed to serialize trace filter request: {e}");
-                internal_server_error(e, "Failed to serialize trace filter request", None)
-            })?),
+            Some(req),
             None,
             None,
             &exchange_token,
@@ -187,7 +184,7 @@ pub async fn get_trace_spans(
 pub async fn trace_metrics(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Json(body): Json<TraceMetricsRequest>,
+    Json(body): Json<serde_json::Value>,
 ) -> Result<Json<TraceMetricsResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !state.scouter_client.is_enabled() {
         return Err((
@@ -209,10 +206,7 @@ pub async fn trace_metrics(
         .request(
             scouter::Routes::TraceMetrics,
             RequestType::Post,
-            Some(serde_json::to_value(&body).map_err(|e| {
-                error!("Failed to serialize trace metrics request: {e}");
-                internal_server_error(e, "Failed to serialize trace metrics request", None)
-            })?),
+            Some(body),
             None,
             None,
             &exchange_token,
@@ -259,7 +253,7 @@ pub async fn trace_metrics(
 pub async fn get_trace_spans_from_filters(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Json(req): Json<TraceFilters>,
+    Json(req): Json<serde_json::Value>,
 ) -> Result<Json<TraceSpansResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !state.scouter_client.is_enabled() {
         return Err((
@@ -280,10 +274,7 @@ pub async fn get_trace_spans_from_filters(
         .request(
             scouter::Routes::TraceSpansFilters,
             RequestType::Post,
-            Some(serde_json::to_value(&req).map_err(|e| {
-                error!("Failed to serialize trace filter request: {e}");
-                internal_server_error(e, "Failed to serialize trace filter request", None)
-            })?),
+            Some(req),
             None,
             None,
             &exchange_token,

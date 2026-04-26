@@ -10,14 +10,14 @@ use opsml_types::SaveName;
 use opsml_types::Suffix;
 use opsml_types::{
     RegistryType,
-    contracts::{ArtifactKey, ListProfilesRequest, ListedProfile, UpdateProfileRequest},
+    contracts::{ArtifactKey, UpdateProfileRequest},
 };
 use opsml_sql::schemas::User;
 use rand::Rng;
 use reqwest::header;
 use scouter_client::{
-    DriftProfile, DriftType, GetProfileRequest, ProfileRequest, ProfileStatusRequest,
-    SpcDriftProfile, VersionRequest,
+    DriftProfile, DriftType, GetProfileRequest, ListProfilesRequest, ListedProfile,
+    ProfileRequest, ProfileStatusRequest, SpcDriftProfile, VersionRequest,
 };
 use std::path::PathBuf;
 
@@ -205,7 +205,7 @@ async fn test_scouter_routes_list_profiles() {
     let mut helper = TestHelper::new(None).await;
 
     let response_payload = vec![ListedProfile {
-        profile: serde_json::to_value(DriftProfile::Spc(SpcDriftProfile::default())).unwrap(),
+        profile: DriftProfile::Spc(SpcDriftProfile::default()),
         active: true,
     }];
 

@@ -33,6 +33,8 @@ export interface TraceFilters {
   status_code?: number;
   start_time?: DateTime;
   end_time?: DateTime;
+  duration_min_ms?: number;
+  duration_max_ms?: number;
   limit?: number;
   cursor_start_time?: DateTime;
   cursor_trace_id?: string;
@@ -40,6 +42,7 @@ export interface TraceFilters {
   attribute_filters?: string[];
   trace_ids?: string[];
   entity_uid?: string;
+  queue_uid?: string;
 }
 
 export interface TraceCursor {
@@ -158,11 +161,17 @@ export interface TraceRequest {
 
 export interface TraceMetricsRequest {
   service_name?: string;
+  has_errors?: boolean;
+  status_code?: number;
   start_time?: DateTime;
   end_time?: DateTime;
   bucket_interval?: string;
+  duration_min_ms?: number;
+  duration_max_ms?: number;
   attribute_filters?: string[];
+  trace_ids?: string[];
   entity_uid?: string;
+  queue_uid?: string;
 }
 
 export interface TraceMetricsResponse {
@@ -196,11 +205,6 @@ export interface TraceFacetResponse {
 }
 
 export type TraceMode = "search" | "analytics";
-
-export interface ClientOnlyFilters {
-  duration_min_ms?: number;
-  duration_max_ms?: number;
-}
 
 export interface TimeRange {
   label: string;

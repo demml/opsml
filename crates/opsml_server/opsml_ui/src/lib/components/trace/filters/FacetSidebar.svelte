@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ClientOnlyFilters, FacetCount, TracePageFilter } from "../types";
+  import type { FacetCount, TracePageFilter } from "../types";
   import AttributeFacet from "./AttributeFacet.svelte";
   import DurationFacet from "./DurationFacet.svelte";
   import FacetRow from "./FacetRow.svelte";
@@ -7,7 +7,6 @@
 
   let {
     filters,
-    clientFilters,
     services,
     statuses,
     onSetService,
@@ -19,7 +18,6 @@
     onSetAttributes,
   } = $props<{
     filters: TracePageFilter;
-    clientFilters: ClientOnlyFilters;
     services: FacetCount[];
     statuses: FacetCount[];
     onSetService: (service: string) => void;
@@ -84,8 +82,8 @@
 
   <FacetSection label="Duration" defaultOpen={false}>
     <DurationFacet
-      min={clientFilters.duration_min_ms}
-      max={clientFilters.duration_max_ms}
+      min={filters.filters.duration_min_ms}
+      max={filters.filters.duration_max_ms}
       onApply={onSetDuration}
     />
   </FacetSection>

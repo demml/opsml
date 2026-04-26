@@ -61,6 +61,6 @@
     </button>
   </div>
   <p class="text-[10px] text-gray-500 font-mono">
-    Client-side filter · backend support pending
+    Server-backed trace duration filter
   </p>
 </div>

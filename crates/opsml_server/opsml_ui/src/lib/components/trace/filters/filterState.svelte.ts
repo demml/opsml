@@ -1,13 +1,11 @@
 import type {
   ActiveFilter,
-  ClientOnlyFilters,
   TraceFilters,
   TracePageFilter,
 } from "../types";
 
 export function derivedActiveFilters(
   page: TracePageFilter,
-  client: ClientOnlyFilters,
 ): ActiveFilter[] {
   const f = page.filters;
   const out: ActiveFilter[] = [];
@@ -25,18 +23,18 @@ export function derivedActiveFilters(
   if (f.has_errors) {
     out.push({ key: "has_errors", label: "Has errors", value: "true" });
   }
-  if (typeof client.duration_min_ms === "number") {
+  if (typeof f.duration_min_ms === "number") {
     out.push({
       key: "duration_min_ms",
       label: "Min duration",
-      value: `${client.duration_min_ms}ms`,
+      value: `${f.duration_min_ms}ms`,
     });
   }
-  if (typeof client.duration_max_ms === "number") {
+  if (typeof f.duration_max_ms === "number") {
     out.push({
       key: "duration_max_ms",
       label: "Max duration",
-      value: `${client.duration_max_ms}ms`,
+      value: `${f.duration_max_ms}ms`,
     });
   }
   for (const raw of f.attribute_filters ?? []) {
@@ -53,11 +51,9 @@ export function derivedActiveFilters(
 
 export function removeActiveFilter(
   page: TracePageFilter,
-  client: ClientOnlyFilters,
   filter: ActiveFilter,
-): { page: TracePageFilter; client: ClientOnlyFilters } {
+): TracePageFilter {
   const nextFilters: TraceFilters = { ...page.filters };
-  const nextClient: ClientOnlyFilters = { ...client };
 
   switch (filter.key) {
     case "service_name":
@@ -70,10 +66,10 @@ export function removeActiveFilter(
       delete nextFilters.has_errors;
       break;
     case "duration_min_ms":
-      delete nextClient.duration_min_ms;
+      delete nextFilters.duration_min_ms;
       break;
     case "duration_max_ms":
-      delete nextClient.duration_max_ms;
+      delete nextFilters.duration_max_ms;
       break;
     case "attribute":
       nextFilters.attribute_filters = (nextFilters.attribute_filters ?? []).filter(
@@ -85,36 +81,5 @@ export function removeActiveFilter(
       break;
   }
 
-  return {
-    page: { ...page, filters: nextFilters },
-    client: nextClient,
-  };
-}
-
-export function applyClientDurationFilter<T extends { duration_ms: number | null }>(
-  items: T[],
-  client: ClientOnlyFilters,
-): T[] {
-  if (
-    client.duration_min_ms === undefined &&
-    client.duration_max_ms === undefined
-  ) {
-    return items;
-  }
-  return items.filter((row) => {
-    if (row.duration_ms === null) return false;
-    if (
-      client.duration_min_ms !== undefined &&
-      row.duration_ms < client.duration_min_ms
-    ) {
-      return false;
-    }
-    if (
-      client.duration_max_ms !== undefined &&
-      row.duration_ms > client.duration_max_ms
-    ) {
-      return false;
-    }
-    return true;
-  });
+  return { ...page, filters: nextFilters };
 }

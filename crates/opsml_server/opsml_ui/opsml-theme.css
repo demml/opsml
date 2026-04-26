@@ -227,6 +227,8 @@
 	--chart-series-4: rgba(253, 220, 90, 1);
 	--chart-series-5: rgba(249, 178, 94, 1);
 	--chart-series-6: rgba(254, 108, 107, 1);
+	--chart-trace-success: rgba(95, 214, 141, 1);
+	--chart-trace-error: rgba(254, 108, 107, 1);
 	--chart-zoom-border: rgb(163, 135, 239);
 	--chart-zoom-bg: rgba(163, 135, 239, 0.3);
 }
@@ -550,6 +552,8 @@
 	--chart-series-4: oklch(75% 0.14 148);
 	--chart-series-5: oklch(60% 0.10 150);
 	--chart-series-6: oklch(55% 0.12 15);
+	--chart-trace-success: oklch(75% 0.15 150);
+	--chart-trace-error: oklch(55% 0.12 15);
 	--chart-zoom-border: oklch(65% 0.14 150);
 	--chart-zoom-bg: oklch(65% 0.14 150 / 0.2);
 }

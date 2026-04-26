@@ -1,7 +1,5 @@
 <script lang="ts">
-  import { applyClientDurationFilter } from './filters/filterState.svelte';
   import type {
-    ClientOnlyFilters,
     TraceListItem,
     TracePaginationResponse,
     TraceCursor,
@@ -17,25 +15,19 @@
   let {
     initialPage,
     filters,
-    clientFilters,
     maxItems = 100,
     height = 'calc(100vh - 400px)',
     children
   }: {
     initialPage: TracePaginationResponse;
     filters: TracePageFilter;
-    clientFilters: ClientOnlyFilters;
     maxItems?: number;
     height?: string;
     children: (item: TraceListItem, index: number) => any;
   } = $props();
 
-  function filterRows(items: TraceListItem[]): TraceListItem[] {
-    return applyClientDurationFilter(items, clientFilters);
-  }
-
   // State management
-  let allTraces = $state<TraceListItem[]>(filterRows([...(initialPage.items ?? [])]));
+  let allTraces = $state<TraceListItem[]>([...(initialPage.items ?? [])]);
   let hasNext = $state(initialPage.has_next);
   let hasPrevious = $state(initialPage.has_previous ?? false);
   let nextCursor = $state<TraceCursor | undefined>(initialPage.next_cursor);
@@ -52,10 +44,8 @@
 
   $effect(() => {
     filters;
-    clientFilters.duration_min_ms;
-    clientFilters.duration_max_ms;
 
-    allTraces = filterRows([...(initialPage.items ?? [])]);
+    allTraces = [...(initialPage.items ?? [])];
     hasNext = initialPage.has_next;
     hasPrevious = initialPage.has_previous ?? false;
     nextCursor = initialPage.next_cursor;
@@ -81,7 +71,7 @@
       });
 
 
-      const newTraces = filterRows(response.items).filter(
+      const newTraces = response.items.filter(
         (newTrace) => !allTraces.some((t) => t.trace_id === newTrace.trace_id)
       );
 
@@ -131,7 +121,7 @@
           direction: 'next'
       });
 
-      const newTraces = filterRows(response.items).filter(
+      const newTraces = response.items.filter(
         (newTrace) => !allTraces.some((t) => t.trace_id === newTrace.trace_id)
       );
 

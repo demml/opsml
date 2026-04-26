@@ -1,7 +1,6 @@
 <script lang="ts">
   import type {
     ActiveFilter,
-    ClientOnlyFilters,
     TimeRange,
     TraceFacetResponse,
     TraceMetricBucket,
@@ -45,12 +44,11 @@
   let isUpdating = $state(false);
   let mode = $state<TraceMode>("search");
   let filters = $state<TracePageFilter>(initialFilters);
-  let clientFilters = $state<ClientOnlyFilters>({});
   let traceMetrics = $state<TraceMetricBucket[]>(trace_metrics);
   let tracePage = $state<TracePaginationResponse>(trace_page);
   let traceFacets = $state<TraceFacetResponse>(trace_facets);
 
-  const activeChips = $derived(derivedActiveFilters(filters, clientFilters));
+  const activeChips = $derived(derivedActiveFilters(filters));
 
   const LIVE_POLL_INTERVAL = 30_000;
   let pollInterval = $state<ReturnType<typeof setInterval> | null>(null);
@@ -81,9 +79,7 @@
 
   async function getTraceFacetsForRange(): Promise<TraceFacetResponse> {
     return await getServerTraceFacets(fetch, {
-      start_time: filters.filters.start_time,
-      end_time: filters.filters.end_time,
-      service_name: undefined,
+      ...filters.filters,
     });
   }
 
@@ -179,7 +175,11 @@
 
     try {
       filters = updatedFilters;
-      [traceMetrics, tracePage] = await Promise.all([getTraceMetrics(), getTracePage()]);
+      [traceMetrics, tracePage, traceFacets] = await Promise.all([
+        getTraceMetrics(),
+        getTracePage(),
+        getTraceFacetsForRange(),
+      ]);
     } catch (error) {
       console.error("Failed to update filters:", error);
     } finally {
@@ -188,14 +188,7 @@
   }
 
   async function handleRemoveChip(chip: ActiveFilter) {
-    const next = removeActiveFilter(filters, clientFilters, chip);
-    filters = next.page;
-    clientFilters = next.client;
-
-    if (chip.key === "duration_min_ms" || chip.key === "duration_max_ms") {
-      return;
-    }
-
+    filters = removeActiveFilter(filters, chip);
     await handleFiltersChange(filters);
   }
 
@@ -233,11 +226,15 @@
   }
 
   function addDuration(min?: number, max?: number) {
-    clientFilters = {
-      ...clientFilters,
-      ...(min !== undefined ? { duration_min_ms: min } : {}),
-      ...(max !== undefined ? { duration_max_ms: max } : {}),
+    const next = {
+      ...filters,
+      filters: {
+        ...filters.filters,
+        ...(min !== undefined ? { duration_min_ms: min } : { duration_min_ms: undefined }),
+        ...(max !== undefined ? { duration_max_ms: max } : { duration_max_ms: undefined }),
+      },
     };
+    void handleFiltersChange(next);
   }
 
   function setService(service: string) {
@@ -279,10 +276,14 @@
   }
 
   function setDuration(next: { min?: number; max?: number }) {
-    clientFilters = {
-      duration_min_ms: next.min,
-      duration_max_ms: next.max,
-    };
+    void handleFiltersChange({
+      ...filters,
+      filters: {
+        ...filters.filters,
+        duration_min_ms: next.min,
+        duration_max_ms: next.max,
+      },
+    });
   }
 
   function setAttributes(list: string[]) {
@@ -409,7 +410,6 @@
     <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
       <FacetSidebar
         {filters}
-        {clientFilters}
         services={traceFacets.services}
         statuses={traceFacets.status_codes}
         onSetService={setService}
@@ -423,11 +423,10 @@
 
       <div class="space-y-4 min-w-0">
         <TraceCharts buckets={traceMetrics} />
-        <TraceTable
-          trace_page={tracePage}
-          {filters}
-          {clientFilters}
-        />
+      <TraceTable
+        trace_page={tracePage}
+        {filters}
+      />
       </div>
     </div>
   {:else}
