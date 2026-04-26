@@ -1,5 +1,6 @@
 import type { PageLoad } from "./$types";
 import type {
+  TraceFacetResponse,
   TraceMetricsRequest,
   TracePageFilter,
   TraceFilters,
@@ -8,6 +9,7 @@ import type {
 import {
   getServerTracePage,
   getServerTraceMetrics,
+  getServerTraceFacets,
   getCookie,
   calculateTimeRange,
 } from "$lib/components/trace/utils";
@@ -31,20 +33,36 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       bucket_interval: bucketInterval,
     };
 
-    let traceMetrics = await getServerTraceMetrics(fetch, metricsRequest);
+    const traceMetrics = await getServerTraceMetrics(fetch, metricsRequest);
 
-    let tracePage = await getServerTracePage(fetch, {
+    const tracePage = await getServerTracePage(fetch, {
       start_time: startTime,
       end_time: endTime,
       limit: 50,
     });
 
+    let traceFacets: TraceFacetResponse = {
+      services: [],
+      status_codes: [],
+      attribute_keys: [],
+    };
+
+    try {
+      traceFacets = await getServerTraceFacets(fetch, {
+        start_time: startTime,
+        end_time: endTime,
+        service_name: undefined,
+      });
+    } catch (facetError) {
+      console.warn("Failed to load trace facets:", facetError);
+    }
+
     if (!tracePage.items || tracePage.items.length === 0) {
-      let filters: TraceFilters = {
+      const filters: TraceFilters = {
         start_time: startTime,
         end_time: endTime,
       };
-      let initialFilters: TracePageFilter = {
+      const initialFilters: TracePageFilter = {
         filters: { ...filters },
         bucket_interval: bucketInterval,
         selected_range: selectedRange,
@@ -54,14 +72,15 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
         errorMessage:
           "No traces found for the selected time range. Try adjusting your time range or check if your application is generating traces.",
         initialFilters: initialFilters,
+        trace_facets: traceFacets,
         mockMode: Boolean(devMockEnabled),
       };
     }
-    let traceFilter: TraceFilters = {
+    const traceFilter: TraceFilters = {
       start_time: startTime,
       end_time: endTime,
     };
-    let initialFilters: TracePageFilter = {
+    const initialFilters: TracePageFilter = {
       filters: { ...traceFilter },
       bucket_interval: bucketInterval,
       selected_range: selectedRange,
@@ -71,6 +90,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       status: "success" as const,
       trace_page: tracePage,
       trace_metrics: traceMetrics,
+      trace_facets: traceFacets,
       initialFilters,
       mockMode: Boolean(devMockEnabled),
     };
@@ -101,7 +121,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       }
     }
 
-    let initialFilters: TracePageFilter = {
+    const initialFilters: TracePageFilter = {
       filters: {
         start_time: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
         end_time: new Date().toISOString(),

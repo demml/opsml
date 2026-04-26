@@ -10,6 +10,7 @@ import type {
   TraceRequest,
   TraceFilters,
   TracePaginationResponse,
+  TraceFacetResponse,
   TimeRange,
 } from "./types";
 import {
@@ -156,7 +157,10 @@ export function formatChartTime(timestamp: string): string {
 /**
  * Get attribute value by key from span attributes
  */
-export function getAttributeValue(attributes: Attribute[], key: string): any {
+export function getAttributeValue(
+  attributes: Attribute[],
+  key: string,
+): unknown {
   const attr = attributes.find((a) => a.key === key);
   return attr?.value;
 }
@@ -164,7 +168,9 @@ export function getAttributeValue(attributes: Attribute[], key: string): any {
 /**
  * Parse JSON input/output safely
  */
-export function parseSpanJson(jsonString: string | null | object): any {
+export function parseSpanJson(
+  jsonString: string | null | object,
+): string | object | null {
   if (!jsonString) return null;
 
   if (typeof jsonString === "object") {
@@ -174,7 +180,7 @@ export function parseSpanJson(jsonString: string | null | object): any {
   if (typeof jsonString === "string") {
     try {
       return JSON.parse(jsonString);
-    } catch (error) {
+    } catch {
       return jsonString;
     }
   }
@@ -186,7 +192,7 @@ export function parseSpanJson(jsonString: string | null | object): any {
  * Formats attribute values for UI display, truncating long strings
  * to maintain layout integrity in Neo-Brutalist components.
  */
-export function formatAttributeValue(value: any): string {
+export function formatAttributeValue(value: unknown): string {
   if (value === null || value === undefined) return "null";
 
   let result: string;
@@ -278,6 +284,24 @@ export async function getServerTracePage(
   }
 
   return response as TracePaginationResponse;
+}
+
+export async function getServerTraceFacets(
+  fetch: typeof globalThis.fetch,
+  filters: TraceFilters,
+): Promise<TraceFacetResponse> {
+  const resp = await createInternalApiClient(fetch).post(
+    ServerPaths.TRACE_SPANS_FILTERS,
+    filters,
+  );
+
+  const { response, error } = await resp.json();
+
+  if (error) {
+    throw new Error(error);
+  }
+
+  return response as TraceFacetResponse;
 }
 
 export function getCookie(name: string): string | null {
@@ -379,10 +403,10 @@ export function getCardKeyAttribute(registryType: RegistryType): string {
       return MCP_KEY_ATTR;
     case RegistryType.Agent:
       return AGENT_KEY_ATTR;
-    default:
-      // Exhaustiveness check - TypeScript will error if a case is missing
-      const _exhaustive: never = registryType;
-      throw new Error(`Unhandled registry type: ${_exhaustive}`);
+    default: {
+      const exhaustive: never = registryType;
+      throw new Error(`Unhandled registry type: ${exhaustive}`);
+    }
   }
 }
 

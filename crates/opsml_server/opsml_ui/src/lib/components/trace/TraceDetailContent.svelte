@@ -4,7 +4,7 @@
   import SpanDetailView from './SpanDetailView.svelte';
   import SpanGraph from './graph/SpanGraph.svelte';
   import { formatDuration } from './utils';
-  import { Network, List, X, ChevronLeft, Clock, Layers, AlertTriangle } from 'lucide-svelte';
+  import { Network, List, X, ChevronLeft, ChevronUp, ChevronDown, Clock, Layers, AlertTriangle } from 'lucide-svelte';
 
   let {
     trace,
@@ -21,6 +21,7 @@
   let selectedSpan = $state<TraceSpan | null>(traceSpans.spans[0] || null);
   let spans = $state<TraceSpan[]>(traceSpans.spans);
   let activeTopTab = $state<'waterfall' | 'map'>('waterfall');
+  let topCollapsed = $state(false);
 
   // Draggable divider — topPct is % height for the top (waterfall) panel
   let topPct = $state(52);
@@ -147,7 +148,7 @@
   </header>
 
   <!-- ─── Tab switcher (Waterfall / Map) ──────────────────────────────────── -->
-  <div class="flex-shrink-0 flex items-center gap-0 px-4 py-2 border-b-2 border-black bg-surface-50 z-10">
+  <div class="flex-shrink-0 flex items-center justify-between gap-2 px-4 py-2 border-b-2 border-black bg-surface-50 z-10">
     <div class="inline-flex border-2 border-black rounded-base overflow-hidden shadow-small">
       <button
         onclick={() => activeTopTab = 'waterfall'}
@@ -166,6 +167,22 @@
         Map
       </button>
     </div>
+
+    <button
+      type="button"
+      onclick={() => (topCollapsed = !topCollapsed)}
+      class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-black uppercase tracking-wide border-2 border-black bg-surface-50 hover:bg-warning-200 rounded-base shadow-small transition-colors duration-100"
+      aria-label={topCollapsed ? "Expand top panel" : "Collapse top panel"}
+      title={topCollapsed ? "Expand top panel" : "Collapse top panel"}
+    >
+      {#if topCollapsed}
+        <ChevronDown class="w-3.5 h-3.5" />
+        Expand
+      {:else}
+        <ChevronUp class="w-3.5 h-3.5" />
+        Collapse
+      {/if}
+    </button>
   </div>
 
   <!-- ─── Resizable vertical split ────────────────────────────────────────── -->
@@ -173,8 +190,8 @@
 
     <!-- Top panel: Waterfall or Map -->
     <div
-      class="flex-shrink-0 overflow-hidden"
-      style="height: {topPct}%;"
+      class="flex-shrink-0 overflow-hidden transition-[height] duration-200 ease-out"
+      style="height: {topCollapsed ? 0 : topPct}%;"
     >
       {#if activeTopTab === 'waterfall'}
         <div class="h-full">
@@ -196,20 +213,22 @@
     </div>
 
     <!-- Draggable divider -->
-    <button
-      type="button"
-      class="flex-shrink-0 relative flex items-center justify-center border-t-2 border-b-2 border-black bg-primary-100 cursor-row-resize z-10 select-none w-full hover:bg-primary-200 transition-colors duration-100"
-      style="height: 14px;"
-      onmousedown={onDividerMouseDown}
-      aria-label="Resize panels"
-      tabindex="0"
-    >
-      <div class="flex items-center gap-0.5 pointer-events-none">
-        {#each [0,1,2,3,4] as _}
-          <div class="w-4 h-0.5 rounded-full bg-primary-700/40"></div>
-        {/each}
-      </div>
-    </button>
+    {#if !topCollapsed}
+      <button
+        type="button"
+        class="flex-shrink-0 relative flex items-center justify-center border-t-2 border-b-2 border-black bg-primary-100 cursor-row-resize z-10 select-none w-full hover:bg-primary-200 transition-colors duration-100"
+        style="height: 14px;"
+        onmousedown={onDividerMouseDown}
+        aria-label="Resize panels"
+        tabindex="0"
+      >
+        <div class="flex items-center gap-0.5 pointer-events-none">
+          {#each [0,1,2,3,4] as dot (dot)}
+            <div class="w-4 h-0.5 rounded-full bg-primary-700/40"></div>
+          {/each}
+        </div>
+      </button>
+    {/if}
 
     <!-- Bottom panel: Span detail -->
     <div class="flex-1 min-h-0 overflow-hidden border-t-0">
