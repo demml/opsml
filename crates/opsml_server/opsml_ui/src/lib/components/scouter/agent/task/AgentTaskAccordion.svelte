@@ -33,7 +33,7 @@
 </script>
 
 {#if hasAnyTasks}
-  <div class="bg-white border-2 border-black rounded-xl shadow overflow-hidden">
+  <div class="bg-white border-2 border-black rounded-base shadow overflow-hidden">
     <Accordion collapsible>
       <Accordion.Item
         value="tasks"

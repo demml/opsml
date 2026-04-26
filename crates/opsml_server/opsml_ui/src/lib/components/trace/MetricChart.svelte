@@ -34,6 +34,15 @@
     }
   });
 
+  // Re-render when chart configuration input changes.
+  $effect(() => {
+    configFn;
+    title;
+    if (chart && canvas) {
+      initChart();
+    }
+  });
+
   // Re-render chart when theme changes
   $effect(() => {
     const _ = themeStore.resolved;

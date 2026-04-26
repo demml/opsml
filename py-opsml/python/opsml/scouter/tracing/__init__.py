@@ -584,7 +584,12 @@ class ScouterTracer(_OtelTracer):
 def get_tracer(name: str) -> ScouterTracer:
     """Get an OTel-compliant Scouter tracer."""
     if not HAS_OPENTELEMETRY:
-        raise ImportError("OpenTelemetry is not installed. Install with: pip install opsml[opentelemetry]")
+        try:
+            return ScouterTracer(BaseTracer(name))
+        except Exception as exc:  # noqa: BLE001 pylint: disable=broad-except
+            raise RuntimeError(
+                "init_tracer() must be called before get_tracer() when OpenTelemetry is unavailable"
+            ) from exc
 
     provider = get_tracer_provider()
     tracer = provider.get_tracer(name)

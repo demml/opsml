@@ -15,7 +15,6 @@
   import ChipBar from "./filters/ChipBar.svelte";
   import FacetSidebar from "./filters/FacetSidebar.svelte";
   import {
-    applyClientDurationFilter,
     derivedActiveFilters,
     removeActiveFilter,
   } from "./filters/filterState.svelte";
@@ -52,10 +51,6 @@
   let traceFacets = $state<TraceFacetResponse>(trace_facets);
 
   const activeChips = $derived(derivedActiveFilters(filters, clientFilters));
-  const visibleTracePage = $derived({
-    ...tracePage,
-    items: applyClientDurationFilter(tracePage.items ?? [], clientFilters),
-  });
 
   const LIVE_POLL_INTERVAL = 30_000;
   let pollInterval = $state<ReturnType<typeof setInterval> | null>(null);
@@ -429,8 +424,9 @@
       <div class="space-y-4 min-w-0">
         <TraceCharts buckets={traceMetrics} />
         <TraceTable
-          trace_page={visibleTracePage}
+          trace_page={tracePage}
           {filters}
+          {clientFilters}
         />
       </div>
     </div>

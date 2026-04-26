@@ -209,6 +209,63 @@ impl ScouterApiClient {
         });
     }
 
+    fn append_query(url: String, query_string: Option<&str>) -> String {
+        match query_string {
+            Some(query) if !query.is_empty() => format!("{url}?{query}"),
+            _ => url,
+        }
+    }
+
+    async fn execute_request(
+        &self,
+        request_type: RequestType,
+        url: String,
+        headers: HeaderMap,
+        body_params: Option<Value>,
+        bearer_token: &str,
+    ) -> Result<Response, ApiClientError> {
+        let request = match request_type {
+            RequestType::Get => self.client.get(url).headers(headers),
+            RequestType::Post => self.client.post(url).headers(headers).json(&body_params),
+            RequestType::Put => self.client.put(url).headers(headers).json(&body_params),
+            RequestType::Delete => self.client.delete(url).headers(headers),
+        };
+
+        Ok(request.bearer_auth(bearer_token).send().await?)
+    }
+
+    fn build_route_url(&self, route: &Routes, query_string: Option<&str>) -> String {
+        let base = format!("{}/{}", self.base_path.trim_end_matches('/'), route.as_str());
+        Self::append_query(base, query_string)
+    }
+
+    fn build_route_url_with_path_segments(
+        &self,
+        route: &Routes,
+        path_segments: &[&str],
+        query_string: Option<&str>,
+    ) -> Result<String, ApiClientError> {
+        let base = format!("{}/{}", self.base_path.trim_end_matches('/'), route.as_str());
+        let mut url = reqwest::Url::parse(&base).map_err(|e| {
+            ApiClientError::ServerError(format!("Failed to parse scouter route url: {e}"))
+        })?;
+
+        {
+            let mut segments = url.path_segments_mut().map_err(|_| {
+                ApiClientError::ServerError("Failed to set scouter route path segments".to_string())
+            })?;
+            for segment in path_segments {
+                segments.push(segment);
+            }
+        }
+
+        if let Some(query) = query_string.filter(|query| !query.is_empty()) {
+            url.set_query(Some(query));
+        }
+
+        Ok(url.into())
+    }
+
     async fn _request(
         &self,
         route: Routes,
@@ -219,67 +276,9 @@ impl ScouterApiClient {
         bearer_token: &str,
     ) -> Result<Response, ApiClientError> {
         let headers = headers.unwrap_or_default();
-
-        let url = format!("{}/{}", self.base_path, route.as_str());
-        let response = match request_type {
-            RequestType::Get => {
-                let url = if let Some(query_string) = query_string {
-                    format!("{url}?{query_string}")
-                } else {
-                    url
-                };
-
-                self.client
-                    .get(url)
-                    .headers(headers)
-                    .bearer_auth(bearer_token)
-                    .send()
-                    .await?
-            }
-            RequestType::Post => {
-                let url = if let Some(query_string) = query_string {
-                    format!("{url}?{query_string}")
-                } else {
-                    url
-                };
-                self.client
-                    .post(url)
-                    .headers(headers)
-                    .json(&body_params)
-                    .bearer_auth(bearer_token)
-                    .send()
-                    .await?
-            }
-            RequestType::Put => {
-                let url = if let Some(query_string) = query_string {
-                    format!("{url}?{query_string}")
-                } else {
-                    url
-                };
-                self.client
-                    .put(url)
-                    .headers(headers)
-                    .json(&body_params)
-                    .bearer_auth(bearer_token)
-                    .send()
-                    .await?
-            }
-            RequestType::Delete => {
-                let url = if let Some(query_string) = query_string {
-                    format!("{url}?{query_string}")
-                } else {
-                    url
-                };
-                self.client
-                    .delete(url)
-                    .headers(headers)
-                    .bearer_auth(bearer_token)
-                    .send()
-                    .await?
-            }
-        };
-
-        Ok(response)
+        let url = self.build_route_url(&route, query_string.as_deref());
+        self.execute_request(request_type, url, headers, body_params, bearer_token)
+            .await
     }
 
     pub async fn request(
@@ -291,18 +290,36 @@ impl ScouterApiClient {
         headers: Option<HeaderMap>,
         bearer_token: &str,
     ) -> Result<Response, ApiClientError> {
-        let response = self
-            ._request(
-                route.clone(),
-                request_type,
-                body_params,
-                query_params,
-                headers,
-                bearer_token,
-            )
-            .await?;
+        self._request(
+            route,
+            request_type,
+            body_params,
+            query_params,
+            headers,
+            bearer_token,
+        )
+        .await
+    }
 
-        Ok(response)
+    pub async fn request_with_path(
+        &self,
+        route: Routes,
+        path_segments: &[&str],
+        request_type: RequestType,
+        body_params: Option<Value>,
+        query_params: Option<String>,
+        headers: Option<HeaderMap>,
+        bearer_token: &str,
+    ) -> Result<Response, ApiClientError> {
+        let headers = headers.unwrap_or_default();
+        let url = self.build_route_url_with_path_segments(
+            &route,
+            path_segments,
+            query_params.as_deref(),
+        )?;
+
+        self.execute_request(request_type, url, headers, body_params, bearer_token)
+            .await
     }
 
     /// Create the initial user in scouter
@@ -368,4 +385,106 @@ impl ScouterApiClient {
 
 pub async fn build_scouter_http_client(settings: &ScouterSettings) -> Result<ScouterApiClient> {
     ScouterApiClient::new(settings).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mockito::Matcher;
+    use std::sync::Arc;
+    use std::sync::atomic::AtomicBool;
+
+    fn test_client(base_path: String) -> ScouterApiClient {
+        ScouterApiClient {
+            client: Client::new(),
+            base_path,
+            enabled: Arc::new(AtomicBool::new(true)),
+            bootstrap_token: "bootstrap-token".to_string(),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_request_post_forwards_query_and_body() {
+        let mut server = mockito::Server::new_async().await;
+        let _mock = server
+            .mock("POST", "/scouter/profile")
+            .match_query(Matcher::UrlEncoded("space".into(), "ml".into()))
+            .match_body(Matcher::Json(serde_json::json!({ "active": true })))
+            .with_status(200)
+            .with_body("{}")
+            .create_async()
+            .await;
+
+        let client = test_client(server.url());
+        let response = client
+            .request(
+                Routes::Profile,
+                RequestType::Post,
+                Some(serde_json::json!({ "active": true })),
+                Some("space=ml".to_string()),
+                None,
+                "token",
+            )
+            .await
+            .expect("request should succeed");
+
+        assert_eq!(response.status(), reqwest::StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_request_put_forwards_query_and_body() {
+        let mut server = mockito::Server::new_async().await;
+        let _mock = server
+            .mock("PUT", "/scouter/profile/status")
+            .match_query(Matcher::UrlEncoded("dry_run".into(), "true".into()))
+            .match_body(Matcher::Json(
+                serde_json::json!({ "active": false, "space": "ml" }),
+            ))
+            .with_status(200)
+            .with_body("{}")
+            .create_async()
+            .await;
+
+        let client = test_client(server.url());
+        let response = client
+            .request(
+                Routes::ProfileStatus,
+                RequestType::Put,
+                Some(serde_json::json!({ "active": false, "space": "ml" })),
+                Some("dry_run=true".to_string()),
+                None,
+                "token",
+            )
+            .await
+            .expect("request should succeed");
+
+        assert_eq!(response.status(), reqwest::StatusCode::OK);
+    }
+
+    #[tokio::test]
+    async fn test_request_with_path_encodes_path_segments() {
+        let mut server = mockito::Server::new_async().await;
+        let _mock = server
+            .mock("GET", "/scouter/genai/conversation/a%2Fb")
+            .with_status(200)
+            .with_body("{}")
+            .create_async()
+            .await;
+
+        let client = test_client(server.url());
+        let response = client
+            .request_with_path(
+                Routes::GenAiConversation,
+                &["a/b"],
+                RequestType::Get,
+                None,
+                None,
+                None,
+                "token",
+            )
+            .await
+            .expect("request should succeed");
+
+        assert_eq!(response.status(), reqwest::StatusCode::OK);
+    }
 }

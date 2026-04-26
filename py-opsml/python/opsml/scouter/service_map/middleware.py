@@ -7,18 +7,13 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
-from ..._opsml import (
-    GrpcConfig,
-    py_extract_trace_id,
-    py_infer_schema,
-    py_normalize_endpoint,
-)
+from ..._opsml import GrpcConfig, extract_trace_id, infer_schema, normalize_endpoint
 from ..bifrost import Bifrost, TableConfig, WriteConfig
 
 # Aliased so existing imports like `from .middleware import _normalize_endpoint` continue to work.
-_normalize_endpoint = py_normalize_endpoint
-_extract_trace_id = py_extract_trace_id
-_infer_schema = py_infer_schema
+_normalize_endpoint = normalize_endpoint
+_extract_trace_id = extract_trace_id
+_infer_schema = infer_schema
 
 SERVICE_MAP_CATALOG = "scouter"
 SERVICE_MAP_SCHEMA = "service_map"

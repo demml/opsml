@@ -1,6 +1,6 @@
 import type { ChartConfiguration } from "chart.js";
 import { format } from "date-fns";
-import { getChartTheme, getTooltip } from "$lib/components/viz/utils";
+import { getChartTheme, getCssVar, getTooltip } from "$lib/components/viz/utils";
 import type { TraceMetricBucket } from "./types";
 
 export function createStackedTraceCountChart(
@@ -15,6 +15,8 @@ export function createStackedTraceCountChart(
   );
 
   const theme = getChartTheme();
+  const successColor = getCssVar("--chart-series-2", "rgba(95, 214, 141, 0.85)");
+  const errorColor = getCssVar("--chart-series-6", "rgba(254, 108, 107, 0.9)");
 
   const isMultiDay = (() => {
     if (labels.length < 2) return false;
@@ -30,16 +32,16 @@ export function createStackedTraceCountChart(
         {
           label: "Success",
           data: successCounts,
-          backgroundColor: "rgba(95, 214, 141, 0.85)",
-          borderColor: "rgb(95, 214, 141)",
+          backgroundColor: successColor,
+          borderColor: successColor,
           borderWidth: 1,
           stack: "traces",
         },
         {
           label: "Error",
           data: errorCounts,
-          backgroundColor: "rgba(254, 108, 107, 0.9)",
-          borderColor: "rgb(254, 108, 107)",
+          backgroundColor: errorColor,
+          borderColor: errorColor,
           borderWidth: 1,
           stack: "traces",
         },

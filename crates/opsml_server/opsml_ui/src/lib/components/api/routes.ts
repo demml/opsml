@@ -152,7 +152,7 @@ export enum ServerPaths {
   GENAI_AGENT_METRICS = "/api/scouter/genai/agent/metrics",
   GENAI_TOOL_METRICS = "/api/scouter/genai/tool/metrics",
   OBSERVABILITY_METRICS = "/api/scouter/observability/metrics",
-  TRACE_SPANS_FILTERS = "/api/scouter/trace/spans/filters",
+  TRACE_FACETS = "/api/scouter/trace/facets",
   PROFILES_LIST = "/api/scouter/profiles",
 
   EXPERIMENT_GROUPED_METRICS = "/api/card/experiment/metrics/grouped",

@@ -4,7 +4,24 @@ from typing import Any
 from ..._opsml import SpanKind
 
 _PROPAGATION_HEADERS = frozenset({"traceparent", "tracestate", "baggage"})
+_RESERVED_BAGGAGE_PREFIX = "scouter."
 _MAX_SPAN_NAME_LEN = 512
+
+
+def _sanitize_baggage_header(header_value: str) -> str | None:
+    entries: list[str] = []
+    for raw_item in header_value.split(","):
+        item = raw_item.strip()
+        if not item:
+            continue
+        key, separator, _ = item.partition("=")
+        baggage_key = key.strip().lower()
+        if separator and baggage_key.startswith(_RESERVED_BAGGAGE_PREFIX):
+            continue
+        entries.append(item)
+    if not entries:
+        return None
+    return ", ".join(entries)
 
 
 class ScouterTracingMiddleware:
@@ -60,9 +77,17 @@ class ScouterTracingMiddleware:
             key = raw_key.decode("latin-1").lower()
             if key in _PROPAGATION_HEADERS:
                 try:
-                    propagation_headers[key] = raw_val.decode("utf-8")
+                    value = raw_val.decode("utf-8")
                 except UnicodeDecodeError:
-                    propagation_headers[key] = raw_val.decode("latin-1")
+                    value = raw_val.decode("latin-1")
+
+                if key == "baggage":
+                    sanitized = _sanitize_baggage_header(value)
+                    if sanitized is not None:
+                        propagation_headers[key] = sanitized
+                    continue
+
+                propagation_headers[key] = value
 
         method = scope.get("method", "")
         path = scope.get("path", "/")[:_MAX_SPAN_NAME_LEN]

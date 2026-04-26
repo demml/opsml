@@ -291,7 +291,7 @@ export async function getServerTraceFacets(
   filters: TraceFilters,
 ): Promise<TraceFacetResponse> {
   const resp = await createInternalApiClient(fetch).post(
-    ServerPaths.TRACE_SPANS_FILTERS,
+    ServerPaths.TRACE_FACETS,
     filters,
   );
 

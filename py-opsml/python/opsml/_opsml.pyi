@@ -19108,19 +19108,19 @@ class DataProfiler:
             """
 
 ### scouter/service_map.pyi ###
-def py_normalize_endpoint(path: str) -> str:
+def normalize_endpoint(path: str) -> str:
     """Strip UUID and integer path segments to prevent cardinality explosion.
 
     ``/users/12345/orders`` → ``/users/{id}/orders``
     """
 
-def py_extract_trace_id(traceparent: str) -> Optional[str]:
+def extract_trace_id(traceparent: str) -> Optional[str]:
     """Extract the trace ID from a W3C ``traceparent`` header value.
 
     Returns ``None`` if the header is absent, malformed, or empty.
     """
 
-def py_infer_schema(body: bytes) -> Optional[str]:
+def infer_schema(body: bytes) -> Optional[str]:
     """Inspect a JSON object body and return a JSON-encoded ``{field: type}`` map.
 
     Returns ``None`` if the body is not valid JSON or is not a top-level object.
@@ -26511,14 +26511,14 @@ __all__ = [
     "download_service",
     "execute_agent_assertion_tasks",
     "extract_span_context_from_headers",
+    "extract_trace_id",
     "flush_tracer",
     "generate_feature_schema",
     "get_experiment_metrics",
     "get_experiment_parameters",
+    "infer_schema",
     "init_tracer",
-    "py_extract_trace_id",
-    "py_infer_schema",
-    "py_normalize_endpoint",
+    "normalize_endpoint",
     "shutdown_tracer",
     "start_experiment",
 ]

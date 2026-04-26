@@ -1,24 +1,27 @@
 use pyo3::prelude::*;
-use scouter_client::{extract_trace_id, infer_schema, normalize_endpoint};
+use scouter_client::{
+    extract_trace_id as extract_trace_id_impl, infer_schema as infer_schema_impl,
+    normalize_endpoint as normalize_endpoint_impl,
+};
 
 #[pyfunction]
-fn py_normalize_endpoint(path: &str) -> String {
-    normalize_endpoint(path)
+fn normalize_endpoint(path: &str) -> String {
+    normalize_endpoint_impl(path)
 }
 
 #[pyfunction]
-fn py_extract_trace_id(traceparent: &str) -> Option<String> {
-    extract_trace_id(traceparent)
+fn extract_trace_id(traceparent: &str) -> Option<String> {
+    extract_trace_id_impl(traceparent)
 }
 
 #[pyfunction]
-fn py_infer_schema(body: &[u8]) -> Option<String> {
-    infer_schema(body)
+fn infer_schema(body: &[u8]) -> Option<String> {
+    infer_schema_impl(body)
 }
 
 pub fn add_service_map_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_function(wrap_pyfunction!(py_normalize_endpoint, m)?)?;
-    m.add_function(wrap_pyfunction!(py_extract_trace_id, m)?)?;
-    m.add_function(wrap_pyfunction!(py_infer_schema, m)?)?;
+    m.add_function(wrap_pyfunction!(normalize_endpoint, m)?)?;
+    m.add_function(wrap_pyfunction!(extract_trace_id, m)?)?;
+    m.add_function(wrap_pyfunction!(infer_schema, m)?)?;
     Ok(())
 }

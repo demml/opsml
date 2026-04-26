@@ -89,6 +89,23 @@ where
     }
 }
 
+fn is_valid_conversation_id(id: &str) -> bool {
+    !id.is_empty()
+        && id.len() <= 200
+        && id.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | ':' | '.'))
+}
+
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/genai/metrics/tokens",
+    request_body(content = inline(serde_json::Value), description = "GenAI metrics request"),
+    responses(
+        (status = 200, description = "GenAI token metrics", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn genai_token_metrics(
     State(state): State<Arc<AppState>>,
@@ -106,6 +123,17 @@ pub async fn genai_token_metrics(
     .await
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/genai/metrics/operations",
+    request_body(content = inline(serde_json::Value), description = "GenAI metrics request"),
+    responses(
+        (status = 200, description = "GenAI operation breakdown", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn genai_operations(
     State(state): State<Arc<AppState>>,
@@ -123,6 +151,17 @@ pub async fn genai_operations(
     .await
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/genai/metrics/models",
+    request_body(content = inline(serde_json::Value), description = "GenAI metrics request"),
+    responses(
+        (status = 200, description = "GenAI model usage", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn genai_models(
     State(state): State<Arc<AppState>>,
@@ -140,6 +179,20 @@ pub async fn genai_models(
     .await
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/genai/metrics/agents",
+    request_body(content = inline(serde_json::Value), description = "GenAI metrics request"),
+    params(
+        ("agent_name" = Option<String>, Query, description = "Optional agent name"),
+    ),
+    responses(
+        (status = 200, description = "GenAI agent activity", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn genai_agents(
     State(state): State<Arc<AppState>>,
@@ -167,6 +220,17 @@ pub async fn genai_agents(
     .await
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/genai/metrics/tools",
+    request_body(content = inline(serde_json::Value), description = "GenAI metrics request"),
+    responses(
+        (status = 200, description = "GenAI tool activity", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn genai_tools(
     State(state): State<Arc<AppState>>,
@@ -184,6 +248,17 @@ pub async fn genai_tools(
     .await
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/genai/metrics/errors",
+    request_body(content = inline(serde_json::Value), description = "GenAI metrics request"),
+    responses(
+        (status = 200, description = "GenAI error breakdown", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn genai_errors(
     State(state): State<Arc<AppState>>,
@@ -201,6 +276,17 @@ pub async fn genai_errors(
     .await
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/genai/spans",
+    request_body(content = inline(serde_json::Value), description = "GenAI span filter request"),
+    responses(
+        (status = 200, description = "GenAI spans", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn genai_spans(
     State(state): State<Arc<AppState>>,
@@ -218,6 +304,17 @@ pub async fn genai_spans(
     .await
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/genai/agent/metrics",
+    request_body(content = inline(serde_json::Value), description = "GenAI agent dashboard request"),
+    responses(
+        (status = 200, description = "GenAI agent dashboard", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn genai_agent_metrics(
     State(state): State<Arc<AppState>>,
@@ -235,6 +332,17 @@ pub async fn genai_agent_metrics(
     .await
 }
 
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/genai/tool/metrics",
+    request_body(content = inline(serde_json::Value), description = "GenAI tool dashboard request"),
+    responses(
+        (status = 200, description = "GenAI tool dashboard", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn genai_tool_metrics(
     State(state): State<Arc<AppState>>,
@@ -252,6 +360,22 @@ pub async fn genai_tool_metrics(
     .await
 }
 
+#[utoipa::path(
+    get,
+    path = "/opsml/api/scouter/genai/conversation/{id}",
+    params(
+        ("id" = String, Path, description = "Conversation ID"),
+        ("start_time" = Option<String>, Query, description = "Optional conversation window start time"),
+        ("end_time" = Option<String>, Query, description = "Optional conversation window end time"),
+    ),
+    responses(
+        (status = 200, description = "GenAI conversation spans", body = inline(serde_json::Value)),
+        (status = 400, description = "Invalid conversation id", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
 #[instrument(skip_all)]
 pub async fn genai_conversation(
     State(state): State<Arc<AppState>>,
@@ -268,31 +392,40 @@ pub async fn genai_conversation(
         ));
     }
 
+    if !is_valid_conversation_id(&id) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(OpsmlServerError::new(
+                "Invalid conversation id format".to_string(),
+            )),
+        ));
+    }
+
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
-
-    let base_route = scouter::Routes::GenAiConversation.as_str();
-    let url = format!("{}/{}/{}", state.scouter_client.base_path, base_route, id);
 
     let query_string = serde_qs::to_string(&params).map_err(|e| {
         error!("Failed to serialize query string: {e}");
         internal_server_error(e, "Failed to serialize query string", None)
     })?;
 
-    let full_url = if query_string.is_empty() {
-        url
-    } else {
-        format!("{url}?{query_string}")
-    };
-
     let response = state
         .scouter_client
-        .client
-        .get(full_url)
-        .bearer_auth(&exchange_token)
-        .send()
+        .request_with_path(
+            scouter::Routes::GenAiConversation,
+            &[id.as_str()],
+            RequestType::Get,
+            None,
+            if query_string.is_empty() {
+                None
+            } else {
+                Some(query_string)
+            },
+            None,
+            &exchange_token,
+        )
         .await
         .map_err(|e| {
             error!("Failed to get genai conversation: {e}");

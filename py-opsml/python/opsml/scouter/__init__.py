@@ -1,5 +1,7 @@
 # mypy: disable-error-code="attr-defined"
 # pylint: disable=no-name-in-module
+import importlib
+
 from .._opsml import (
     AgentEvalConfig,
     AgentEvalProfile,
@@ -67,7 +69,6 @@ from . import (
     observe,
     profile,
     queue,
-    service_map,
     trace,
     tracing,
     transport,
@@ -75,6 +76,15 @@ from . import (
     util,
 )
 from .bifrost import Bifrost
+
+
+def __getattr__(name: str):
+    if name == "service_map":
+        module = importlib.import_module(".service_map", __name__)
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
+
 
 __all__ = [
     "alert",

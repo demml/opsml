@@ -4,15 +4,19 @@ import {
   getTraceSpansFromFilters,
 } from "$lib/server/trace/utils";
 
-/**
- * /opsml/api/scouter/trace/spans/filters currently returns TraceSpansResponse (raw spans),
- * not pre-aggregated facets. This helper derives service/status/attribute-key facet counts
- * from that spans payload for the observability filter sidebar.
- */
+const FACET_SPAN_LIMIT = 500;
+
 export async function getTraceFacets(
   fetch: typeof globalThis.fetch,
   filters: TraceFilters,
 ): Promise<TraceFacetResponse> {
-  const spans = await getTraceSpansFromFilters(fetch, filters);
+  const limit = Math.min(filters.limit ?? FACET_SPAN_LIMIT, FACET_SPAN_LIMIT);
+  const spans = await getTraceSpansFromFilters(fetch, {
+    ...filters,
+    limit,
+    cursor_start_time: undefined,
+    cursor_trace_id: undefined,
+    direction: undefined,
+  });
   return deriveTraceFacetsFromSpans(spans);
 }

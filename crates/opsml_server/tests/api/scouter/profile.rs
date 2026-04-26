@@ -10,12 +10,14 @@ use opsml_types::SaveName;
 use opsml_types::Suffix;
 use opsml_types::{
     RegistryType,
-    contracts::{ArtifactKey, UpdateProfileRequest},
+    contracts::{ArtifactKey, ListProfilesRequest, ListedProfile, UpdateProfileRequest},
 };
+use opsml_sql::schemas::User;
 use rand::Rng;
 use reqwest::header;
 use scouter_client::{
-    DriftType, ProfileRequest, ProfileStatusRequest, SpcDriftProfile, VersionRequest,
+    DriftProfile, DriftType, GetProfileRequest, ProfileRequest, ProfileStatusRequest,
+    SpcDriftProfile, VersionRequest,
 };
 use std::path::PathBuf;
 
@@ -153,4 +155,130 @@ async fn test_scouter_routes_update_profile() {
 
     let response = helper.send_oneshot(request).await;
     assert_eq!(response.status(), StatusCode::OK);
+}
+
+fn restricted_token(helper: &TestHelper) -> String {
+    let user = User {
+        username: "limited-user".to_string(),
+        permissions: vec![],
+        group_permissions: vec![],
+        ..Default::default()
+    };
+    helper.app_state.auth_manager.generate_jwt(&user).unwrap()
+}
+
+#[tokio::test]
+async fn test_scouter_routes_get_profile() {
+    let mut helper = TestHelper::new(None).await;
+
+    let profile = DriftProfile::Spc(SpcDriftProfile::default());
+    let _mock = helper
+        .server
+        .server
+        .mock("GET", "/scouter/profile")
+        .match_query(mockito::Matcher::Any)
+        .with_status(200)
+        .with_body(serde_json::to_string(&profile).unwrap())
+        .create_async()
+        .await;
+
+    let request = GetProfileRequest {
+        name: "name".to_string(),
+        space: helper.space.clone(),
+        version: "1.0.0".to_string(),
+        drift_type: DriftType::Spc,
+    };
+    let query_string = serde_qs::to_string(&request).unwrap();
+
+    let request = Request::builder()
+        .uri(format!("/opsml/api/scouter/profile?{query_string}"))
+        .method("GET")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[tokio::test]
+async fn test_scouter_routes_list_profiles() {
+    let mut helper = TestHelper::new(None).await;
+
+    let response_payload = vec![ListedProfile {
+        profile: serde_json::to_value(DriftProfile::Spc(SpcDriftProfile::default())).unwrap(),
+        active: true,
+    }];
+
+    let _mock = helper
+        .server
+        .server
+        .mock("POST", "/scouter/profiles")
+        .with_status(200)
+        .with_body(serde_json::to_string(&response_payload).unwrap())
+        .create_async()
+        .await;
+
+    let body = serde_json::to_string(&ListProfilesRequest {
+        space: helper.space.clone(),
+        name: "name".to_string(),
+        version: "1.0.0".to_string(),
+    })
+    .unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/scouter/profiles")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_oneshot(request).await;
+    assert_eq!(response.status(), StatusCode::OK);
+}
+
+#[tokio::test]
+async fn test_scouter_routes_get_profile_requires_read_permission() {
+    let helper = TestHelper::new(None).await;
+
+    let token = restricted_token(&helper);
+    let request_query = GetProfileRequest {
+        name: "name".to_string(),
+        space: helper.space.clone(),
+        version: "1.0.0".to_string(),
+        drift_type: DriftType::Spc,
+    };
+    let query_string = serde_qs::to_string(&request_query).unwrap();
+    let request = Request::builder()
+        .uri(format!("/opsml/api/scouter/profile?{query_string}"))
+        .method("GET")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header(header::USER_AGENT, "opsml-test")
+        .body(Body::empty())
+        .unwrap();
+
+    let response = helper.send_no_auth(request).await;
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
+}
+
+#[tokio::test]
+async fn test_scouter_routes_list_profiles_requires_read_permission() {
+    let helper = TestHelper::new(None).await;
+
+    let token = restricted_token(&helper);
+    let body = serde_json::to_string(&ListProfilesRequest {
+        space: "space".to_string(),
+        name: "name".to_string(),
+        version: "1.0.0".to_string(),
+    })
+    .unwrap();
+    let request = Request::builder()
+        .uri("/opsml/api/scouter/profiles")
+        .method("POST")
+        .header(header::CONTENT_TYPE, "application/json")
+        .header(header::AUTHORIZATION, format!("Bearer {token}"))
+        .header(header::USER_AGENT, "opsml-test")
+        .body(Body::from(body))
+        .unwrap();
+
+    let response = helper.send_no_auth(request).await;
+    assert_eq!(response.status(), StatusCode::FORBIDDEN);
 }

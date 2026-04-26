@@ -20,11 +20,13 @@ use opsml_sql::traits::ArtifactLogicTrait;
 use opsml_types::api::RequestType;
 use opsml_types::contracts::Operation;
 use opsml_types::contracts::ResourceType;
-use opsml_types::contracts::{DriftProfileRequest, UpdateProfileRequest};
+use opsml_types::contracts::{
+    DriftProfileRequest, ListProfilesRequest, ListedProfile, UpdateProfileRequest,
+};
 
 use scouter_client::{
-    GetProfileRequest, ProfileRequest, ProfileStatusRequest, RegisteredProfileResponse,
-    ScouterResponse, ScouterServerError,
+    DriftProfile, GetProfileRequest, ProfileRequest, ProfileStatusRequest,
+    RegisteredProfileResponse, ScouterResponse, ScouterServerError,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
@@ -422,6 +424,7 @@ pub async fn profile_exists(
     ),
     responses(
         (status = 200, description = "Drift profile", body = inline(serde_json::Value)),
+        (status = 403, description = "Permission denied", body = OpsmlServerError),
         (status = 404, description = "Not found", body = OpsmlServerError),
         (status = 500, description = "Internal error", body = OpsmlServerError),
     ),
@@ -433,7 +436,7 @@ pub async fn get_drift_profile(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Query(params): Query<GetProfileRequest>,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Json<DriftProfile>, (StatusCode, Json<OpsmlServerError>)> {
     if !state.scouter_client.is_enabled() {
         return Err((
             StatusCode::SERVICE_UNAVAILABLE,
@@ -441,6 +444,10 @@ pub async fn get_drift_profile(
                 "Scouter service is not available".to_string(),
             )),
         ));
+    }
+
+    if !perms.has_read_permission(&params.space) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
     }
 
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
@@ -472,7 +479,7 @@ pub async fn get_drift_profile(
     let status_code = response.status();
     match status_code.is_success() {
         true => {
-            let body = response.json::<serde_json::Value>().await.map_err(|e| {
+            let body = response.json::<DriftProfile>().await.map_err(|e| {
                 error!("Failed to parse scouter response: {e}");
                 internal_server_error(e, "Failed to parse scouter response", None)
             })?;
@@ -495,6 +502,7 @@ pub async fn get_drift_profile(
     request_body(content = inline(serde_json::Value), description = "List profiles request"),
     responses(
         (status = 200, description = "Listed profiles", body = inline(serde_json::Value)),
+        (status = 403, description = "Permission denied", body = OpsmlServerError),
         (status = 500, description = "Internal error", body = OpsmlServerError),
     ),
     security(("bearer_token" = [])),
@@ -504,8 +512,8 @@ pub async fn get_drift_profile(
 pub async fn list_drift_profiles(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Json(body): Json<serde_json::Value>,
-) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
+    Json(body): Json<ListProfilesRequest>,
+) -> Result<Json<Vec<ListedProfile>>, (StatusCode, Json<OpsmlServerError>)> {
     if !state.scouter_client.is_enabled() {
         return Err((
             StatusCode::SERVICE_UNAVAILABLE,
@@ -515,9 +523,18 @@ pub async fn list_drift_profiles(
         ));
     }
 
+    if !perms.has_read_permission(&body.space) {
+        return OpsmlServerError::permission_denied().into_response(StatusCode::FORBIDDEN);
+    }
+
     let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
         error!("Failed to exchange token for scouter: {e}");
         internal_server_error(e, "Failed to exchange token for scouter", None)
+    })?;
+
+    let body_value = serde_json::to_value(&body).map_err(|e| {
+        error!("Failed to serialize profile list request: {e}");
+        internal_server_error(e, "Failed to serialize profile list request", None)
     })?;
 
     let response = state
@@ -525,7 +542,7 @@ pub async fn list_drift_profiles(
         .request(
             scouter::Routes::Profiles,
             RequestType::Post,
-            Some(body),
+            Some(body_value),
             None,
             None,
             &exchange_token,
@@ -539,7 +556,7 @@ pub async fn list_drift_profiles(
     let status_code = response.status();
     match status_code.is_success() {
         true => {
-            let body = response.json::<serde_json::Value>().await.map_err(|e| {
+            let body = response.json::<Vec<ListedProfile>>().await.map_err(|e| {
                 error!("Failed to parse scouter response: {e}");
                 internal_server_error(e, "Failed to parse scouter response", None)
             })?;

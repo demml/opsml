@@ -3,6 +3,7 @@
   import TraceInfiniteScroll from "./TraceInfiniteScroll.svelte";
   import { getServerTraceSpans } from "./utils";
   import type {
+    ClientOnlyFilters,
     TraceListItem,
     TracePageFilter,
     TracePaginationResponse,
@@ -12,9 +13,11 @@
   let {
     trace_page,
     filters,
+    clientFilters,
   } = $props<{
     trace_page: TracePaginationResponse;
     filters: TracePageFilter;
+    clientFilters: ClientOnlyFilters;
   }>();
 
   let selectedTraceSpans = $state<TraceSpansResponse | null>(null);
@@ -124,7 +127,7 @@
       </div>
 
       <div class="flex-1 bg-white overflow-y-auto">
-        <TraceInfiniteScroll initialPage={trace_page} {filters} height="800px">
+        <TraceInfiniteScroll initialPage={trace_page} {filters} {clientFilters} height="800px">
           {#snippet children(trace: TraceListItem, index: number)}
             <div
               class="grid grid-cols-[64px_180px_1fr_1fr_100px_100px_80px_120px] gap-2 items-center px-3 py-2.5 border-b border-gray-100 hover:bg-primary-100 cursor-pointer transition-colors {index % 2 === 0 ? 'bg-white' : 'bg-surface-500'}"
