@@ -11,14 +11,15 @@ use axum::{
     routing::{get, post},
 };
 use opsml_auth::permission::UserPermissions;
-
+use opsml_events::AuditContext;
 use opsml_types::api::RequestType;
+use opsml_types::contracts::{Operation, ResourceType};
 
 use tracing::debug;
 
 use scouter_client::{
-    ScouterServerError, TraceFacetsResponse, TraceMetricsResponse, TracePaginationResponse,
-    TraceRequest, TraceSpansResponse,
+    ScouterServerError, TraceFacetsResponse, TraceFilters, TraceMetricsRequest, TraceMetricsResponse,
+    TracePaginationResponse, TraceRequest, TraceSpansResponse,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
@@ -40,7 +41,7 @@ use tracing::{error, instrument};
 pub async fn get_paginated_traces(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Json(req): Json<serde_json::Value>,
+    Json(body): Json<TraceFilters>,
 ) -> Result<Json<TracePaginationResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !state.scouter_client.is_enabled() {
         return Err((
@@ -56,7 +57,11 @@ pub async fn get_paginated_traces(
         internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
-    let response = state
+    let req = serde_json::to_value(&body).map_err(|e| {
+        internal_server_error(e, "Failed to serialize trace filter request", None)
+    })?;
+
+    let mut response = state
         .scouter_client
         .request(
             scouter::Routes::TracePage,
@@ -68,9 +73,18 @@ pub async fn get_paginated_traces(
         )
         .await
         .map_err(|e| {
-            error!("Failed to acknowledge drift alerts: {e}");
-            internal_server_error(e, "Failed to acknowledge drift alerts", None)
+            error!("Failed to get paginated traces: {e}");
+            internal_server_error(e, "Failed to get paginated traces", None)
         })?;
+
+    response.extensions_mut().insert(AuditContext {
+        resource_id: "trace_page".to_string(),
+        resource_type: ResourceType::Drift,
+        metadata: String::new(),
+        registry_type: None,
+        operation: Operation::Read,
+        access_location: None,
+    });
 
     let status_code = response.status();
     match status_code.is_success() {
@@ -184,7 +198,7 @@ pub async fn get_trace_spans(
 pub async fn trace_metrics(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Json(body): Json<serde_json::Value>,
+    Json(body): Json<TraceMetricsRequest>,
 ) -> Result<Json<TraceMetricsResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !state.scouter_client.is_enabled() {
         return Err((
@@ -201,12 +215,16 @@ pub async fn trace_metrics(
         internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
-    let response = state
+    let req = serde_json::to_value(&body).map_err(|e| {
+        internal_server_error(e, "Failed to serialize trace metrics request", None)
+    })?;
+
+    let mut response = state
         .scouter_client
         .request(
             scouter::Routes::TraceMetrics,
             RequestType::Post,
-            Some(body),
+            Some(req),
             None,
             None,
             &exchange_token,
@@ -217,11 +235,20 @@ pub async fn trace_metrics(
             internal_server_error(e, "Failed to get trace metrics", None)
         })?;
 
+    response.extensions_mut().insert(AuditContext {
+        resource_id: "trace_metrics".to_string(),
+        resource_type: ResourceType::Drift,
+        metadata: String::new(),
+        registry_type: None,
+        operation: Operation::Read,
+        access_location: None,
+    });
+
     let status_code = response.status();
     match status_code.is_success() {
         true => {
             let body = response.json::<TraceMetricsResponse>().await.map_err(|e| {
-                error!("Failed to parse scouter pagination response: {e}");
+                error!("Failed to parse scouter metrics response: {e}");
                 internal_server_error(e, "Failed to parse scouter response", None)
             })?;
             debug!("Trace metrics response: {:?}", &body);
@@ -253,7 +280,7 @@ pub async fn trace_metrics(
 pub async fn get_trace_spans_from_filters(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
-    Json(req): Json<serde_json::Value>,
+    Json(body): Json<TraceFilters>,
 ) -> Result<Json<TraceSpansResponse>, (StatusCode, Json<OpsmlServerError>)> {
     if !state.scouter_client.is_enabled() {
         return Err((
@@ -269,7 +296,11 @@ pub async fn get_trace_spans_from_filters(
         internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
-    let response = state
+    let req = serde_json::to_value(&body).map_err(|e| {
+        internal_server_error(e, "Failed to serialize trace filter request", None)
+    })?;
+
+    let mut response = state
         .scouter_client
         .request(
             scouter::Routes::TraceSpansFilters,
@@ -284,6 +315,15 @@ pub async fn get_trace_spans_from_filters(
             error!("Failed to get trace spans from filters: {e}");
             internal_server_error(e, "Failed to get trace spans from filters", None)
         })?;
+
+    response.extensions_mut().insert(AuditContext {
+        resource_id: "trace_spans_filters".to_string(),
+        resource_type: ResourceType::Drift,
+        metadata: String::new(),
+        registry_type: None,
+        operation: Operation::Read,
+        access_location: None,
+    });
 
     let status_code = response.status();
     match status_code.is_success() {
@@ -336,7 +376,7 @@ pub async fn get_trace_facets(
         internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
-    let response = state
+    let mut response = state
         .scouter_client
         .request(
             scouter::Routes::TraceFacets,
@@ -351,6 +391,15 @@ pub async fn get_trace_facets(
             error!("Failed to get trace facets: {e}");
             internal_server_error(e, "Failed to get trace facets", None)
         })?;
+
+    response.extensions_mut().insert(AuditContext {
+        resource_id: "trace_facets".to_string(),
+        resource_type: ResourceType::Drift,
+        metadata: String::new(),
+        registry_type: None,
+        operation: Operation::Read,
+        access_location: None,
+    });
 
     let status_code = response.status();
     match status_code.is_success() {

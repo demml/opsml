@@ -9,7 +9,9 @@ use axum::{
     routing::{get, post},
 };
 use opsml_auth::permission::UserPermissions;
+use opsml_events::AuditContext;
 use opsml_types::api::RequestType;
+use opsml_types::contracts::{Operation, ResourceType};
 use scouter_client::{
     AgentActivityQuery, AgentDashboardRequest, AgentDashboardResponse, ConversationQuery,
     GenAiAgentActivityResponse, GenAiErrorBreakdownResponse, GenAiMetricsRequest,
@@ -50,7 +52,7 @@ where
         internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
-    let response = state
+    let mut response = state
         .scouter_client
         .request(
             route,
@@ -69,6 +71,15 @@ where
             let message = format!("Failed to {error_context}");
             internal_server_error(e, &message, None)
         })?;
+
+    response.extensions_mut().insert(AuditContext {
+        resource_id: error_context.to_string(),
+        resource_type: ResourceType::Drift,
+        metadata: String::new(),
+        registry_type: None,
+        operation: Operation::Read,
+        access_location: None,
+    });
 
     let status_code = response.status();
     match status_code.is_success() {
@@ -411,7 +422,7 @@ pub async fn genai_conversation(
         internal_server_error(e, "Failed to serialize query string", None)
     })?;
 
-    let response = state
+    let mut response = state
         .scouter_client
         .request_with_path(
             scouter::Routes::GenAiConversation,
@@ -431,6 +442,15 @@ pub async fn genai_conversation(
             error!("Failed to get genai conversation: {e}");
             internal_server_error(e, "Failed to get genai conversation", None)
         })?;
+
+    response.extensions_mut().insert(AuditContext {
+        resource_id: id.to_string(),
+        resource_type: ResourceType::Drift,
+        metadata: String::new(),
+        registry_type: None,
+        operation: Operation::Read,
+        access_location: None,
+    });
 
     let status_code = response.status();
     match status_code.is_success() {

@@ -9,7 +9,9 @@ use axum::{
     routing::get,
 };
 use opsml_auth::permission::UserPermissions;
+use opsml_events::AuditContext;
 use opsml_types::api::RequestType;
+use opsml_types::contracts::{Operation, ResourceType};
 use scouter_client::ScouterServerError;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
@@ -50,7 +52,7 @@ pub async fn get_observability_metrics(
         internal_server_error(e, "Failed to serialize query string", None)
     })?;
 
-    let response = state
+    let mut response = state
         .scouter_client
         .request(
             scouter::Routes::ObservabilityMetrics,
@@ -65,6 +67,15 @@ pub async fn get_observability_metrics(
             error!("Failed to get observability metrics: {e}");
             internal_server_error(e, "Failed to get observability metrics", None)
         })?;
+
+    response.extensions_mut().insert(AuditContext {
+        resource_id: "observability_metrics".to_string(),
+        resource_type: ResourceType::Drift,
+        metadata: String::new(),
+        registry_type: None,
+        operation: Operation::Read,
+        access_location: None,
+    });
 
     let status_code = response.status();
     match status_code.is_success() {
