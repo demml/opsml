@@ -16,12 +16,24 @@ class TimeRangeState {
   /** Incremented each time the user clicks the manual refresh button. */
   refreshSignal = $state(0);
 
+  /** True while any dashboard is executing a refresh fetch. */
+  isRefreshing = $state(false);
+
   updateTimeRange(newRange: TimeRange) {
     this.selectedTimeRange = newRange;
   }
 
+  beginRefresh() {
+    this.isRefreshing = true;
+  }
+
+  endRefresh() {
+    this.isRefreshing = false;
+  }
+
   /** Recalculates start/end for the current range value and triggers a refresh. */
   refresh() {
+    if (this.isRefreshing) return;
     const current = this.selectedTimeRange;
     if (!current) return;
 

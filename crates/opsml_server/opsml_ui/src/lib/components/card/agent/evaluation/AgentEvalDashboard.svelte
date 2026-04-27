@@ -48,6 +48,8 @@
   // Working mutable state (refreshed on time range changes)
   let evalData = $state<AgentPromptEvalData[]>(agentPromptEvals);
   let isRefreshing = $state(false);
+  // Snapshot on mount so stale singleton state from prior navigation never triggers an immediate refresh.
+  let lastSeenRange = $state(timeRangeState.selectedTimeRange);
   let lastSeenSignal = $state(timeRangeState.refreshSignal);
 
   // ── Time Range Refresh ────────────────────────────────────────────────────────
@@ -60,13 +62,12 @@
     const signalFired = signal !== lastSeenSignal;
     if (!newRange) return;
 
-    const rangeChanged = evalData.some(e => {
-      if (e.monitoringData.status !== 'success') return false;
-      const r = e.monitoringData.selectedTimeRange;
-      return r.startTime !== newRange.startTime || r.endTime !== newRange.endTime;
-    });
+    const rangeChanged =
+      lastSeenRange.startTime !== newRange.startTime ||
+      lastSeenRange.endTime !== newRange.endTime;
 
     if (rangeChanged || signalFired) {
+      lastSeenRange = newRange;
       lastSeenSignal = signal;
       evalData.forEach(e => {
         if (e.monitoringData.status === 'success') {
@@ -80,6 +81,7 @@
   /** Full refresh without cursors — resets pagination to page 1. */
   async function performRefresh() {
     isRefreshing = true;
+    timeRangeState.beginRefresh();
     try {
       await Promise.all(
         evalData.map(async (e) => {
@@ -91,12 +93,14 @@
       console.error('[AgentEvalDashboard] Refresh failed:', err);
     } finally {
       isRefreshing = false;
+      timeRangeState.endRefresh();
     }
   }
 
   /** Advance the record page for all evals that have a cursor in that direction. */
   async function handleRecordPageChange(direction: string) {
     isRefreshing = true;
+    timeRangeState.beginRefresh();
     try {
       await Promise.all(
         evalData.map(async (e) => {
@@ -114,12 +118,14 @@
       console.error('[AgentEvalDashboard] Record page change failed:', err);
     } finally {
       isRefreshing = false;
+      timeRangeState.endRefresh();
     }
   }
 
   /** Advance the workflow page for all evals that have a cursor in that direction. */
   async function handleWorkflowPageChange(direction: string) {
     isRefreshing = true;
+    timeRangeState.beginRefresh();
     try {
       await Promise.all(
         evalData.map(async (e) => {
@@ -137,6 +143,7 @@
       console.error('[AgentEvalDashboard] Workflow page change failed:', err);
     } finally {
       isRefreshing = false;
+      timeRangeState.endRefresh();
     }
   }
 

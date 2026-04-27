@@ -476,23 +476,28 @@ const ALL_SPANS: TraceSpan[][] = ALL_BUILDERS.map((fn) => fn());
 
 // Derive trace list items from actual spans (so counts always match)
 function buildTraceListItems(): TraceListItem[] {
+  // Shift all timestamps forward so traces always appear "just happened"
+  // relative to the current wall-clock time, not the frozen module-load time.
+  const offsetMs = Date.now() - NOW;
   return ALL_SPANS.map((spans, i) => {
     const root = spans[0];
     const errorSpans = spans.filter((s) => s.status_code === 2);
+    const startMs = new Date(root.start_time).getTime() + offsetMs;
+    const endMs = root.end_time ? new Date(root.end_time).getTime() + offsetMs : undefined;
     return {
       trace_id: root.trace_id,
       service_name: TRACE_META[i].service,
       scope: TRACE_META[i].scope,
       root_operation: root.span_name,
-      start_time: root.start_time,
-      end_time: root.end_time,
+      start_time: new Date(startMs).toISOString(),
+      end_time: endMs !== undefined ? new Date(endMs).toISOString() : root.end_time,
       duration_ms: root.duration_ms,
       status_code: root.status_code,
       status_message: root.status_message,
       span_count: spans.length,
       has_errors: errorSpans.length > 0,
       error_count: errorSpans.length,
-      created_at: root.start_time,
+      created_at: new Date(startMs).toISOString(),
       resource_attributes: root.attributes,
     };
   });

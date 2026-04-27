@@ -11,7 +11,6 @@
   import { refreshAgentMonitoringData } from '$lib/components/scouter/dashboard/utils';
   import type { RecordCursor } from '$lib/components/scouter/types';
   import { getMaxDataPoints, type RegistryType } from '$lib/utils';
-  import { Loader2 } from 'lucide-svelte';
   import AgentDashboard from '$lib/components/scouter/agent/dashboard/AgentDashboard.svelte';
   import AgentTaskAccordion from '$lib/components/scouter/agent/task/AgentTaskAccordion.svelte';
   import { timeRangeState } from '$lib/components/utils/timeState.svelte';
@@ -29,6 +28,8 @@
   let monitoringData = $state<AgentMonitoringPageData>(initialMonitoringData);
   let isRefreshing = $state(false);
   let currentMaxPoints = $state(typeof window !== 'undefined' ? getMaxDataPoints() : 0);
+  // Snapshot on mount so stale singleton state from prior navigation never triggers an immediate refresh.
+  let lastSeenRange = $state(timeRangeState.selectedTimeRange);
   let lastSeenSignal = $state(timeRangeState.refreshSignal);
 
   $effect(() => {
@@ -36,12 +37,12 @@
     const newRange = timeRangeState.selectedTimeRange;
     const signal = timeRangeState.refreshSignal;
     if (newRange && monitoringData?.status === 'success') {
-      const currentRange = monitoringData.selectedTimeRange;
       const rangeChanged =
-        currentRange.startTime !== newRange.startTime ||
-        currentRange.endTime !== newRange.endTime;
+        lastSeenRange.startTime !== newRange.startTime ||
+        lastSeenRange.endTime !== newRange.endTime;
       const signalFired = signal !== lastSeenSignal;
       if (rangeChanged || signalFired) {
+        lastSeenRange = newRange;
         lastSeenSignal = signal;
         monitoringData.selectedTimeRange = newRange;
         performRefresh();
@@ -72,6 +73,7 @@
   ) {
     if (!monitoringData || monitoringData.status !== 'success') return;
     isRefreshing = true;
+    timeRangeState.beginRefresh();
     try {
       await refreshAgentMonitoringData(fetch, monitoringData, {
         recordCursor: rCursor,
@@ -81,6 +83,7 @@
       console.error('Agent Dashboard Refresh Failed', e);
     } finally {
       isRefreshing = false;
+      timeRangeState.endRefresh();
     }
   }
 
@@ -93,14 +96,6 @@
   }
 </script>
 
-{#if isRefreshing}
-  <div class="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-black text-white
-              rounded-lg shadow-lg animate-pulse border-2 border-white transition-opacity duration-200">
-    <Loader2 class="w-4 h-4 animate-spin" />
-    <span class="text-xs font-bold uppercase tracking-wider">Syncing...</span>
-  </div>
-{/if}
-
 {#if monitoringData.status === 'error'}
   <AgentTaskAccordion tasks={monitoringData.profile.tasks} />
   <MonitoringErrorView
@@ -112,7 +107,7 @@
     {registryType}
   />
 {:else if monitoringData.status === 'success'}
-  <div class="transition-opacity duration-200 {isRefreshing ? 'opacity-60 pointer-events-none grayscale-[0.5]' : ''}">
+  <div class="transition-opacity duration-200 {isRefreshing ? 'opacity-60 grayscale-[0.5]' : ''}">
     <AgentDashboard
       bind:monitoringData
       onRecordPageChange={handleRecordPageChange}

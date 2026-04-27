@@ -2,12 +2,12 @@
   import { page } from '$app/state';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
   import ScouterRequiredView from '$lib/components/scouter/ScouterRequiredView.svelte';
-  import { Activity, Brain, RefreshCw } from 'lucide-svelte';
-  import { DriftType } from '$lib/components/scouter/types';
+  import { Activity, Brain } from 'lucide-svelte';
   import type { LayoutData } from './$types';
-  import TimeRangeFilter from '$lib/components/trace/TimeRangeFilter.svelte';
+  import DashboardTimeBar from '$lib/components/utils/DashboardTimeBar.svelte';
   import { timeRangeState } from '$lib/components/utils/timeState.svelte';
   import { getRegistryFromString, RegistryType } from "$lib/utils";
+  import type { TimeRange } from '$lib/components/trace/types';
 
   let { data, children }: { data: LayoutData; children: any } = $props();
   let scouterEnabled = $derived(uiSettingsStore.scouterEnabled);
@@ -17,7 +17,7 @@
 
   const dashboardTitle = $derived(isAgent ? 'Agent Evaluation Dashboard' : 'Prompt Evaluation Dashboard');
 
-  function handleRangeChange(newRange: any) {
+  function handleRangeChange(newRange: TimeRange) {
     timeRangeState.updateTimeRange(newRange);
   }
 </script>
@@ -41,25 +41,14 @@
         </div>
       </div>
 
-      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full xl:w-auto">
-        <div class="hidden sm:block w-[2px] h-8 bg-black/10 mx-2"></div>
-        <div class="w-full sm:w-auto">
-          {#if timeRangeState.selectedTimeRange}
-            <TimeRangeFilter
-              selectedRange={timeRangeState.selectedTimeRange}
-              onRangeChange={handleRangeChange}
-            />
-          {/if}
-        </div>
-        <button
-          onclick={() => timeRangeState.refresh()}
-          class="flex items-center gap-2 px-3 py-2 bg-white border-2 border-black rounded-lg shadow-small hover:bg-primary-50 hover:shadow-hover transition-all duration-100 text-sm font-bold text-black"
-          title="Refresh data"
-          aria-label="Refresh data"
-        >
-          <RefreshCw class="w-4 h-4" />
-        </button>
-      </div>
+      {#if timeRangeState.selectedTimeRange}
+        <DashboardTimeBar
+          selectedRange={timeRangeState.selectedTimeRange}
+          refreshing={timeRangeState.isRefreshing}
+          onRangeChange={handleRangeChange}
+          onRefresh={() => timeRangeState.refresh()}
+        />
+      {/if}
     </div>
 
     {@render children()}

@@ -19,7 +19,7 @@
     removeActiveFilter,
   } from "./filters/filterState.svelte";
   import ModeTabs from "./ModeTabs.svelte";
-  import TimeRangeFilter from "./TimeRangeFilter.svelte";
+  import DashboardTimeBar from "$lib/components/utils/DashboardTimeBar.svelte";
   import TraceCharts from "$lib/components/trace/TraceCharts.svelte";
   import TraceTable from "$lib/components/trace/TraceTable.svelte";
   import {
@@ -350,24 +350,12 @@
         {/if}
       </div>
 
-      <div class="flex items-center gap-2">
-        <button
-          onclick={() => void refreshData()}
-          disabled={isUpdating}
-          class="flex items-center gap-1.5 px-3 py-2 text-sm font-bold bg-white border-2 border-black shadow-small shadow-hover rounded-base text-primary-800 disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="Refresh data"
-        >
-          <svg class="w-3.5 h-3.5 {isUpdating ? 'animate-spin' : ''}" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
-
-        <TimeRangeFilter
-          onRangeChange={handleTimeRangeChange}
-          selectedRange={selectedTimeRange}
-        />
-      </div>
+      <DashboardTimeBar
+        selectedRange={selectedTimeRange}
+        refreshing={isUpdating}
+        onRangeChange={handleTimeRangeChange}
+        onRefresh={() => void refreshData()}
+      />
     </div>
 
     <div class="grid grid-cols-2 sm:grid-cols-4 divide-x-2 divide-black rounded-b-base overflow-hidden">
