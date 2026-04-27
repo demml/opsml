@@ -76,8 +76,9 @@
         const matchesName =
           searchTerm.length === 0 ||
           item.name.toLowerCase().includes(searchTerm);
+        const matchesTags = filteredTags.length === 0;
 
-        return matchesSpace && matchesName;
+        return matchesSpace && matchesName && matchesTags;
       });
 
       registryPage = {

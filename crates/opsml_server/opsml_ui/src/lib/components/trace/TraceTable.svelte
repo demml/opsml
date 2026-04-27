@@ -94,11 +94,11 @@
     <span class="text-xs font-mono text-primary-100">click a row to inspect</span>
   </div>
 
-  <div class="flex-1 flex flex-col bg-white overflow-x-auto">
+  <div class="flex-1 flex flex-col bg-surface-50 overflow-x-auto">
     <div class="h-full flex flex-col min-w-[900px]">
       <div class="bg-surface-100 border-b-2 border-black sticky top-0 z-5">
         <div class="grid grid-cols-[64px_180px_1fr_1fr_100px_100px_80px_120px] gap-2 text-black text-xs font-black uppercase tracking-wide px-3 py-2">
-          <div class="text-center text-gray-500">ID</div>
+          <div class="text-center text-black">ID</div>
           <div class="text-left">
             <span class="px-2 py-0.5 rounded-base bg-primary-100 text-primary-800 border border-primary-300">Date</span>
           </div>
@@ -123,18 +123,18 @@
         </div>
       </div>
 
-      <div class="flex-1 bg-white overflow-y-auto">
+      <div class="flex-1 bg-surface-50 overflow-y-auto">
         <TraceInfiniteScroll initialPage={trace_page} {filters} height="800px">
           {#snippet children(trace: TraceListItem, index: number)}
             <div
-              class="grid grid-cols-[64px_180px_1fr_1fr_100px_100px_80px_120px] gap-2 items-center px-3 py-2.5 border-b border-gray-100 hover:bg-primary-100 cursor-pointer transition-colors {index % 2 === 0 ? 'bg-white' : 'bg-surface-500'}"
+              class="grid grid-cols-[64px_180px_1fr_1fr_100px_100px_80px_120px] gap-2 items-center px-3 py-2.5 border-b border-black hover:bg-primary-100 cursor-pointer transition-colors {index % 2 === 0 ? 'bg-surface-50' : 'bg-surface-100'}"
               onclick={() => handleTraceClick(trace)}
               onkeydown={(event) => event.key === "Enter" && handleTraceClick(trace)}
               role="button"
               tabindex="0"
             >
               <div class="text-center">
-                <span class="text-xs font-mono text-gray-400 bg-surface-200 px-1.5 py-0.5 rounded">{trace.trace_id.slice(0, 7)}</span>
+                <span class="text-xs font-mono text-black bg-surface-200 px-1.5 py-0.5 rounded">{trace.trace_id.slice(0, 7)}</span>
               </div>
 
               <div class="flex items-center gap-2 min-w-0">
@@ -152,7 +152,7 @@
               </div>
 
               <div class="min-w-0">
-                <span class="text-xs text-gray-700 truncate block">{trace.root_operation ?? "N/A"}</span>
+                <span class="text-xs text-black truncate block">{trace.root_operation ?? "N/A"}</span>
               </div>
 
               <div class="text-center">
@@ -160,7 +160,7 @@
               </div>
 
               <div class="text-center">
-                <span class="px-2 py-0.5 rounded-base bg-surface-200 border border-black text-gray-800 text-xs font-bold">
+                <span class="px-2 py-0.5 rounded-base bg-surface-200 border border-black text-black text-xs font-bold">
                   {trace.scope ?? "GET"}
                 </span>
               </div>
@@ -191,8 +191,8 @@
 {/if}
 
 {#if isLoadingDetail}
-  <div class="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center">
-    <div class="bg-white border-2 border-black rounded-base shadow p-6 flex flex-col items-center gap-3">
+  <div class="fixed inset-0 bg-black/20 z-50 flex items-center justify-center">
+    <div class="bg-surface-50 border-2 border-black rounded-base shadow p-6 flex flex-col items-center gap-3">
       <div class="w-10 h-10 border-3 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
       <p class="text-sm font-black text-primary-800 uppercase tracking-wide">Loading trace details</p>
     </div>

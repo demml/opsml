@@ -9,7 +9,7 @@ import type {
 import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
 import { buildMockAgentPromptCards } from "$lib/components/mock/opsmlMockData";
 
-async function setup_agent_layout(
+async function setupAgentLayout(
   card: ServiceCard,
   fetch: typeof globalThis.fetch,
   useMockFallback: boolean,
@@ -63,7 +63,7 @@ export const load: LayoutServerLoad = async ({ params, parent, fetch, cookies })
   if (genAIRegistryType === RegistryType.Agent) {
     // load all cards for service and find prompt cards with eval profiles
     const serviceCard = cardLayout.metadata as ServiceCard;
-    const promptCardsWithEval = await setup_agent_layout(
+    const promptCardsWithEval = await setupAgentLayout(
       serviceCard,
       fetch,
       useMockFallback,
