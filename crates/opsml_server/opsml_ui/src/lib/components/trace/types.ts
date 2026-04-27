@@ -204,6 +204,17 @@ export interface TraceFacetResponse {
   attribute_keys: FacetCount[];
 }
 
+export interface TraceFacetDimension {
+  value: string;
+  trace_count: number;
+}
+
+export interface TraceFacetsResponse {
+  services: TraceFacetDimension[];
+  status_codes: TraceFacetDimension[];
+  total_count: number;
+}
+
 export type TraceMode = "search" | "analytics";
 
 export interface TimeRange {

@@ -2,7 +2,8 @@
   import type {
     ActiveFilter,
     TimeRange,
-    TraceFacetResponse,
+    TraceFacetDimension,
+    TraceFacetsResponse,
     TraceMetricBucket,
     TraceMetricsRequest,
     TraceMetricsResponse,
@@ -37,7 +38,7 @@
   }: {
     trace_page: TracePaginationResponse;
     trace_metrics: TraceMetricBucket[];
-    trace_facets: TraceFacetResponse;
+    trace_facets: TraceFacetsResponse;
     initialFilters: TracePageFilter;
   } = $props();
 
@@ -46,7 +47,7 @@
   let filters = $state<TracePageFilter>(initialFilters);
   let traceMetrics = $state<TraceMetricBucket[]>(trace_metrics);
   let tracePage = $state<TracePaginationResponse>(trace_page);
-  let traceFacets = $state<TraceFacetResponse>(trace_facets);
+  let traceFacets = $state<TraceFacetsResponse>(trace_facets);
 
   const activeChips = $derived(derivedActiveFilters(filters));
 
@@ -77,10 +78,16 @@
     });
   }
 
-  async function getTraceFacetsForRange(): Promise<TraceFacetResponse> {
-    return await getServerTraceFacets(fetch, {
-      ...filters.filters,
-    });
+  async function getTraceFacetsForRange(): Promise<TraceFacetsResponse> {
+    const [serviceFacets, statusFacets] = await Promise.all([
+      getServerTraceFacets(fetch, { ...filters.filters, service_name: undefined }),
+      getServerTraceFacets(fetch, { ...filters.filters, status_code: undefined }),
+    ]);
+    return {
+      services: serviceFacets.services,
+      status_codes: statusFacets.status_codes,
+      total_count: serviceFacets.total_count,
+    };
   }
 
   async function refreshData() {
@@ -396,8 +403,8 @@
 
   <ChipBar
     chips={activeChips}
-    services={traceFacets.services}
-    statuses={traceFacets.status_codes}
+    services={traceFacets.services.map((d) => ({ value: d.value, count: d.trace_count }))}
+    statuses={traceFacets.status_codes.map((d) => ({ value: d.value, count: d.trace_count }))}
     onRemove={handleRemoveChip}
     onAddService={addService}
     onAddStatus={addStatus}
@@ -410,8 +417,8 @@
     <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
       <FacetSidebar
         {filters}
-        services={traceFacets.services}
-        statuses={traceFacets.status_codes}
+        services={traceFacets.services.map((d: TraceFacetDimension) => ({ value: d.value, count: d.trace_count }))}
+        statuses={traceFacets.status_codes.map((d: TraceFacetDimension) => ({ value: d.value, count: d.trace_count }))}
         onSetService={setService}
         onClearService={clearService}
         onSetStatus={setStatus}

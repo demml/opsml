@@ -37,6 +37,7 @@ pub enum Routes {
     TagEntity,
     // Trace extensions
     TraceSpansFilters,
+    TraceFacets,
     // Profile extensions
     Profiles,
     // Observability
@@ -90,6 +91,7 @@ impl Routes {
 
             // Trace extensions
             Routes::TraceSpansFilters => "scouter/trace/spans/filters",
+            Routes::TraceFacets => "scouter/trace/facets",
 
             // Profile extensions
             Routes::Profiles => "scouter/profiles",

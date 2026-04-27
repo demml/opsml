@@ -17,8 +17,8 @@ use opsml_types::api::RequestType;
 use tracing::debug;
 
 use scouter_client::{
-    ScouterServerError, TraceMetricsResponse, TracePaginationResponse, TraceRequest,
-    TraceSpansResponse,
+    ScouterServerError, TraceFacetsResponse, TraceMetricsResponse, TracePaginationResponse,
+    TraceRequest, TraceSpansResponse,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
@@ -304,6 +304,73 @@ pub async fn get_trace_spans_from_filters(
     }
 }
 
+/// Get trace facets (aggregated service and status_code counts) from scouter
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/trace/facets",
+    request_body(content = inline(serde_json::Value), description = "Trace filter request for facets"),
+    responses(
+        (status = 200, description = "Trace facets response", body = inline(serde_json::Value)),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
+#[instrument(skip_all)]
+pub async fn get_trace_facets(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(req): Json<serde_json::Value>,
+) -> Result<Json<TraceFacetsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter", None)
+    })?;
+
+    let response = state
+        .scouter_client
+        .request(
+            scouter::Routes::TraceFacets,
+            RequestType::Post,
+            Some(req),
+            None,
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get trace facets: {e}");
+            internal_server_error(e, "Failed to get trace facets", None)
+        })?;
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<TraceFacetsResponse>().await.map_err(|e| {
+                error!("Failed to parse scouter facets response: {e}");
+                internal_server_error(e, "Failed to parse scouter response", None)
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse scouter error response", None)
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
 pub async fn get_scouter_trace_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
@@ -322,6 +389,10 @@ pub async fn get_scouter_trace_router(prefix: &str) -> Result<Router<Arc<AppStat
             .route(
                 &format!("{prefix}/scouter/trace/spans/filters"),
                 post(get_trace_spans_from_filters),
+            )
+            .route(
+                &format!("{prefix}/scouter/trace/facets"),
+                post(get_trace_facets),
             )
     }));
 

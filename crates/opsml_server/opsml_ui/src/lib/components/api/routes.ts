@@ -52,6 +52,7 @@ export enum RoutePaths {
   OBSERVABILITY_METRICS = "/opsml/api/scouter/observability/metrics",
   // Trace extensions
   TRACE_SPANS_FILTERS = "/opsml/api/scouter/trace/spans/filters",
+  TRACE_FACETS = "/opsml/api/scouter/trace/facets",
   // Profile extensions
   PROFILE_GET = "/opsml/api/scouter/profile",
   PROFILES_LIST = "/opsml/api/scouter/profiles",

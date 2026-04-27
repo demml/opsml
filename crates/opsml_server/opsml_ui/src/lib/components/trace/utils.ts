@@ -10,7 +10,7 @@ import type {
   TraceRequest,
   TraceFilters,
   TracePaginationResponse,
-  TraceFacetResponse,
+  TraceFacetsResponse,
   TimeRange,
 } from "./types";
 import {
@@ -289,7 +289,7 @@ export async function getServerTracePage(
 export async function getServerTraceFacets(
   fetch: typeof globalThis.fetch,
   filters: TraceFilters,
-): Promise<TraceFacetResponse> {
+): Promise<TraceFacetsResponse> {
   const resp = await createInternalApiClient(fetch).post(
     ServerPaths.TRACE_FACETS,
     filters,
@@ -301,7 +301,7 @@ export async function getServerTraceFacets(
     throw new Error(error);
   }
 
-  return response as TraceFacetResponse;
+  return response as TraceFacetsResponse;
 }
 
 export function getCookie(name: string): string | null {

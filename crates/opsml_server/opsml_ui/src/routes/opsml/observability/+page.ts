@@ -1,6 +1,6 @@
 import type { PageLoad } from "./$types";
 import type {
-  TraceFacetResponse,
+  TraceFacetsResponse,
   TraceMetricsRequest,
   TracePageFilter,
   TraceFilters,
@@ -41,10 +41,10 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       limit: 50,
     });
 
-    let traceFacets: TraceFacetResponse = {
+    let traceFacets: TraceFacetsResponse = {
       services: [],
       status_codes: [],
-      attribute_keys: [],
+      total_count: 0,
     };
 
     try {
