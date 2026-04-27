@@ -58,7 +58,7 @@ uuid = { workspace = true }
 http-body-util = "0.*"
 mockall = { workspace = true }
 mockito = { workspace = true }
-rand = "0.*"
+rand = { workspace = true }
 tower = { version = "0.*", features = ["util"] }
 jsonwebtoken = { workspace = true }
 test_utils = { workspace = true }

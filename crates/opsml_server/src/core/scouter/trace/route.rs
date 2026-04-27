@@ -18,7 +18,7 @@ use opsml_types::contracts::{Operation, ResourceType};
 use tracing::debug;
 
 use scouter_client::{
-    ScouterServerError, TraceFacetsResponse, TraceFilters, TraceMetricsRequest, TraceMetricsResponse,
+    ScouterServerError, TraceFilters, TraceMetricsRequest, TraceMetricsResponse,
     TracePaginationResponse, TraceRequest, TraceSpansResponse,
 };
 use std::panic::{AssertUnwindSafe, catch_unwind};
@@ -361,7 +361,7 @@ pub async fn get_trace_facets(
     State(state): State<Arc<AppState>>,
     Extension(perms): Extension<UserPermissions>,
     Json(req): Json<serde_json::Value>,
-) -> Result<Json<TraceFacetsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
     if !state.scouter_client.is_enabled() {
         return Err((
             StatusCode::SERVICE_UNAVAILABLE,
@@ -404,7 +404,7 @@ pub async fn get_trace_facets(
     let status_code = response.status();
     match status_code.is_success() {
         true => {
-            let body = response.json::<TraceFacetsResponse>().await.map_err(|e| {
+            let body = response.json::<serde_json::Value>().await.map_err(|e| {
                 error!("Failed to parse scouter facets response: {e}");
                 internal_server_error(e, "Failed to parse scouter response", None)
             })?;
