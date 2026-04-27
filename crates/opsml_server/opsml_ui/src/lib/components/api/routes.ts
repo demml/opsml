@@ -53,8 +53,6 @@ export enum RoutePaths {
   // Trace extensions
   TRACE_SPANS_FILTERS = "/opsml/api/scouter/trace/spans/filters",
   TRACE_FACETS = "/opsml/api/scouter/trace/facets",
-  // Profile extensions
-  PROFILE_GET = "/opsml/api/scouter/profile",
   PROFILES_LIST = "/opsml/api/scouter/profiles",
   // GenAI
   GENAI_TOKEN_METRICS = "/opsml/api/scouter/genai/metrics/tokens",
@@ -116,7 +114,7 @@ export enum ServerPaths {
 
   // scouter
   // profile
-  MONITORING_PROFILES = "/api/scouter/profiles",
+  MONITORING_PROFILES = "/api/scouter/profiles/hydrate",
   MONITORING_PROFILE_EXISTS = "/api/scouter/profile/exists",
   UPDATE_MONITORING_PROFILE = "/api/scouter/profile/update",
 
@@ -154,7 +152,6 @@ export enum ServerPaths {
   GENAI_TOOL_METRICS = "/api/scouter/genai/tool/metrics",
   OBSERVABILITY_METRICS = "/api/scouter/observability/metrics",
   TRACE_FACETS = "/api/scouter/trace/facets",
-  PROFILES_LIST = "/api/scouter/profiles",
 
   EXPERIMENT_GROUPED_METRICS = "/api/card/experiment/metrics/grouped",
   DATA_PROFILE = "/api/card/data/profile",
