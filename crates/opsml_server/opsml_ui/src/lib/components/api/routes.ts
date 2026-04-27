@@ -53,6 +53,7 @@ export enum RoutePaths {
   // Trace extensions
   TRACE_SPANS_FILTERS = "/opsml/api/scouter/trace/spans/filters",
   TRACE_FACETS = "/opsml/api/scouter/trace/facets",
+  TRACE_SPANS_BY_ID = "/opsml/api/scouter/trace",
   PROFILES_LIST = "/opsml/api/scouter/profiles",
   // GenAI
   GENAI_TOKEN_METRICS = "/opsml/api/scouter/genai/metrics/tokens",
@@ -138,6 +139,7 @@ export enum ServerPaths {
   TRACE_METRICS = "/api/scouter/observability/trace/metrics",
   TRACE_SPANS = "/api/scouter/observability/trace/spans",
   TRACE_PAGE = "/api/scouter/observability/trace",
+  TRACE_SPANS_BY_ID = "/api/scouter/observability/trace",
   ENTITY_ID_TAGS = "/api/scouter/tags/entity",
   // GenAI
   GENAI_TOKEN_METRICS = "/api/scouter/genai/metrics/tokens",

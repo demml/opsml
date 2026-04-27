@@ -8,6 +8,7 @@
   import { timeRangeState } from '$lib/components/utils/timeState.svelte';
   import { getRegistryFromString, RegistryType } from "$lib/utils";
   import type { TimeRange } from '$lib/components/trace/types';
+  import { setCookie } from '$lib/components/trace/utils';
 
   let { data, children }: { data: LayoutData; children: any } = $props();
   let scouterEnabled = $derived(uiSettingsStore.scouterEnabled);
@@ -19,6 +20,7 @@
 
   function handleRangeChange(newRange: TimeRange) {
     timeRangeState.updateTimeRange(newRange);
+    setCookie('monitoring_range', newRange.value);
   }
 </script>
 

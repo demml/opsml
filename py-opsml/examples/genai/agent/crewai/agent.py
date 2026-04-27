@@ -109,3 +109,13 @@ def ask(request: AgentRequest) -> AgentResponse:
 def shutdown() -> None:
     _crewai_instrumentor.uninstrument()
     teardown()
+
+
+if __name__ == "__main__":
+    import argparse
+
+    _parser = argparse.ArgumentParser(description="Run CrewAI agent example.")
+    _parser.add_argument("query", help="Query to send to the agent.")
+    _args = _parser.parse_args()
+    print(run_agent(_args.query))
+    teardown()

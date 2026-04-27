@@ -1,23 +1,30 @@
 <script lang="ts">
-  import { X, List, Clock, Layers, CheckCircle2, XCircle } from 'lucide-svelte';
+  import { X, List, Clock, Layers, CheckCircle2, XCircle, Activity } from 'lucide-svelte';
+  import { page } from '$app/state';
   import type { AgentEvalWorkflowResult, EvalTaskResult } from '../task';
   import WorkflowStageList from './WorkflowStageList.svelte';
   import TaskDetailView from '../task/TaskDetailView.svelte';
   import { getServerAgentEvalTask } from '../utils';
   import type { AgentEvalProfile, AgentEvalTaskRequest } from '../types';
-  import { dev } from '$app/environment';
+  import { devMockStore } from '$lib/components/settings/mockMode.svelte';
 
   let {
     workflow,
     onClose,
     showCloseButton = true,
     profile,
+    traceId,
   }: {
     workflow: AgentEvalWorkflowResult;
     onClose?: () => void;
     showCloseButton?: boolean;
     profile: AgentEvalProfile;
+    traceId?: string;
   } = $props();
+
+  const observabilityPath = $derived(
+    traceId ? page.url.pathname.replace(/\/evaluation(\/.*)?$/, '/observability') : null
+  );
 
   let selectedTask = $state<EvalTaskResult | null>(null);
   let tasks = $state<EvalTaskResult[]>([]);
@@ -27,7 +34,7 @@
   async function loadTasks() {
     loading = true;
     try {
-      if (dev) {
+      if (devMockStore.enabled) {
         const { buildMockEvalTasks } = await import('$lib/components/scouter/evaluation/mockData');
         tasks = buildMockEvalTasks(workflow.record_uid);
         if (tasks.length > 0) selectedTask = tasks[0];
@@ -115,6 +122,16 @@
         </span>
       {/if}
 
+      {#if traceId && observabilityPath}
+        <a
+          href="{observabilityPath}?trace_id={traceId}"
+          class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold border-2 border-black bg-purple-100 text-purple-900 rounded-base shadow-small hover:bg-purple-200 transition-colors duration-100"
+          title="Open trace in Observability"
+        >
+          <Activity class="w-3 h-3" />
+          Trace
+        </a>
+      {/if}
       {#if showCloseButton && onClose}
         <button
           onclick={onClose}
@@ -175,7 +192,7 @@
         <!-- Right: Task detail -->
         <div class="flex-1 min-w-0 overflow-hidden bg-surface-50 {activePanel === 'detail' ? 'block' : 'hidden'} lg:block">
           {#if selectedTask}
-            <TaskDetailView task={selectedTask} profile={profile} />
+            <TaskDetailView task={selectedTask} profile={profile} {traceId} {observabilityPath} />
           {:else}
             <div class="flex flex-col items-center justify-center h-full gap-3 text-center p-8">
               <div class="w-12 h-12 border-2 border-black bg-surface-200 flex items-center justify-center rounded-base shadow-small">

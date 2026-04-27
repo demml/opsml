@@ -4,12 +4,14 @@
     TimeRange,
     TraceFacetDimension,
     TraceFacetsResponse,
+    TraceListItem,
     TraceMetricBucket,
     TraceMetricsRequest,
     TraceMetricsResponse,
     TraceMode,
     TracePageFilter,
     TracePaginationResponse,
+    TraceSpansResponse,
   } from "./types";
   import type { DateTime } from "$lib/types";
   import ChipBar from "./filters/ChipBar.svelte";
@@ -35,11 +37,15 @@
     trace_metrics,
     trace_facets,
     initialFilters,
+    initialTrace,
+    initialTraceSpans,
   }: {
     trace_page: TracePaginationResponse;
     trace_metrics: TraceMetricBucket[];
     trace_facets: TraceFacetsResponse;
     initialFilters: TracePageFilter;
+    initialTrace?: TraceListItem;
+    initialTraceSpans?: TraceSpansResponse;
   } = $props();
 
   let isUpdating = $state(false);
@@ -421,6 +427,8 @@
       <TraceTable
         trace_page={tracePage}
         {filters}
+        {initialTrace}
+        {initialTraceSpans}
       />
       </div>
     </div>

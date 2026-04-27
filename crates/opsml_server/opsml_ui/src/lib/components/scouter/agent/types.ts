@@ -150,6 +150,7 @@ export interface EvalRecord {
   entity_uid: string;
   status: Status;
   entity_type: EntityType;
+  trace_id?: string;
 }
 
 /**

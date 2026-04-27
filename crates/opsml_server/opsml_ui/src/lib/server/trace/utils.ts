@@ -54,6 +54,16 @@ export async function getTraceSpansFromFilters(
   return (await response.json()) as TraceSpansResponse;
 }
 
+export async function getTraceSpansById(
+  fetch: typeof globalThis.fetch,
+  traceId: string,
+): Promise<TraceSpansResponse> {
+  const response = await createOpsmlClient(fetch).get(
+    `${RoutePaths.TRACE_SPANS_BY_ID}/${traceId}/spans`,
+  );
+  return (await response.json()) as TraceSpansResponse;
+}
+
 export function deriveTraceFacetsFromSpans(
   spansResponse: TraceSpansResponse,
 ): TraceFacetResponse {

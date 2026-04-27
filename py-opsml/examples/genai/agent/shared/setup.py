@@ -37,7 +37,7 @@ def get_shared_config() -> SharedConfig:
     app = AppState.from_spec(
         path=_SPEC_DIR / "opsmlspec.yaml",
         transport_config=_transport_config(),
-        register=False,
+        register=True,
     )
     app.instrument(batch_config=BatchConfig(scheduled_delay_ms=200))
 

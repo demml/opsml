@@ -12,13 +12,17 @@
   let {
     trace_page,
     filters,
+    initialTrace,
+    initialTraceSpans,
   } = $props<{
     trace_page: TracePaginationResponse;
     filters: TracePageFilter;
+    initialTrace?: TraceListItem;
+    initialTraceSpans?: TraceSpansResponse;
   }>();
 
-  let selectedTraceSpans = $state<TraceSpansResponse | null>(null);
-  let selectedTrace = $state<TraceListItem | null>(null);
+  let selectedTraceSpans = $state<TraceSpansResponse | null>(initialTraceSpans ?? null);
+  let selectedTrace = $state<TraceListItem | null>(initialTrace ?? null);
   let isLoadingDetail = $state(false);
 
   const maxDurationInPage = $derived(

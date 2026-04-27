@@ -29,6 +29,7 @@ export type WorkflowWithAgent = AgentEvalWorkflowResult & {
   _agentName: string;
   _evalPath: string;
   _profile: AgentEvalProfile;
+  _traceId?: string;
 };
 
 /** Merged pagination state for the agent eval record table. */

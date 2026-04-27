@@ -10,9 +10,15 @@ import {
   getServerTracePage,
   getServerTraceMetrics,
   getServerTraceFacets,
+  getServerTraceSpansById,
+  traceListItemFromSpans,
   getCookie,
   calculateTimeRange,
 } from "$lib/components/trace/utils";
+import type {
+  TraceListItem,
+  TraceSpansResponse,
+} from "$lib/components/trace/types";
 import {
   getMockTraceMetrics,
   getMockTracePage,
@@ -25,10 +31,12 @@ import { RegistryType } from "$lib/utils";
 
 export const ssr = false;
 
-export const load: PageLoad = async ({ fetch, depends, parent }) => {
+export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
   const parentData = await parent();
   const metadata = parentData.metadata as CardMetadata;
   const useMockFallback = Boolean(parentData.devMockEnabled);
+
+  const initialTraceId = url.searchParams.get("trace_id") ?? undefined;
 
   try {
     depends("trace:data");
@@ -58,6 +66,22 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       entity_uid: entity_uid,
     };
 
+    let initialTrace: TraceListItem | undefined;
+    let initialTraceSpans: TraceSpansResponse | undefined;
+    if (initialTraceId && !useMockFallback) {
+      try {
+        const spans = await getServerTraceSpansById(fetch, initialTraceId);
+        console.log("Loaded spans for initial trace:", JSON.stringify(spans));
+        const item = traceListItemFromSpans(spans.spans);
+        if (item) {
+          initialTrace = item;
+          initialTraceSpans = spans;
+        }
+      } catch {
+        /* silently ignore — page still loads normally */
+      }
+    }
+
     const traceMetrics = useMockFallback
       ? getMockTraceMetrics(metricsRequest)
       : await getServerTraceMetrics(fetch, metricsRequest);
@@ -72,7 +96,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
           start_time: startTime,
           end_time: endTime,
           limit: 50,
-          entity_uid: entity_uid,
+          entity_uid,
         });
     let traceFacets: TraceFacetsResponse = {
       services: [],
@@ -108,6 +132,8 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
         initialFilters: initialFilters,
         trace_facets: traceFacets,
         mockMode: useMockFallback,
+        initialTrace,
+        initialTraceSpans,
       };
     }
     const traceFilter: TraceFilters = {
@@ -128,6 +154,8 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       trace_facets: traceFacets,
       initialFilters,
       mockMode: useMockFallback,
+      initialTrace,
+      initialTraceSpans,
     };
   } catch (error) {
     console.error("Error loading trace data:", error);

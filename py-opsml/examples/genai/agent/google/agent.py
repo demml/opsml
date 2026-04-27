@@ -84,6 +84,15 @@ class GoogleAgentService:
         )
         return runner, session_service
 
+    async def aclose(self) -> None:
+        if self._service is None:
+            return
+        runner, _ = self._service
+        if hasattr(runner, "aclose"):
+            await runner.aclose()
+        elif hasattr(runner, "close"):
+            runner.close()
+
     async def run(self, query: str) -> str:
         if self._service is None:
             response = self._fallback_response(query)
@@ -150,4 +159,16 @@ async def ask(request: AgentRequest) -> AgentResponse:
 
 
 def shutdown() -> None:
+    teardown()
+
+
+if __name__ == "__main__":
+    import argparse
+    import asyncio
+
+    _parser = argparse.ArgumentParser(description="Run Google ADK agent example.")
+    _parser.add_argument("query", help="Query to send to the agent.")
+    _args = _parser.parse_args()
+    _service = build_agent_service()
+    print(asyncio.run(_service.run(_args.query)))
     teardown()

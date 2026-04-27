@@ -25480,6 +25480,7 @@ class AppState:
                 RabbitMQConfig,
                 RedisConfig,
                 HttpConfig,
+                MockConfig,
             ]
         ] = None,
         reload_config: Optional[ReloadConfig] = None,

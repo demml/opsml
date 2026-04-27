@@ -290,6 +290,14 @@
   /** Merged workflow page: items from all evals sorted by created_at desc. */
   const workflowPage = $derived(
     (() => {
+      const recordTraceMap = new Map<string, string>();
+      evalData.forEach(e => {
+        if (e.monitoringData.status !== 'success') return;
+        e.monitoringData.selectedData.records?.items?.forEach(r => {
+          if (r.trace_id) recordTraceMap.set(r.uid, r.trace_id);
+        });
+      });
+
       const items: WorkflowWithAgent[] = [];
       let hasNext = false;
       let hasPrevious = false;
@@ -298,7 +306,13 @@
         const path = promptEvalPath(e);
         const profile = e.monitoringData.profile as AgentEvalProfile;
         e.monitoringData.selectedData.workflows?.items?.forEach(w =>
-          items.push({ ...w, _agentName: e.promptCard.name, _evalPath: path, _profile: profile })
+          items.push({
+            ...w,
+            _agentName: e.promptCard.name,
+            _evalPath: path,
+            _profile: profile,
+            _traceId: recordTraceMap.get(w.record_uid),
+          })
         );
         if (e.monitoringData.selectedData.workflows?.has_next) hasNext = true;
         if (e.monitoringData.selectedData.workflows?.has_previous) hasPrevious = true;

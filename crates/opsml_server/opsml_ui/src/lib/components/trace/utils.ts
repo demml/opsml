@@ -286,6 +286,40 @@ export async function getServerTracePage(
   return response as TracePaginationResponse;
 }
 
+export async function getServerTraceSpansById(
+  fetch: typeof globalThis.fetch,
+  traceId: string,
+): Promise<TraceSpansResponse> {
+  const resp = await createInternalApiClient(fetch).get(
+    `${ServerPaths.TRACE_SPANS_BY_ID}/${traceId}/spans`,
+  );
+  const { response, error } = await resp.json();
+  if (error) throw new Error(error);
+  return response as TraceSpansResponse;
+}
+
+export function traceListItemFromSpans(spans: TraceSpan[]): TraceListItem | null {
+  const root = spans.find(s => s.parent_span_id === null) ?? spans[0];
+  if (!root) return null;
+  const hasErrors = spans.some(s => s.status_code === 2);
+  return {
+    trace_id: root.trace_id,
+    service_name: root.service_name,
+    scope: root.span_kind ?? '',
+    root_operation: root.span_name,
+    start_time: root.start_time,
+    end_time: root.end_time,
+    duration_ms: root.duration_ms,
+    status_code: root.status_code,
+    status_message: root.status_message,
+    span_count: spans.length,
+    has_errors: hasErrors,
+    error_count: spans.filter(s => s.status_code === 2).length,
+    created_at: root.start_time,
+    resource_attributes: root.attributes,
+  };
+}
+
 export async function getServerTraceFacets(
   fetch: typeof globalThis.fetch,
   filters: TraceFilters,
