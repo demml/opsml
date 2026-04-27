@@ -248,7 +248,9 @@ async fn test_scouter_routes_genai_error_propagation() {
         .uri("/opsml/api/scouter/genai/metrics/tokens")
         .method("POST")
         .header(header::CONTENT_TYPE, "application/json")
-        .body(Body::from(serde_json::to_string(&metrics_request()).unwrap()))
+        .body(Body::from(
+            serde_json::to_string(&metrics_request()).unwrap(),
+        ))
         .unwrap();
 
     let response = helper.send_oneshot(request).await;

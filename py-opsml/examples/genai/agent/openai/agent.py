@@ -69,12 +69,8 @@ def run_agent(query: str, callback: AgentCallback | None = None) -> str:
         model="gpt-4.1-mini",
     )
 
-    with trace.get_tracer("evaluate.agent.openai").start_as_current_span(
-        "openai.agent.run"
-    ):
-        result = Runner.run_sync(
-            agent, query, hooks=EvalHooks(query=query, callback=on_response)
-        )
+    with trace.get_tracer("evaluate.agent.openai").start_as_current_span("openai.agent.run"):
+        result = Runner.run_sync(agent, query, hooks=EvalHooks(query=query, callback=on_response))
     return str(result.final_output)
 
 

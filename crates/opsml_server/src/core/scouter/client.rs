@@ -237,7 +237,11 @@ impl ScouterApiClient {
     }
 
     fn build_route_url(&self, route: &Routes, query_string: Option<&str>) -> String {
-        let base = format!("{}/{}", self.base_path.trim_end_matches('/'), route.as_str());
+        let base = format!(
+            "{}/{}",
+            self.base_path.trim_end_matches('/'),
+            route.as_str()
+        );
         Self::append_query(base, query_string)
     }
 
@@ -247,7 +251,11 @@ impl ScouterApiClient {
         path_segments: &[&str],
         query_string: Option<&str>,
     ) -> Result<String, ApiClientError> {
-        let base = format!("{}/{}", self.base_path.trim_end_matches('/'), route.as_str());
+        let base = format!(
+            "{}/{}",
+            self.base_path.trim_end_matches('/'),
+            route.as_str()
+        );
         let mut url = reqwest::Url::parse(&base).map_err(|e| {
             ApiClientError::ServerError(format!("Failed to parse scouter route url: {e}"))
         })?;
@@ -303,6 +311,7 @@ impl ScouterApiClient {
         .await
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn request_with_path(
         &self,
         route: Routes,

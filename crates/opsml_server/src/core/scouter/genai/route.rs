@@ -103,7 +103,9 @@ where
 fn is_valid_conversation_id(id: &str) -> bool {
     !id.is_empty()
         && id.len() <= 200
-        && id.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | ':' | '.' | '/'))
+        && id
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | ':' | '.' | '/'))
 }
 
 #[utoipa::path(

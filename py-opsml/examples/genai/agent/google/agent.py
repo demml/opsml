@@ -59,9 +59,7 @@ class GoogleAgentService:
         if not llm_response.content or not llm_response.content.parts:
             return None
 
-        text = next(
-            (part.text for part in llm_response.content.parts if part.text), None
-        )
+        text = next((part.text for part in llm_response.content.parts if part.text), None)
         if text:
             query = str(callback_context.state.get(QUERY_STATE_KEY, ""))
             self._callback(query, text)

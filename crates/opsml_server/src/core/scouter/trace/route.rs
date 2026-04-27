@@ -57,9 +57,8 @@ pub async fn get_paginated_traces(
         internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
-    let req = serde_json::to_value(&body).map_err(|e| {
-        internal_server_error(e, "Failed to serialize trace filter request", None)
-    })?;
+    let req = serde_json::to_value(&body)
+        .map_err(|e| internal_server_error(e, "Failed to serialize trace filter request", None))?;
 
     let mut response = state
         .scouter_client
@@ -215,9 +214,8 @@ pub async fn trace_metrics(
         internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
-    let req = serde_json::to_value(&body).map_err(|e| {
-        internal_server_error(e, "Failed to serialize trace metrics request", None)
-    })?;
+    let req = serde_json::to_value(&body)
+        .map_err(|e| internal_server_error(e, "Failed to serialize trace metrics request", None))?;
 
     let mut response = state
         .scouter_client
@@ -296,9 +294,8 @@ pub async fn get_trace_spans_from_filters(
         internal_server_error(e, "Failed to exchange token for scouter", None)
     })?;
 
-    let req = serde_json::to_value(&body).map_err(|e| {
-        internal_server_error(e, "Failed to serialize trace filter request", None)
-    })?;
+    let req = serde_json::to_value(&body)
+        .map_err(|e| internal_server_error(e, "Failed to serialize trace filter request", None))?;
 
     let mut response = state
         .scouter_client

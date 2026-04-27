@@ -6,18 +6,18 @@ use axum::{
     http::{Request, StatusCode},
 };
 use opsml_crypt::encrypt_file;
+use opsml_sql::schemas::User;
 use opsml_types::SaveName;
 use opsml_types::Suffix;
 use opsml_types::{
     RegistryType,
     contracts::{ArtifactKey, UpdateProfileRequest},
 };
-use opsml_sql::schemas::User;
 use rand::Rng;
 use reqwest::header;
 use scouter_client::{
-    DriftProfile, DriftType, GetProfileRequest, ListProfilesRequest, ListedProfile,
-    ProfileRequest, ProfileStatusRequest, SpcDriftProfile, VersionRequest,
+    DriftProfile, DriftType, GetProfileRequest, ListProfilesRequest, ListedProfile, ProfileRequest,
+    ProfileStatusRequest, SpcDriftProfile, VersionRequest,
 };
 use std::path::PathBuf;
 

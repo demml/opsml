@@ -14,9 +14,7 @@ from ..shared import get_shared_config, teardown
 
 config = get_shared_config()
 _crewai_instrumentor = CrewAIInstrumentor()
-_crewai_instrumentor.instrument(
-    skip_dep_check=True, tracer_provider=get_tracer_provider()
-)
+_crewai_instrumentor.instrument(skip_dep_check=True, tracer_provider=get_tracer_provider())
 
 AgentCallback = Callable[[str, str], None]
 
