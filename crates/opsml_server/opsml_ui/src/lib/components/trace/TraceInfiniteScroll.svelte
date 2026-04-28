@@ -43,8 +43,6 @@
   const KEEP_ITEMS = maxItems;
 
   $effect(() => {
-    filters;
-
     allTraces = [...(initialPage.items ?? [])];
     hasNext = initialPage.has_next;
     hasPrevious = initialPage.has_previous ?? false;
@@ -177,7 +175,7 @@
 </VirtualScroller>
 
 {#if import.meta.env.DEV}
-  <div class="fixed bottom-4 right-4 bg-black text-white p-4 rounded-lg text-xs font-mono space-y-1 max-w-xs shadow-lg z-50">
+  <div class="fixed bottom-4 right-4 bg-black text-white p-4 rounded-base text-xs font-mono space-y-1 max-w-xs shadow z-50">
     <div class="font-bold border-b border-gray-600 pb-1 mb-1">🔍 Infinite Scroll Debug</div>
     <div class="text-green-400">Memory: {allTraces.length}/{maxItems} items</div>
     <div class="text-blue-400">Virtual: #{virtualOffset + 1} - #{virtualOffset + allTraces.length}</div>

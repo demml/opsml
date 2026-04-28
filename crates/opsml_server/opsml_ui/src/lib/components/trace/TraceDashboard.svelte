@@ -49,6 +49,7 @@
   } = $props();
 
   let isUpdating = $state(false);
+  let updateCounter = 0;
   let mode = $state<TraceMode>("search");
   let filters = $state<TracePageFilter>(initialFilters);
   let traceMetrics = $state<TraceMetricBucket[]>(trace_metrics);
@@ -105,7 +106,7 @@
   }
 
   async function refreshData() {
-    if (isUpdating) return;
+    const id = ++updateCounter;
     isUpdating = true;
     stripTraceIdFromUrl();
 
@@ -125,15 +126,19 @@
         };
       }
 
-      [traceMetrics, tracePage, traceFacets] = await Promise.all([
+      const [newMetrics, newPage, newFacets] = await Promise.all([
         getTraceMetrics(),
         getTracePage(),
         getTraceFacetsForRange(),
       ]);
+      if (id !== updateCounter) return;
+      traceMetrics = newMetrics;
+      tracePage = newPage;
+      traceFacets = newFacets;
     } catch (error) {
       console.error("Failed to refresh data:", error);
     } finally {
-      isUpdating = false;
+      if (id === updateCounter) isUpdating = false;
     }
   }
 
@@ -163,6 +168,7 @@
   }
 
   async function handleTimeRangeChange(range: TimeRange) {
+    const id = ++updateCounter;
     selectedTimeRange = range;
     isUpdating = true;
     stripTraceIdFromUrl();
@@ -181,33 +187,41 @@
         bucket_interval: range.bucketInterval,
       };
 
-      [traceMetrics, tracePage, traceFacets] = await Promise.all([
+      const [newMetrics, newPage, newFacets] = await Promise.all([
         getTraceMetrics(),
         getTracePage(),
         getTraceFacetsForRange(),
       ]);
+      if (id !== updateCounter) return;
+      traceMetrics = newMetrics;
+      tracePage = newPage;
+      traceFacets = newFacets;
     } catch (error) {
       console.error("Failed to update time range:", error);
     } finally {
-      isUpdating = false;
+      if (id === updateCounter) isUpdating = false;
     }
   }
 
   async function handleFiltersChange(updatedFilters: TracePageFilter) {
-    if (isUpdating) return;
+    const id = ++updateCounter;
     isUpdating = true;
 
     try {
       filters = updatedFilters;
-      [traceMetrics, tracePage, traceFacets] = await Promise.all([
+      const [newMetrics, newPage, newFacets] = await Promise.all([
         getTraceMetrics(),
         getTracePage(),
         getTraceFacetsForRange(),
       ]);
+      if (id !== updateCounter) return;
+      traceMetrics = newMetrics;
+      tracePage = newPage;
+      traceFacets = newFacets;
     } catch (error) {
       console.error("Failed to update filters:", error);
     } finally {
-      isUpdating = false;
+      if (id === updateCounter) isUpdating = false;
     }
   }
 
@@ -323,12 +337,10 @@
       if (pollInterval !== null) {
         clearInterval(pollInterval);
         pollInterval = null;
-        console.log("⏸️ Stopping live polling (via effect cleanup)");
       }
     };
 
     if (selectedTimeRange.value === "15min-live") {
-      console.log("🔴 Starting live polling (30s interval)");
       pollInterval = setInterval(() => {
         void refreshData();
       }, LIVE_POLL_INTERVAL);
