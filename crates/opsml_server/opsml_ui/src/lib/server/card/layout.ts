@@ -69,14 +69,7 @@ export async function loadCardLayout(
       mockMode: false,
     };
   } catch (error) {
-    if (!useMockFallback) {
-      throw error;
-    }
-
-    return {
-      ...buildMockCardLayout(registryType, space, name, version),
-      mockMode: true,
-    };
+    throw error;
   }
 }
 
@@ -108,10 +101,6 @@ export async function loadCard(
 
     return metadata as CardMetadata;
   } catch (error) {
-    if (!useMockFallback) {
-      throw error;
-    }
-
-    return buildMockCardMetadata(registryType, space, name, version);
+    throw error;
   }
 }

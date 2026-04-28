@@ -3,17 +3,11 @@
   import TraceErrorView from "$lib/components/trace/TraceErrorView.svelte";
   import ScouterRequiredView from "$lib/components/scouter/ScouterRequiredView.svelte";
   import { Activity } from 'lucide-svelte';
-  import type { TraceFacetsResponse } from "$lib/components/trace/types";
   import type { PageProps } from './$types';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
 
   let { data }: PageProps = $props();
   let scouterEnabled = $derived(uiSettingsStore.scouterEnabled);
-  const emptyFacets: TraceFacetsResponse = {
-    services: [],
-    status_codes: [],
-    total_count: 0,
-  };
 </script>
 
 {#if scouterEnabled || data.mockMode}
@@ -27,7 +21,7 @@
     <TraceDashboard
       trace_page={data.trace_page}
       trace_metrics={data.trace_metrics.metrics}
-      trace_facets={"trace_facets" in data ? data.trace_facets : emptyFacets}
+      trace_facets={data.trace_facets}
       initialFilters={data.initialFilters}
       initialTrace={"initialTrace" in data ? data.initialTrace : undefined}
       initialTraceSpans={"initialTraceSpans" in data ? data.initialTraceSpans : undefined}
