@@ -168,6 +168,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       status: "error" as const,
       errorMessage,
       initialFilters,
+      trace_facets: { services: [], status_codes: [], total_count: 0 },
       mockMode: false,
     };
   }
