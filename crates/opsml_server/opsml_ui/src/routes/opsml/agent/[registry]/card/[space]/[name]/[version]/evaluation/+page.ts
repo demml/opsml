@@ -164,7 +164,11 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       const { getMockAgentMonitoringPageData } =
         await import("$lib/components/scouter/evaluation/mockData");
       return {
-        monitoringData: getMockAgentMonitoringPageData(metadata.uid, registryType, timeRange),
+        monitoringData: getMockAgentMonitoringPageData(
+          metadata.uid,
+          registryType,
+          timeRange,
+        ),
         driftType: DriftType.Agent,
         metadata,
         registryType,
@@ -233,6 +237,8 @@ export const load: PageLoad = async ({ parent, fetch }) => {
 
   try {
     const selectedData = await loadAgentData(fetch, eval_profile, timeRange);
+
+    console.log("Loaded prompt evaluation data:", selectedData);
 
     const monitoringData: Extract<
       AgentMonitoringPageData,

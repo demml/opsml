@@ -163,7 +163,7 @@
           {#if traceId && observabilityPath}
             <a
               href="{observabilityPath}?trace_id={traceId}"
-              class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold border-2 border-black bg-purple-100 text-purple-900 rounded-base shadow-small hover:bg-purple-200 transition-colors duration-100"
+              class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold border-2 border-black bg-surface-50 text-primary-800 rounded-base shadow-small shadow-click-small"
               title="Open trace in Observability"
             >
               <ExternalLink class="w-3 h-3" />

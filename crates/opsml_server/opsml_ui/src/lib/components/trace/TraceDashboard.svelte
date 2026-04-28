@@ -96,9 +96,18 @@
     };
   }
 
+  function stripTraceIdFromUrl() {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("trace_id")) {
+      url.searchParams.delete("trace_id");
+      history.replaceState(history.state, "", url.pathname + url.search);
+    }
+  }
+
   async function refreshData() {
     if (isUpdating) return;
     isUpdating = true;
+    stripTraceIdFromUrl();
 
     try {
       if (selectedTimeRange.value !== "custom") {
@@ -139,6 +148,7 @@
       "24hours": "Past 24 Hours",
       "7days": "Past 7 Days",
       "30days": "Past 30 Days",
+      "custom": "Custom Range",
     };
 
     return {
@@ -155,6 +165,7 @@
   async function handleTimeRangeChange(range: TimeRange) {
     selectedTimeRange = range;
     isUpdating = true;
+    stripTraceIdFromUrl();
 
     try {
       setCookie("trace_range", range.value);
@@ -423,7 +434,13 @@
       />
 
       <div class="space-y-4 min-w-0">
-        <TraceCharts buckets={traceMetrics} />
+        {#key traceMetrics}
+          <TraceCharts
+            buckets={traceMetrics}
+            startTime={filters.filters.start_time}
+            endTime={filters.filters.end_time}
+          />
+        {/key}
       <TraceTable
         trace_page={tracePage}
         {filters}
@@ -438,7 +455,13 @@
         <span class="text-xs font-black uppercase tracking-widest text-black">Analytics</span>
         <div class="flex-1 h-px bg-black opacity-10"></div>
       </div>
-      <TraceCharts buckets={traceMetrics} />
+      {#key traceMetrics}
+        <TraceCharts
+          buckets={traceMetrics}
+          startTime={filters.filters.start_time}
+          endTime={filters.filters.end_time}
+        />
+      {/key}
     </div>
   {/if}
 </div>

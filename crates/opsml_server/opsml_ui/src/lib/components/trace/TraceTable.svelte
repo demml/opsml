@@ -56,6 +56,11 @@
   function handleClosePanel() {
     selectedTraceSpans = null;
     selectedTrace = null;
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("trace_id")) {
+      url.searchParams.delete("trace_id");
+      history.replaceState(history.state, "", url.pathname + url.search);
+    }
   }
 
   function formatTimestamp(timestamp: string | number): string {
@@ -95,7 +100,7 @@
 <div class="flex flex-col rounded-base border-2 border-black shadow overflow-hidden">
   <div class="flex items-center justify-between px-4 py-2.5 bg-primary-500 border-b-2 border-black">
     <span class="font-black text-sm uppercase tracking-wide text-white">Traces</span>
-    <span class="text-xs font-mono text-primary-100">click a row to inspect</span>
+    <span class="text-xs font-mono text-primary-800">click a row to inspect</span>
   </div>
 
   <div class="flex-1 flex flex-col bg-surface-50 overflow-x-auto">

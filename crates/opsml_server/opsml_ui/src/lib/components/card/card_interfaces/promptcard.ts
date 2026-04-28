@@ -32,7 +32,7 @@ export function isPromptCard(obj: unknown): obj is PromptCard {
 
   const card = obj as Partial<PromptCard>;
   return (
-    card.registry_type === RegistryType.Prompt &&
+    String(card.registry_type).toLowerCase() === RegistryType.Prompt &&
     typeof card.prompt === "object" &&
     card.prompt !== null &&
     typeof card.name === "string" &&

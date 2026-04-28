@@ -5,6 +5,8 @@ import type { TraceMetricBucket } from "./types";
 
 export function createStackedTraceCountChart(
   buckets: TraceMetricBucket[],
+  startTime?: string,
+  endTime?: string,
 ): ChartConfiguration {
   const labels = buckets.map((bucket) => new Date(bucket.bucket_start));
   const errorCounts = buckets.map((bucket) =>
@@ -58,6 +60,8 @@ export function createStackedTraceCountChart(
         x: {
           stacked: true,
           type: "time",
+          min: startTime ? new Date(startTime).getTime() : undefined,
+          max: endTime ? new Date(endTime).getTime() : undefined,
           time: {
             displayFormats: {
               minute: "HH:mm",

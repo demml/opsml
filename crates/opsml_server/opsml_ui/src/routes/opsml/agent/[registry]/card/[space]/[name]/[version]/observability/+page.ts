@@ -3,7 +3,6 @@ import {
   type TraceFacetsResponse,
   type TraceMetricsRequest,
   type TracePageFilter,
-  type TraceFilters,
 } from "$lib/components/trace/types";
 
 import {
@@ -51,12 +50,42 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
       );
     }
     const card = metadata as PromptCard | ServiceCard;
-
     const entity_uid = getEvalProfileOrUid(card);
-    const selectedRange = getCookie("trace_range") || "15min";
 
-    const { startTime, endTime, bucketInterval } =
-      calculateTimeRange(selectedRange);
+    // Fetch trace spans first so we can derive the time window from the trace's timestamp
+    let initialTrace: TraceListItem | undefined;
+    let initialTraceSpans: TraceSpansResponse | undefined;
+    if (initialTraceId && !useMockFallback) {
+      try {
+        const spans = await getServerTraceSpansById(fetch, initialTraceId);
+        const item = traceListItemFromSpans(spans.spans);
+        if (item) {
+          initialTrace = item;
+          initialTraceSpans = spans;
+        }
+      } catch {
+        /* page loads normally without sidebar */
+      }
+    }
+
+    // If we have a specific trace, center the time window on it so the table
+    // and charts show surrounding context. Otherwise fall back to cookie range.
+    let startTime: string;
+    let endTime: string;
+    let bucketInterval: string;
+    let selectedRange: string;
+
+    if (initialTrace) {
+      const traceTs = new Date(initialTrace.start_time).getTime();
+      const margin = 60 * 60 * 1000; // ±1 hour
+      startTime = new Date(traceTs - margin).toISOString();
+      endTime = new Date(traceTs + margin).toISOString();
+      bucketInterval = "5 minutes";
+      selectedRange = "custom";
+    } else {
+      selectedRange = getCookie("trace_range") || "15min";
+      ({ startTime, endTime, bucketInterval } = calculateTimeRange(selectedRange));
+    }
 
     const metricsRequest: TraceMetricsRequest = {
       service_name: undefined,
@@ -65,22 +94,6 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
       bucket_interval: bucketInterval,
       entity_uid: entity_uid,
     };
-
-    let initialTrace: TraceListItem | undefined;
-    let initialTraceSpans: TraceSpansResponse | undefined;
-    if (initialTraceId && !useMockFallback) {
-      try {
-        const spans = await getServerTraceSpansById(fetch, initialTraceId);
-        console.log("Loaded spans for initial trace:", JSON.stringify(spans));
-        const item = traceListItemFromSpans(spans.spans);
-        if (item) {
-          initialTrace = item;
-          initialTraceSpans = spans;
-        }
-      } catch {
-        /* silently ignore — page still loads normally */
-      }
-    }
 
     const traceMetrics = useMockFallback
       ? getMockTraceMetrics(metricsRequest)
@@ -98,12 +111,12 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
           limit: 50,
           entity_uid,
         });
+
     let traceFacets: TraceFacetsResponse = {
       services: [],
       status_codes: [],
       total_count: 0,
     };
-
     try {
       traceFacets = await getServerTraceFacets(fetch, {
         start_time: startTime,
@@ -114,38 +127,38 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
       console.warn("Failed to load trace facets:", facetError);
     }
 
+    const initialFilters: TracePageFilter = {
+      filters: { start_time: startTime, end_time: endTime, entity_uid },
+      bucket_interval: bucketInterval,
+      selected_range: selectedRange,
+    };
+
     if (!tracePage.items || tracePage.items.length === 0) {
-      const filters: TraceFilters = {
-        start_time: startTime,
-        end_time: endTime,
-        entity_uid: entity_uid,
-      };
-      const initialFilters: TracePageFilter = {
-        filters: { ...filters },
-        bucket_interval: bucketInterval,
-        selected_range: selectedRange,
-      };
+      if (initialTrace) {
+        // Specific trace found — render dashboard with sidebar even if table is empty
+        return {
+          status: "success" as const,
+          trace_page: tracePage,
+          trace_metrics: traceMetrics,
+          trace_facets: traceFacets,
+          initialFilters,
+          mockMode: useMockFallback,
+          initialTrace,
+          initialTraceSpans,
+        };
+      }
+
       return {
         status: "not_found" as const,
         errorMessage:
           "No traces found for the selected time range. Try adjusting your time range or check if your application is generating traces.",
-        initialFilters: initialFilters,
+        initialFilters,
         trace_facets: traceFacets,
         mockMode: useMockFallback,
         initialTrace,
         initialTraceSpans,
       };
     }
-    const traceFilter: TraceFilters = {
-      start_time: startTime,
-      end_time: endTime,
-      entity_uid: entity_uid,
-    };
-    const initialFilters: TracePageFilter = {
-      filters: { ...traceFilter },
-      bucket_interval: bucketInterval,
-      selected_range: selectedRange,
-    };
 
     return {
       status: "success" as const,
