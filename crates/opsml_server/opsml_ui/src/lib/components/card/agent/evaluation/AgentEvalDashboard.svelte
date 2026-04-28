@@ -458,7 +458,7 @@
   <!-- ── Evaluation Records Table ──────────────────────────────────────────── -->
   <div class="grid grid-cols-1 gap-6">
   {#if recordPage.items.length > 0 || recordPage.hasPrevious}
-    <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl overflow-hidden flex flex-col h-full">
+    <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-base overflow-hidden flex flex-col h-full">
       <div class="bg-primary-100 border-b-2 border-black px-5 py-3 flex items-center justify-between flex-shrink-0">
         <div class="flex items-center gap-2">
           <TableProperties class="w-4 h-4 text-primary-700" />
@@ -468,7 +468,7 @@
           {recordPage.items.length}
         </span>
       </div>
-      <div class="p-2 w-full flex-grow bg-slate-50 min-h-0">
+      <div class="p-2 w-full flex-grow bg-surface-50 min-h-0">
         <AgentEvalRecordTable
           records={recordPage.items}
           hasNext={recordPage.hasNext}
@@ -481,7 +481,7 @@
   {/if}
 
   {#if workflowPage.items.length > 0 || workflowPage.hasPrevious}
-    <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl overflow-hidden flex flex-col h-full">
+    <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-base overflow-hidden flex flex-col h-full">
       <div class="bg-primary-100 border-b-2 border-black px-5 py-3 flex items-center justify-between flex-shrink-0">
         <div class="flex items-center gap-2">
           <ArrowRightLeft class="w-4 h-4 text-primary-700"/>
@@ -491,7 +491,7 @@
           {workflowPage.items.length}
         </span>
       </div>
-      <div class="p-2 w-full flex-grow bg-slate-50 min-h-0">
+      <div class="p-2 w-full flex-grow bg-surface-50 min-h-0">
         <AgentEvalWorkflowTable
           workflows={workflowPage.items}
           hasNext={workflowPage.hasNext}
