@@ -62,14 +62,14 @@
    <header class = "flex flex-col min-w-0 px-3 py-2 border-b-2 border-black bg-primary-500">
     <div class="flex justify-between items-center min-w-0 gap-2 mb-0.5">
       <span class="text-[10px] font-black uppercase tracking-widest text-white mb-0.5">Task ID</span>
-      <span class="badge text-[9px] border-1 px-1.5 rounded-full flex-shrink-0 whitespace-nowrap {colorClass}">
+      <span class="badge text-[9px] border-1 px-1.5 rounded-base flex-shrink-0 whitespace-nowrap {colorClass}">
         <Icon class="w-3 h-3 inline-block mr-1 -mt-px" />
         {label}
       </span>
     </div>
     <div class="relative group">
       <p class="text-[13px] font-mono font-bold text-white truncate cursor-help min-w-0" title={task.id}>{task.id}</p>
-      <div class="absolute left-0 top-full mt-2 px-3 py-2 bg-slate-900 text-white text-xs font-mono rounded-lg border-2 border-white shadow-[4px_4px_0px_0px_rgba(255,255,255,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 max-w-sm break-all">
+      <div class="absolute left-0 top-full mt-2 px-3 py-2 bg-slate-900 text-white text-xs font-mono rounded-base border-2 border-white shadow-[4px_4px_0px_0px_rgba(255,255,255,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 max-w-sm break-all">
         {task.id}
         <div class="absolute -top-1 left-4 w-2 h-2 bg-slate-900 border-t-2 border-l-2 border-white transform rotate-45"></div>
       </div>
@@ -104,7 +104,7 @@
 
     <div class="flex flex-col gap-0.5">
       <span class="text-[10px] font-black uppercase tracking-wider text-slate-500">Expected Value</span>
-      <pre class="bg-slate-700 text-secondary-300 rounded-md px-2 py-1 text-[10px] font-mono overflow-x-auto whitespace-pre-wrap break-all max-h-16 max-w-full">{expectedDisplay}</pre>
+      <pre class="bg-slate-700 text-secondary-300 rounded-base px-2 py-1 text-[10px] font-mono overflow-x-auto whitespace-pre-wrap break-all max-h-16 max-w-full">{expectedDisplay}</pre>
     </div>
 
     {#if task.description}

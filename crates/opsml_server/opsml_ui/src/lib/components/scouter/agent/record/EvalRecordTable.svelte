@@ -111,7 +111,7 @@
             <div class="bg-white w-full">
               {#each records as record, i}
                 <button
-                  class="grid gap-3 items-center w-full px-4 py-3 border-b border-gray-200 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-100 cursor-pointer text-left group"
+                  class="grid gap-3 items-center w-full px-4 py-3 border-b border-black/10 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-100 cursor-pointer text-left group"
                   style={gridLayout}
                   onclick={() => selectRecordForDetail(record)}
                 >
