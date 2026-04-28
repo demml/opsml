@@ -238,7 +238,6 @@ export const load: PageLoad = async ({ parent, fetch }) => {
   try {
     const selectedData = await loadAgentData(fetch, eval_profile, timeRange);
 
-    console.log("Loaded prompt evaluation data:", selectedData);
 
     const monitoringData: Extract<
       AgentMonitoringPageData,
