@@ -45,6 +45,8 @@ export const load: LayoutLoad = async ({ parent }) => {
   }
 
   // ── Prompt registry: existing single-card evaluation flow ──
+  // isPromptCard normalizes registry_type to lowercase before comparing, so it
+  // correctly handles the PascalCase "Prompt" emitted by Rust's #[derive(Serialize)].
   if (!isPromptCard(metadata)) {
     throw redirect(
       303,

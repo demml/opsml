@@ -6,10 +6,16 @@
     actual: unknown;
   }>();
 
-  const isComplex = $derived(
+  const isStacked = $derived(
     (typeof expected === 'object' && expected !== null) ||
-    (typeof actual === 'object' && actual !== null)
+    (typeof actual === 'object' && actual !== null) ||
+    typeof expected === 'string' ||
+    typeof actual === 'string'
   );
+
+  function isObject(val: unknown): val is object {
+    return typeof val === 'object' && val !== null;
+  }
 
   function getTypeHint(val: unknown): string {
     if (val === null || val === undefined) return 'null';
@@ -26,7 +32,7 @@
   }
 </script>
 
-{#if !isComplex}
+{#if !isStacked}
   <div class="grid grid-cols-2 gap-3">
     <div class="flex flex-col gap-1.5">
       <div class="flex items-center gap-2">
@@ -55,15 +61,21 @@
         <span class="text-xs font-black uppercase tracking-wide text-primary-700">Expected</span>
         <span class="text-xs font-mono text-primary-500">{getTypeHint(expected)}</span>
       </div>
-      <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs overflow-hidden">
-        <CodeBlock
-          code={formatValue(expected)}
-          showLineNumbers={false}
-          lang="json"
-          prePadding="p-1"
-          classes="h-full"
-        />
-      </div>
+      {#if isObject(expected)}
+        <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs overflow-hidden">
+          <CodeBlock
+            code={formatValue(expected)}
+            showLineNumbers={false}
+            lang="json"
+            prePadding="p-1"
+            classes="h-full"
+          />
+        </div>
+      {:else}
+        <div class="bg-surface-50 rounded-base border-2 border-black p-3 shadow-small">
+          <span class="text-sm font-mono text-primary-950 whitespace-pre-wrap break-words">{formatValue(expected)}</span>
+        </div>
+      {/if}
     </div>
 
     <div class="border-t-2 border-black/10"></div>
@@ -73,15 +85,21 @@
         <span class="text-xs font-black uppercase tracking-wide text-primary-700">Actual</span>
         <span class="text-xs font-mono text-primary-500">{getTypeHint(actual)}</span>
       </div>
-      <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs overflow-hidden">
-        <CodeBlock
-          code={formatValue(actual)}
-          showLineNumbers={false}
-          lang="json"
-          prePadding="p-1"
-          classes="h-full"
-        />
-      </div>
+      {#if isObject(actual)}
+        <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs overflow-hidden">
+          <CodeBlock
+            code={formatValue(actual)}
+            showLineNumbers={false}
+            lang="json"
+            prePadding="p-1"
+            classes="h-full"
+          />
+        </div>
+      {:else}
+        <div class="bg-surface-50 rounded-base border-2 border-black p-3 shadow-small">
+          <span class="text-sm font-mono text-primary-950 whitespace-pre-wrap break-words">{formatValue(actual)}</span>
+        </div>
+      {/if}
     </div>
   </div>
 {/if}

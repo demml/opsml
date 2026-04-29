@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { X, FileJson, AlertCircle, Clock, Tag, ChevronDown, ChevronUp } from 'lucide-svelte';
+  import { X, FileJson, AlertCircle, Clock, Tag, ChevronDown, ChevronUp, Activity } from 'lucide-svelte';
+  import { page } from '$app/state';
   import type { EvalRecord } from '../types';
   import { Status } from '../types';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
@@ -15,6 +16,10 @@
   } = $props();
 
   let contextOpen = $state(true);
+
+  const observabilityPath = $derived(
+    record.trace_id ? page.url.pathname.replace(/\/evaluation(\/.*)?$/, '/observability') : null
+  );
 
   function getStatusBadgeClass(status: Status): string {
     switch (status) {
@@ -124,6 +129,16 @@
           <Clock class="w-3 h-3" />
           {formatDuration(record.processing_duration)}
         </span>
+      {/if}
+      {#if record.trace_id && observabilityPath}
+        <a
+          href="{observabilityPath}?trace_id={record.trace_id}"
+          class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold border-2 border-black bg-purple-100 text-purple-900 rounded-base shadow-small hover:bg-purple-200 transition-colors duration-100"
+          title="Open trace in Observability"
+        >
+          <Activity class="w-3 h-3" />
+          Trace
+        </a>
       {/if}
       {#if showCloseButton && onClose}
         <button

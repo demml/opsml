@@ -20,6 +20,7 @@ from ..scouter.tracing import BatchConfig
 from .agent.potato import *
 from .card import *
 from .scouter.evaluate import *
+from .scouter.mock import MockConfig
 from .scouter.scouter import *
 from .service.agent import AgentSpec
 
@@ -2819,6 +2820,7 @@ class AppState:
                 RabbitMQConfig,
                 RedisConfig,
                 HttpConfig,
+                MockConfig,
             ]
         ] = None,
         reload_config: Optional[ReloadConfig] = None,

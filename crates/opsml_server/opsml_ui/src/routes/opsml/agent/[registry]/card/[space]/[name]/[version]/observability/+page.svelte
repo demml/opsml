@@ -23,6 +23,8 @@
       trace_metrics={data.trace_metrics.metrics}
       trace_facets={data.trace_facets}
       initialFilters={data.initialFilters}
+      initialTrace={"initialTrace" in data ? data.initialTrace : undefined}
+      initialTraceSpans={"initialTraceSpans" in data ? data.initialTraceSpans : undefined}
     />
   {/if}
 {:else}

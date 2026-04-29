@@ -188,6 +188,7 @@
     <AgentEvalWorkflowSideBar
       selectedWorkflow={selectedWorkflow}
       profile={selectedWorkflow._profile}
+      traceId={selectedWorkflow._traceId}
       onClose={handleClosePanel}
     />
   {/if}

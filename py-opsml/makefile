@@ -94,6 +94,26 @@ test.examples.model:
 
 test.examples: test.examples.data test.examples.model
 
+AGENT_QUERY ?= Help me plan a weeknight dinner with ingredients and steps.
+
+example.agent.openai:
+	uv run python -m examples.genai.agent.openai.agent "$(AGENT_QUERY)"
+
+example.agent.google:
+	uv run python -m examples.genai.agent.google.agent "$(AGENT_QUERY)"
+
+example.agent.crewai:
+	uv run python -m examples.genai.agent.crewai.agent "$(AGENT_QUERY)"
+
+example.eval.openai:
+	uv run python -m examples.genai.agent.openai.evaluate
+
+example.eval.google:
+	uv run python -m examples.genai.agent.google.evaluate
+
+example.eval.crewai:
+	uv run python -m examples.genai.agent.crewai.evaluate
+
 uv.pre.patch:
 	uv version prepatch
 

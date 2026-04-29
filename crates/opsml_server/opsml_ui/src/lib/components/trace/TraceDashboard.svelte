@@ -4,12 +4,14 @@
     TimeRange,
     TraceFacetDimension,
     TraceFacetsResponse,
+    TraceListItem,
     TraceMetricBucket,
     TraceMetricsRequest,
     TraceMetricsResponse,
     TraceMode,
     TracePageFilter,
     TracePaginationResponse,
+    TraceSpansResponse,
   } from "./types";
   import type { DateTime } from "$lib/types";
   import ChipBar from "./filters/ChipBar.svelte";
@@ -19,7 +21,7 @@
     removeActiveFilter,
   } from "./filters/filterState.svelte";
   import ModeTabs from "./ModeTabs.svelte";
-  import TimeRangeFilter from "./TimeRangeFilter.svelte";
+  import DashboardTimeBar from "$lib/components/utils/DashboardTimeBar.svelte";
   import TraceCharts from "$lib/components/trace/TraceCharts.svelte";
   import TraceTable from "$lib/components/trace/TraceTable.svelte";
   import {
@@ -35,11 +37,15 @@
     trace_metrics,
     trace_facets,
     initialFilters,
+    initialTrace,
+    initialTraceSpans,
   }: {
     trace_page: TracePaginationResponse;
     trace_metrics: TraceMetricBucket[];
     trace_facets: TraceFacetsResponse;
     initialFilters: TracePageFilter;
+    initialTrace?: TraceListItem;
+    initialTraceSpans?: TraceSpansResponse;
   } = $props();
 
   let isUpdating = $state(false);
@@ -91,9 +97,18 @@
     };
   }
 
+  function stripTraceIdFromUrl() {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("trace_id")) {
+      url.searchParams.delete("trace_id");
+      history.replaceState(history.state, "", url.pathname + url.search);
+    }
+  }
+
   async function refreshData() {
     const id = ++updateCounter;
     isUpdating = true;
+    stripTraceIdFromUrl();
 
     try {
       if (selectedTimeRange.value !== "custom") {
@@ -138,6 +153,7 @@
       "24hours": "Past 24 Hours",
       "7days": "Past 7 Days",
       "30days": "Past 30 Days",
+      "custom": "Custom Range",
     };
 
     return {
@@ -155,6 +171,7 @@
     const id = ++updateCounter;
     selectedTimeRange = range;
     isUpdating = true;
+    stripTraceIdFromUrl();
 
     try {
       setCookie("trace_range", range.value);
@@ -362,24 +379,12 @@
         {/if}
       </div>
 
-      <div class="flex items-center gap-2">
-        <button
-          onclick={() => void refreshData()}
-          disabled={isUpdating}
-          class="flex items-center gap-1.5 px-3 py-2 text-sm font-bold bg-white border-2 border-black shadow-small shadow-hover rounded-base text-primary-800 disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="Refresh data"
-        >
-          <svg class="w-3.5 h-3.5 {isUpdating ? 'animate-spin' : ''}" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
-
-        <TimeRangeFilter
-          onRangeChange={handleTimeRangeChange}
-          selectedRange={selectedTimeRange}
-        />
-      </div>
+      <DashboardTimeBar
+        selectedRange={selectedTimeRange}
+        refreshing={isUpdating}
+        onRangeChange={handleTimeRangeChange}
+        onRefresh={() => void refreshData()}
+      />
     </div>
 
     <div class="grid grid-cols-2 sm:grid-cols-4 divide-x-2 divide-black rounded-b-base overflow-hidden">
@@ -441,10 +446,18 @@
       />
 
       <div class="space-y-4 min-w-0">
-        <TraceCharts buckets={traceMetrics} />
+        {#key traceMetrics}
+          <TraceCharts
+            buckets={traceMetrics}
+            startTime={filters.filters.start_time}
+            endTime={filters.filters.end_time}
+          />
+        {/key}
       <TraceTable
         trace_page={tracePage}
         {filters}
+        {initialTrace}
+        {initialTraceSpans}
       />
       </div>
     </div>
@@ -454,7 +467,13 @@
         <span class="text-xs font-black uppercase tracking-widest text-black">Analytics</span>
         <div class="flex-1 h-px bg-black opacity-10"></div>
       </div>
-      <TraceCharts buckets={traceMetrics} />
+      {#key traceMetrics}
+        <TraceCharts
+          buckets={traceMetrics}
+          startTime={filters.filters.start_time}
+          endTime={filters.filters.end_time}
+        />
+      {/key}
     </div>
   {/if}
 </div>

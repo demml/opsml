@@ -8,7 +8,7 @@
     type TraceAssertion,
   } from '../task';
   import { Accordion } from '@skeletonlabs/skeleton-svelte';
-  import { Info, Activity, AlertCircle, GitBranch, CheckCircle2, XCircle, TrendingUp, MessageSquareText, ChevronDown } from 'lucide-svelte';
+  import { Info, Activity, AlertCircle, GitBranch, CheckCircle2, XCircle, TrendingUp, MessageSquareText, ChevronDown, ExternalLink } from 'lucide-svelte';
   import Pill from '$lib/components/utils/Pill.svelte';
   import ComparisonView from '$lib/components/scouter/agent/task/ComparisonView.svelte';
   import TraceAssertionPill from './TraceAssertionPill.svelte';
@@ -17,9 +17,11 @@
   import { AgentEvalProfileHelper } from '../utils';
   import PromptModal from '$lib/components/card/prompt/common/PromptModal.svelte';
 
-  let { task, profile } = $props<{
+  let { task, profile, traceId, observabilityPath } = $props<{
     task: EvalTaskResult;
     profile: AgentEvalProfile;
+    traceId?: string;
+    observabilityPath?: string | null;
   }>();
 
   const active_task: EvalTaskResult = $derived(task);
@@ -158,6 +160,16 @@
           />
           <Pill key="Duration" value={durationStr} textSize="text-xs" />
           <Pill key="Score" value={active_task.value.toFixed(4)} textSize="text-xs" />
+          {#if traceId && observabilityPath}
+            <a
+              href="{observabilityPath}?trace_id={traceId}"
+              class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold border-2 border-black bg-surface-50 text-primary-800 rounded-base shadow-small shadow-click-small"
+              title="Open trace in Observability"
+            >
+              <ExternalLink class="w-3 h-3" />
+              Trace
+            </a>
+          {/if}
         </div>
       </div>
       <div class="mr-2 mt-1 flex-shrink-0">

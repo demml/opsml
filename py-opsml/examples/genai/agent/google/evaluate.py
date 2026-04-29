@@ -41,6 +41,10 @@ class GoogleInteractiveEvalOrchestrator(EvalOrchestrator):
         return self._loop.run_until_complete(self._service.run(message))
 
     def close(self) -> None:
+        self._loop.run_until_complete(self._service.aclose())
+        pending = asyncio.all_tasks(self._loop)
+        if pending:
+            self._loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
         self._loop.close()
 
 

@@ -87,6 +87,7 @@ export type AgentMonitoringPageData =
       uid: string;
       registryType: RegistryType;
       selectedTimeRange: TimeRange;
+      mockMode?: boolean;
     }
   | {
       status: "error";
@@ -436,8 +437,24 @@ export async function refreshAgentMonitoringData(
   monitoringData: Extract<AgentMonitoringPageData, { status: "success" }>,
   options: AgentRefreshOptions = {},
 ): Promise<void> {
-  const { uid, space } = monitoringData.profile.config;
   const timeRange = monitoringData.selectedTimeRange;
+
+  if (monitoringData.mockMode) {
+    const { getMockAgentMonitoringPageData } = await import(
+      "$lib/components/scouter/evaluation/mockData"
+    );
+    const fresh = getMockAgentMonitoringPageData(
+      monitoringData.uid,
+      monitoringData.registryType,
+      timeRange,
+    );
+    if (fresh.status === "success") {
+      monitoringData.selectedData = fresh.selectedData;
+    }
+    return;
+  }
+
+  const { uid, space } = monitoringData.profile.config;
   const maxPoints = getMaxDataPoints();
   const isPaginationOnly = options.recordCursor || options.workflowCursor;
 

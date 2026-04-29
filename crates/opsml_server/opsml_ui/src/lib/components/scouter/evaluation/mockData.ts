@@ -1371,5 +1371,6 @@ export function getMockAgentMonitoringPageData(
     uid,
     registryType,
     selectedTimeRange: timeRange,
+    mockMode: true,
   };
 }

@@ -8,10 +8,12 @@
     selectedWorkflow,
     onClose,
     profile,
+    traceId,
   }: {
     selectedWorkflow: AgentEvalWorkflowResult;
     onClose: () => void;
     profile: AgentEvalProfile;
+    traceId?: string;
   } = $props();
 
   let isClosing = $state(false);
@@ -56,5 +58,6 @@
     onClose={handleClose}
     showCloseButton={true}
     profile={profile}
+    {traceId}
   />
 </div>
