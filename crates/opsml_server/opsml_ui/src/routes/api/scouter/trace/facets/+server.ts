@@ -30,6 +30,13 @@ export const POST: RequestHandler = async ({ request, fetch, cookies }) => {
 
   try {
     const resp = await createOpsmlClient(fetch).post(RoutePaths.TRACE_FACETS, filters);
+    if (!resp.ok) {
+      const errorBody = await resp.text();
+      return json(
+        { response: null, error: errorBody || `Facets request failed: ${resp.status}` },
+        { status: resp.status },
+      );
+    }
     const response = (await resp.json()) as TraceFacetsResponse;
     return json({ response, error: null });
   } catch (error) {
