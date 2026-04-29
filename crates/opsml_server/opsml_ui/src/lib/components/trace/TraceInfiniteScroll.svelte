@@ -1,5 +1,10 @@
 <script lang="ts">
-  import type { TraceListItem, TracePaginationResponse, TraceCursor, TracePageFilter } from './types';
+  import type {
+    TraceListItem,
+    TracePaginationResponse,
+    TraceCursor,
+    TracePageFilter
+  } from './types';
   import VirtualScroller from '$lib/components/utils/VirtualScroller.svelte';
   import { getServerTracePage } from './utils';
   /**
@@ -22,7 +27,7 @@
   } = $props();
 
   // State management
-  let allTraces = $state<TraceListItem[]>([...initialPage.items]);
+  let allTraces = $state<TraceListItem[]>([...(initialPage.items ?? [])]);
   let hasNext = $state(initialPage.has_next);
   let hasPrevious = $state(initialPage.has_previous ?? false);
   let nextCursor = $state<TraceCursor | undefined>(initialPage.next_cursor);
@@ -36,6 +41,15 @@
   const PAGE_SIZE = 50;
   const TRIM_TRIGGER = maxItems + 30;
   const KEEP_ITEMS = maxItems;
+
+  $effect(() => {
+    allTraces = [...(initialPage.items ?? [])];
+    hasNext = initialPage.has_next;
+    hasPrevious = initialPage.has_previous ?? false;
+    nextCursor = initialPage.next_cursor;
+    previousCursor = initialPage.previous_cursor;
+    virtualOffset = 0;
+  });
 
   /**
    * Load previous page (newer traces)
@@ -161,7 +175,7 @@
 </VirtualScroller>
 
 {#if import.meta.env.DEV}
-  <div class="fixed bottom-4 right-4 bg-black text-white p-4 rounded-lg text-xs font-mono space-y-1 max-w-xs shadow-lg z-50">
+  <div class="fixed bottom-4 right-4 bg-black text-white p-4 rounded-base text-xs font-mono space-y-1 max-w-xs shadow z-50">
     <div class="font-bold border-b border-gray-600 pb-1 mb-1">🔍 Infinite Scroll Debug</div>
     <div class="text-green-400">Memory: {allTraces.length}/{maxItems} items</div>
     <div class="text-blue-400">Virtual: #{virtualOffset + 1} - #{virtualOffset + allTraces.length}</div>

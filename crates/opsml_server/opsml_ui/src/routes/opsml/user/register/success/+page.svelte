@@ -11,7 +11,7 @@
   }
 
   let copied = $state(false);
-  let timeoutId: number = 0;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   let codes = $state(userStore.recovery_codes);
   let usageCode = `export OPSML_USERNAME={{username}}
 export OPSML_PASSWORD={{password}}
@@ -27,7 +27,7 @@ export OPSML_PASSWORD={{password}}
         copied = true;
         
         // Reset the copied state after 2 seconds
-        clearTimeout(timeoutId);
+        if (timeoutId) clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
           copied = false;
         }, 2000);

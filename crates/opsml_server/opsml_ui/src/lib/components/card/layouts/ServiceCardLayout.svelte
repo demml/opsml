@@ -5,7 +5,7 @@
   import { getRegistryPath } from '$lib/utils';
   import type { RegistryType } from '$lib/utils';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
-  import { dev } from '$app/environment';
+  import { devMockStore } from '$lib/components/settings/mockMode.svelte';
   import type { ServiceCard } from '../card_interfaces/servicecard';
 
   interface ServiceLayoutProps {
@@ -17,6 +17,7 @@
   let { data, registryType, children }: ServiceLayoutProps = $props();
   let metadata = $derived(data.metadata as ServiceCard);
   let showEvalTab = $derived(data.showEvalTab as boolean);
+  let mockEnabled = $derived(devMockStore.enabled);
 
   /**
    * Determines the active tab based on the current URL path
@@ -33,7 +34,7 @@
   });
 
   let showObservability = $derived(
-    uiSettingsStore.scouterEnabled || dev
+    uiSettingsStore.scouterEnabled || mockEnabled
   );
 
   /**
@@ -100,7 +101,7 @@
     ];
 
     // Insert Evaluation tab after Playground when conditions are met
-    if (showEvalTab && (uiSettingsStore.scouterEnabled || dev)) {
+    if (showEvalTab && (uiSettingsStore.scouterEnabled || mockEnabled)) {
       agentItems.splice(2, 0, {
         key: 'evaluation',
         label: 'Evaluation',

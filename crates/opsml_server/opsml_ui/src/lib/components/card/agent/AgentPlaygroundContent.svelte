@@ -18,12 +18,14 @@
     agentName,
     onClose,
     deploymentConfig,
+    mockMode = false,
     showCloseButton = false,
   } = $props<{
     agentSpec: AgentSpec;
     agentName: string;
     onClose?: () => void;
     deploymentConfig?: DeploymentConfig[];
+    mockMode?: boolean;
     showCloseButton?: boolean;
   }>();
 
@@ -44,7 +46,6 @@
   let messages = $state<ChatMessage[]>([]);
 
   let isLoading = $state(false);
-  let streamingContent = $state('');
   let useStreaming = $state(false);
 
   // Error state
@@ -58,7 +59,6 @@
   // Debug sidebar state
   let showDebugSidebar = $state(false);
   let selectedDebugIndex = $state<number | null>(null);
-  let isDebugClosing = $state(false);
   let isHealthy = $state<boolean>(false);
   let hasCheckedHealth = $state(false);
 
@@ -80,10 +80,8 @@
   }
 
   function closeDebugSidebar() {
-    isDebugClosing = true;
     setTimeout(() => {
       showDebugSidebar = false;
-      isDebugClosing = false;
       selectedDebugIndex = null;
     }, 20);
   }
@@ -111,7 +109,7 @@
     const requiredSchemes = contract.security.requirements.flat();
     const noAuthRequired = requiredSchemes.length === 0;
 
-    if (noAuthRequired || Object.keys(authConfig).length > 0) {
+    if (mockMode || noAuthRequired || Object.keys(authConfig).length > 0) {
       client = createAgentClient(contract, {
         authConfig,
         timeout: 30000,
@@ -124,6 +122,12 @@
 
   // Check health once when client becomes available
   $effect(() => {
+    if (mockMode && !hasCheckedHealth) {
+      hasCheckedHealth = true;
+      isHealthy = true;
+      return;
+    }
+
     if (client && deploymentConfig && !hasCheckedHealth) {
       hasCheckedHealth = true;
       const healthcheckUrls = inferHealthEndpoint(deploymentConfig);
@@ -137,6 +141,7 @@
 
   // Check if auth is configured
   const isAuthConfigured = $derived(() => {
+    if (mockMode) return true;
     const requiredSchemes = contract.security.requirements.flat();
     if (requiredSchemes.length === 0) return true;
     return requiredSchemes.some(scheme => authConfig[scheme]);
@@ -237,7 +242,6 @@
         if (event.statusUpdate.taskId) currentTaskId = event.statusUpdate.taskId;
         if (event.statusUpdate.contextId) currentContextId = event.statusUpdate.contextId;
       }
-      streamingContent = accumulatedContent;
       updateLastMessage(accumulatedContent);
     }
   }
@@ -289,6 +293,29 @@
       request: sendRequest,
     });
 
+    if (mockMode) {
+      const mockText = `Mock ${selectedSkill.name} response for: ${userMessage}`;
+      const response: SendMessageResponse = {
+        messageId,
+        role: "agent",
+        parts: [{ text: mockText }],
+        taskId: currentTaskId ?? `mock-task-${messageId.slice(0, 8)}`,
+        contextId: currentContextId ?? `mock-context-${messageId.slice(0, 8)}`,
+        metadata: { mock: true, skill: selectedSkill.name },
+      };
+
+      if (response.taskId) currentTaskId = response.taskId;
+      if (response.contextId) currentContextId = response.contextId;
+
+      addAgentMessage(mockText, {
+        messageId,
+        request: sendRequest,
+        response,
+        timestamp: new Date(),
+      });
+      return;
+    }
+
     const response = await client.invokeSkillWithRequest(sendRequest, {
       skill: selectedSkill,
       task: userMessage,
@@ -331,10 +358,9 @@
 
     const messageId = crypto.randomUUID().replace(/-/g, '');
     isLoading = true;
-    streamingContent = '';
 
     try {
-      if (useStreaming && canStream()) {
+      if (!mockMode && useStreaming && canStream()) {
         await handleStreamingResponse(userMessage);
       } else {
         await handleNonStreamingResponse(userMessage, messageId);
@@ -343,7 +369,6 @@
       handleMessageError(error);
     } finally {
       isLoading = false;
-      streamingContent = '';
     }
   }
 
@@ -439,7 +464,7 @@
     <div class="p-3 border-b-2 border-black bg-surface-500">
       <label for="skill-select" class="text-xs font-bold text-gray-700 mb-1 block">Select Skill:</label>
       <div class="flex flex-wrap gap-2">
-        {#each contract.skills as skill}
+        {#each contract.skills as skill (skill.skillId)}
           <button
             onclick={() => selectedSkill = skill}
             class="px-3 py-1 text-xs rounded-lg border-2 border-black shadow-small shadow-hover transition-all {selectedSkill?.skillId === skill.skillId ? 'bg-primary-500 text-white font-bold' : 'bg-white text-gray-900 hover:bg-gray-100'}"
@@ -462,13 +487,13 @@
 
           <!-- Input/Output Modes -->
           <div class="flex flex-wrap gap-2 mt-2">
-            {#each selectedSkill.inputModes as mode}
+            {#each selectedSkill.inputModes as mode (mode)}
               <span class="inline-flex items-center rounded border-2 border-black shadow-small bg-primary-100 text-primary-950 px-2 py-0.5 text-xs">
                 <span class="font-bold">Input:</span>
                 <span class="ml-1">{mode}</span>
               </span>
             {/each}
-            {#each selectedSkill.outputModes as mode}
+            {#each selectedSkill.outputModes as mode (mode)}
               <span class="inline-flex items-center rounded border-2 border-black shadow-small bg-secondary-100 text-black px-2 py-0.5 text-xs">
                 <span class="font-bold">Output:</span>
                 <span class="ml-1">{mode}</span>
@@ -482,7 +507,7 @@
           <div class="sm:w-64">
             <p class="text-xs font-bold text-gray-700 mb-1">Try these examples:</p>
             <div class="space-y-1">
-              {#each formatExamplesForDisplay(selectedSkill.examples) as example}
+              {#each formatExamplesForDisplay(selectedSkill.examples) as example (example.value)}
                 <button
                   onclick={() => useExample(example.value)}
                   class="text-black w-full text-left px-2 py-1 text-xs bg-white rounded border-2 border-black hover:bg-primary-200 transition-colors"
@@ -536,7 +561,7 @@
         </p>
       </div>
     {:else}
-      {#each messages as msg, idx}
+      {#each messages as msg, idx (msg.messageId ?? `${msg.role}-${msg.timestamp.getTime()}-${idx}`)}
         <div class="flex {msg.role === 'user' ? 'justify-end' : 'justify-start'} {idx === selectedDebugIndex && showDebugSidebar ? 'relative' : ''}">
           <div class="max-w-[80%] {idx === selectedDebugIndex && showDebugSidebar ? 'ring-2 ring-primary-500 rounded-lg' : ''}">
             <div class="text-xs text-gray-500 mb-1 {msg.role === 'user' ? 'text-right' : 'text-left'}">

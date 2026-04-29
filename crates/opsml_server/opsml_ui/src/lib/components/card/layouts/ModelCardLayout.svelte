@@ -3,8 +3,8 @@
   import { IdCard, FolderTree, Tag, Activity } from 'lucide-svelte';
   import { page } from '$app/state';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
+  import { devMockStore } from '$lib/components/settings/mockMode.svelte';
   import { getRegistryPath } from '$lib/utils';
-  import { dev } from '$app/environment';
   import type { RegistryType } from '$lib/utils';
   import type { ModelCard } from '../card_interfaces/modelcard';
 
@@ -18,6 +18,7 @@
   let { data, registryType, children }: CardLayoutProps = $props();
 
   let scouterEnabled: boolean = $state(uiSettingsStore.scouterEnabled);
+  let mockEnabled = $derived(devMockStore.enabled);
   let metadata = $derived(data.metadata as ModelCard);
 
   /**
@@ -41,7 +42,9 @@
    * Determines if monitoring tab should be shown based on metadata and settings
    */
   let showMonitoring = $derived(
-    (metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map && scouterEnabled) || dev
+    (metadata.metadata.interface_metadata.save_metadata.drift_profile_uri_map &&
+      scouterEnabled) ||
+      mockEnabled
   );
 
 

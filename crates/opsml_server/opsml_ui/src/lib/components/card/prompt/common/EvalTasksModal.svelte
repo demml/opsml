@@ -11,10 +11,16 @@
     openState = false;
   }
 
+  const assertionTasks = $derived(evalProfile.tasks.assertion ?? []);
+  const judgeTasks = $derived(evalProfile.tasks.judge ?? []);
+  const traceTasks = $derived(evalProfile.tasks.trace ?? []);
+  const agentTasks = $derived(evalProfile.tasks.agent ?? []);
+
   const totalTaskCount = $derived(
-    evalProfile.tasks.assertion.length +
-    evalProfile.tasks.judge.length +
-    evalProfile.tasks.trace.length
+    assertionTasks.length +
+    judgeTasks.length +
+    traceTasks.length +
+    agentTasks.length
   );
 
   const hasNoTasks = $derived(totalTaskCount === 0);
@@ -62,9 +68,10 @@
             <div>
               <h3 class="text-base font-bold text-primary-950">Task Breakdown</h3>
               <p class="text-xs text-gray-600 mt-1">
-                {evalProfile.tasks.assertion.length} Assertion · 
-                {evalProfile.tasks.judge.length} LLM Judge · 
-                {evalProfile.tasks.trace.length} Trace
+                {assertionTasks.length} Assertion · 
+                {judgeTasks.length} LLM Judge · 
+                {traceTasks.length} Trace ·
+                {agentTasks.length} Agent
               </p>
             </div>
             {#if evalProfile.alias}

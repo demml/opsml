@@ -1,5 +1,6 @@
 import type { PageLoad } from "./$types";
 import {
+  type TraceFacetsResponse,
   type TraceMetricsRequest,
   type TracePageFilter,
   type TraceFilters,
@@ -8,9 +9,14 @@ import {
 import {
   getServerTracePage,
   getServerTraceMetrics,
+  getServerTraceFacets,
   getCookie,
   calculateTimeRange,
 } from "$lib/components/trace/utils";
+import {
+  getMockTraceMetrics,
+  getMockTracePage,
+} from "$lib/components/trace/mockData";
 import { getEvalProfileOrUid } from "$lib/components/card/card_interfaces/enum";
 import type { CardMetadata } from "$lib/server/card/layout";
 import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
@@ -22,6 +28,7 @@ export const ssr = false;
 export const load: PageLoad = async ({ fetch, depends, parent }) => {
   const parentData = await parent();
   const metadata = parentData.metadata as CardMetadata;
+  const useMockFallback = Boolean(parentData.devMockEnabled);
 
   try {
     depends("trace:data");
@@ -51,21 +58,45 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       entity_uid: entity_uid,
     };
 
-    let traceMetrics = await getServerTraceMetrics(fetch, metricsRequest);
-    let tracePage = await getServerTracePage(fetch, {
-      start_time: startTime,
-      end_time: endTime,
-      limit: 50,
-      entity_uid: entity_uid,
-    });
+    const traceMetrics = useMockFallback
+      ? getMockTraceMetrics(metricsRequest)
+      : await getServerTraceMetrics(fetch, metricsRequest);
+    const tracePage = useMockFallback
+      ? getMockTracePage({
+          start_time: startTime,
+          end_time: endTime,
+          limit: 50,
+          entity_uid: entity_uid,
+        })
+      : await getServerTracePage(fetch, {
+          start_time: startTime,
+          end_time: endTime,
+          limit: 50,
+          entity_uid: entity_uid,
+        });
+    let traceFacets: TraceFacetsResponse = {
+      services: [],
+      status_codes: [],
+      total_count: 0,
+    };
+
+    try {
+      traceFacets = await getServerTraceFacets(fetch, {
+        start_time: startTime,
+        end_time: endTime,
+        entity_uid,
+      });
+    } catch (facetError) {
+      console.warn("Failed to load trace facets:", facetError);
+    }
 
     if (!tracePage.items || tracePage.items.length === 0) {
-      let filters: TraceFilters = {
+      const filters: TraceFilters = {
         start_time: startTime,
         end_time: endTime,
         entity_uid: entity_uid,
       };
-      let initialFilters: TracePageFilter = {
+      const initialFilters: TracePageFilter = {
         filters: { ...filters },
         bucket_interval: bucketInterval,
         selected_range: selectedRange,
@@ -75,14 +106,16 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
         errorMessage:
           "No traces found for the selected time range. Try adjusting your time range or check if your application is generating traces.",
         initialFilters: initialFilters,
+        trace_facets: traceFacets,
+        mockMode: useMockFallback,
       };
     }
-    let traceFilter: TraceFilters = {
+    const traceFilter: TraceFilters = {
       start_time: startTime,
       end_time: endTime,
       entity_uid: entity_uid,
     };
-    let initialFilters: TracePageFilter = {
+    const initialFilters: TracePageFilter = {
       filters: { ...traceFilter },
       bucket_interval: bucketInterval,
       selected_range: selectedRange,
@@ -92,7 +125,9 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       status: "success" as const,
       trace_page: tracePage,
       trace_metrics: traceMetrics,
+      trace_facets: traceFacets,
       initialFilters,
+      mockMode: useMockFallback,
     };
   } catch (error) {
     console.error("Error loading trace data:", error);
@@ -121,7 +156,7 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       }
     }
 
-    let initialFilters: TracePageFilter = {
+    const initialFilters: TracePageFilter = {
       filters: {
         start_time: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
         end_time: new Date().toISOString(),
@@ -133,6 +168,8 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       status: "error" as const,
       errorMessage,
       initialFilters,
+      trace_facets: { services: [], status_codes: [], total_count: 0 },
+      mockMode: false,
     };
   }
 };

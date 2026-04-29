@@ -5,7 +5,7 @@
     let { schema } = $props<{schema: FeatureSchema}>();
     let openState = $state(false);
     let copied = $state(false);
-    let timeoutId: number = 0;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
   
   
     function modalClose() {
@@ -19,7 +19,7 @@
         copied = true;
         
         // Reset the copied state after 2 seconds
-        clearTimeout(timeoutId);
+        if (timeoutId) clearTimeout(timeoutId);
         timeoutId = setTimeout(() => {
           copied = false;
         }, 2000);

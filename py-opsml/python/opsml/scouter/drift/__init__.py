@@ -59,7 +59,7 @@ __all__ = [
     "Scott",
     "TerrellScott",
     "FreedmanDiaconis",
-    # agent
+    # genai
     "AgentEvalConfig",
     "AgentEvalProfile",
     "EvalRecord",

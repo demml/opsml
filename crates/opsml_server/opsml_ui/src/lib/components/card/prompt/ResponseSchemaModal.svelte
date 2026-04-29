@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Modal } from '@skeletonlabs/skeleton-svelte';
-  import type { Prompt } from '../card_interfaces/promptcard';
+  import type { Prompt } from '$lib/components/agent/types';
   import { onMount } from 'svelte';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
 
@@ -9,7 +9,7 @@
   let openState = $state(false);
   let copied = $state(false);
   let response_json_schema: string = $state('');
-  let timeoutId: number = 0;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
 
   function modalClose() {
@@ -22,7 +22,7 @@
       copied = true;
 
       // Reset the copied state after 2 seconds
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         copied = false;
       }, 2000);

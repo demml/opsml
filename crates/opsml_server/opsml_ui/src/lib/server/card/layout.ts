@@ -1,5 +1,9 @@
 import { getCardMetadata } from "./utils";
 import { getCardReadMe } from "./readme/utils";
+import {
+  buildMockCardLayout,
+  buildMockCardMetadata,
+} from "$lib/components/mock/opsmlMockData";
 import type { RegistryType } from "$lib/utils";
 import type { ReadMe } from "$lib/components/readme/util";
 import type { DataCard } from "$lib/components/card/card_interfaces/datacard";
@@ -20,6 +24,7 @@ export type CardLayoutData = {
   registryType: RegistryType;
   readme: ReadMe;
   activeTab: string;
+  mockMode?: boolean;
 };
 
 /**
@@ -31,18 +36,38 @@ export async function loadCardLayout(
   name: string,
   version: string,
   fetch: typeof globalThis.fetch,
+  useMockFallback = false,
 ): Promise<CardLayoutData> {
-  const [metadata, readme] = await Promise.all([
-    getCardMetadata(space, name, version, undefined, registryType, fetch),
-    getCardReadMe(name, space, registryType, fetch),
-  ]);
+  try {
+    const metadata = (await getCardMetadata(
+      space,
+      name,
+      version,
+      undefined,
+      registryType,
+      fetch,
+    )) as CardMetadata;
+    const readme = await getCardReadMe(name, space, registryType, fetch).catch(
+      () => ({
+        readme: "",
+        exists: false,
+      }),
+    );
 
-  return {
-    metadata: metadata as CardMetadata,
-    registryType,
-    readme,
-    activeTab: "card",
-  };
+    return {
+      metadata,
+      registryType,
+      readme,
+      activeTab: "card",
+      mockMode: false,
+    };
+  } catch (error) {
+    if (!useMockFallback) throw error;
+    return {
+      ...buildMockCardLayout(registryType, space, name, version),
+      mockMode: true,
+    };
+  }
 }
 
 /**
@@ -55,15 +80,21 @@ export async function loadCard(
   name: string,
   version: string,
   fetch: typeof globalThis.fetch,
+  useMockFallback = false,
 ): Promise<CardMetadata> {
-  const metadata = await getCardMetadata(
-    space,
-    name,
-    version,
-    undefined,
-    registryType,
-    fetch,
-  );
+  try {
+    const metadata = await getCardMetadata(
+      space,
+      name,
+      version,
+      undefined,
+      registryType,
+      fetch,
+    );
 
-  return metadata as CardMetadata;
+    return metadata as CardMetadata;
+  } catch (error) {
+    if (!useMockFallback) throw error;
+    return buildMockCardMetadata(registryType, space, name, version);
+  }
 }

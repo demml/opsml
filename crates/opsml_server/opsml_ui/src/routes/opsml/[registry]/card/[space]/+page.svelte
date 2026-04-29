@@ -16,6 +16,6 @@
   {page} 
   {selectedName} 
   {selectedSpace}
+  mockMode={data.mockMode}
 />
-
 

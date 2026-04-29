@@ -32,7 +32,7 @@
       </div>
       <button
         onclick={modalClose}
-        class="btn-icon btn-icon-sm bg-white border-2 border-black shadow-small shadow-hover-small"
+        class="btn-icon btn-icon-sm border-2 border-black shadow-small shadow-hover-small"
       >
         <X class="w-4 h-4" />
       </button>

@@ -105,7 +105,7 @@ card = registry.load_card(uid="${card.uid}")
   {#if card.eval_profile}
     <div class="flex flex-col gap-2">
       <div class="flex flex-row items-center gap-2 pb-1 border-b-2 border-black">
-        <div class="p-1.5 bg-success-300 border-2 border-black rounded-base">
+        <div class="p-1.5 bg-secondary-300 border-2 border-black rounded-base">
           <ListChecks class="w-3.5 h-3.5 text-black" />
         </div>
         <header class="text-primary-900 text-xs font-black uppercase tracking-wide">Evaluation Profile</header>
@@ -120,13 +120,13 @@ card = registry.load_card(uid="${card.uid}")
   {#if card.tags.length > 0}
     <div class="flex flex-col gap-2">
       <div class="flex flex-row items-center gap-2 pb-1 border-b-2 border-black">
-        <div class="p-1.5 bg-warning-300 border-2 border-black rounded-base">
-          <Tags class="w-3.5 h-3.5 text-black" />
+        <div class="p-1.5 bg-tertiary-100 border-2 border-black rounded-base">
+          <Tags class="w-3.5 h-3.5 text-tertiary-950" />
         </div>
         <header class="text-primary-900 text-xs font-black uppercase tracking-wide">Tags</header>
       </div>
       <div class="flex flex-wrap gap-1">
-        {#each card.tags as tag}
+        {#each card.tags as tag (tag)}
           <span class="badge bg-primary-100 text-primary-900 border border-black shadow-small text-xs font-bold">
             {tag}
           </span>
@@ -139,14 +139,14 @@ card = registry.load_card(uid="${card.uid}")
   {#if card.prompt.parameters}
     <div class="flex flex-col gap-2">
       <div class="flex flex-row items-center gap-2 pb-1 border-b-2 border-black">
-        <div class="p-1.5 bg-tertiary-100 border-2 border-black rounded-base">
-          <Tags class="w-3.5 h-3.5 text-tertiary-950" />
+        <div class="p-1.5 bg-secondary-300 border-2 border-black rounded-base">
+          <Tags class="w-3.5 h-3.5 text-black" />
         </div>
         <header class="text-primary-900 text-xs font-black uppercase tracking-wide">Parameters</header>
       </div>
       <div class="flex flex-wrap gap-1">
-        {#each card.prompt.parameters as param}
-          <span class="badge bg-tertiary-100 text-tertiary-950 border border-black shadow-small text-xs font-bold">
+        {#each card.prompt.parameters as param (param)}
+          <span class="badge bg-secondary-100 text-secondary-950 border border-black shadow-small text-xs font-bold">
             {param}
           </span>
         {/each}

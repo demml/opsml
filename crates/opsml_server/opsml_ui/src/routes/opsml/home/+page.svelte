@@ -5,10 +5,15 @@
   import type { PageProps } from './$types';
 
   let { data }: PageProps = $props();
-  let cards: RecentCards  = data.cards;
+  const emptyCards: RecentCards = {
+    modelcards: [],
+    datacards: [],
+    experimentcards: [],
+    promptcards: [],
+  };
+  let cards: RecentCards = Array.isArray(data.cards) ? emptyCards : data.cards;
   let stats: HomePageStats = data.stats;
 
 </script>
 
 <Homepage {cards} {stats} />
-

@@ -1,37 +1,61 @@
 <script lang="ts">
-  import { FileJson, AlignLeft } from 'lucide-svelte';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
 
-  let { expected, actual, label = "Assertion Comparison" } = $props<{
-    expected: any;
-    actual: any;
-    label?: string;
+  let { expected, actual } = $props<{
+    expected: unknown;
+    actual: unknown;
   }>();
 
-  function formatValue(val: any): string {
+  const isComplex = $derived(
+    (typeof expected === 'object' && expected !== null) ||
+    (typeof actual === 'object' && actual !== null)
+  );
+
+  function getTypeHint(val: unknown): string {
+    if (val === null || val === undefined) return 'null';
+    if (Array.isArray(val)) return `array - ${val.length} items`;
+    if (typeof val === 'object') return `object - ${Object.keys(val as Record<string, unknown>).length} keys`;
+    return typeof val;
+  }
+
+  function formatValue(val: unknown): string {
     if (typeof val === 'object' && val !== null) {
       return JSON.stringify(val, null, 2);
     }
     return String(val);
   }
-
-  const isJson = typeof expected === 'object' || typeof actual === 'object';
 </script>
 
-<section>
-  <div class="flex flex-row items-center pb-2 mb-3 border-b-2 border-black">
-    {#if isJson}
-      <FileJson color="currentColor"/>
-    {:else}
-      <AlignLeft color="currentColor"/>
-    {/if}
-    <header class="pl-2 text-primary-950 text-sm font-bold">{label}</header>
-  </div>
+{#if !isComplex}
+  <div class="grid grid-cols-2 gap-3">
+    <div class="flex flex-col gap-1.5">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-black uppercase tracking-wide text-primary-700">Expected</span>
+        <span class="text-xs font-mono text-primary-500">{getTypeHint(expected)}</span>
+      </div>
+      <div class="bg-surface-50 rounded-base border-2 border-black p-3 shadow-small">
+        <span class="text-sm font-mono text-primary-950">{formatValue(expected)}</span>
+      </div>
+    </div>
 
-  <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-    <div class="flex flex-col gap-1">
-      <span class="text-xs font-bold text-gray-500 uppercase ml-1">Expected</span>
-      <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs overflow-hidden h-full">
+    <div class="flex flex-col gap-1.5">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-black uppercase tracking-wide text-primary-700">Actual</span>
+        <span class="text-xs font-mono text-primary-500">{getTypeHint(actual)}</span>
+      </div>
+      <div class="bg-surface-50 rounded-base border-2 border-black p-3 shadow-small">
+        <span class="text-sm font-mono text-primary-950">{formatValue(actual)}</span>
+      </div>
+    </div>
+  </div>
+{:else}
+  <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-1.5">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-black uppercase tracking-wide text-primary-700">Expected</span>
+        <span class="text-xs font-mono text-primary-500">{getTypeHint(expected)}</span>
+      </div>
+      <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs overflow-hidden">
         <CodeBlock
           code={formatValue(expected)}
           showLineNumbers={false}
@@ -42,9 +66,14 @@
       </div>
     </div>
 
-    <div class="flex flex-col gap-1">
-      <span class="text-xs font-bold text-gray-500 uppercase ml-1">Actual</span>
-      <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs overflow-hidden h-full">
+    <div class="border-t-2 border-black/10"></div>
+
+    <div class="flex flex-col gap-1.5">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-black uppercase tracking-wide text-primary-700">Actual</span>
+        <span class="text-xs font-mono text-primary-500">{getTypeHint(actual)}</span>
+      </div>
+      <div class="bg-surface-50 rounded-base border-2 border-black p-1 shadow-small text-xs overflow-hidden">
         <CodeBlock
           code={formatValue(actual)}
           showLineNumbers={false}
@@ -55,4 +84,4 @@
       </div>
     </div>
   </div>
-</section>
+{/if}

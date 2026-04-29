@@ -85,7 +85,7 @@ names = "0.*"
 ort = { version = "=2.0.0-rc.11" }
 owo-colors = "4.*"
 password-auth = "1.*"
-pbkdf2 = { version = "0.*", features = ["hmac"] }
+pbkdf2 = { version = "0.12.*", features = ["hmac"] }
 potato-head = "0.*"
 pyo3 = { version = "0.28.*", features = ["abi3-py310", "extension-module", "anyhow", "serde", "chrono"] }
 rand = { version = "0.9.1"}
@@ -97,7 +97,7 @@ rpassword = "7.*"
 rusty-logging = "0.*"
 pythonize = { version = "0.*" }
 # we cant use crates.io because scouter relies on a fork of linfa at the moment
-scouter-client = { git = "https://github.com/demml/scouter", branch = "genai-semantics" }
+scouter-client = { git = "https://github.com/demml/scouter", branch = "main" }
 sha2 = "0.10.*"
 hex = "0.4.*"
 semver = "1.*"

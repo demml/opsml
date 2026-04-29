@@ -1,4 +1,5 @@
 # mypy: disable-error-code="attr-defined"
+
 from ..._opsml import (
     CustomMetricRecord,
     EntityType,

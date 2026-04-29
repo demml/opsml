@@ -1,10 +1,10 @@
 import { type RequestHandler, json } from "@sveltejs/kit";
-import { getDriftProfiles } from "$lib/server/scouter/drift/utils";
+import { createOpsmlClient } from "$lib/server/api/opsmlClient";
+import { RoutePaths } from "$lib/components/api/routes";
 
-/** Get a page of latest metrics for drift profiles
- */
-export const POST: RequestHandler = async ({ request, fetch }) => {
-  const { uid, driftMap, registryType } = await request.json();
-  const response = await getDriftProfiles(fetch, uid, driftMap, registryType);
-  return json(response);
+export const GET: RequestHandler = async ({ fetch, url }) => {
+  const query = url.searchParams.toString();
+  const path = query ? `${RoutePaths.PROFILES_LIST}?${query}` : RoutePaths.PROFILES_LIST;
+  const response = await createOpsmlClient(fetch).get(path);
+  return json(await response.json());
 };

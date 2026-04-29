@@ -7,10 +7,16 @@
 
   let { tasks }: { tasks: AssertionTasks } = $props();
 
+  const assertionTasks = $derived(tasks.assertion ?? []);
+  const judgeTasks = $derived(tasks.judge ?? []);
+  const traceTasks = $derived(tasks.trace ?? []);
+  const agentTasks = $derived(tasks.agent ?? []);
+
   const allTasks = $derived<AnyTask[]>([
-    ...tasks.assertion,
-    ...tasks.judge,
-    ...tasks.trace,
+    ...assertionTasks,
+    ...judgeTasks,
+    ...traceTasks,
+    ...agentTasks,
   ]);
 
   const totalCount = $derived(allTasks.length);
@@ -18,15 +24,16 @@
 
   const breakdownLabel = $derived(() => {
     const parts: string[] = [];
-    if (tasks.assertion.length) parts.push(`${tasks.assertion.length} Assertion`);
-    if (tasks.judge.length) parts.push(`${tasks.judge.length} LLM Judge`);
-    if (tasks.trace.length) parts.push(`${tasks.trace.length} Trace`);
+    if (assertionTasks.length) parts.push(`${assertionTasks.length} Assertion`);
+    if (judgeTasks.length) parts.push(`${judgeTasks.length} LLM Judge`);
+    if (traceTasks.length) parts.push(`${traceTasks.length} Trace`);
+    if (agentTasks.length) parts.push(`${agentTasks.length} Agent`);
     return parts.join(' · ');
   });
 </script>
 
 {#if hasAnyTasks}
-  <div class="bg-white border-2 border-black rounded-xl shadow overflow-hidden">
+  <div class="bg-white border-2 border-black rounded-base shadow overflow-hidden">
     <Accordion collapsible>
       <Accordion.Item
         value="tasks"
@@ -45,8 +52,8 @@
         {/snippet}
 
         {#snippet panel()}
-          <div class="overflow-x-auto bg-white border-black">
-            <div class="flex gap-3 p-4 w-max min-w-full">
+          <div class="bg-white border-black overflow-hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 p-3">
               {#each allTasks as task (task.id)}
                 <AgentTaskCard {task} />
               {/each}

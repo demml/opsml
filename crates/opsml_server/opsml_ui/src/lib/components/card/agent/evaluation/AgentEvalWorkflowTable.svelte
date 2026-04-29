@@ -6,6 +6,7 @@
   Manages its own row-detail sidebar.
 -->
 <script lang="ts">
+  import { resolve } from '$app/paths';
   import type { WorkflowWithAgent } from './types';
   import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-svelte';
   import AgentEvalWorkflowSideBar from '$lib/components/scouter/agent/workflow/AgentEvalWorkflowSideBar.svelte';
@@ -91,7 +92,7 @@
           </div>
 
           <div class="bg-white w-full">
-            {#each workflows as workflow, i}
+            {#each workflows as workflow, i (`${workflow._evalPath}-${workflow.id}-${workflow.record_uid}`)}
               <button
                 class="grid gap-3 items-center w-full px-4 py-3 border-b border-gray-200 transition-colors {i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-primary-100 cursor-pointer text-left group"
                 style={gridLayout}
@@ -107,7 +108,7 @@
 
                 <div class="flex justify-center">
                   <a
-                    href={workflow._evalPath}
+                    href={resolve(workflow._evalPath as `/opsml/${string}/${string}`)}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Open prompt evaluation page"
@@ -165,14 +166,14 @@
     {#if workflows.length > 0}
       <div class="border-t-2 border-black bg-gray-50 p-2 flex justify-center gap-2 items-center">
         <button
-          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
+          class="btn bg-surface-50 text-primary-800 disabled:text-primary-400 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
           onclick={() => onPageChange('previous')}
           disabled={!hasPrevious}
         >
           <ArrowLeft class="w-4 h-4" color="currentColor"/>
         </button>
         <button
-          class="btn bg-surface-50 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
+          class="btn bg-surface-50 text-primary-800 disabled:text-primary-400 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
           onclick={() => onPageChange('next')}
           disabled={!hasNext}
         >

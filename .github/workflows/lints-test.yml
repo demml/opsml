@@ -395,6 +395,11 @@ jobs:
       - name: Install UI dependencies
         run: make install.ui.deps
 
+      - name: Run UI tests
+        run: |
+          cd crates/opsml_server/opsml_ui
+          pnpm test
+
       - name: Setup Server
         run: make start.server.background
 

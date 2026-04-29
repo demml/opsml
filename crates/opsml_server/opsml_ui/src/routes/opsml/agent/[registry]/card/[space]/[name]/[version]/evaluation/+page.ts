@@ -13,7 +13,6 @@ import { getDriftProfileExists } from "$lib/components/scouter/utils";
 import { RegistryType } from "$lib/utils";
 import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
 import type { AgentPromptEvalData } from "$lib/components/card/agent/evaluation/types";
-import { dev } from "$app/environment";
 
 export const load: PageLoad = async ({ parent, fetch }) => {
   const parentData = await parent();
@@ -23,7 +22,9 @@ export const load: PageLoad = async ({ parent, fetch }) => {
     eval_profile,
     promptCardsWithEval,
     settings,
+    devMockEnabled,
   } = parentData;
+  const useMockFallback = Boolean(devMockEnabled);
 
   const timeRange = getTimeRange();
 
@@ -34,7 +35,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
         const profile = promptCard.eval_profile!;
 
         if (!settings?.scouter_enabled) {
-          if (dev) {
+          if (useMockFallback) {
             const { getMockAgentMonitoringPageData } =
               await import("$lib/components/scouter/evaluation/mockData");
             const monitoringData = getMockAgentMonitoringPageData(
@@ -66,7 +67,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
           drift_type: DriftType.Agent,
         });
 
-        if (!profileExists) {
+        if (!profileExists && !useMockFallback) {
           const errorData: Extract<
             AgentMonitoringPageData,
             { status: "error" }
@@ -80,6 +81,17 @@ export const load: PageLoad = async ({ parent, fetch }) => {
             profile,
           };
           return { promptCard, monitoringData: errorData };
+        } else if (!profileExists && useMockFallback) {
+          const { getMockAgentMonitoringPageData } =
+            await import("$lib/components/scouter/evaluation/mockData");
+          return {
+            promptCard,
+            monitoringData: getMockAgentMonitoringPageData(
+              promptCard.uid,
+              registryType,
+              timeRange,
+            ),
+          };
         }
 
         try {
@@ -98,6 +110,19 @@ export const load: PageLoad = async ({ parent, fetch }) => {
           };
           return { promptCard, monitoringData };
         } catch (err) {
+          if (useMockFallback) {
+            const { getMockAgentMonitoringPageData } =
+              await import("$lib/components/scouter/evaluation/mockData");
+            return {
+              promptCard,
+              monitoringData: getMockAgentMonitoringPageData(
+                promptCard.uid,
+                registryType,
+                timeRange,
+              ),
+            };
+          }
+
           const message =
             err instanceof Error ? err.message : "Unknown monitoring error";
           console.error(
@@ -135,7 +160,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
 
   // ── Prompt registry: existing single-card evaluation flow ──
   if (!settings?.scouter_enabled) {
-    if (dev) {
+    if (useMockFallback) {
       const { getMockAgentMonitoringPageData } =
         await import("$lib/components/scouter/evaluation/mockData");
       return {
@@ -172,7 +197,7 @@ export const load: PageLoad = async ({ parent, fetch }) => {
     drift_type: DriftType.Agent,
   });
 
-  if (!profileExists) {
+  if (!profileExists && !useMockFallback) {
     const errorData: Extract<AgentMonitoringPageData, { status: "error" }> = {
       status: "error",
       uid: metadata.uid,
@@ -185,6 +210,20 @@ export const load: PageLoad = async ({ parent, fetch }) => {
 
     return {
       monitoringData: errorData,
+      driftType: DriftType.Agent,
+      metadata,
+      registryType,
+      agentPromptEvals: undefined,
+    };
+  } else if (!profileExists && useMockFallback) {
+    const { getMockAgentMonitoringPageData } =
+      await import("$lib/components/scouter/evaluation/mockData");
+    return {
+      monitoringData: getMockAgentMonitoringPageData(
+        metadata.uid,
+        registryType,
+        timeRange,
+      ),
       driftType: DriftType.Agent,
       metadata,
       registryType,
@@ -216,6 +255,22 @@ export const load: PageLoad = async ({ parent, fetch }) => {
       agentPromptEvals: undefined,
     };
   } catch (err) {
+    if (useMockFallback) {
+      const { getMockAgentMonitoringPageData } =
+        await import("$lib/components/scouter/evaluation/mockData");
+      return {
+        monitoringData: getMockAgentMonitoringPageData(
+          metadata.uid,
+          registryType,
+          timeRange,
+        ),
+        driftType: DriftType.Agent,
+        metadata,
+        registryType,
+        agentPromptEvals: undefined,
+      };
+    }
+
     const message =
       err instanceof Error ? err.message : "Unknown monitoring error";
     console.error(`[Monitoring Load Error]: ${message}`, err);

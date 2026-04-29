@@ -1,4 +1,5 @@
 import type {
+  AgentAssertionTask,
   AssertionTask,
   EvalTaskResult,
   AgentEvalWorkflowResult,
@@ -100,6 +101,7 @@ export interface AssertionTasks {
   assertion: AssertionTask[];
   judge: LLMJudgeTask[];
   trace: TraceAssertionTask[];
+  agent: AgentAssertionTask[];
 }
 
 export interface AgentEvalProfile {

@@ -1,11 +1,12 @@
 
 <script lang="ts">
-  import { opsmlClient } from '../api/client.svelte';
   import { goto } from '$app/navigation';
+  import { createInternalApiClient } from '$lib/api/internalClient';
+  import { ServerPaths, UiPaths } from '$lib/components/api/routes';
 
-	function logOutHandler(): void {
-    opsmlClient.logout();
-    goto('/opsml/user/login');
+	async function logOutHandler(): Promise<void> {
+    await createInternalApiClient(fetch).get(ServerPaths.LOGOUT);
+    await goto(UiPaths.LOGIN);
 	}
 
 </script>
@@ -21,6 +22,5 @@
       </button>
     </footer>
   </div>
-
 
 

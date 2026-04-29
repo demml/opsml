@@ -26,13 +26,18 @@ export interface PromptCard {
 }
 
 export function isPromptCard(obj: unknown): obj is PromptCard {
+  if (typeof obj !== "object" || obj === null) {
+    return false;
+  }
+
+  const card = obj as Partial<PromptCard>;
   return (
-    obj &&
-    obj.registry_type === "Prompt" &&
-    typeof obj.prompt === "object" &&
-    typeof obj.name === "string" &&
-    typeof obj.space === "string" &&
-    typeof obj.version === "string" &&
-    typeof obj.uid === "string"
+    card.registry_type === RegistryType.Prompt &&
+    typeof card.prompt === "object" &&
+    card.prompt !== null &&
+    typeof card.name === "string" &&
+    typeof card.space === "string" &&
+    typeof card.version === "string" &&
+    typeof card.uid === "string"
   );
 }

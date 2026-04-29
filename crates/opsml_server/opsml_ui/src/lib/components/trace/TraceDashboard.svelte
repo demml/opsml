@@ -1,31 +1,63 @@
 <script lang="ts">
-  import type { TraceMetricBucket, TracePaginationResponse, TimeRange, TracePageFilter, TraceMetricsRequest, TraceMetricsResponse } from './types';
-  import TraceCharts from './TraceCharts.svelte';
-  import TraceTable from './TraceTable.svelte';
-  import TimeRangeFilter from './TimeRangeFilter.svelte';
-  import type { DateTime } from '$lib/types';
-  import {setCookie, calculateTimeRange} from './utils';
-  import { getServerTraceMetrics, getServerTracePage } from './utils';
+  import type {
+    ActiveFilter,
+    TimeRange,
+    TraceFacetDimension,
+    TraceFacetsResponse,
+    TraceMetricBucket,
+    TraceMetricsRequest,
+    TraceMetricsResponse,
+    TraceMode,
+    TracePageFilter,
+    TracePaginationResponse,
+  } from "./types";
+  import type { DateTime } from "$lib/types";
+  import ChipBar from "./filters/ChipBar.svelte";
+  import FacetSidebar from "./filters/FacetSidebar.svelte";
+  import {
+    derivedActiveFilters,
+    removeActiveFilter,
+  } from "./filters/filterState.svelte";
+  import ModeTabs from "./ModeTabs.svelte";
+  import TimeRangeFilter from "./TimeRangeFilter.svelte";
+  import TraceCharts from "$lib/components/trace/TraceCharts.svelte";
+  import TraceTable from "$lib/components/trace/TraceTable.svelte";
+  import {
+    calculateTimeRange,
+    getServerTraceFacets,
+    getServerTraceMetrics,
+    getServerTracePage,
+    setCookie,
+  } from "./utils";
 
   let {
     trace_page,
     trace_metrics,
+    trace_facets,
     initialFilters,
   }: {
     trace_page: TracePaginationResponse;
     trace_metrics: TraceMetricBucket[];
+    trace_facets: TraceFacetsResponse;
     initialFilters: TracePageFilter;
   } = $props();
 
   let isUpdating = $state(false);
-  let tableKey = $state(0);
+  let updateCounter = 0;
+  let mode = $state<TraceMode>("search");
   let filters = $state<TracePageFilter>(initialFilters);
   let traceMetrics = $state<TraceMetricBucket[]>(trace_metrics);
   let tracePage = $state<TracePaginationResponse>(trace_page);
+  let traceFacets = $state<TraceFacetsResponse>(trace_facets);
 
-  // Polling configuration
-  const LIVE_POLL_INTERVAL = 30_000; // Poll every 30 seconds
+  const activeChips = $derived(derivedActiveFilters(filters));
+
+  const LIVE_POLL_INTERVAL = 30_000;
   let pollInterval = $state<ReturnType<typeof setInterval> | null>(null);
+
+  let selectedTimeRange = $state<TimeRange>(
+    createTimeRangeFromValue(initialFilters.selected_range),
+  );
 
   async function getTraceMetrics(): Promise<TraceMetricBucket[]> {
     const metricsRequest: TraceMetricsRequest = {
@@ -33,31 +65,41 @@
       ...filters.filters,
     };
 
-    let traceMetrics = await getServerTraceMetrics(fetch, metricsRequest);
-    return traceMetrics.metrics;
+    const metrics: TraceMetricsResponse = await getServerTraceMetrics(
+      fetch,
+      metricsRequest,
+    );
+    return metrics.metrics;
   }
 
   async function getTracePage(): Promise<TracePaginationResponse> {
-    let request = {
+    return await getServerTracePage(fetch, {
       ...filters.filters,
       limit: 50,
-    };
-    let tracePage = await getServerTracePage(fetch, request);
-    return tracePage;
+    });
   }
 
-  /**
-   * Refresh data - always recomputes timestamps from selected range name
-   */
+  async function getTraceFacetsForRange(): Promise<TraceFacetsResponse> {
+    const [serviceFacets, statusFacets] = await Promise.all([
+      getServerTraceFacets(fetch, { ...filters.filters, service_name: undefined }),
+      getServerTraceFacets(fetch, { ...filters.filters, status_code: undefined }),
+    ]);
+    return {
+      services: serviceFacets.services,
+      status_codes: statusFacets.status_codes,
+      total_count: serviceFacets.total_count,
+    };
+  }
+
   async function refreshData() {
-    if (isUpdating) return;
+    const id = ++updateCounter;
     isUpdating = true;
 
     try {
-      // Always recompute timestamps from the selected range name so they never go stale.
-      // Custom ranges keep their absolute timestamps as-is.
-      if (selectedTimeRange.value !== 'custom') {
-        const { startTime, endTime, bucketInterval } = calculateTimeRange(selectedTimeRange.value);
+      if (selectedTimeRange.value !== "custom") {
+        const { startTime, endTime, bucketInterval } = calculateTimeRange(
+          selectedTimeRange.value,
+        );
         filters = {
           ...filters,
           filters: {
@@ -69,62 +111,53 @@
         };
       }
 
-      [traceMetrics, tracePage] = await Promise.all([
+      const [newMetrics, newPage, newFacets] = await Promise.all([
         getTraceMetrics(),
-        getTracePage()
+        getTracePage(),
+        getTraceFacetsForRange(),
       ]);
-
-      tableKey++;
-
+      if (id !== updateCounter) return;
+      traceMetrics = newMetrics;
+      tracePage = newPage;
+      traceFacets = newFacets;
     } catch (error) {
-      console.error('Failed to refresh data:', error);
+      console.error("Failed to refresh data:", error);
     } finally {
-      isUpdating = false;
+      if (id === updateCounter) isUpdating = false;
     }
   }
 
-  /**
-   * Initialize selected range from stored preference
-   */
-  let selectedTimeRange = $state<TimeRange>(
-    createTimeRangeFromValue(initialFilters.selected_range)
-  );
-
-  /**
-   * Create TimeRange object from a range value
-   */
   function createTimeRangeFromValue(rangeValue: string): TimeRange {
     const labels: Record<string, string> = {
-      '15min-live': 'Live (15min)',
-      '15min': 'Past 15 Minutes',
-      '30min': 'Past 30 Minutes',
-      '1hour': 'Past 1 Hour',
-      '4hours': 'Past 4 Hours',
-      '12hours': 'Past 12 Hours',
-      '24hours': 'Past 24 Hours',
-      '7days': 'Past 7 Days',
-      '30days': 'Past 30 Days',
+      "15min-live": "Live (15min)",
+      "15min": "Past 15 Minutes",
+      "30min": "Past 30 Minutes",
+      "1hour": "Past 1 Hour",
+      "4hours": "Past 4 Hours",
+      "12hours": "Past 12 Hours",
+      "24hours": "Past 24 Hours",
+      "7days": "Past 7 Days",
+      "30days": "Past 30 Days",
     };
 
     return {
-      label: labels[rangeValue] || 'Past 15 Minutes',
+      label: labels[rangeValue] || "Past 15 Minutes",
       value: rangeValue,
-      startTime: initialFilters.filters.start_time || (new Date(Date.now() - 15 * 60 * 1000).toISOString() as DateTime),
+      startTime:
+        initialFilters.filters.start_time ||
+        (new Date(Date.now() - 15 * 60 * 1000).toISOString() as DateTime),
       endTime: initialFilters.filters.end_time || (new Date().toISOString() as DateTime),
       bucketInterval: initialFilters.bucket_interval,
     };
   }
 
-  /**
-   * Handle time range changes by storing the range value
-   */
   async function handleTimeRangeChange(range: TimeRange) {
-    // Stop any existing polling
+    const id = ++updateCounter;
     selectedTimeRange = range;
     isUpdating = true;
 
     try {
-      setCookie('trace_range', range.value);
+      setCookie("trace_range", range.value);
 
       filters = {
         ...filters,
@@ -137,67 +170,171 @@
         bucket_interval: range.bucketInterval,
       };
 
-      [traceMetrics, tracePage] = await Promise.all([
+      const [newMetrics, newPage, newFacets] = await Promise.all([
         getTraceMetrics(),
-        getTracePage()
+        getTracePage(),
+        getTraceFacetsForRange(),
       ]);
-
-      tableKey++;
-
+      if (id !== updateCounter) return;
+      traceMetrics = newMetrics;
+      tracePage = newPage;
+      traceFacets = newFacets;
     } catch (error) {
-      console.error('Failed to update time range:', error);
+      console.error("Failed to update time range:", error);
     } finally {
-      isUpdating = false;
+      if (id === updateCounter) isUpdating = false;
     }
   }
 
   async function handleFiltersChange(updatedFilters: TracePageFilter) {
-  if (isUpdating) return;
-  isUpdating = true;
+    const id = ++updateCounter;
+    isUpdating = true;
 
     try {
       filters = updatedFilters;
-      [traceMetrics, tracePage] = await Promise.all([
+      const [newMetrics, newPage, newFacets] = await Promise.all([
         getTraceMetrics(),
-        getTracePage()
+        getTracePage(),
+        getTraceFacetsForRange(),
       ]);
-
-      tableKey++;
+      if (id !== updateCounter) return;
+      traceMetrics = newMetrics;
+      tracePage = newPage;
+      traceFacets = newFacets;
     } catch (error) {
-      console.error('Failed to update filters:', error);
+      console.error("Failed to update filters:", error);
     } finally {
-      isUpdating = false;
+      if (id === updateCounter) isUpdating = false;
     }
   }
 
-  $effect(() => {
+  async function handleRemoveChip(chip: ActiveFilter) {
+    filters = removeActiveFilter(filters, chip);
+    await handleFiltersChange(filters);
+  }
 
+  function addService(service: string) {
+    const next = {
+      ...filters,
+      filters: { ...filters.filters, service_name: service },
+    };
+    void handleFiltersChange(next);
+  }
+
+  function addStatus(status: number) {
+    const next = {
+      ...filters,
+      filters: { ...filters.filters, status_code: status },
+    };
+    void handleFiltersChange(next);
+  }
+
+  function addHasErrors() {
+    const next = {
+      ...filters,
+      filters: { ...filters.filters, has_errors: true },
+    };
+    void handleFiltersChange(next);
+  }
+
+  function addAttribute(raw: string) {
+    const list = [...(filters.filters.attribute_filters ?? []), raw];
+    const next = {
+      ...filters,
+      filters: { ...filters.filters, attribute_filters: list },
+    };
+    void handleFiltersChange(next);
+  }
+
+  function addDuration(min?: number, max?: number) {
+    const next = {
+      ...filters,
+      filters: {
+        ...filters.filters,
+        ...(min !== undefined ? { duration_min_ms: min } : { duration_min_ms: undefined }),
+        ...(max !== undefined ? { duration_max_ms: max } : { duration_max_ms: undefined }),
+      },
+    };
+    void handleFiltersChange(next);
+  }
+
+  function setService(service: string) {
+    const next = {
+      ...filters,
+      filters: { ...filters.filters, service_name: service },
+    };
+    void handleFiltersChange(next);
+  }
+
+  function clearService() {
+    const nextFilters = { ...filters.filters };
+    delete nextFilters.service_name;
+    void handleFiltersChange({ ...filters, filters: nextFilters });
+  }
+
+  function setStatus(status: number) {
+    const next = {
+      ...filters,
+      filters: { ...filters.filters, status_code: status },
+    };
+    void handleFiltersChange(next);
+  }
+
+  function clearStatus() {
+    const nextFilters = { ...filters.filters };
+    delete nextFilters.status_code;
+    void handleFiltersChange({ ...filters, filters: nextFilters });
+  }
+
+  function toggleErrors(enabled: boolean) {
+    const nextFilters = { ...filters.filters };
+    if (enabled) {
+      nextFilters.has_errors = true;
+    } else {
+      delete nextFilters.has_errors;
+    }
+    void handleFiltersChange({ ...filters, filters: nextFilters });
+  }
+
+  function setDuration(next: { min?: number; max?: number }) {
+    void handleFiltersChange({
+      ...filters,
+      filters: {
+        ...filters.filters,
+        duration_min_ms: next.min,
+        duration_max_ms: next.max,
+      },
+    });
+  }
+
+  function setAttributes(list: string[]) {
+    const next = {
+      ...filters,
+      filters: { ...filters.filters, attribute_filters: list },
+    };
+    void handleFiltersChange(next);
+  }
+
+  $effect(() => {
     const cleanup = () => {
       if (pollInterval !== null) {
         clearInterval(pollInterval);
         pollInterval = null;
-        console.log('⏸️ Stopping live polling (via effect cleanup)');
       }
     };
 
-    if (selectedTimeRange.value === '15min-live') {
-      console.log('🔴 Starting live polling (30s interval)');
+    if (selectedTimeRange.value === "15min-live") {
       pollInterval = setInterval(() => {
-        refreshData();
+        void refreshData();
       }, LIVE_POLL_INTERVAL);
     }
 
     return cleanup;
   });
-
-
 </script>
 
 <div class="mx-auto w-full max-w-8xl px-4 py-6 sm:px-6 lg:px-8 space-y-6">
-
-  <!-- Page Header -->
   <div class="rounded-base border-2 border-black shadow bg-surface-50">
-    <!-- Top bar: title + controls -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4 border-b-2 border-black bg-white rounded-t-base">
       <div class="flex items-center gap-3">
         <div class="w-1 h-8 rounded-sm bg-primary-500 flex-shrink-0"></div>
@@ -227,7 +364,7 @@
 
       <div class="flex items-center gap-2">
         <button
-          onclick={() => refreshData()}
+          onclick={() => void refreshData()}
           disabled={isUpdating}
           class="flex items-center gap-1.5 px-3 py-2 text-sm font-bold bg-white border-2 border-black shadow-small shadow-hover rounded-base text-primary-800 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Refresh data"
@@ -245,12 +382,11 @@
       </div>
     </div>
 
-    <!-- Summary stats bar -->
     <div class="grid grid-cols-2 sm:grid-cols-4 divide-x-2 divide-black rounded-b-base overflow-hidden">
       <div class="px-5 py-3">
         <div class="text-xs font-black uppercase tracking-wider text-gray-500">Loaded Traces</div>
         <div class="text-2xl font-black text-primary-800 font-mono mt-0.5">
-          {tracePage.items?.length ?? '—'}
+          {tracePage.items?.length ?? "—"}
         </div>
       </div>
       <div class="px-5 py-3">
@@ -264,33 +400,61 @@
       <div class="px-5 py-3">
         <div class="text-xs font-black uppercase tracking-wider text-gray-500">Status</div>
         <div class="text-base font-black mt-0.5 {pollInterval ? 'text-error-600' : 'text-secondary-600'}">
-          {pollInterval ? 'Live · 30s poll' : 'Static'}
+          {pollInterval ? "Live · 30s poll" : "Static"}
         </div>
       </div>
     </div>
   </div>
 
-  {#key tableKey}
-    <!-- Charts Section -->
-    <div>
-      <div class="flex items-center gap-2 mb-3">
-        <span class="text-xs font-black uppercase tracking-widest text-black">Metrics</span>
-        <div class="flex-1 h-px bg-black opacity-10"></div>
-      </div>
+  <div class="flex items-center justify-between gap-2">
+    <ModeTabs {mode} onChange={(next) => (mode = next)} />
+    <span class="text-xs font-mono text-gray-500">
+      {mode === "search" ? "Browse traces with filters" : "Time-series analytics"}
+    </span>
+  </div>
+
+  <ChipBar
+    chips={activeChips}
+    services={traceFacets.services.map((d) => ({ value: d.value, count: d.trace_count }))}
+    statuses={traceFacets.status_codes.map((d) => ({ value: d.value, count: d.trace_count }))}
+    onRemove={handleRemoveChip}
+    onAddService={addService}
+    onAddStatus={addStatus}
+    onAddHasErrors={addHasErrors}
+    onAddAttribute={addAttribute}
+    onAddDuration={addDuration}
+  />
+
+  {#if mode === "search"}
+    <div class="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+      <FacetSidebar
+        {filters}
+        services={traceFacets.services.map((d: TraceFacetDimension) => ({ value: d.value, count: d.trace_count }))}
+        statuses={traceFacets.status_codes.map((d: TraceFacetDimension) => ({ value: d.value, count: d.trace_count }))}
+        onSetService={setService}
+        onClearService={clearService}
+        onSetStatus={setStatus}
+        onClearStatus={clearStatus}
+        onToggleErrors={toggleErrors}
+        onSetDuration={setDuration}
+        onSetAttributes={setAttributes}
+      />
+
+      <div class="space-y-4 min-w-0">
         <TraceCharts buckets={traceMetrics} />
-    </div>
-    <!-- Traces Section -->
-    <div>
-      <div class="flex items-center gap-2 mb-3">
-        <span class="text-xs font-black uppercase tracking-widest text-black">Traces</span>
-        <div class="flex-1 h-px bg-black opacity-10"></div>
-      </div>
       <TraceTable
         trace_page={tracePage}
-        filters={filters}
-        onFiltersChange={handleFiltersChange}
+        {filters}
       />
+      </div>
     </div>
-  {/key}
-
+  {:else}
+    <div>
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-xs font-black uppercase tracking-widest text-black">Analytics</span>
+        <div class="flex-1 h-px bg-black opacity-10"></div>
+      </div>
+      <TraceCharts buckets={traceMetrics} />
+    </div>
+  {/if}
 </div>

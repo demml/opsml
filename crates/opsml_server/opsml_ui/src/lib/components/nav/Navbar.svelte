@@ -2,9 +2,11 @@
   import logo from "$lib/images/opsml_word.webp";
   import { page } from "$app/state";
   import { goto } from "$app/navigation";
-  import { KeySquare, Sun, Moon, Monitor } from 'lucide-svelte';
+  import { KeySquare, Sun, Moon, Monitor, FlaskConical } from 'lucide-svelte';
   import UserDropdown from "../user/UserDropdown.svelte";
   import { themeStore } from "$lib/components/settings/theme.svelte";
+  import { dev } from "$app/environment";
+  import { devMockStore } from "$lib/components/settings/mockMode.svelte";
 
   function logInHandle() {
     const currentPage = page.url.pathname;
@@ -65,6 +67,18 @@
       >
         <ThemeIcon size={18} />
       </button>
+
+      {#if dev}
+        <button
+          aria-label={devMockStore.enabled ? "Disable mock fallback" : "Enable mock fallback"}
+          title={devMockStore.enabled ? "Disable mock fallback" : "Enable mock fallback"}
+          onclick={() => devMockStore.toggle()}
+          class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 px-3 {devMockStore.enabled ? 'bg-warning-300 text-black shadow-hover' : 'bg-surface-50 text-black'}"
+        >
+          <FlaskConical size={16} />
+          <span class="text-xs font-black uppercase tracking-wide">Mock</span>
+        </button>
+      {/if}
 
       <a aria-label="github" href="https://github.com/demml/opsml" class="m800:hidden flex gap-2 items-center justify-center rounded-base border-2 border-black shadow p-2 shadow-hover bg-surface-50 w-9 h-9 text-black">
         <svg

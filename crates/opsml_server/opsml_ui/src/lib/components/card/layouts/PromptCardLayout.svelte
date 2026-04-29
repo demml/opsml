@@ -3,7 +3,7 @@
   import { IdCard, FolderTree, Tag, Activity, Search } from 'lucide-svelte';
   import { page } from '$app/state';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
-  import { dev } from '$app/environment';
+  import { devMockStore } from '$lib/components/settings/mockMode.svelte';
   import type { PromptCard } from '../card_interfaces/promptcard';
 
 
@@ -17,6 +17,7 @@
   let { data, registryType, children }: PromptLayoutProps = $props();
   let metadata = $derived(data.metadata as PromptCard);
   let showEvalTab = $derived(data.showEvalTab as boolean);
+  let mockEnabled = $derived(devMockStore.enabled);
 
   /**
    * Determines the active tab based on the current URL path
@@ -39,11 +40,11 @@
    * Determines if evaluation tab should be shown based on metadata and settings
    */
   let showEvaluation = $derived(
-    showEvalTab && (uiSettingsStore.scouterEnabled || dev)
+    showEvalTab && (uiSettingsStore.scouterEnabled || mockEnabled)
   );
 
   let showObservability = $derived(
-    showEvalTab && (uiSettingsStore.scouterEnabled || dev)
+    showEvalTab && (uiSettingsStore.scouterEnabled || mockEnabled)
   );
 
   /**

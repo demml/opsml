@@ -2,17 +2,24 @@
   import { Switch } from '@skeletonlabs/skeleton-svelte';
   import CardTableView from "$lib/components/card/CardTableView.svelte";
   import { onMount } from "svelte";
-  import type { RegistryPageReturn, RegistryStatsResponse, QueryPageResponse, CardCursor} from "$lib/components/card/types";
+  import type {
+    RegistryPageReturn,
+    RegistryStatsResponse,
+    QueryPageResponse,
+    CardCursor,
+    CardSummary,
+  } from "$lib/components/card/types";
   import  { RegistryType, delay, getRegistryTypeUpperCase } from "$lib/utils";
   import { Settings } from 'lucide-svelte';
   import { getRegistryPage, getRegistryStats, getRegistryPageWithCursor } from '$lib/components/api/registry';
   import MultiComboBoxDropDown from '$lib/components/utils/MultiComboBoxDropDown.svelte';
   import CardPageView from './CardPageView.svelte';
 
-  let { page, selectedName, selectedSpace } = $props<{
+  let { page, selectedName, selectedSpace, mockMode = false } = $props<{
     page: RegistryPageReturn;
     selectedName: string | undefined;
     selectedSpace: string | undefined;
+    mockMode?: boolean;
   }>();
 
   let viewState = $state(true);
@@ -26,6 +33,8 @@
   let registryPage = $state<QueryPageResponse>(page.registryPage);
   let registryStats = $state<RegistryStatsResponse>(page.registryStats);
   let artifactTitle = $state<string>(`${getRegistryTypeUpperCase(registryType)} Artifacts`);
+  const useMockMode = Boolean(mockMode);
+  const mockBasePage = page.registryPage;
 
   let availableSpaces = page.spaces;
   let availableTags = page.tags;
@@ -58,6 +67,54 @@
   });
 
   const searchPage = async function () {
+    if (useMockMode) {
+      const searchTerm = artifactSearchQuery.trim().toLowerCase();
+      const activeSpaces = filteredSpaces.filter(Boolean);
+      const filteredItems = mockBasePage.items.filter((item: CardSummary) => {
+        const matchesSpace =
+          activeSpaces.length === 0 || activeSpaces.includes(item.space);
+        const matchesName =
+          searchTerm.length === 0 ||
+          item.name.toLowerCase().includes(searchTerm);
+        const matchesTags = filteredTags.length === 0;
+
+        return matchesSpace && matchesName && matchesTags;
+      });
+
+      registryPage = {
+        ...mockBasePage,
+        items: filteredItems,
+        has_next: false,
+        next_cursor: undefined,
+        has_previous: false,
+        previous_cursor: undefined,
+        page_info: {
+          ...mockBasePage.page_info,
+          page_size: filteredItems.length,
+          offset: 0,
+          filters: {
+            ...mockBasePage.page_info.filters,
+            search_term: artifactSearchQuery || undefined,
+            spaces: activeSpaces.length > 0 ? activeSpaces : undefined,
+            tags: filteredTags.length > 0 ? filteredTags : undefined,
+          },
+        },
+      };
+
+      registryStats = {
+        stats: {
+          nbr_names: filteredItems.length,
+          nbr_spaces: new Set(filteredItems.map((item: CardSummary) => item.space)).size,
+          nbr_versions: filteredItems.reduce(
+            (sum: number, item: CardSummary) => sum + item.versions,
+            0,
+          ),
+        },
+      };
+
+      return;
+    }
+
     [registryPage, registryStats] = await Promise.all([
       getRegistryPage(fetch, registryType, undefined, filteredSpaces, artifactSearchQuery, filteredTags, undefined),
       getRegistryStats(fetch, registryType, artifactSearchQuery, filteredSpaces, filteredTags)
@@ -65,6 +122,10 @@
   }
 
   const handlePageChange = async function (cursor: CardCursor) {
+    if (useMockMode) {
+      return;
+    }
+
     const newPage = await getRegistryPageWithCursor(fetch, registryType, cursor);
     registryPage = newPage;
   }
@@ -110,7 +171,7 @@
 
     <div class="col-span-1 lg:col-span-4 gap-1 p-4 flex-1 flex-col rounded-base border-primary-500 border-2 shadow-primary bg-surface-50 h-auto">
       <div class="flex flex-row items-center gap-2 pb-2">
-        <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small">
+        <div class="rounded-full bg-surface-200 border-black border-2 p-1 shadow-small text-primary-800">
           <Settings color="currentColor" />
         </div>
         <h2 class="font-bold text-primary-800 text-lg">{artifactTitle}</h2>

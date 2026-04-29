@@ -4,6 +4,7 @@
   import { CircleDot, ChartNoAxesColumn } from "lucide-svelte";
   import { ServerPaths } from "$lib/components/api/routes";
   import { PlotType, type Experiment, type GroupedMetrics } from "$lib/components/card/experiment/types";
+  import { buildMockGroupedMetrics } from "$lib/components/mock/opsmlMockData";
   import VizBody from "$lib/components/card/experiment/VizBody.svelte";
   import { createInternalApiClient} from "$lib/api/internalClient";
   import Dropdown from "$lib/components/utils/Dropdown.svelte";
@@ -52,6 +53,12 @@
     };
 
     let experimentsToPlot = [...selectedExperiments, currentExperiment];
+    if (data.mockMode) {
+      groupedMetrics = buildMockGroupedMetrics(experimentsToPlot, selectedMetrics);
+      plot = true;
+      return;
+    }
+
     let resp = await createInternalApiClient(fetch).post(ServerPaths.EXPERIMENT_GROUPED_METRICS, {
       experiments: experimentsToPlot,
       selectedMetrics

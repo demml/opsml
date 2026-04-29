@@ -1,6 +1,6 @@
 import { type RequestHandler, json } from "@sveltejs/kit";
 import { getDriftAlerts } from "$lib/server/scouter/drift/utils";
-import type { DriftAlertPaginationRequest } from "$lib/components/card/monitoring/alert/types";
+import type { DriftAlertPaginationRequest } from "$lib/components/scouter/alert/types";
 
 /** Get a page of recent drift alerts
  */

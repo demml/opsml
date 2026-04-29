@@ -33,6 +33,8 @@ export interface TraceFilters {
   status_code?: number;
   start_time?: DateTime;
   end_time?: DateTime;
+  duration_min_ms?: number;
+  duration_max_ms?: number;
   limit?: number;
   cursor_start_time?: DateTime;
   cursor_trace_id?: string;
@@ -40,6 +42,7 @@ export interface TraceFilters {
   attribute_filters?: string[];
   trace_ids?: string[];
   entity_uid?: string;
+  queue_uid?: string;
 }
 
 export interface TraceCursor {
@@ -69,11 +72,11 @@ export interface TracePaginationResponse {
 
 export interface Attribute {
   key: string;
-  value: any; // JSON value from serde_json::Value
+  value: unknown; // JSON value from serde_json::Value
 }
 
 function getAttributeValueType(
-  value: any,
+  value: unknown,
 ): "null" | "boolean" | "number" | "string" | "array" | "object" {
   if (value === null) return "null";
   if (typeof value === "boolean") return "boolean";
@@ -87,18 +90,18 @@ function getAttributeValueType(
 /**
  * Format an attribute value for display based on its type
  */
-export function formatAttributeValue(value: any): string {
+export function formatAttributeValue(value: unknown): string {
   const type = getAttributeValueType(value);
 
   switch (type) {
     case "null":
       return "null";
     case "boolean":
-      return value.toString();
+      return String(value);
     case "number":
-      return value.toString();
+      return String(value);
     case "string":
-      return value;
+      return String(value);
     case "array":
     case "object":
       return JSON.stringify(value, null, 2);
@@ -158,16 +161,61 @@ export interface TraceRequest {
 
 export interface TraceMetricsRequest {
   service_name?: string;
+  has_errors?: boolean;
+  status_code?: number;
   start_time?: DateTime;
   end_time?: DateTime;
   bucket_interval?: string;
+  duration_min_ms?: number;
+  duration_max_ms?: number;
   attribute_filters?: string[];
+  trace_ids?: string[];
   entity_uid?: string;
+  queue_uid?: string;
 }
 
 export interface TraceMetricsResponse {
   metrics: TraceMetricBucket[];
 }
+
+export type ActiveFilterKey =
+  | "service_name"
+  | "status_code"
+  | "has_errors"
+  | "duration_min_ms"
+  | "duration_max_ms"
+  | "attribute";
+
+export interface ActiveFilter {
+  key: ActiveFilterKey;
+  label: string;
+  value: string;
+  attributeRaw?: string;
+}
+
+export interface FacetCount {
+  value: string;
+  count: number;
+}
+
+export interface TraceFacetResponse {
+  services: FacetCount[];
+  status_codes: FacetCount[];
+  attribute_keys: FacetCount[];
+}
+
+export interface TraceFacetDimension {
+  value: string;
+  trace_count: number;
+}
+
+export interface TraceFacetsResponse {
+  services: TraceFacetDimension[];
+  status_codes: TraceFacetDimension[];
+  total_count: number;
+}
+
+export type TraceMode = "search" | "analytics";
 
 export interface TimeRange {
   label: string;

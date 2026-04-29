@@ -3,7 +3,7 @@
   import { Chart, type ChartConfiguration } from 'chart.js/auto';
   import zoomPlugin from 'chartjs-plugin-zoom';
   import annotationPlugin from 'chartjs-plugin-annotation';
-  import { onMount, onDestroy } from 'svelte';
+  import { onDestroy } from 'svelte';
   import { themeStore } from '$lib/components/settings/theme.svelte';
 
   let { configFn, title } = $props<{ configFn: () => ChartConfiguration, title: String }>();
@@ -34,16 +34,13 @@
     }
   });
 
-  // Re-render chart when theme changes
   $effect(() => {
-    const _ = themeStore.resolved;
-    if (chart && canvas) {
+    configFn;
+    title;
+    themeStore.resolved;
+    if (canvas) {
       initChart();
     }
-  });
-
-  onMount(() => {
-    initChart();
   });
 
   onDestroy(() => {
