@@ -48,6 +48,7 @@
   // Working mutable state (refreshed on time range changes)
   let evalData = $state<AgentPromptEvalData[]>(agentPromptEvals);
   let isRefreshing = $state(false);
+  let recordTraceMap = $state(new Map<string, string>());
   // Snapshot on mount so stale singleton state from prior navigation never triggers an immediate refresh.
   let lastSeenRange = $state(timeRangeState.selectedTimeRange);
   let lastSeenSignal = $state(timeRangeState.refreshSignal);
@@ -93,6 +94,7 @@
       console.error('[AgentEvalDashboard] Refresh failed:', err);
     } finally {
       isRefreshing = false;
+      resetRecordTraceMap();
       timeRangeState.endRefresh();
     }
   }
@@ -118,6 +120,7 @@
       console.error('[AgentEvalDashboard] Record page change failed:', err);
     } finally {
       isRefreshing = false;
+      appendToRecordTraceMap();
       timeRangeState.endRefresh();
     }
   }
@@ -145,6 +148,20 @@
       isRefreshing = false;
       timeRangeState.endRefresh();
     }
+  }
+
+  function appendToRecordTraceMap() {
+    evalData.forEach(e => {
+      if (e.monitoringData.status !== 'success') return;
+      e.monitoringData.selectedData.records?.items?.forEach(r => {
+        if (r.trace_id) recordTraceMap.set(r.uid, r.trace_id);
+      });
+    });
+  }
+
+  function resetRecordTraceMap() {
+    recordTraceMap = new Map<string, string>();
+    appendToRecordTraceMap();
   }
 
   // ── Chart ─────────────────────────────────────────────────────────────────────
@@ -290,14 +307,6 @@
   /** Merged workflow page: items from all evals sorted by created_at desc. */
   const workflowPage = $derived(
     (() => {
-      const recordTraceMap = new Map<string, string>();
-      evalData.forEach(e => {
-        if (e.monitoringData.status !== 'success') return;
-        e.monitoringData.selectedData.records?.items?.forEach(r => {
-          if (r.trace_id) recordTraceMap.set(r.uid, r.trace_id);
-        });
-      });
-
       const items: WorkflowWithAgent[] = [];
       let hasNext = false;
       let hasPrevious = false;
@@ -327,6 +336,7 @@
 
     onMount(() => {
       currentMaxPoints = getMaxDataPoints();
+      appendToRecordTraceMap();
       let timeoutId: ReturnType<typeof setTimeout>;
       const handleResize = () => {
         clearTimeout(timeoutId);
@@ -448,7 +458,7 @@
   <!-- ── Evaluation Records Table ──────────────────────────────────────────── -->
   <div class="grid grid-cols-1 gap-6">
   {#if recordPage.items.length > 0 || recordPage.hasPrevious}
-    <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl overflow-hidden flex flex-col h-full">
+    <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-base overflow-hidden flex flex-col h-full">
       <div class="bg-primary-100 border-b-2 border-black px-5 py-3 flex items-center justify-between flex-shrink-0">
         <div class="flex items-center gap-2">
           <TableProperties class="w-4 h-4 text-primary-700" />
@@ -458,7 +468,7 @@
           {recordPage.items.length}
         </span>
       </div>
-      <div class="p-2 w-full flex-grow bg-slate-50 min-h-0">
+      <div class="p-2 w-full flex-grow bg-surface-50 min-h-0">
         <AgentEvalRecordTable
           records={recordPage.items}
           hasNext={recordPage.hasNext}
@@ -471,7 +481,7 @@
   {/if}
 
   {#if workflowPage.items.length > 0 || workflowPage.hasPrevious}
-    <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-xl overflow-hidden flex flex-col h-full">
+    <div class="bg-white border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-base overflow-hidden flex flex-col h-full">
       <div class="bg-primary-100 border-b-2 border-black px-5 py-3 flex items-center justify-between flex-shrink-0">
         <div class="flex items-center gap-2">
           <ArrowRightLeft class="w-4 h-4 text-primary-700"/>
@@ -481,7 +491,7 @@
           {workflowPage.items.length}
         </span>
       </div>
-      <div class="p-2 w-full flex-grow bg-slate-50 min-h-0">
+      <div class="p-2 w-full flex-grow bg-surface-50 min-h-0">
         <AgentEvalWorkflowTable
           workflows={workflowPage.items}
           hasNext={workflowPage.hasNext}
