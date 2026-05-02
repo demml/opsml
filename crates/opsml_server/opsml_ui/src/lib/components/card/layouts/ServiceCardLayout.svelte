@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { IdCard, FolderTree, Tag, Search, MessageSquare, Activity } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Search, MessageSquare, Activity, LayoutDashboard } from 'lucide-svelte';
   import { page } from '$app/state';
   import { getRegistryPath } from '$lib/utils';
   import type { RegistryType } from '$lib/utils';
@@ -29,7 +29,9 @@
     const secondLast = parts[parts.length - 2] ?? '';
     // evaluation may have nested routes
     if (secondLast === 'evaluation' || last === 'evaluation') return 'evaluation';
-    if (['card', 'files', 'observability', 'versions', 'view', 'playground'].includes(last)) return last;
+    if (last === 'observability') return 'observability';
+    if (last === 'dashboard') return 'dashboard';
+    if (['card', 'files', 'versions', 'view', 'playground'].includes(last)) return last;
     return 'card';
   });
 
@@ -110,6 +112,19 @@
         isActive: (tab: string) => tab === 'evaluation',
         iconProps: undefined,
         description: 'View prompt evaluation dashboards'
+      });
+    }
+
+    // Dashboard tab — GenAI metrics today, expandable in future
+    if (uiSettingsStore.scouterEnabled || mockEnabled) {
+      agentItems.push({
+        key: 'dashboard',
+        label: 'Dashboard',
+        icon: LayoutDashboard,
+        //@ts-ignore
+        isActive: (tab: string) => tab === 'dashboard',
+        iconProps: undefined,
+        description: 'Agent metrics dashboard'
       });
     }
 
