@@ -15,7 +15,7 @@
     Settings2,
     Wrench
   } from 'lucide-svelte';
-  import ChartCard from './ChartCard.svelte';
+  import ChartCard from '$lib/components/card/agent/observability/GenAiChartCard.svelte';
   import {
     buildOperationBarChart,
     buildSpanDurationBar
@@ -176,7 +176,7 @@
   <div class="rounded-base border-2 border-black shadow bg-surface-50 overflow-hidden">
     <div class="px-3 py-1.5 border-b-2 border-black bg-surface-100 flex items-center justify-between">
       <span class="text-xs font-black uppercase tracking-wide text-primary-800">Token Mix</span>
-      <span class="text-[11px] font-mono text-gray-700">{fmtCompact(tokSum)} total</span>
+      <span class="text-[11px] font-mono text-primary-700">{fmtCompact(tokSum)} total</span>
     </div>
     <div class="p-3 space-y-2">
       <div class="flex w-full h-5 border-2 border-black rounded-base overflow-hidden">
@@ -263,7 +263,7 @@
             </tr>
           {/each}
           {#if data.tool_dashboard.aggregates.length === 0}
-            <tr><td colspan="4" class="px-2 py-2 text-center text-gray-500 italic">no tool calls</td></tr>
+            <tr><td colspan="4" class="px-2 py-2 text-center text-primary-600 italic">no tool calls</td></tr>
           {/if}
         </tbody>
       </table>
@@ -283,11 +283,11 @@
             <div class="flex-1 h-3 bg-surface-100 border border-black rounded-base overflow-hidden">
               <div class="h-full bg-error-300" style="width: {pct}%"></div>
             </div>
-            <div class="text-[11px] font-mono text-gray-700 w-10 text-right">{fmtInt(e.count)}</div>
+            <div class="text-[11px] font-mono text-primary-700 w-10 text-right">{fmtInt(e.count)}</div>
           </div>
         {/each}
         {#if data.error_breakdown.errors.length === 0}
-          <div class="text-center text-gray-500 italic text-xs py-2">no errors in trace</div>
+          <div class="text-center text-primary-600 italic text-xs py-2">no errors in trace</div>
         {/if}
       </div>
     </div>
@@ -319,7 +319,7 @@
                 </span>
                 <span class="px-1 border border-black rounded-base text-[8px] font-black {status.cls}">{status.label}</span>
               </div>
-              <div class="text-[9px] font-mono text-gray-700 truncate">
+              <div class="text-[9px] font-mono text-primary-700 truncate">
                 {s.span_id.slice(0, 8)} · {fmtMs(s.duration_ms)}
                 {#if s.request_model}· {s.request_model}{/if}
                 {#if s.tool_name && !s.request_model}· {s.tool_name}{/if}
@@ -346,7 +346,7 @@
 
         <div class="p-3 overflow-auto max-h-[480px]">
           {#if !selectedSpan}
-            <div class="text-center text-gray-500 italic">select a span</div>
+            <div class="text-center text-primary-600 italic">select a span</div>
           {:else if activeTab === 'overview'}
             <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-[11px]">
               {#each [
@@ -462,7 +462,7 @@
             </div>
           {:else if activeTab === 'eval'}
             {#if selectedSpan.eval_results.length === 0}
-              <div class="text-center text-gray-500 italic text-xs py-4">no eval_results recorded for this span</div>
+              <div class="text-center text-primary-600 italic text-xs py-4">no eval_results recorded for this span</div>
             {:else}
               <div class="space-y-2">
                 {#each selectedSpan.eval_results as e}

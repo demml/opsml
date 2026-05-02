@@ -14,6 +14,15 @@
     children: Snippet;
   }
 
+  interface NavItem {
+    key: string;
+    label: string;
+    icon: typeof IdCard;
+    isActive: (tab: string) => boolean;
+    iconProps?: Record<string, unknown>;
+    description: string;
+  }
+
   let { data, registryType, children }: ServiceLayoutProps = $props();
   let metadata = $derived(data.metadata as ServiceCard);
   let showEvalTab = $derived(data.showEvalTab as boolean);
@@ -50,7 +59,7 @@
    * Navigation configuration for service-specific tabs
    * Minimal set focused on service deployment and management essentials
    */
-  const baseNavItems = [
+  const baseNavItems: NavItem[] = [
     {
       key: 'card',
       label: 'Card',
@@ -108,7 +117,6 @@
         key: 'evaluation',
         label: 'Evaluation',
         icon: Activity,
-        //@ts-ignore
         isActive: (tab: string) => tab === 'evaluation',
         iconProps: undefined,
         description: 'View prompt evaluation dashboards'
@@ -121,7 +129,6 @@
         key: 'dashboard',
         label: 'Dashboard',
         icon: LayoutDashboard,
-        //@ts-ignore
         isActive: (tab: string) => tab === 'dashboard',
         iconProps: undefined,
         description: 'Agent metrics dashboard'

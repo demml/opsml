@@ -4,88 +4,128 @@ import { ServerPaths } from '$lib/components/api/routes';
 import { calculateTimeRange, getCookie } from '$lib/components/trace/utils';
 import type { DateTime } from '$lib/types';
 import type { CardMetadata } from '$lib/server/card/layout';
+import { RegistryType } from '$lib/utils';
 import { buildMockGenAiBundle } from '$lib/components/card/agent/observability/mockData';
 import type {
-  AgentDashboardRequest,
-  AgentDashboardResponse,
-  ToolDashboardRequest,
-  ToolDashboardResponse,
-  GenAiMetricsRequest,
-  GenAiModelUsageResponse,
-  GenAiOperationBreakdownResponse,
-  GenAiErrorBreakdownResponse,
-  GenAiAgentActivityResponse,
   AgentGenAiBundle,
+  EvalProfileOption,
+  GenAiDashboardRequest,
+  GenAiDashboardResponse,
 } from '$lib/components/card/agent/observability/types';
+import type { PromptCard } from '$lib/components/card/card_interfaces/promptcard';
+
+/**
+ * Map prompt cards (filtered to those with an eval profile by the parent
+ * layout loader) into the lightweight option shape consumed by FilterBar.
+ */
+export function toEvalProfileOptions(cards: PromptCard[]): EvalProfileOption[] {
+  return cards
+    .filter((pc) => !!pc.eval_profile)
+    .map((pc) => ({
+      uid: pc.eval_profile!.config.uid,
+      alias: pc.eval_profile!.alias ?? null,
+      name: pc.name,
+    }));
+}
 
 export const ssr = false;
 
+/**
+ * Loads the composite GenAI dashboard for the current card.
+ *
+ * - Agent registry: scopes by `service_name = "{space}:{name}"` (matches the
+ *   Rust `ServiceInfo::namespace()`, which is what the tracer stamps onto every
+ *   span via `service.name`).
+ * - Prompt registry: scopes by `entity_id = eval_profile.config.uid`.
+ *
+ * The two scopes are mutually exclusive in practice — only one is non-null per
+ * request. The composite endpoint applies AND if both are set.
+ */
 export const load: PageLoad = async ({ fetch, parent }) => {
   const parentData = await parent();
   const metadata = parentData.metadata as CardMetadata;
-  const agentName = metadata.name;
+  const registryType = parentData.registryType as RegistryType;
   const useMockFallback = Boolean(parentData.devMockEnabled);
 
-  const selectedRange = getCookie('trace_range') ?? '24hours';
-  const { startTime: start_time, endTime: end_time, bucketInterval: bucket_interval } =
-    calculateTimeRange(selectedRange);
+  const isPrompt = registryType === RegistryType.Prompt;
+  const promptUid = isPrompt
+    ? (metadata as PromptCard).eval_profile?.config.uid ?? null
+    : null;
+  const serviceName = isPrompt ? null : `${metadata.space}:${metadata.name}`;
+
+  // FilterBar Profile dropdown sourcing.
+  // - Agent registry: every associated prompt card with an eval profile
+  //   becomes a selectable scope (parent layout already filters to those).
+  // - Prompt registry: the only valid scope is this prompt's own profile,
+  //   which the FilterBar will render as a disabled (locked) select.
+  const promptCardsWithEval =
+    (parentData.promptCardsWithEval as PromptCard[] | undefined) ?? [];
+  const evalProfiles: EvalProfileOption[] = isPrompt
+    ? promptUid
+      ? [
+          {
+            uid: promptUid,
+            alias: (metadata as PromptCard).eval_profile?.alias ?? null,
+            name: (metadata as PromptCard).name,
+          },
+        ]
+      : []
+    : toEvalProfileOptions(promptCardsWithEval);
+
+  const selectedRange = getCookie('monitoring_range') ?? '24hours';
+  const {
+    startTime: start_time,
+    endTime: end_time,
+    bucketInterval: bucket_interval,
+  } = calculateTimeRange(selectedRange);
 
   if (useMockFallback) {
-    return { bundle: buildMockGenAiBundle({ selectedRange, bucketInterval: bucket_interval }), mockMode: true };
+    return {
+      bundle: buildMockGenAiBundle({
+        selectedRange,
+        bucketInterval: bucket_interval,
+        serviceName,
+        entityId: promptUid,
+        evalProfiles: isPrompt ? evalProfiles : evalProfiles.length > 0 ? evalProfiles : undefined,
+      }),
+      mockMode: true,
+    };
   }
+
+  const body: GenAiDashboardRequest = {
+    service_name: serviceName,
+    entity_id: promptUid,
+    start_time: start_time as DateTime,
+    end_time: end_time as DateTime,
+    bucket_interval,
+    agent_name: null,
+    provider_name: null,
+    operation_name: null,
+    model: null,
+    model_pricing: {},
+  };
 
   const client = createInternalApiClient(fetch);
 
-  const agentBody: AgentDashboardRequest = {
-    service_name: null,
-    agent_name: agentName,
-    provider_name: null,
-    start_time: start_time as DateTime,
-    end_time: end_time as DateTime,
-    bucket_interval,
-    model_pricing: {},
-  };
-  const toolBody: ToolDashboardRequest = {
-    service_name: null,
-    start_time: start_time as DateTime,
-    end_time: end_time as DateTime,
-    bucket_interval,
-  };
-  const metricsBody: GenAiMetricsRequest = {
-    service_name: null,
-    start_time: start_time as DateTime,
-    end_time: end_time as DateTime,
-    bucket_interval,
-    operation_name: null,
-    provider_name: null,
-    model: null,
-  };
-
   try {
-    const [agentRes, toolRes, modelsRes, opsRes, errsRes, agentsRes] = await Promise.all([
-      client.post(ServerPaths.GENAI_AGENT_METRICS, agentBody),
-      client.post(ServerPaths.GENAI_TOOL_METRICS, toolBody),
-      client.post(ServerPaths.GENAI_MODELS, metricsBody),
-      client.post(ServerPaths.GENAI_OPERATIONS, metricsBody),
-      client.post(ServerPaths.GENAI_ERRORS, metricsBody),
-      client.post(ServerPaths.GENAI_AGENTS, metricsBody),
-    ]);
-
+    const response = await client.post(ServerPaths.GENAI_DASHBOARD, body);
+    const dashboard = (await response.json()) as GenAiDashboardResponse;
     const bundle: AgentGenAiBundle = {
-      agent_dashboard: (await agentRes.json()) as AgentDashboardResponse,
-      tool_dashboard: (await toolRes.json()) as ToolDashboardResponse,
-      model_usage: ((await modelsRes.json()) as GenAiModelUsageResponse).models,
-      operation_breakdown: ((await opsRes.json()) as GenAiOperationBreakdownResponse).operations,
-      errors: ((await errsRes.json()) as GenAiErrorBreakdownResponse).errors,
-      agents: ((await agentsRes.json()) as GenAiAgentActivityResponse).agents,
+      dashboard,
       range: { start_time, end_time, bucket_interval, selected_range: selectedRange },
+      eval_profiles: evalProfiles,
     };
-
     return { bundle, mockMode: false };
   } catch (error) {
-    console.error('Failed to load GenAI metrics:', error);
+    console.error('Failed to load GenAI dashboard:', error);
     return {
-      bundle: buildMockGenAiBundle({ selectedRange, bucketInterval: bucket_interval }),
+      bundle: buildMockGenAiBundle({
+        selectedRange,
+        bucketInterval: bucket_interval,
+        serviceName,
+        entityId: promptUid,
+        evalProfiles: isPrompt ? evalProfiles : evalProfiles.length > 0 ? evalProfiles : undefined,
+      }),
       mockMode: true,
     };
   }

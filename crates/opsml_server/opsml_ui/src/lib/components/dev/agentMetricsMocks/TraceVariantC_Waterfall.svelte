@@ -168,7 +168,7 @@
     <!-- Time axis -->
     <div class="grid grid-cols-[280px_1fr] border-b-2 border-black bg-surface-100">
       <div class="px-2 py-1 border-r-2 border-black text-[10px] font-black uppercase text-primary-700">Span</div>
-      <div class="px-2 py-1 relative text-[10px] font-mono text-gray-700">
+      <div class="px-2 py-1 relative text-[10px] font-mono text-primary-700">
         <div class="flex justify-between">
           <span>0 ms</span>
           <span>{fmtMs(totalDurationMs * 0.25)}</span>
@@ -187,7 +187,7 @@
         {@const active = s.span_id === selectedSpanId}
         <button
           type="button"
-          class="grid grid-cols-[280px_1fr] w-full border-b border-gray-300 transition-colors duration-100 {active ? 'bg-primary-100' : 'hover:bg-primary-50'}"
+          class="grid grid-cols-[280px_1fr] w-full border-b border-black/10 transition-colors duration-100 {active ? 'bg-primary-100' : 'hover:bg-primary-50'}"
           onclick={() => (selectedSpanId = s.span_id)}
         >
           <!-- Label column -->
@@ -197,7 +197,7 @@
               <div class="text-[11px] font-mono font-black text-primary-900 truncate">
                 {s.label ?? s.operation_name ?? s.span_id.slice(0, 8)}
               </div>
-              <div class="text-[9px] font-mono text-gray-700 truncate">
+              <div class="text-[9px] font-mono text-primary-700 truncate">
                 {s.span_id.slice(0, 8)}{s.request_model ? ` · ${s.request_model}` : ''}{s.tool_name && !s.request_model ? ` · ${s.tool_name}` : ''}
               </div>
             </div>
@@ -271,7 +271,7 @@
             { k: 'server_port', v: selectedSpan.server_port ?? '—' },
             { k: 'error_type', v: selectedSpan.error_type ?? '—' }
           ] as row}
-            <div class="flex items-baseline gap-2 border-b border-gray-300 py-0.5">
+            <div class="flex items-baseline gap-2 border-b border-black/10 py-0.5">
               <span class="text-[9px] font-black text-primary-700 uppercase tracking-widest w-32 shrink-0">{row.k}</span>
               <span class="font-mono text-primary-900 break-all flex-1">{row.v}</span>
             </div>
@@ -301,7 +301,7 @@
           </div>
         {/if}
         {#if !selectedSpan.input_messages && !selectedSpan.output_messages && !selectedSpan.system_instructions}
-          <div class="text-center text-gray-500 italic text-xs py-4">no messages captured</div>
+          <div class="text-center text-primary-600 italic text-xs py-4">no messages captured</div>
         {/if}
       </div>
 
@@ -311,7 +311,7 @@
           <BadgeCheck class="w-3 h-3" /> Eval Results
         </div>
         {#if selectedSpan.eval_results.length === 0}
-          <div class="text-center text-gray-500 italic text-xs py-2 mb-2">no evals</div>
+          <div class="text-center text-primary-600 italic text-xs py-2 mb-2">no evals</div>
         {:else}
           <div class="space-y-2 mb-3">
             {#each selectedSpan.eval_results as e}

@@ -10,7 +10,7 @@
     Wrench,
     Zap
   } from 'lucide-svelte';
-  import ChartCard from './ChartCard.svelte';
+  import ChartCard from '$lib/components/card/agent/observability/GenAiChartCard.svelte';
   import {
     buildVolumeChart,
     buildLatencyChart,
@@ -188,7 +188,7 @@
             <div class="flex-1 h-3 bg-surface-100 border border-black rounded-base overflow-hidden">
               <div class="h-full bg-error-300" style="width: {pct}%"></div>
             </div>
-            <div class="text-[11px] font-mono text-gray-700 w-10 text-right">{fmtInt(e.count)}</div>
+            <div class="text-[11px] font-mono text-primary-700 w-10 text-right">{fmtInt(e.count)}</div>
           </div>
         {/each}
       </div>

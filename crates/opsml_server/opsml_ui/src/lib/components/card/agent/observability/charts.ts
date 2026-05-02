@@ -1,7 +1,11 @@
 import type { ChartConfiguration, ChartDataset } from "chart.js";
 import { format } from "date-fns";
 import { getChartTheme, getTooltip } from "$lib/components/viz/utils";
-import type { AgentMetricBucket, ToolTimeBucket } from "./types";
+import type {
+  AgentMetricBucket,
+  ModelCostBreakdown,
+  ToolTimeBucket,
+} from "./types";
 
 const PALETTE = {
   primary: "rgba(163, 135, 239, 1)",
@@ -229,10 +233,27 @@ export function buildTokenChart(
 }
 
 export function buildCostChart(
-  buckets: AgentMetricBucket[],
+  costByModel: ModelCostBreakdown[],
 ): ChartConfiguration {
   const theme = getChartTheme();
-  const labels = buckets.map((b) => new Date(b.bucket_start));
+  const sorted = [...costByModel]
+    .filter((m) => (m.total_cost ?? 0) > 0)
+    .sort((a, b) => (b.total_cost ?? 0) - (a.total_cost ?? 0));
+  const labels = sorted.map((m) => m.model);
+  const palette = [
+    PALETTE.primarySoft,
+    PALETTE.secondarySoft,
+    PALETTE.tertiarySoft,
+    PALETTE.warningSoft,
+    PALETTE.errorSoft,
+  ];
+  const borders = [
+    PALETTE.primary,
+    PALETTE.secondary,
+    PALETTE.tertiary,
+    PALETTE.warning,
+    PALETTE.error,
+  ];
   return {
     type: "bar",
     data: {
@@ -240,14 +261,15 @@ export function buildCostChart(
       datasets: [
         {
           label: "spend ($)",
-          data: buckets.map((b) => b.total_cost ?? 0),
-          backgroundColor: PALETTE.warningSoft,
-          borderColor: PALETTE.warning,
+          data: sorted.map((m) => m.total_cost ?? 0),
+          backgroundColor: sorted.map((_, i) => palette[i % palette.length]),
+          borderColor: sorted.map((_, i) => borders[i % borders.length]),
           borderWidth: 1,
         },
       ],
     },
     options: {
+      indexAxis: "y" as const,
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
@@ -255,8 +277,12 @@ export function buildCostChart(
         legend: { display: false },
       },
       scales: {
-        x: timeAxis(theme),
-        y: valueAxis(theme, "$ / bucket"),
+        x: valueAxis(theme, "$ total"),
+        y: {
+          border: { display: true, width: 2, color: theme.axisColor },
+          grid: { display: false, color: theme.gridColor },
+          ticks: { color: theme.textColor, font: { size: 11 } },
+        },
       },
     },
   } as ChartConfiguration;

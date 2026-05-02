@@ -3,10 +3,13 @@ import type {
   AgentDashboardResponse,
   AgentGenAiBundle,
   AgentMetricBucket,
+  EvalProfileOption,
   GenAiAgentActivity,
+  GenAiDashboardResponse,
   GenAiErrorCount,
   GenAiModelUsage,
   GenAiOperationBreakdown,
+  GenAiTokenBucket,
   GenAiToolActivity,
   ModelCostBreakdown,
   ToolDashboardResponse,
@@ -32,6 +35,16 @@ export interface MockOptions {
   trafficScale?: number;
   selectedRange?: string;
   bucketInterval?: string;
+  /** Service name to surface in `applied_filters`. Set for AgentCard scope. */
+  serviceName?: string | null;
+  /** Entity uid to surface in `applied_filters`. Set for PromptCard scope. */
+  entityId?: string | null;
+  /**
+   * Eval profile descriptors to expose in the FilterBar's Profile dropdown.
+   * If omitted on an AgentCard mock fallback, a small synthetic set is used
+   * so the dropdown demonstrates real selection behavior.
+   */
+  evalProfiles?: EvalProfileOption[];
 }
 
 export function buildMockGenAiBundle(opts: MockOptions = {}): AgentGenAiBundle {
@@ -182,18 +195,74 @@ export function buildMockGenAiBundle(opts: MockOptions = {}): AgentGenAiBundle {
     { agent_name: "summarizer", agent_id: "agent-summary-04", conversation_id: null, span_count: Math.round(total_requests * 0.07), total_input_tokens: Math.round(total_input_tokens * 0.07), total_output_tokens: Math.round(total_output_tokens * 0.07), last_seen: end.toISOString() as DateTime },
   ];
 
-  return {
+  const token_buckets: GenAiTokenBucket[] = buckets.map((b) => ({
+    bucket_start: b.bucket_start,
+    total_input_tokens: b.total_input_tokens,
+    total_output_tokens: b.total_output_tokens,
+    total_cache_creation_tokens: b.total_cache_creation_tokens,
+    total_cache_read_tokens: b.total_cache_read_tokens,
+    span_count: b.span_count,
+    error_rate: b.error_rate,
+  }));
+
+  const dashboard: GenAiDashboardResponse = {
+    applied_filters: {
+      service_name: opts.serviceName ?? null,
+      entity_id: opts.entityId ?? null,
+      agent_name: null,
+      provider_name: null,
+      operation_name: null,
+      model: null,
+      start_time: start.toISOString() as DateTime,
+      end_time: end.toISOString() as DateTime,
+      bucket_interval,
+    },
+    available_filters: {
+      agents,
+      providers: Array.from(new Set(modelMix.map((m) => m.provider))),
+      models: modelMix.map((m) => m.model),
+      operations: operation_breakdown.map((o) => o.operation_name),
+    },
+    metadata: {
+      generated_at: end.toISOString() as DateTime,
+      schema_version: 1,
+      total_spans: total_requests,
+    },
+    token_metrics: { buckets: token_buckets },
+    operation_breakdown: { operations: operation_breakdown },
+    model_usage: { models: model_usage },
     agent_dashboard,
     tool_dashboard,
-    model_usage,
-    operation_breakdown,
-    errors,
-    agents,
+    error_breakdown: { errors },
+    buckets_truncated: false,
+  };
+
+  // PromptCard mock: caller passes a single profile (entityId already set).
+  // AgentCard mock: caller passes evalProfiles or we synthesize a few so the
+  // Profile dropdown has something to render.
+  let eval_profiles: EvalProfileOption[];
+  if (opts.evalProfiles !== undefined) {
+    eval_profiles = opts.evalProfiles;
+  } else if (opts.entityId) {
+    eval_profiles = [
+      { uid: opts.entityId, alias: "primary", name: "primary-prompt" },
+    ];
+  } else {
+    eval_profiles = [
+      { uid: "prof-mock-router-001", alias: "router", name: "router-prompt" },
+      { uid: "prof-mock-summary-002", alias: null, name: "summarizer-prompt" },
+      { uid: "prof-mock-extract-003", alias: "extractor", name: "extract-prompt" },
+    ];
+  }
+
+  return {
+    dashboard,
     range: {
       start_time: start.toISOString(),
       end_time: end.toISOString(),
       bucket_interval,
       selected_range: selectedRange,
     },
+    eval_profiles,
   };
 }

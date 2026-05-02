@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { IdCard, FolderTree, Tag, Activity, Search } from 'lucide-svelte';
+  import { IdCard, FolderTree, Tag, Activity, Search, Sparkles } from 'lucide-svelte';
   import { page } from '$app/state';
   import { uiSettingsStore } from '$lib/components/settings/settings.svelte';
   import { devMockStore } from '$lib/components/settings/mockMode.svelte';
@@ -31,7 +31,7 @@
     if (secondLast === 'evaluation') return 'evaluation';
 
     // Direct routes
-    if (['card', 'files', 'evaluation', 'observability', 'versions', 'view'].includes(last)) return last;
+    if (['card', 'files', 'evaluation', 'observability', 'dashboard', 'versions', 'view'].includes(last)) return last;
 
     return 'card';
   });
@@ -45,6 +45,14 @@
 
   let showObservability = $derived(
     showEvalTab && (uiSettingsStore.scouterEnabled || mockEnabled)
+  );
+
+  /**
+   * Dashboard tab requires an eval profile so we have an `entity_id` to scope by.
+   * Mock mode bypasses the profile check so the panels can be inspected.
+   */
+  let showDashboard = $derived(
+    (uiSettingsStore.scouterEnabled || mockEnabled) && (!!metadata.eval_profile || mockEnabled)
   );
 
   /**
@@ -118,6 +126,18 @@
         >
           <Search color={iconColor} size={16} />
           <span>Observability</span>
+        </a>
+      {/if}
+
+      {#if showDashboard}
+        <a
+          class="flex items-center gap-x-2 border-b-3 {activeTab === 'dashboard' ? 'border-secondary-500' : 'border-transparent'} hover:border-secondary-500 hover:border-b-3 transition-colors"
+          href={`${basePath}/dashboard`}
+          data-sveltekit-preload-data="hover"
+          aria-current={activeTab === 'dashboard' ? 'page' : undefined}
+        >
+          <Sparkles color={iconColor} size={16} />
+          <span>Dashboard</span>
         </a>
       {/if}
 

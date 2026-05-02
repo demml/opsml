@@ -1,9 +1,16 @@
 <script lang="ts">
   import GenAiChartCard from './GenAiChartCard.svelte';
   import { buildCostChart } from './charts';
-  import type { AgentMetricBucket } from './types';
+  import type { ModelCostBreakdown } from './types';
 
-  let { buckets }: { buckets: AgentMetricBucket[] } = $props();
+  let { costByModel }: { costByModel: ModelCostBreakdown[] } = $props();
+
+  const cfg = $derived(() => buildCostChart(costByModel));
 </script>
 
-<GenAiChartCard title="Cost" subtitle="$ / bucket" height="h-40" configFn={() => buildCostChart(buckets)} />
+<GenAiChartCard
+  title="Cost by Model"
+  subtitle="$ total"
+  height="h-40"
+  configFn={cfg}
+/>

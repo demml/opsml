@@ -7,6 +7,30 @@ export interface ModelPricing {
   cache_read_per_million: number;
 }
 
+// ── Composite GenAI dashboard request ────────────────────────────────────────
+
+/**
+ * Request body for `POST /opsml/api/scouter/genai/dashboard`.
+ *
+ * Scope by setting EITHER `service_name` (service-wide view, e.g. an AgentCard)
+ * OR `entity_id` (a single Scouter entity such as an `AgentEvalProfile`).
+ * Sending both is allowed but unusual; the backend treats them as AND.
+ */
+export interface GenAiDashboardRequest {
+  service_name: string | null;
+  entity_id: string | null;
+  start_time: DateTime;
+  end_time: DateTime;
+  bucket_interval: string;
+  agent_name: string | null;
+  provider_name: string | null;
+  operation_name: string | null;
+  model: string | null;
+  model_pricing: Record<string, ModelPricing>;
+}
+
+// ── Existing per-panel types (still used inside the composite response) ──────
+
 export interface AgentDashboardRequest {
   service_name: string | null;
   start_time: DateTime;
@@ -102,6 +126,20 @@ export interface GenAiMetricsRequest {
   model: string | null;
 }
 
+export interface GenAiTokenBucket {
+  bucket_start: DateTime;
+  total_input_tokens: number;
+  total_output_tokens: number;
+  total_cache_creation_tokens: number;
+  total_cache_read_tokens: number;
+  span_count: number;
+  error_rate: number;
+}
+
+export interface GenAiTokenMetricsResponse {
+  buckets: GenAiTokenBucket[];
+}
+
 export interface GenAiModelUsage {
   model: string;
   provider_name: string | null;
@@ -154,17 +192,86 @@ export interface GenAiAgentActivityResponse {
   agents: GenAiAgentActivity[];
 }
 
-export interface AgentGenAiBundle {
+// ── Composite response types ─────────────────────────────────────────────────
+
+/**
+ * Echoes the filters the server actually applied. Mirrors the request body so
+ * the UI can confirm scope without tracking request state.
+ */
+export interface AppliedFilters {
+  service_name: string | null;
+  entity_id: string | null;
+  agent_name: string | null;
+  provider_name: string | null;
+  operation_name: string | null;
+  model: string | null;
+  start_time: DateTime;
+  end_time: DateTime;
+  bucket_interval: string;
+}
+
+/**
+ * Distinct filter values present in the query window. Always service-scoped
+ * (NOT narrowed by `agent_name`) so dropdowns stay populated during drilldown.
+ */
+export interface AvailableFilters {
+  agents: GenAiAgentActivity[];
+  providers: string[];
+  models: string[];
+  operations: string[];
+}
+
+export interface DashboardMetadata {
+  generated_at: DateTime;
+  schema_version: number;
+  total_spans: number;
+}
+
+/**
+ * Composite dashboard response from `POST /opsml/api/scouter/genai/dashboard`.
+ * Single round-trip — populates every dashboard panel.
+ */
+export interface GenAiDashboardResponse {
+  applied_filters: AppliedFilters;
+  available_filters: AvailableFilters;
+  metadata: DashboardMetadata;
+  token_metrics: GenAiTokenMetricsResponse;
+  operation_breakdown: GenAiOperationBreakdownResponse;
+  model_usage: GenAiModelUsageResponse;
   agent_dashboard: AgentDashboardResponse;
   tool_dashboard: ToolDashboardResponse;
-  model_usage: GenAiModelUsage[];
-  operation_breakdown: GenAiOperationBreakdown[];
-  errors: GenAiErrorCount[];
-  agents: GenAiAgentActivity[];
+  error_breakdown: GenAiErrorBreakdownResponse;
+  buckets_truncated: boolean;
+}
+
+/**
+ * Lightweight descriptor of an `AgentEvalProfile` used to populate the
+ * Profile dropdown in the dashboard FilterBar. Sourced from prompt cards
+ * associated with the surrounding agent service.
+ */
+export interface EvalProfileOption {
+  uid: string;
+  alias: string | null;
+  name: string;
+}
+
+/**
+ * Bundle handed to `AgentGenAiDashboard.svelte`. Wraps the composite dashboard
+ * response together with the time range that was queried so the UI can
+ * recompute relative ranges on refresh.
+ */
+export interface AgentGenAiBundle {
+  dashboard: GenAiDashboardResponse;
   range: {
     start_time: string;
     end_time: string;
     bucket_interval: string;
     selected_range: string;
   };
+  /**
+   * Eval profiles available for entity_id scoping. Empty for prompt-card
+   * scope (entity_id is locked to that prompt's profile) and for agents
+   * with no associated prompt cards that carry an eval profile.
+   */
+  eval_profiles: EvalProfileOption[];
 }

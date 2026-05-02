@@ -11,7 +11,7 @@
     Zap,
     ChevronDown
   } from 'lucide-svelte';
-  import ChartCard from './ChartCard.svelte';
+  import ChartCard from '$lib/components/card/agent/observability/GenAiChartCard.svelte';
   import {
     buildVolumeChart,
     buildLatencyChart,
@@ -93,7 +93,7 @@
       <div class="text-2xl font-black text-black mt-1">
         {fmtCompact(summary.total_input_tokens + summary.total_output_tokens)}
       </div>
-      <div class="text-[10px] font-mono text-gray-700 mt-0.5">
+      <div class="text-[10px] font-mono text-primary-700 mt-0.5">
         {fmtCompact(summary.total_input_tokens)} in · {fmtCompact(summary.total_output_tokens)} out
       </div>
     </div>
@@ -162,9 +162,9 @@
           </thead>
           <tbody>
             {#each bundle.model_usage as m}
-              <tr class="border-b border-gray-200 hover:bg-primary-50">
+              <tr class="border-b border-black/10 hover:bg-primary-50">
                 <td class="px-3 py-2 font-mono font-bold text-primary-900">{m.model}</td>
-                <td class="px-3 py-2 text-gray-700">{m.provider_name ?? '—'}</td>
+                <td class="px-3 py-2 text-primary-700">{m.provider_name ?? '—'}</td>
                 <td class="px-3 py-2 text-right font-mono">{fmtCompact(m.span_count)}</td>
                 <td class="px-3 py-2 text-right font-mono">{fmtCompact(m.total_input_tokens)}</td>
                 <td class="px-3 py-2 text-right font-mono">{fmtCompact(m.total_output_tokens)}</td>
@@ -196,9 +196,9 @@
           </thead>
           <tbody>
             {#each bundle.tool_dashboard.aggregates as t}
-              <tr class="border-b border-gray-200 hover:bg-primary-50">
+              <tr class="border-b border-black/10 hover:bg-primary-50">
                 <td class="px-3 py-2 font-mono font-bold text-primary-900">{t.tool_name}</td>
-                <td class="px-3 py-2 text-gray-700">{t.tool_type}</td>
+                <td class="px-3 py-2 text-primary-700">{t.tool_type}</td>
                 <td class="px-3 py-2 text-right font-mono">{fmtCompact(t.call_count)}</td>
                 <td class="px-3 py-2 text-right font-mono">{fmtMs(t.avg_duration_ms)}</td>
                 <td class="px-3 py-2 text-right font-mono {t.error_rate > 0.02 ? 'text-error-700 font-bold' : ''}">{fmtPct(t.error_rate)}</td>
@@ -231,9 +231,9 @@
           </thead>
           <tbody>
             {#each bundle.operation_breakdown as op}
-              <tr class="border-b border-gray-200 hover:bg-primary-50">
+              <tr class="border-b border-black/10 hover:bg-primary-50">
                 <td class="px-3 py-2 font-mono font-bold text-primary-900">{op.operation_name}</td>
-                <td class="px-3 py-2 text-gray-700">{op.provider_name ?? '—'}</td>
+                <td class="px-3 py-2 text-primary-700">{op.provider_name ?? '—'}</td>
                 <td class="px-3 py-2 text-right font-mono">{fmtCompact(op.span_count)}</td>
                 <td class="px-3 py-2 text-right font-mono">{fmtMs(op.avg_duration_ms)}</td>
                 <td class="px-3 py-2 text-right font-mono">{fmtCompact(op.total_input_tokens)}</td>
@@ -258,7 +258,7 @@
           <div>
             <div class="flex justify-between text-xs font-mono mb-0.5">
               <span class="font-bold text-primary-900">{e.error_type}</span>
-              <span class="text-gray-700">{fmtInt(e.count)}</span>
+              <span class="text-primary-700">{fmtInt(e.count)}</span>
             </div>
             <div class="h-3 bg-surface-100 border border-black rounded-base overflow-hidden">
               <div class="h-full bg-error-300 border-r border-black" style="width: {pct}%"></div>
@@ -288,9 +288,9 @@
         </thead>
         <tbody>
           {#each bundle.agents as a}
-            <tr class="border-b border-gray-200 hover:bg-primary-50">
+            <tr class="border-b border-black/10 hover:bg-primary-50">
               <td class="px-3 py-2 font-mono font-bold text-primary-900">{a.agent_name}</td>
-              <td class="px-3 py-2 text-gray-700 font-mono text-xs">{a.agent_id}</td>
+              <td class="px-3 py-2 text-primary-700 font-mono text-xs">{a.agent_id}</td>
               <td class="px-3 py-2 text-right font-mono">{fmtCompact(a.span_count)}</td>
               <td class="px-3 py-2 text-right font-mono">{fmtCompact(a.total_input_tokens)}</td>
               <td class="px-3 py-2 text-right font-mono">{fmtCompact(a.total_output_tokens)}</td>

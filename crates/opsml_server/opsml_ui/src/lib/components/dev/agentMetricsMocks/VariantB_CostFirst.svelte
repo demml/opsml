@@ -11,7 +11,7 @@
     Zap,
     ChevronDown
   } from 'lucide-svelte';
-  import ChartCard from './ChartCard.svelte';
+  import ChartCard from '$lib/components/card/agent/observability/GenAiChartCard.svelte';
   import {
     buildCostChart,
     buildCostDonut,

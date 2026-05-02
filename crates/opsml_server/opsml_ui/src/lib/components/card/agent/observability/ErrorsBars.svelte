@@ -14,8 +14,8 @@
     {#if errors.length === 0}
       <p class="text-xs text-primary-700 py-2 text-center">No errors</p>
     {:else}
+      {@const max = Math.max(1, ...errors.map((x) => x.count))}
       {#each errors as e (e.error_type)}
-        {@const max = Math.max(...errors.map((x) => x.count))}
         {@const pct = (e.count / max) * 100}
         <div class="flex items-center gap-2">
           <div class="text-xs font-mono font-bold text-primary-900 truncate w-32">{e.error_type}</div>

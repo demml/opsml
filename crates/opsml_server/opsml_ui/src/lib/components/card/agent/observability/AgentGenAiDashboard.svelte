@@ -1,10 +1,8 @@
 <script lang="ts">
-  import { Activity } from 'lucide-svelte';
-  import TimeRangeFilter from '$lib/components/trace/TimeRangeFilter.svelte';
-  import type { TimeRange } from '$lib/components/trace/types';
   import { ServerPaths } from '$lib/components/api/routes';
-  import { calculateTimeRange } from '$lib/components/trace/utils';
-  import type { AgentGenAiBundle } from './types';
+  import { createInternalApiClient } from '$lib/api/internalClient';
+  import { timeRangeState } from '$lib/components/utils/timeState.svelte';
+  import type { AgentGenAiBundle, GenAiDashboardRequest, GenAiDashboardResponse } from './types';
   import KpiRail from './KpiRail.svelte';
   import VolumeChart from './VolumeChart.svelte';
   import LatencyChart from './LatencyChart.svelte';
@@ -17,120 +15,123 @@
   import ErrorsBars from './ErrorsBars.svelte';
   import OperationsTable from './OperationsTable.svelte';
   import AgentsTable from './AgentsTable.svelte';
+  import FilterBar from './FilterBar.svelte';
 
   let { bundle: initialBundle }: { bundle: AgentGenAiBundle } = $props();
 
-  let bundle = $state(initialBundle);
+  let bundle = $state<AgentGenAiBundle>(initialBundle);
 
-  const agentName = $derived((bundle.range as Record<string, unknown>).agent_name as string ?? null);
+  // PromptCard scope: service_name is null and entity_id is implicit on the
+  // route — never let the user clear it via the FilterBar. AgentCard scope
+  // owns service_name; entity_id is a freely selectable filter dimension.
+  const isPromptScope = $derived(
+    bundle.dashboard.applied_filters.service_name === null &&
+      bundle.dashboard.applied_filters.entity_id !== null,
+  );
 
-  function makeInitialRange(): TimeRange {
-    const { startTime, endTime, bucketInterval } = calculateTimeRange(
-      bundle.range.selected_range || '24hours',
-    );
-    return {
-      label: bundle.range.selected_range,
-      value: bundle.range.selected_range,
-      startTime: startTime as TimeRange['startTime'],
-      endTime: endTime as TimeRange['endTime'],
-      bucketInterval,
-    };
+  type FilterDelta = {
+    agent_name: string | null;
+    model: string | null;
+    provider_name: string | null;
+    operation_name: string | null;
+    entity_id: string | null;
+  };
+
+  async function postDashboard(body: GenAiDashboardRequest): Promise<GenAiDashboardResponse> {
+    const client = createInternalApiClient(fetch);
+    const r = await client.post(ServerPaths.GENAI_DASHBOARD, body);
+    if (!r.ok) throw new Error(`dashboard fetch failed: ${r.status}`);
+    return (await r.json()) as GenAiDashboardResponse;
   }
 
-  let currentRange = $state<TimeRange>(makeInitialRange());
-
-  async function refetch(range: TimeRange) {
-    const agentBody = {
-      service_name: null,
-      agent_name: agentName,
-      provider_name: null,
+  async function refetch(filters?: Partial<FilterDelta>) {
+    const range = timeRangeState.selectedTimeRange;
+    if (!range) return;
+    const applied = bundle.dashboard.applied_filters;
+    const body: GenAiDashboardRequest = {
+      // service_name is route-locked (echoed verbatim from the initial bundle).
+      service_name: applied.service_name,
+      entity_id: filters?.entity_id !== undefined ? filters.entity_id : applied.entity_id,
       start_time: range.startTime,
       end_time: range.endTime,
       bucket_interval: range.bucketInterval,
+      agent_name: filters?.agent_name ?? applied.agent_name,
+      provider_name: filters?.provider_name ?? applied.provider_name,
+      operation_name: filters?.operation_name ?? applied.operation_name,
+      model: filters?.model ?? applied.model,
       model_pricing: {},
     };
-    const metricsBody = {
-      service_name: null,
-      start_time: range.startTime,
-      end_time: range.endTime,
-      bucket_interval: range.bucketInterval,
-      operation_name: null,
-      provider_name: null,
-      model: null,
-    };
-    const toolBody = {
-      service_name: null,
-      start_time: range.startTime,
-      end_time: range.endTime,
-      bucket_interval: range.bucketInterval,
-    };
 
-    const post = (path: string, body: unknown) =>
-      fetch(path, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      }).then((r) => r.json());
-
-    const [agentDash, toolDash, modelUsageRes, opsRes, errsRes, agentsRes] = await Promise.all([
-      post(ServerPaths.GENAI_AGENT_METRICS, agentBody),
-      post(ServerPaths.GENAI_TOOL_METRICS, toolBody),
-      post(ServerPaths.GENAI_MODELS, metricsBody),
-      post(ServerPaths.GENAI_OPERATIONS, metricsBody),
-      post(ServerPaths.GENAI_ERRORS, metricsBody),
-      post(ServerPaths.GENAI_AGENTS, metricsBody),
-    ]);
-
-    bundle = {
-      agent_dashboard: agentDash,
-      tool_dashboard: toolDash,
-      model_usage: modelUsageRes.models,
-      operation_breakdown: opsRes.operations,
-      errors: errsRes.errors,
-      agents: agentsRes.agents,
-      range: {
-        start_time: range.startTime,
-        end_time: range.endTime,
-        bucket_interval: range.bucketInterval,
-        selected_range: range.value,
-      },
-    };
+    timeRangeState.beginRefresh();
+    try {
+      const dashboard = await postDashboard(body);
+      bundle = {
+        dashboard,
+        range: {
+          start_time: range.startTime,
+          end_time: range.endTime,
+          bucket_interval: range.bucketInterval,
+          selected_range: range.value,
+        },
+        eval_profiles: bundle.eval_profiles,
+      };
+    } catch (err) {
+      console.error('GenAI dashboard refetch failed:', err);
+    } finally {
+      timeRangeState.endRefresh();
+    }
   }
 
-  function handleRangeChange(range: TimeRange) {
-    currentRange = range;
-    refetch(range);
+  function handleFilterChange(next: FilterDelta) {
+    refetch(next);
   }
+
+  // React to time-bar driven refreshes (range change OR refresh button click).
+  // Skip the initial mount: if the time bar already reflects the bundle's range
+  // and refreshSignal is 0 we shouldn't double-fetch.
+  let mounted = $state(false);
+  $effect(() => {
+    void timeRangeState.selectedTimeRange;
+    void timeRangeState.refreshSignal;
+    if (!mounted) {
+      mounted = true;
+      return;
+    }
+    refetch();
+  });
 </script>
 
-<div class="flex flex-col h-full overflow-hidden bg-surface-50">
-  <header class="flex-shrink-0 flex items-center justify-between px-4 py-2.5 border-b-2 border-black bg-primary-100">
-    <div class="flex items-center gap-2">
-      <Activity class="w-4 h-4 text-primary-800" />
-      <span class="text-sm font-black text-primary-900 uppercase tracking-wider">Agent GenAI</span>
-    </div>
-    <TimeRangeFilter bind:selectedRange={currentRange} onRangeChange={handleRangeChange} />
-  </header>
-  <div class="flex-1 overflow-y-auto overscroll-contain p-3 space-y-3">
-    <KpiRail summary={bundle.agent_dashboard.summary} />
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-      <VolumeChart buckets={bundle.agent_dashboard.buckets} />
-      <LatencyChart buckets={bundle.agent_dashboard.buckets} />
-      <TokenChart buckets={bundle.agent_dashboard.buckets} />
-      <CostChart buckets={bundle.agent_dashboard.buckets} />
-    </div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-      <ErrorRateChart buckets={bundle.agent_dashboard.buckets} />
-      <ToolStackChart series={bundle.tool_dashboard.time_series} />
-    </div>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-      <ModelsTable models={bundle.model_usage} />
-      <ToolsTable tools={bundle.tool_dashboard.aggregates} />
-      <ErrorsBars errors={bundle.errors} />
-    </div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-      <OperationsTable operations={bundle.operation_breakdown} />
-      <AgentsTable agents={bundle.agents} />
-    </div>
+<div class="space-y-4">
+  <FilterBar
+    available={bundle.dashboard.available_filters}
+    applied={bundle.dashboard.applied_filters}
+    evalProfiles={bundle.eval_profiles}
+    lockEntity={isPromptScope}
+    onChange={handleFilterChange}
+  />
+
+  <KpiRail summary={bundle.dashboard.agent_dashboard.summary} />
+
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+    <VolumeChart buckets={bundle.dashboard.agent_dashboard.buckets} />
+    <LatencyChart buckets={bundle.dashboard.agent_dashboard.buckets} />
+    <TokenChart buckets={bundle.dashboard.agent_dashboard.buckets} />
+    <CostChart costByModel={bundle.dashboard.agent_dashboard.summary.cost_by_model} />
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+    <ErrorRateChart buckets={bundle.dashboard.agent_dashboard.buckets} />
+    <ToolStackChart series={bundle.dashboard.tool_dashboard.time_series} />
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+    <ModelsTable models={bundle.dashboard.model_usage.models} />
+    <ToolsTable tools={bundle.dashboard.tool_dashboard.aggregates} />
+    <ErrorsBars errors={bundle.dashboard.error_breakdown.errors} />
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+    <OperationsTable operations={bundle.dashboard.operation_breakdown.operations} />
+    <AgentsTable agents={bundle.dashboard.available_filters.agents} />
   </div>
 </div>

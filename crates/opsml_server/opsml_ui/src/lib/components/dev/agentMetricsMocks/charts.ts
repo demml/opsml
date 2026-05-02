@@ -1,4 +1,4 @@
-import type { ChartConfiguration } from "chart.js";
+import type { ChartConfiguration, ChartDataset } from "chart.js";
 import { format } from "date-fns";
 import { getChartTheme, getTooltip } from "$lib/components/viz/utils";
 import type {
@@ -154,7 +154,7 @@ export function buildLatencyChart(
           borderWidth: 2,
           tension: 0.3,
         },
-      ] as any,
+      ] as ChartDataset[],
     },
     options: {
       responsive: true,
@@ -215,7 +215,7 @@ export function buildTokenChart(
           borderWidth: 1.5,
           tension: 0.4,
         },
-      ] as any,
+      ] as ChartDataset[],
     },
     options: {
       responsive: true,
@@ -328,7 +328,7 @@ export function buildErrorRateChart(
           borderWidth: 2,
           tension: 0.3,
         },
-      ] as any,
+      ] as ChartDataset[],
     },
     options: {
       responsive: true,

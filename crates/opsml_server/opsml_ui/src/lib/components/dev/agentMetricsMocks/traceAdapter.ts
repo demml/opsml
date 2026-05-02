@@ -98,6 +98,7 @@ export function buildTraceListItem(
   summary = resp.agent_dashboard.summary,
 ): TraceListItem {
   const spans = resp.spans;
+  if (!spans.length) throw new Error('buildTraceListItem: spans array is empty');
   const rootSpan = spans[0];
   const startMs = Math.min(...spans.map((s) => new Date(s.start_time).getTime()));
   const endMs = Math.max(

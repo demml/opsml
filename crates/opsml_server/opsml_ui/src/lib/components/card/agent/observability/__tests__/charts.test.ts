@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { buildVolumeChart, buildLatencyChart, buildTokenChart, buildCostChart, buildErrorRateChart, buildToolStackChart } from '../charts';
-import type { AgentMetricBucket, ToolTimeBucket } from '../types';
+import type { AgentMetricBucket, ModelCostBreakdown, ToolTimeBucket } from '../types';
 import type { ChartDataset } from 'chart.js';
 
 vi.mock('$lib/components/viz/utils', () => ({
@@ -90,22 +90,38 @@ describe('buildTokenChart', () => {
 });
 
 describe('buildCostChart', () => {
+  const costRow: ModelCostBreakdown = {
+    model: 'gpt-4o',
+    total_input_tokens: 1000,
+    total_output_tokens: 500,
+    total_cache_creation_tokens: 0,
+    total_cache_read_tokens: 100,
+    total_cost: 0.01,
+  };
+
   it('has spend dataset', () => {
-    const config = buildCostChart([bucket]);
+    const config = buildCostChart([costRow]);
     expect(config.data.datasets[0].label).toBe('spend ($)');
   });
 
   it('uses total_cost values', () => {
-    const config = buildCostChart([bucket]);
+    const config = buildCostChart([costRow]);
     const data = config.data.datasets[0].data as number[];
     expect(data[0]).toBe(0.01);
   });
 
-  it('falls back to 0 for null total_cost', () => {
-    const nullCostBucket = { ...bucket, total_cost: null };
-    const config = buildCostChart([nullCostBucket]);
+  it('skips rows with null or zero total_cost', () => {
+    const nullCostRow: ModelCostBreakdown = { ...costRow, total_cost: null };
+    const config = buildCostChart([nullCostRow]);
     const data = config.data.datasets[0].data as number[];
-    expect(data[0]).toBe(0);
+    expect(data).toHaveLength(0);
+  });
+
+  it('sorts models by descending cost', () => {
+    const high: ModelCostBreakdown = { ...costRow, model: 'high', total_cost: 5 };
+    const low: ModelCostBreakdown = { ...costRow, model: 'low', total_cost: 1 };
+    const config = buildCostChart([low, high]);
+    expect(config.data.labels).toEqual(['high', 'low']);
   });
 });
 
