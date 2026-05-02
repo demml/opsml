@@ -26,6 +26,7 @@
 
   const summary = $derived(bundle.agent_dashboard.summary);
   const totalCost = $derived(
+    summary.cost_by_model.reduce((a, b) => a + (b.total_cost ?? 0), 0)
   );
   const totalTokens = $derived(
     summary.total_input_tokens + summary.total_output_tokens
