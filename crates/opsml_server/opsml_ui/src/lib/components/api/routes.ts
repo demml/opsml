@@ -66,6 +66,8 @@ export enum RoutePaths {
   GENAI_CONVERSATION = "/opsml/api/scouter/genai/conversation",
   GENAI_AGENT_METRICS = "/opsml/api/scouter/genai/agent/metrics",
   GENAI_TOOL_METRICS = "/opsml/api/scouter/genai/tool/metrics",
+  GENAI_DASHBOARD = "/opsml/api/scouter/genai/dashboard",
+  GENAI_TRACE_METRICS = "/opsml/api/scouter/genai/traces",
 
   // Experiment
   EXPERIMENT_METRICS = "/opsml/api/experiment/metrics",
@@ -152,6 +154,8 @@ export enum ServerPaths {
   GENAI_CONVERSATION = "/api/scouter/genai/conversation",
   GENAI_AGENT_METRICS = "/api/scouter/genai/agent/metrics",
   GENAI_TOOL_METRICS = "/api/scouter/genai/tool/metrics",
+  GENAI_DASHBOARD = "/api/scouter/genai/dashboard",
+  GENAI_TRACE_METRICS = "/api/scouter/genai/traces",
   OBSERVABILITY_METRICS = "/api/scouter/observability/metrics",
   TRACE_FACETS = "/api/scouter/trace/facets",
 

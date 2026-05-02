@@ -97,7 +97,7 @@ rpassword = "7.*"
 rusty-logging = "0.*"
 pythonize = { version = "0.*" }
 # we cant use crates.io because scouter relies on a fork of linfa at the moment
-scouter-client = { git = "https://github.com/demml/scouter", branch = "main" }
+scouter-client = { git = "https://github.com/demml/scouter", branch = "agents-by-service" }
 sha2 = "0.10.*"
 hex = "0.4.*"
 semver = "1.*"
