@@ -54,6 +54,8 @@ pub enum Routes {
     GenAiConversation,
     GenAiAgentMetrics,
     GenAiToolMetrics,
+    GenAiDashboard,
+    GenAiTraceMetrics,
 }
 
 impl Routes {
@@ -112,6 +114,8 @@ impl Routes {
             Routes::GenAiConversation => "scouter/genai/conversation",
             Routes::GenAiAgentMetrics => "scouter/genai/agent/metrics",
             Routes::GenAiToolMetrics => "scouter/genai/tool/metrics",
+            Routes::GenAiDashboard => "scouter/genai/dashboard",
+            Routes::GenAiTraceMetrics => "scouter/genai/traces",
         }
     }
 }
