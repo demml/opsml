@@ -67,6 +67,10 @@ impl ServiceInfo {
         self.version = version;
         Ok(())
     }
+
+    pub fn namespace(&self) -> String {
+        format!("{}:{}", self.space, self.name)
+    }
 }
 
 #[cfg(feature = "python")]
@@ -1112,6 +1116,16 @@ impl<'de> Deserialize<'de> for ServiceCard {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_service_info_namespace() {
+        let info = ServiceInfo {
+            space: "my-space".to_string(),
+            name: "my-service".to_string(),
+            version: "1.0.0".to_string(),
+        };
+        assert_eq!(info.namespace(), "my-space:my-service");
+    }
 
     #[test]
     fn test_service_info_update() {

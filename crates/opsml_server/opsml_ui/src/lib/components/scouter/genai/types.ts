@@ -244,7 +244,7 @@ export interface AgentMetricBucket {
   total_output_tokens: number;
   total_cache_creation_tokens: number;
   total_cache_read_tokens: number;
-  total_cost: null;
+  total_cost: number | null;
 }
 
 export interface ModelCostBreakdown {
