@@ -24,6 +24,8 @@
         <TraceDetailContent
           trace={trace}
           traceSpans={traceSpans}
+          genai={data.genai}
+          genAiBySpanId={data.genAiBySpanId}
           showCloseButton={false}
         />
       </div>

@@ -11,11 +11,27 @@ import {
   getCardKeyAttribute,
   getServerTraceSpans,
   getServerTracePage,
+  getServerGenAiTraceMetrics,
+  buildGenAiBySpanId,
 } from "$lib/components/trace/utils";
 import {
   getMockTracePage,
   getMockTraceSpans,
 } from "$lib/components/trace/mockData";
+import { getMockGenAiTraceMetrics } from "$lib/components/trace/genai/mockData";
+import type { GenAiTraceMetricsResponse } from "$lib/components/scouter/genai/types";
+
+function buildMockBundle(metadata_uid: string) {
+  const tracePage = getMockTracePage({ entity_uid: metadata_uid });
+  const trace = tracePage.items[0] ?? null;
+  const spans = trace ? getMockTraceSpans({ trace_id: trace.trace_id }) : null;
+  const spanIds = spans?.spans.map((s) => s.span_id) ?? [];
+  const genai = trace
+    ? getMockGenAiTraceMetrics(trace.trace_id, spanIds)
+    : null;
+  const genAiBySpanId = buildGenAiBySpanId(genai);
+  return { trace, spans, genai, genAiBySpanId };
+}
 
 export const load: PageLoad = async ({ parent }) => {
   const { metadata, registryType, settings, devMockEnabled } = await parent();
@@ -23,17 +39,8 @@ export const load: PageLoad = async ({ parent }) => {
 
   if (!settings?.scouter_enabled) {
     if (useMockFallback) {
-      const tracePage = getMockTracePage({
-        entity_uid: metadata.uid,
-      });
-      const trace = tracePage.items[0] ?? null;
-      const spans = trace
-        ? getMockTraceSpans({ trace_id: trace.trace_id })
-        : null;
-
       return {
-        trace,
-        spans,
+        ...buildMockBundle(metadata.uid),
         errorMessage: "none",
         mockMode: true,
       };
@@ -42,6 +49,8 @@ export const load: PageLoad = async ({ parent }) => {
     return {
       trace: null,
       spans: null,
+      genai: null,
+      genAiBySpanId: {},
       type: "not_found" as const,
       errorMessage: "Scouter is not enabled.",
       mockMode: false,
@@ -67,17 +76,8 @@ export const load: PageLoad = async ({ parent }) => {
 
     if (response.entity_id.length === 0) {
       if (useMockFallback) {
-        const tracePage = getMockTracePage({
-          entity_uid: metadata.uid,
-        });
-        const trace = tracePage.items[0] ?? null;
-        const spans = trace
-          ? getMockTraceSpans({ trace_id: trace.trace_id })
-          : null;
-
         return {
-          trace,
-          spans,
+          ...buildMockBundle(metadata.uid),
           errorMessage: "none",
           mockMode: true,
         };
@@ -86,6 +86,8 @@ export const load: PageLoad = async ({ parent }) => {
       return {
         trace: null,
         spans: null,
+        genai: null,
+        genAiBySpanId: {},
         type: "not_found" as const,
         errorMessage:
           "No trace found for this card. Ensure that the application is generating traces with the correct tags.",
@@ -93,33 +95,33 @@ export const load: PageLoad = async ({ parent }) => {
       };
     }
 
-    // Fetch spans and trace page in parallel for better performance
+    const trace_id = response.entity_id[0];
     const [spansDetails, tracePage] = await Promise.all([
-      getServerTraceSpans(fetch, {
-        trace_id: response.entity_id[0],
-      }),
-      getServerTracePage(fetch, {
-        trace_ids: response.entity_id,
-      }),
+      getServerTraceSpans(fetch, { trace_id }),
+      getServerTracePage(fetch, { trace_ids: response.entity_id }),
     ]);
+
+    let genai: GenAiTraceMetricsResponse | null = null;
+    try {
+      genai = await getServerGenAiTraceMetrics(fetch, trace_id);
+    } catch {
+      // GenAI metrics are non-critical; trace view remains functional without them
+    }
+
+    const genAiBySpanId = buildGenAiBySpanId(genai);
 
     return {
       trace: tracePage.items[0],
       spans: spansDetails,
+      genai,
+      genAiBySpanId,
       errorMessage: "none",
       mockMode: false,
     };
   } catch (error) {
     if (useMockFallback) {
-      const tracePage = getMockTracePage({
-        entity_uid: metadata.uid,
-      });
-      const trace = tracePage.items[0] ?? null;
-      const spans = trace ? getMockTraceSpans({ trace_id: trace.trace_id }) : null;
-
       return {
-        trace,
-        spans,
+        ...buildMockBundle(metadata.uid),
         errorMessage: "none",
         mockMode: true,
       };
@@ -147,7 +149,7 @@ export const load: PageLoad = async ({ parent }) => {
         errorMessage =
           "You do not have permission to access trace data. Please contact your administrator.";
       } else {
-        errorMessage = `Error: ${error.message}`;
+        errorMessage = "An unexpected error occurred while loading trace data.";
       }
     }
 
@@ -155,6 +157,8 @@ export const load: PageLoad = async ({ parent }) => {
       errorMessage,
       trace: null,
       spans: null,
+      genai: null,
+      genAiBySpanId: {},
       type: "error" as const,
       mockMode: false,
     };

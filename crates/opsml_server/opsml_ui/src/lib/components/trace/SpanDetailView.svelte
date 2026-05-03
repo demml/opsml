@@ -9,11 +9,13 @@
   } from './utils';
   import {
     Info, Tags, Activity, Link2, AlertCircle, FileJson,
-    ChevronDown, ChevronUp, Copy, Check, Search, Server, ArrowLeftRight
+    ChevronDown, ChevronUp, Copy, Check, Search, Server, ArrowLeftRight, Sparkles
   } from 'lucide-svelte';
   import Pill from '$lib/components/utils/Pill.svelte';
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
   import SpanEvents from './SpanEvents.svelte';
+  import SpanGenAiPanel from './genai/SpanGenAiPanel.svelte';
+  import type { GenAiSpanRecord } from '$lib/components/scouter/genai/types';
   import { EXCEPTION_TRACEBACK } from './types';
 
   let {
@@ -22,12 +24,14 @@
     allSpans,
     slowestSpan,
     resourceAttributes = [],
+    genaiSpan = null,
   }: {
     span: TraceSpan;
     onSpanSelect: (span: TraceSpan) => void;
     allSpans: TraceSpan[];
     slowestSpan?: TraceSpan | null;
     resourceAttributes?: Attribute[];
+    genaiSpan?: GenAiSpanRecord | null;
   } = $props();
 
   // ─── Derived values ────────────────────────────────────────────────────────
@@ -128,7 +132,7 @@
 
   // ─── Tab state ─────────────────────────────────────────────────────────────
 
-  type Tab = 'overview' | 'errors' | 'attributes' | 'reqres' | 'events' | 'resources';
+  type Tab = 'overview' | 'errors' | 'attributes' | 'reqres' | 'events' | 'resources' | 'genai';
   let activeTab = $state<Tab>('overview');
 
   const tabs = $derived([
@@ -138,6 +142,9 @@
     { id: 'reqres'     as Tab, label: 'Req / Res',   Icon: ArrowLeftRight,  count: reqResEntries.length > 0 ? reqResEntries.length : null as number | null },
     { id: 'events'     as Tab, label: 'Events',      Icon: Activity,        count: span.events.length > 0 ? span.events.length : null as number | null },
     { id: 'resources'  as Tab, label: 'Resources',   Icon: Server,          count: resourceAttributes.length > 0 ? resourceAttributes.length : null as number | null },
+    ...(genaiSpan
+      ? [{ id: 'genai' as Tab, label: 'GenAI', Icon: Sparkles, count: null as number | null }]
+      : []),
   ]);
 
   // ─── UI helpers ────────────────────────────────────────────────────────────
@@ -648,6 +655,11 @@
           </div>
         {/if}
       </div>
+    {/if}
+
+    <!-- GENAI TAB -->
+    {#if activeTab === 'genai' && genaiSpan}
+      <SpanGenAiPanel span={genaiSpan} />
     {/if}
 
   </div>
