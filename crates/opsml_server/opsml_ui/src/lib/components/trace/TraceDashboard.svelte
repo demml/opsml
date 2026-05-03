@@ -39,6 +39,7 @@
     initialFilters,
     initialTrace,
     initialTraceSpans,
+    mockMode = false,
   }: {
     trace_page: TracePaginationResponse;
     trace_metrics: TraceMetricBucket[];
@@ -46,6 +47,7 @@
     initialFilters: TracePageFilter;
     initialTrace?: TraceListItem;
     initialTraceSpans?: TraceSpansResponse;
+    mockMode?: boolean;
   } = $props();
 
   let isUpdating = $state(false);
@@ -458,6 +460,7 @@
         {filters}
         {initialTrace}
         {initialTraceSpans}
+        {mockMode}
       />
       </div>
     </div>

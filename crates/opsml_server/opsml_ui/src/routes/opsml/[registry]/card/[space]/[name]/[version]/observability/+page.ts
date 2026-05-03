@@ -1,134 +1,203 @@
-export const ssr = false;
-
 import type { PageLoad } from "./$types";
-import type {
-  ScouterEntityIdResponse,
-  ScouterEntityIdTagsRequest,
-  Tag,
-} from "$lib/components/tags/types";
-import { getScouterServerEntityIdFromTags } from "$lib/components/tags/utils";
 import {
-  getCardKeyAttribute,
-  getServerTraceSpans,
+  type TraceFacetsResponse,
+  type TraceMetricsRequest,
+  type TracePageFilter,
+  type TraceListItem,
+  type TraceSpansResponse,
+} from "$lib/components/trace/types";
+import {
   getServerTracePage,
+  getServerTraceMetrics,
+  getServerTraceFacets,
+  getServerTraceSpansById,
+  traceListItemFromSpans,
+  getCookie,
+  calculateTimeRange,
 } from "$lib/components/trace/utils";
 import {
+  getMockTraceMetrics,
   getMockTracePage,
-  getMockTraceSpans,
 } from "$lib/components/trace/mockData";
+import { getEvalProfileOrUid } from "$lib/components/card/card_interfaces/enum";
+import type { CardMetadata } from "$lib/server/card/layout";
+import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
+import type { ServiceCard } from "$lib/components/card/card_interfaces/servicecard";
+import { RegistryType } from "$lib/utils";
 
-export const load: PageLoad = async ({ parent }) => {
-  const { metadata, registryType, settings, devMockEnabled } = await parent();
-  const useMockFallback = Boolean(devMockEnabled);
+export const ssr = false;
 
-  if (!settings?.scouter_enabled) {
-    if (useMockFallback) {
-      const tracePage = getMockTracePage({
-        entity_uid: metadata.uid,
-      });
-      const trace = tracePage.items[0] ?? null;
-      const spans = trace
-        ? getMockTraceSpans({ trace_id: trace.trace_id })
-        : null;
+const ALLOWED_REGISTRIES: ReadonlySet<string> = new Set([
+  RegistryType.Prompt,
+  RegistryType.Service,
+  RegistryType.Mcp,
+  RegistryType.Agent,
+]);
 
-      return {
-        trace,
-        spans,
-        errorMessage: "none",
-        mockMode: true,
-      };
-    }
+export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
+  const parentData = await parent();
+  const metadata = parentData.metadata as CardMetadata;
+  const useMockFallback = Boolean(parentData.devMockEnabled);
+  const scouterEnabled = Boolean(parentData.settings?.scouter_enabled);
 
+  const initialTraceId = url.searchParams.get("trace_id") ?? undefined;
+
+  const fallbackFilters: TracePageFilter = {
+    filters: {
+      start_time: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+      end_time: new Date().toISOString(),
+    },
+    bucket_interval: "1 minutes",
+    selected_range: "15min",
+  };
+
+  const registryTypeLower = metadata.registry_type.toLowerCase();
+  if (!ALLOWED_REGISTRIES.has(registryTypeLower)) {
     return {
-      trace: null,
-      spans: null,
-      type: "not_found" as const,
+      status: "not_found" as const,
+      errorMessage: "Observability is not available for this card type.",
+      initialFilters: fallbackFilters,
+      trace_facets: { services: [], status_codes: [], total_count: 0 },
+      mockMode: false,
+    };
+  }
+
+  if (!scouterEnabled && !useMockFallback) {
+    return {
+      status: "not_found" as const,
       errorMessage: "Scouter is not enabled.",
+      initialFilters: fallbackFilters,
+      trace_facets: { services: [], status_codes: [], total_count: 0 },
       mockMode: false,
     };
   }
 
   try {
-    const key = getCardKeyAttribute(registryType);
+    depends("trace:data");
 
-    const tag: Tag = {
-      key,
-      value: metadata.uid,
+    const card = metadata as PromptCard | ServiceCard;
+    const entity_uid = getEvalProfileOrUid(card);
+
+    let initialTrace: TraceListItem | undefined;
+    let initialTraceSpans: TraceSpansResponse | undefined;
+    if (initialTraceId && !useMockFallback) {
+      try {
+        const spans = await getServerTraceSpansById(fetch, initialTraceId);
+        const item = traceListItemFromSpans(spans.spans);
+        if (item) {
+          initialTrace = item;
+          initialTraceSpans = spans;
+        }
+      } catch {
+        /* page loads normally without sidebar */
+      }
+    }
+
+    let startTime: string;
+    let endTime: string;
+    let bucketInterval: string;
+    let selectedRange: string;
+
+    if (initialTrace) {
+      const traceTs = new Date(initialTrace.start_time).getTime();
+      const margin = 60 * 60 * 1000;
+      startTime = new Date(traceTs - margin).toISOString();
+      endTime = new Date(traceTs + margin).toISOString();
+      bucketInterval = "5 minutes";
+      selectedRange = "custom";
+    } else {
+      selectedRange = getCookie("trace_range") || "15min";
+      ({ startTime, endTime, bucketInterval } =
+        calculateTimeRange(selectedRange));
+    }
+
+    const metricsRequest: TraceMetricsRequest = {
+      service_name: undefined,
+      start_time: startTime,
+      end_time: endTime,
+      bucket_interval: bucketInterval,
+      entity_uid: entity_uid,
     };
 
-    const request: ScouterEntityIdTagsRequest = {
-      entity_type: "trace",
-      tags: [tag],
-      match_all: true,
-    };
-
-    const response: ScouterEntityIdResponse =
-      await getScouterServerEntityIdFromTags(fetch, request);
-
-    if (response.entity_id.length === 0) {
-      if (useMockFallback) {
-        const tracePage = getMockTracePage({
-          entity_uid: metadata.uid,
+    const traceMetrics = useMockFallback
+      ? getMockTraceMetrics(metricsRequest)
+      : await getServerTraceMetrics(fetch, metricsRequest);
+    const tracePage = useMockFallback
+      ? getMockTracePage({
+          start_time: startTime,
+          end_time: endTime,
+          limit: 50,
+          entity_uid: entity_uid,
+        })
+      : await getServerTracePage(fetch, {
+          start_time: startTime,
+          end_time: endTime,
+          limit: 50,
+          entity_uid,
         });
-        const trace = tracePage.items[0] ?? null;
-        const spans = trace
-          ? getMockTraceSpans({ trace_id: trace.trace_id })
-          : null;
 
+    let traceFacets: TraceFacetsResponse = {
+      services: [],
+      status_codes: [],
+      total_count: 0,
+    };
+    try {
+      traceFacets = await getServerTraceFacets(fetch, {
+        start_time: startTime,
+        end_time: endTime,
+        entity_uid,
+      });
+    } catch (facetError) {
+      console.warn("Failed to load trace facets:", facetError);
+    }
+
+    const initialFilters: TracePageFilter = {
+      filters: { start_time: startTime, end_time: endTime, entity_uid },
+      bucket_interval: bucketInterval,
+      selected_range: selectedRange,
+    };
+
+    if (!tracePage.items || tracePage.items.length === 0) {
+      if (initialTrace) {
         return {
-          trace,
-          spans,
-          errorMessage: "none",
-          mockMode: true,
+          status: "success" as const,
+          trace_page: tracePage,
+          trace_metrics: traceMetrics,
+          trace_facets: traceFacets,
+          initialFilters,
+          mockMode: useMockFallback,
+          initialTrace,
+          initialTraceSpans,
         };
       }
 
       return {
-        trace: null,
-        spans: null,
-        type: "not_found" as const,
+        status: "not_found" as const,
         errorMessage:
-          "No trace found for this card. Ensure that the application is generating traces with the correct tags.",
-        mockMode: false,
+          "No traces found for the selected time range. Try adjusting your time range or check if your application is generating traces.",
+        initialFilters,
+        trace_facets: traceFacets,
+        mockMode: useMockFallback,
+        initialTrace,
+        initialTraceSpans,
       };
     }
-
-    // Fetch spans and trace page in parallel for better performance
-    const [spansDetails, tracePage] = await Promise.all([
-      getServerTraceSpans(fetch, {
-        trace_id: response.entity_id[0],
-      }),
-      getServerTracePage(fetch, {
-        trace_ids: response.entity_id,
-      }),
-    ]);
 
     return {
-      trace: tracePage.items[0],
-      spans: spansDetails,
-      errorMessage: "none",
-      mockMode: false,
+      status: "success" as const,
+      trace_page: tracePage,
+      trace_metrics: traceMetrics,
+      trace_facets: traceFacets,
+      initialFilters,
+      mockMode: useMockFallback,
+      initialTrace,
+      initialTraceSpans,
     };
   } catch (error) {
-    if (useMockFallback) {
-      const tracePage = getMockTracePage({
-        entity_uid: metadata.uid,
-      });
-      const trace = tracePage.items[0] ?? null;
-      const spans = trace ? getMockTraceSpans({ trace_id: trace.trace_id }) : null;
-
-      return {
-        trace,
-        spans,
-        errorMessage: "none",
-        mockMode: true,
-      };
-    }
-
-    console.error("Error loading span data:", error);
+    console.error("Error loading trace data:", error);
 
     let errorMessage =
-      "An unexpected error occurred while loading span data. Please try again.";
+      "An unexpected error occurred while loading trace data. Please try again.";
 
     if (error instanceof Error) {
       if (
@@ -152,10 +221,10 @@ export const load: PageLoad = async ({ parent }) => {
     }
 
     return {
+      status: "error" as const,
       errorMessage,
-      trace: null,
-      spans: null,
-      type: "error" as const,
+      initialFilters: fallbackFilters,
+      trace_facets: { services: [], status_codes: [], total_count: 0 },
       mockMode: false,
     };
   }

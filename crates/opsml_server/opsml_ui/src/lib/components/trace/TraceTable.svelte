@@ -1,28 +1,34 @@
 <script lang="ts">
   import TraceDetailSidebar from "./TraceDetailSidebar.svelte";
   import TraceInfiniteScroll from "./TraceInfiniteScroll.svelte";
-  import { getServerTraceSpans } from "./utils";
+  import { getServerTraceSpans, getServerGenAiTraceMetrics, buildGenAiBySpanId } from "./utils";
+  import { getMockGenAiTraceMetrics } from "./genai/mockData";
   import type {
     TraceListItem,
     TracePageFilter,
     TracePaginationResponse,
     TraceSpansResponse,
   } from "./types";
+  import type { GenAiTraceMetricsResponse, GenAiSpanRecord } from "$lib/components/scouter/genai/types";
 
   let {
     trace_page,
     filters,
     initialTrace,
     initialTraceSpans,
+    mockMode = false,
   } = $props<{
     trace_page: TracePaginationResponse;
     filters: TracePageFilter;
     initialTrace?: TraceListItem;
     initialTraceSpans?: TraceSpansResponse;
+    mockMode?: boolean;
   }>();
 
   let selectedTraceSpans = $state<TraceSpansResponse | null>(initialTraceSpans ?? null);
   let selectedTrace = $state<TraceListItem | null>(initialTrace ?? null);
+  let selectedGenAi = $state<GenAiTraceMetricsResponse | null>(null);
+  let selectedGenAiBySpanId = $state<Record<string, GenAiSpanRecord>>({});
   let isLoadingDetail = $state(false);
 
   const maxDurationInPage = $derived(
@@ -51,11 +57,24 @@
     } finally {
       isLoadingDetail = false;
     }
+
+    try {
+      const genai = mockMode
+        ? getMockGenAiTraceMetrics(trace.trace_id, selectedTraceSpans?.spans.map((s) => s.span_id) ?? [])
+        : await getServerGenAiTraceMetrics(fetch, trace.trace_id);
+      selectedGenAi = genai;
+      selectedGenAiBySpanId = buildGenAiBySpanId(genai);
+    } catch {
+      selectedGenAi = null;
+      selectedGenAiBySpanId = {};
+    }
   }
 
   function handleClosePanel() {
     selectedTraceSpans = null;
     selectedTrace = null;
+    selectedGenAi = null;
+    selectedGenAiBySpanId = {};
     const url = new URL(window.location.href);
     if (url.searchParams.has("trace_id")) {
       url.searchParams.delete("trace_id");
@@ -195,6 +214,8 @@
   <TraceDetailSidebar
     trace={selectedTrace}
     traceSpans={selectedTraceSpans}
+    genai={selectedGenAi}
+    genAiBySpanId={selectedGenAiBySpanId}
     onClose={handleClosePanel}
   />
 {/if}

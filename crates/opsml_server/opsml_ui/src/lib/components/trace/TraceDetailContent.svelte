@@ -3,24 +3,35 @@
   import TraceWaterfall from './TraceWaterfall.svelte';
   import SpanDetailView from './SpanDetailView.svelte';
   import SpanGraph from './graph/SpanGraph.svelte';
+  import TraceGenAiPanel from './genai/TraceGenAiPanel.svelte';
   import { formatDuration } from './utils';
-  import { Network, List, X, ChevronLeft, ChevronUp, ChevronDown, Clock, Layers, AlertTriangle } from 'lucide-svelte';
+  import { Network, List, Sparkles, X, ChevronLeft, ChevronUp, ChevronDown, Clock, Layers, AlertTriangle } from 'lucide-svelte';
+  import type { GenAiTraceMetricsResponse, GenAiSpanRecord } from '$lib/components/scouter/genai/types';
 
   let {
     trace,
     traceSpans,
+    genai = null,
+    genAiBySpanId = {},
     onClose,
     showCloseButton = true,
   }: {
     trace: TraceListItem;
     traceSpans: TraceSpansResponse;
+    genai?: GenAiTraceMetricsResponse | null;
+    genAiBySpanId?: Record<string, GenAiSpanRecord>;
     onClose?: () => void;
     showCloseButton?: boolean;
   } = $props();
 
   let selectedSpan = $state<TraceSpan | null>(traceSpans.spans[0] || null);
   let spans = $state<TraceSpan[]>(traceSpans.spans);
-  let activeTopTab = $state<'waterfall' | 'map'>('waterfall');
+  let activeTopTab = $state<'waterfall' | 'map' | 'genai'>('waterfall');
+
+  const showGenAiTab = $derived(genai != null && genai.has_genai_spans);
+  const selectedGenAiSpan = $derived(
+    selectedSpan ? (genAiBySpanId[selectedSpan.span_id] ?? null) : null,
+  );
   let topCollapsed = $state(false);
 
   // Draggable divider — topPct is % height for the top (waterfall) panel
@@ -166,6 +177,16 @@
         <Network class="w-3.5 h-3.5" />
         Map
       </button>
+      {#if showGenAiTab}
+        <button
+          onclick={() => activeTopTab = 'genai'}
+          class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase tracking-wide border-l-2 border-black transition-colors duration-100 ease-out
+            {activeTopTab === 'genai' ? 'bg-primary-800 text-white' : 'bg-surface-50 text-primary-800 hover:bg-primary-100'}"
+        >
+          <Sparkles class="w-3.5 h-3.5" />
+          GenAI
+        </button>
+      {/if}
     </div>
 
     <button
@@ -185,71 +206,79 @@
     </button>
   </div>
 
-  <!-- ─── Resizable vertical split ────────────────────────────────────────── -->
-  <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
-
-    <!-- Top panel: Waterfall or Map -->
-    <div
-      class="flex-shrink-0 overflow-hidden transition-[height] duration-200 ease-out"
-      style="height: {topCollapsed ? 0 : topPct}%;"
-    >
-      {#if activeTopTab === 'waterfall'}
-        <div class="h-full">
-          <TraceWaterfall
-            spans={spans}
-            totalDuration={trace.duration_ms || 0}
-            {selectedSpan}
-            onSpanSelect={handleSpanSelect}
-            slowestSpan={slowestSpan()}
-          />
-        </div>
-      {:else}
-        <div class="h-full bg-surface-50 p-3 overflow-auto">
-          <div class="bg-surface-50 p-8overflow-y-scroll">
-            <SpanGraph spans={spans} slowestSpan={slowestSpan()} onSpanSelect={handleSpanSelect} />
-          </div>
-        </div>
-      {/if}
+  {#if activeTopTab === 'genai' && genai}
+    <!-- ─── GenAI dashboard (full-height, single scroll container) ─────────── -->
+    <div class="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+      <TraceGenAiPanel {genai} />
     </div>
+  {:else}
+    <!-- ─── Resizable vertical split ────────────────────────────────────────── -->
+    <div class="flex flex-col flex-1 min-h-0 overflow-hidden">
 
-    <!-- Draggable divider -->
-    {#if !topCollapsed}
-      <button
-        type="button"
-        class="flex-shrink-0 relative flex items-center justify-center border-t-2 border-b-2 border-black bg-primary-100 cursor-row-resize z-10 select-none w-full hover:bg-primary-200 transition-colors duration-100"
-        style="height: 14px;"
-        onmousedown={onDividerMouseDown}
-        aria-label="Resize panels"
-        tabindex="0"
+      <!-- Top panel: Waterfall or Map -->
+      <div
+        class="flex-shrink-0 overflow-hidden transition-[height] duration-200 ease-out"
+        style="height: {topCollapsed ? 0 : topPct}%;"
       >
-        <div class="flex items-center gap-0.5 pointer-events-none">
-          {#each [0,1,2,3,4] as dot (dot)}
-            <div class="w-4 h-0.5 rounded-full bg-primary-700/40"></div>
-          {/each}
-        </div>
-      </button>
-    {/if}
-
-    <!-- Bottom panel: Span detail -->
-    <div class="flex-1 min-h-0 overflow-hidden border-t-0">
-      {#if selectedSpan}
-        <SpanDetailView
-          span={selectedSpan}
-          onSpanSelect={handleSpanSelect}
-          allSpans={spans}
-          slowestSpan={slowestSpan()}
-          resourceAttributes={trace.resource_attributes}
-        />
-      {:else}
-        <div class="flex flex-col items-center justify-center h-full gap-3 text-center p-8">
-          <div class="w-12 h-12 border-2 border-black bg-surface-200 flex items-center justify-center rounded-base shadow-small">
-            <Layers class="w-6 h-6 text-primary-400" />
+        {#if activeTopTab === 'waterfall'}
+          <div class="h-full">
+            <TraceWaterfall
+              spans={spans}
+              totalDuration={trace.duration_ms || 0}
+              {selectedSpan}
+              onSpanSelect={handleSpanSelect}
+              slowestSpan={slowestSpan()}
+            />
           </div>
-          <p class="text-sm font-black text-primary-500 uppercase tracking-wide">Select a span to inspect</p>
-        </div>
-      {/if}
-    </div>
+        {:else}
+          <div class="h-full bg-surface-50 p-3 overflow-auto">
+            <div class="bg-surface-50 p-8overflow-y-scroll">
+              <SpanGraph spans={spans} slowestSpan={slowestSpan()} onSpanSelect={handleSpanSelect} />
+            </div>
+          </div>
+        {/if}
+      </div>
 
-  </div>
+      <!-- Draggable divider -->
+      {#if !topCollapsed}
+        <button
+          type="button"
+          class="flex-shrink-0 relative flex items-center justify-center border-t-2 border-b-2 border-black bg-primary-100 cursor-row-resize z-10 select-none w-full hover:bg-primary-200 transition-colors duration-100"
+          style="height: 14px;"
+          onmousedown={onDividerMouseDown}
+          aria-label="Resize panels"
+          tabindex="0"
+        >
+          <div class="flex items-center gap-0.5 pointer-events-none">
+            {#each [0,1,2,3,4] as dot (dot)}
+              <div class="w-4 h-0.5 rounded-full bg-primary-700/40"></div>
+            {/each}
+          </div>
+        </button>
+      {/if}
+
+      <!-- Bottom panel: Span detail -->
+      <div class="flex-1 min-h-0 overflow-hidden border-t-0">
+        {#if selectedSpan}
+          <SpanDetailView
+            span={selectedSpan}
+            onSpanSelect={handleSpanSelect}
+            allSpans={spans}
+            slowestSpan={slowestSpan()}
+            resourceAttributes={trace.resource_attributes}
+            genaiSpan={selectedGenAiSpan}
+          />
+        {:else}
+          <div class="flex flex-col items-center justify-center h-full gap-3 text-center p-8">
+            <div class="w-12 h-12 border-2 border-black bg-surface-200 flex items-center justify-center rounded-base shadow-small">
+              <Layers class="w-6 h-6 text-primary-400" />
+            </div>
+            <p class="text-sm font-black text-primary-500 uppercase tracking-wide">Select a span to inspect</p>
+          </div>
+        {/if}
+      </div>
+
+    </div>
+  {/if}
 
 </div>

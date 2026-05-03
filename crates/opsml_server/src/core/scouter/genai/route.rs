@@ -14,35 +14,19 @@ use opsml_types::api::RequestType;
 use opsml_types::contracts::{Operation, ResourceType};
 use scouter_client::{
     AgentActivityQuery, AgentDashboardRequest, AgentDashboardResponse, ConversationQuery,
-    GenAiAgentActivityResponse, GenAiDashboardResponse, GenAiErrorBreakdownResponse,
-    GenAiMetricsRequest, GenAiModelUsageResponse, GenAiOperationBreakdownResponse,
-    GenAiSpanFilters, GenAiSpansResponse, GenAiTokenMetricsResponse, GenAiToolActivityResponse,
-    GenAiTraceMetricsRequest, GenAiTraceMetricsResponse, ModelPricing, ScouterServerError,
-    ToolDashboardRequest, ToolDashboardResponse,
+    GenAiAgentActivityResponse, GenAiDashBoardReqeust, GenAiDashboardResponse,
+    GenAiErrorBreakdownResponse, GenAiMetricsRequest, GenAiModelUsageResponse,
+    GenAiOperationBreakdownResponse, GenAiSpanFilters, GenAiSpansResponse,
+    GenAiTokenMetricsResponse, GenAiToolActivityResponse, GenAiTraceMetricsRequest,
+    GenAiTraceMetricsResponse, ScouterServerError, ToolDashboardRequest, ToolDashboardResponse,
 };
+use serde::Serialize;
 use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::{error, instrument};
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GenAiDashboardRequest {
-    pub service_name: Option<String>,
-    pub entity_id: Option<String>,
-    pub start_time: String,
-    pub end_time: String,
-    #[serde(default)]
-    pub bucket_interval: String,
-    pub agent_name: Option<String>,
-    pub provider_name: Option<String>,
-    pub operation_name: Option<String>,
-    pub model: Option<String>,
-    #[serde(default)]
-    pub model_pricing: HashMap<String, ModelPricing>,
-}
 
 async fn post_proxy<Req, Res>(
     state: &Arc<AppState>,

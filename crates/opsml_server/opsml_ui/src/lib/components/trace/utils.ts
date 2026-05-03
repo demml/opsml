@@ -13,6 +13,11 @@ import type {
   TraceFacetsResponse,
   TimeRange,
 } from "./types";
+import type {
+  GenAiTraceMetricsRequest,
+  GenAiTraceMetricsResponse,
+  GenAiSpanRecord,
+} from "$lib/components/scouter/genai/types";
 import {
   MODEL_KEY_ATTR,
   DATA_KEY_ATTR,
@@ -284,6 +289,39 @@ export async function getServerTracePage(
   }
 
   return response as TracePaginationResponse;
+}
+
+export function buildGenAiBySpanId(
+  genai: GenAiTraceMetricsResponse | null,
+): Record<string, GenAiSpanRecord> {
+  const map: Record<string, GenAiSpanRecord> = {};
+  if (genai?.has_genai_spans) {
+    for (const s of genai.spans) map[s.span_id] = s;
+  }
+  return map;
+}
+
+// BFF proxy returns the raw scouter response body, not the {response, error} envelope used by older trace endpoints.
+export async function getServerGenAiTraceMetrics(
+  fetch: typeof globalThis.fetch,
+  traceId: string,
+  body: GenAiTraceMetricsRequest = {
+    start_time: null,
+    end_time: null,
+    bucket_interval: "hour",
+    model_pricing: {},
+    span_limit: 500,
+    include_sensitive_content: true,
+  },
+): Promise<GenAiTraceMetricsResponse> {
+  const resp = await createInternalApiClient(fetch).post(
+    `${ServerPaths.GENAI_TRACE_METRICS}/${encodeURIComponent(traceId)}/metrics`,
+    body,
+  );
+  if (!resp.ok) {
+    throw new Error(`GenAI trace metrics fetch failed: ${resp.status}`);
+  }
+  return (await resp.json()) as GenAiTraceMetricsResponse;
 }
 
 export async function getServerTraceSpansById(
