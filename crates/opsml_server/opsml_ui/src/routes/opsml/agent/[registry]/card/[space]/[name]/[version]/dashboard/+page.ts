@@ -13,20 +13,7 @@ import type {
   GenAiDashboardResponse,
 } from '$lib/components/card/agent/observability/types';
 import type { PromptCard } from '$lib/components/card/card_interfaces/promptcard';
-
-/**
- * Map prompt cards (filtered to those with an eval profile by the parent
- * layout loader) into the lightweight option shape consumed by FilterBar.
- */
-export function toEvalProfileOptions(cards: PromptCard[]): EvalProfileOption[] {
-  return cards
-    .filter((pc) => !!pc.eval_profile)
-    .map((pc) => ({
-      uid: pc.eval_profile!.config.uid,
-      alias: pc.eval_profile!.alias ?? null,
-      name: pc.name,
-    }));
-}
+import { toEvalProfileOptions } from '$lib/components/card/agent/observability/utils';
 
 export const ssr = false;
 

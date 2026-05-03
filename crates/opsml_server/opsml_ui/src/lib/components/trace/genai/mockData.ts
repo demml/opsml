@@ -287,31 +287,33 @@ function buildSpan(
   };
 }
 
-export function getMockGenAiTraceMetrics(
-  traceId: string,
-  spanIds: string[],
-): GenAiTraceMetricsResponse {
-  const traceStart = new Date(Date.now() - 60_000);
-  const usableSpecs = SPECS.slice(0, spanIds.length);
-  const spans = usableSpecs.map((spec, i) =>
-    buildSpan(traceId, spanIds[i], spec, traceStart),
-  );
+// Spec indices used for the "partial" scenario: LLM + embedding only, no tools/agents/errors
+const PARTIAL_SPEC_INDICES = [1, 3, 6];
 
-  if (spans.length === 0) {
-    return emptyResponse(traceId);
+type MockScenario = "full" | "partial" | "empty";
+
+function hashTraceId(traceId: string): number {
+  let h = 0;
+  for (let i = 0; i < traceId.length; i++) {
+    h = (h * 31 + traceId.charCodeAt(i)) & 0xffff;
   }
+  return h;
+}
 
+function getScenario(traceId: string): MockScenario {
+  const n = hashTraceId(traceId) % 10;
+  if (n < 2) return "empty";
+  if (n < 5) return "partial";
+  return "full";
+}
+
+function buildAggregates(spans: GenAiSpanRecord[], traceStart: Date, includeAgents: boolean) {
   const totalIn = spans.reduce((a, s) => a + (s.input_tokens ?? 0), 0);
   const totalOut = spans.reduce((a, s) => a + (s.output_tokens ?? 0), 0);
-  const totalCacheCreate = spans.reduce(
-    (a, s) => a + (s.cache_creation_input_tokens ?? 0),
-    0,
-  );
-  const totalCacheRead = spans.reduce(
-    (a, s) => a + (s.cache_read_input_tokens ?? 0),
-    0,
-  );
+  const totalCacheCreate = spans.reduce((a, s) => a + (s.cache_creation_input_tokens ?? 0), 0);
+  const totalCacheRead = spans.reduce((a, s) => a + (s.cache_read_input_tokens ?? 0), 0);
   const errorCount = spans.filter((s) => s.error_type).length;
+  const avgDuration = spans.reduce((a, s) => a + s.duration_ms, 0) / spans.length;
 
   const tokenBuckets: GenAiTokenBucket[] = [
     {
@@ -410,18 +412,6 @@ export function getMockGenAiTraceMetrics(
     count: v,
   }));
 
-  const agents: GenAiAgentActivity[] = [
-    {
-      agent_name: "research_agent",
-      agent_id: "agent-research_agent",
-      conversation_id: CONVERSATION_ID,
-      span_count: spans.length,
-      total_input_tokens: totalIn,
-      total_output_tokens: totalOut,
-      last_seen: spans[spans.length - 1].end_time,
-    },
-  ];
-
   const totalCost =
     (totalIn / 1e6) * 3.0 +
     (totalOut / 1e6) * 15.0 +
@@ -437,44 +427,121 @@ export function getMockGenAiTraceMetrics(
     total_cost: (m.total_input_tokens / 1e6) * 3.0 + (m.total_output_tokens / 1e6) * 15.0,
   }));
 
-  const dashboardBuckets: AgentMetricBucket[] = [
-    {
-      bucket_start: traceStart.toISOString(),
-      span_count: spans.length,
-      error_count: errorCount,
-      error_rate: errorCount / spans.length,
-      avg_duration_ms:
-        spans.reduce((a, s) => a + s.duration_ms, 0) / spans.length,
-      p50_duration_ms: 612,
-      p95_duration_ms: 2210,
-      p99_duration_ms: spans[0]?.duration_ms ?? 0,
-      total_input_tokens: totalIn,
-      total_output_tokens: totalOut,
-      total_cache_creation_tokens: totalCacheCreate,
-      total_cache_read_tokens: totalCacheRead,
-      total_cost: totalCost,
-    },
-  ];
+  const agents: GenAiAgentActivity[] = includeAgents
+    ? [
+        {
+          agent_name: "research_agent",
+          agent_id: "agent-research_agent",
+          conversation_id: CONVERSATION_ID,
+          span_count: spans.length,
+          total_input_tokens: totalIn,
+          total_output_tokens: totalOut,
+          last_seen: spans[spans.length - 1].end_time,
+        },
+      ]
+    : [];
 
   const agent_dashboard: AgentDashboardResponse = {
     summary: {
       total_requests: spans.length,
-      avg_duration_ms:
-        spans.reduce((a, s) => a + s.duration_ms, 0) / spans.length,
-      p50_duration_ms: 612,
-      p95_duration_ms: 2210,
-      p99_duration_ms: spans[0]?.duration_ms ?? 0,
+      avg_duration_ms: avgDuration,
+      p50_duration_ms: includeAgents ? 612 : null,
+      p95_duration_ms: includeAgents ? 2210 : null,
+      p99_duration_ms: includeAgents ? (spans[0]?.duration_ms ?? 0) : null,
       overall_error_rate: errorCount / spans.length,
       total_input_tokens: totalIn,
       total_output_tokens: totalOut,
       total_cache_creation_tokens: totalCacheCreate,
       total_cache_read_tokens: totalCacheRead,
-      unique_agent_count: 1,
-      unique_conversation_count: 1,
+      unique_agent_count: includeAgents ? 1 : 0,
+      unique_conversation_count: includeAgents ? 1 : 0,
       cost_by_model: costByModel,
     },
-    buckets: dashboardBuckets,
+    buckets: includeAgents
+      ? [
+          {
+            bucket_start: traceStart.toISOString(),
+            span_count: spans.length,
+            error_count: errorCount,
+            error_rate: errorCount / spans.length,
+            avg_duration_ms: avgDuration,
+            p50_duration_ms: 612,
+            p95_duration_ms: 2210,
+            p99_duration_ms: spans[0]?.duration_ms ?? 0,
+            total_input_tokens: totalIn,
+            total_output_tokens: totalOut,
+            total_cache_creation_tokens: totalCacheCreate,
+            total_cache_read_tokens: totalCacheRead,
+            total_cost: totalCost,
+          },
+        ]
+      : [],
   };
+
+  return {
+    tokenBuckets,
+    operations,
+    models,
+    toolAggregates,
+    toolTimeSeries,
+    errors,
+    agents,
+    agent_dashboard,
+  };
+}
+
+export function getMockGenAiTraceMetrics(
+  traceId: string,
+  spanIds: string[],
+): GenAiTraceMetricsResponse {
+  const scenario = getScenario(traceId);
+
+  if (scenario === "empty" || spanIds.length === 0) {
+    return emptyResponse(traceId);
+  }
+
+  const traceStart = new Date(Date.now() - 60_000);
+
+  if (scenario === "partial") {
+    // LLM + embedding spans only: no tool calls, no agent orchestration, no errors, no evals
+    const partialSpecs = PARTIAL_SPEC_INDICES
+      .filter((i) => i < spanIds.length)
+      .map((specIdx, slotIdx) => ({ spec: SPECS[specIdx], spanId: spanIds[slotIdx] }));
+
+    if (partialSpecs.length === 0) {
+      return emptyResponse(traceId);
+    }
+
+    const spans = partialSpecs.map(({ spec, spanId }) => {
+      const s = buildSpan(traceId, spanId, spec, traceStart);
+      s.eval_results = [];
+      s.agent_name = null;
+      s.agent_id = null;
+      return s;
+    });
+
+    const agg = buildAggregates(spans, traceStart, false);
+    return {
+      trace_id: traceId,
+      has_genai_spans: true,
+      spans,
+      span_limit: 500,
+      spans_truncated: false,
+      sensitive_content_redacted: false,
+      token_metrics: { buckets: agg.tokenBuckets },
+      operation_breakdown: { operations: agg.operations },
+      model_usage: { models: agg.models },
+      agent_activity: { agents: [] },
+      agent_dashboard: agg.agent_dashboard,
+      tool_dashboard: { aggregates: [], time_series: [] },
+      error_breakdown: { errors: [] },
+    };
+  }
+
+  // full scenario
+  const usableSpecs = SPECS.slice(0, spanIds.length);
+  const spans = usableSpecs.map((spec, i) => buildSpan(traceId, spanIds[i], spec, traceStart));
+  const agg = buildAggregates(spans, traceStart, true);
 
   return {
     trace_id: traceId,
@@ -483,16 +550,13 @@ export function getMockGenAiTraceMetrics(
     span_limit: 500,
     spans_truncated: false,
     sensitive_content_redacted: false,
-    token_metrics: { buckets: tokenBuckets },
-    operation_breakdown: { operations },
-    model_usage: { models },
-    agent_activity: { agents },
-    agent_dashboard,
-    tool_dashboard: {
-      aggregates: toolAggregates,
-      time_series: toolTimeSeries,
-    },
-    error_breakdown: { errors },
+    token_metrics: { buckets: agg.tokenBuckets },
+    operation_breakdown: { operations: agg.operations },
+    model_usage: { models: agg.models },
+    agent_activity: { agents: agg.agents },
+    agent_dashboard: agg.agent_dashboard,
+    tool_dashboard: { aggregates: agg.toolAggregates, time_series: agg.toolTimeSeries },
+    error_breakdown: { errors: agg.errors },
   };
 }
 

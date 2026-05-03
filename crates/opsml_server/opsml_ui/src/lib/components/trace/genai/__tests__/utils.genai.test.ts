@@ -49,7 +49,7 @@ function makeGenAiResponse(traceId = "t1"): GenAiTraceMetricsResponse {
 const mockPost = vi.fn();
 
 beforeEach(() => {
-  vi.mocked(createInternalApiClient).mockReturnValue({ post: mockPost } as ReturnType<typeof createInternalApiClient>);
+  vi.mocked(createInternalApiClient).mockReturnValue({ post: mockPost } as unknown as ReturnType<typeof createInternalApiClient>);
   mockPost.mockReset();
 });
 
@@ -104,7 +104,7 @@ describe("buildGenAiBySpanId", () => {
     const spans = [
       { span_id: "a", trace_id: "t1" },
       { span_id: "b", trace_id: "t1" },
-    ] as Parameters<typeof buildGenAiBySpanId>[0]["spans"];
+    ] as GenAiTraceMetricsResponse["spans"];
     const resp = { ...makeGenAiResponse(), has_genai_spans: true, spans };
     const map = buildGenAiBySpanId(resp);
     expect(Object.keys(map)).toHaveLength(2);

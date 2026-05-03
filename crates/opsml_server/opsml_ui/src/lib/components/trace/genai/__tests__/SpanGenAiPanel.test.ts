@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/svelte";
+import { render, screen, fireEvent } from "@testing-library/svelte";
 import SpanGenAiPanel from "../SpanGenAiPanel.svelte";
 import type {
   GenAiSpanRecord,
@@ -60,72 +60,72 @@ function makeSpan(overrides: Partial<GenAiSpanRecord> = {}): GenAiSpanRecord {
 }
 
 describe("SpanGenAiPanel", () => {
-  it("renders provider/model header chips", () => {
-    const { container } = render(SpanGenAiPanel, { props: { span: makeSpan() } });
-    expect(container.textContent).toContain("anthropic");
-    expect(container.textContent).toContain("claude-3-5-sonnet");
-  });
-
-  it("hides Input/Output/System/Tool/Evals when their fields are absent", () => {
+  it("renders all sub-tab buttons", () => {
     render(SpanGenAiPanel, { props: { span: makeSpan() } });
-    expect(screen.queryByText("Input")).toBeNull();
-    expect(screen.queryByText("Output")).toBeNull();
-    expect(screen.queryByText("System")).toBeNull();
-    expect(screen.queryByText("Tool")).toBeNull();
-    expect(screen.queryByText("Evals")).toBeNull();
+    for (const label of [
+      "Messages",
+      "Eval",
+      "Request",
+      "Agent",
+      "Tool",
+      "Server",
+      "Raw",
+    ]) {
+      expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
+    }
   });
 
-  it("renders parsed input messages with role badges", () => {
+  it("messages tab is default and shows empty-state when no message fields", () => {
+    const { container } = render(SpanGenAiPanel, { props: { span: makeSpan() } });
+    expect(container.textContent).toContain(
+      "no message content captured for this span",
+    );
+  });
+
+  it("renders parsed input messages on messages tab", () => {
     const span = makeSpan({
-      input_messages: JSON.stringify([
-        { role: "user", content: "hello" },
-      ]),
+      input_messages: JSON.stringify([{ role: "user", content: "hello" }]),
     });
     const { container } = render(SpanGenAiPanel, { props: { span } });
-    expect(screen.getByText("Input")).toBeInTheDocument();
+    expect(container.textContent).toContain("input_messages");
     expect(container.textContent).toContain("user");
     expect(container.textContent).toContain("hello");
   });
 
-  it("renders parsed output messages", () => {
+  it("renders parsed output messages on messages tab", () => {
     const span = makeSpan({
       output_messages: JSON.stringify([
         { role: "assistant", content: "hi back" },
       ]),
     });
     const { container } = render(SpanGenAiPanel, { props: { span } });
-    expect(screen.getByText("Output")).toBeInTheDocument();
+    expect(container.textContent).toContain("output_messages");
     expect(container.textContent).toContain("assistant");
     expect(container.textContent).toContain("hi back");
   });
 
-  it("falls back to raw <pre> for malformed input_messages json", () => {
-    const span = makeSpan({ input_messages: "not json" });
+  it("renders system_instructions block", () => {
+    const span = makeSpan({ system_instructions: "be helpful" });
     const { container } = render(SpanGenAiPanel, { props: { span } });
-    expect(screen.getByText("Input")).toBeInTheDocument();
-    expect(container.textContent).toContain("not json");
-  });
-
-  it("renders system instructions block", () => {
-    const span = makeSpan({ system_instructions: JSON.stringify("be helpful") });
-    const { container } = render(SpanGenAiPanel, { props: { span } });
-    expect(screen.getByText("System")).toBeInTheDocument();
+    expect(container.textContent).toContain("system_instructions");
     expect(container.textContent).toContain("be helpful");
   });
 
-  it("renders tool block when tool_name set", () => {
-    const span = makeSpan({
-      tool_name: "search",
-      tool_type: "function",
-      tool_call_id: "call_1",
-    });
+  it("falls back to <pre> on malformed input_messages json", () => {
+    const span = makeSpan({ input_messages: "not json" });
     const { container } = render(SpanGenAiPanel, { props: { span } });
-    expect(screen.getByText("Tool")).toBeInTheDocument();
-    expect(container.textContent).toContain("search");
-    expect(container.textContent).toContain("call_1");
+    expect(container.textContent).toContain("not json");
   });
 
-  it("renders eval results", () => {
+  it("eval tab shows empty state when no eval_results", async () => {
+    render(SpanGenAiPanel, { props: { span: makeSpan() } });
+    await fireEvent.click(screen.getByRole("button", { name: "Eval" }));
+    expect(
+      screen.getByText("no eval_results recorded for this span"),
+    ).toBeInTheDocument();
+  });
+
+  it("eval tab renders eval results when present", async () => {
     const ev: GenAiEvalResult = {
       name: "groundedness",
       score_label: "good",
@@ -135,68 +135,48 @@ describe("SpanGenAiPanel", () => {
     };
     const span = makeSpan({ eval_results: [ev] });
     const { container } = render(SpanGenAiPanel, { props: { span } });
-    expect(screen.getByText("Evals")).toBeInTheDocument();
+    await fireEvent.click(screen.getByRole("button", { name: "Eval" }));
     expect(container.textContent).toContain("groundedness");
     expect(container.textContent).toContain("well-grounded");
+    expect(container.textContent).toContain("0.8");
   });
 
-  it("renders arrow model label when request and response models differ", () => {
+  it("params tab shows request_model and finish_reasons", async () => {
+    render(SpanGenAiPanel, { props: { span: makeSpan() } });
+    await fireEvent.click(screen.getByRole("button", { name: "Request" }));
+    expect(screen.getByText("request_model")).toBeInTheDocument();
+    expect(screen.getByText("finish_reasons")).toBeInTheDocument();
+  });
+
+  it("tool tab shows empty state when tool fields absent", async () => {
+    render(SpanGenAiPanel, { props: { span: makeSpan() } });
+    await fireEvent.click(screen.getByRole("button", { name: "Tool" }));
+    expect(screen.getByText("no tool data for this span")).toBeInTheDocument();
+  });
+
+  it("tool tab renders tool fields when present", async () => {
     const span = makeSpan({
-      request_model: "claude-3-opus",
-      response_model: "claude-3-5-sonnet",
+      tool_name: "search",
+      tool_type: "function",
+      tool_call_id: "call_1",
     });
     const { container } = render(SpanGenAiPanel, { props: { span } });
-    expect(container.textContent).toContain("claude-3-opus → claude-3-5-sonnet");
+    await fireEvent.click(screen.getByRole("button", { name: "Tool" }));
+    expect(container.textContent).toContain("search");
+    expect(container.textContent).toContain("call_1");
   });
 
-  it("renders dash when both models are null", () => {
-    const span = makeSpan({ request_model: null, response_model: null });
-    const { container } = render(SpanGenAiPanel, { props: { span } });
-    expect(container.textContent).toContain("—");
-  });
-
-  it("renders integer score via fmtInt for score_value > 1", () => {
-    const ev: GenAiEvalResult = {
-      name: "relevance",
-      score_label: null,
-      score_value: 5,
-      explanation: null,
-      response_id: null,
-    };
-    const span = makeSpan({ eval_results: [ev] });
-    const { container } = render(SpanGenAiPanel, { props: { span } });
-    expect(container.textContent).toContain("relevance");
-    expect(container.textContent).toContain("5");
-  });
-
-  it("renders percentage score via fmtPct for negative score_value within [-1,0]", () => {
-    const ev: GenAiEvalResult = {
-      name: "accuracy",
-      score_label: null,
-      score_value: -0.3,
-      explanation: null,
-      response_id: null,
-    };
-    const span = makeSpan({ eval_results: [ev] });
-    const { container } = render(SpanGenAiPanel, { props: { span } });
-    expect(container.textContent).toContain("accuracy");
-  });
-
-  it("renders no score chip when score_value is null", () => {
-    const ev: GenAiEvalResult = {
-      name: "check",
-      score_label: null,
-      score_value: null,
-      explanation: null,
-      response_id: null,
-    };
-    const span = makeSpan({ eval_results: [ev] });
-    render(SpanGenAiPanel, { props: { span } });
-    expect(screen.getByText("check")).toBeInTheDocument();
+  it("raw tab dumps the span json", async () => {
+    const { container } = render(SpanGenAiPanel, { props: { span: makeSpan() } });
+    await fireEvent.click(screen.getByRole("button", { name: "Raw" }));
+    expect(container.textContent).toContain("span-1");
+    expect(container.textContent).toContain("trace-1");
   });
 
   it("does not introduce internal overflow-y-auto", () => {
-    const { container } = render(SpanGenAiPanel, { props: { span: makeSpan() } });
+    const { container } = render(SpanGenAiPanel, {
+      props: { span: makeSpan() },
+    });
     expect(container.querySelector(".overflow-y-auto")).toBeNull();
   });
 
@@ -216,5 +196,12 @@ describe("SpanGenAiPanel", () => {
     });
     const { container } = render(SpanGenAiPanel, { props: { span } });
     expect(container.innerHTML).not.toContain("dark:");
+  });
+
+  it("does not include text-gray-* classes", () => {
+    const { container } = render(SpanGenAiPanel, {
+      props: { span: makeSpan() },
+    });
+    expect(container.innerHTML).not.toMatch(/text-gray-\d+/);
   });
 });

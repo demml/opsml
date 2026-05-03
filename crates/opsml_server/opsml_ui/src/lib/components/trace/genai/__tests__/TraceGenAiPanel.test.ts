@@ -1,10 +1,10 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/svelte";
 
-vi.mock("$lib/components/card/agent/observability/VolumeChart.svelte", () => ({ default: vi.fn() }));
-vi.mock("$lib/components/card/agent/observability/LatencyChart.svelte", () => ({ default: vi.fn() }));
-vi.mock("$lib/components/card/agent/observability/TokenChart.svelte", () => ({ default: vi.fn() }));
-vi.mock("$lib/components/card/agent/observability/ErrorRateChart.svelte", () => ({ default: vi.fn() }));
+vi.mock(
+  "$lib/components/card/agent/observability/GenAiChartCard.svelte",
+  () => ({ default: vi.fn() }),
+);
 
 import TraceGenAiPanel from "../TraceGenAiPanel.svelte";
 import type {
@@ -119,53 +119,47 @@ function makeGenai(
 }
 
 describe("TraceGenAiPanel", () => {
-  it("renders KPI rail summary fields", () => {
+  it("renders KPI rail with required labels", () => {
     const { container } = render(TraceGenAiPanel, {
       props: { genai: makeGenai() },
     });
-    expect(container.textContent).toContain("claude-3-5-sonnet");
+    const text = container.textContent ?? "";
+    expect(text).toContain("GenAI Spans");
+    expect(text).toContain("p50");
+    expect(text).toContain("p95");
+    expect(text).toContain("Spend");
+    expect(text).toContain("Errors");
+    expect(text).toContain("Evals");
   });
 
   it("renders models, tools, agents tables", () => {
     const { container } = render(TraceGenAiPanel, {
       props: { genai: makeGenai() },
     });
-    expect(container.textContent).toContain("claude-3-5-sonnet");
-    expect(container.textContent).toContain("search");
-    expect(container.textContent).toContain("planner");
+    const text = container.textContent ?? "";
+    expect(text).toContain("claude-3-5-sonnet");
+    expect(text).toContain("search");
+    expect(text).toContain("planner");
   });
 
-  it("hides operations table when empty", () => {
-    render(TraceGenAiPanel, { props: { genai: makeGenai() } });
-    expect(screen.queryByText("Operations")).toBeNull();
-  });
-
-  it("renders operations table when populated", () => {
-    const genai = makeGenai({
-      operation_breakdown: {
-        operations: [
-          {
-            operation_name: "chat.completions",
-            provider_name: "anthropic",
-            span_count: 5,
-            avg_duration_ms: 200,
-            total_input_tokens: 500,
-            total_output_tokens: 250,
-            error_rate: 0,
-          },
-        ],
-      },
-    });
+  it("shows empty-state row when no tools", () => {
+    const genai = makeGenai({ tool_dashboard: { aggregates: [], time_series: [] } });
     const { container } = render(TraceGenAiPanel, { props: { genai } });
-    expect(container.textContent).toContain("chat.completions");
+    expect(container.textContent).toContain("no tool calls");
   });
 
-  it("renders errors bars when populated", () => {
+  it("renders error breakdown rows", () => {
     const genai = makeGenai({
       error_breakdown: { errors: [{ error_type: "TimeoutError", count: 3 }] },
     });
     const { container } = render(TraceGenAiPanel, { props: { genai } });
     expect(container.textContent).toContain("TimeoutError");
+  });
+
+  it("hides Agent Activity table when no agents", () => {
+    const genai = makeGenai({ agent_activity: { agents: [] } });
+    render(TraceGenAiPanel, { props: { genai } });
+    expect(screen.queryByText("Agent Activity")).toBeNull();
   });
 
   it("does not introduce internal overflow-y-auto", () => {
@@ -180,5 +174,12 @@ describe("TraceGenAiPanel", () => {
       props: { genai: makeGenai() },
     });
     expect(container.innerHTML).not.toContain("dark:");
+  });
+
+  it("does not include text-gray-* classes", () => {
+    const { container } = render(TraceGenAiPanel, {
+      props: { genai: makeGenai() },
+    });
+    expect(container.innerHTML).not.toMatch(/text-gray-\d+/);
   });
 });
