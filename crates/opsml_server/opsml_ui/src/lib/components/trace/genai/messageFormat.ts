@@ -80,3 +80,12 @@ export function extractMessageText(m: ChatMessage): string {
   }
   return parts.join("\n\n");
 }
+
+export function prettyJson(s: string | null): string {
+  if (!s) return "—";
+  try {
+    return JSON.stringify(JSON.parse(s), null, 2);
+  } catch {
+    return s;
+  }
+}

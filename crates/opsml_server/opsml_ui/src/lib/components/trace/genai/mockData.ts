@@ -308,6 +308,7 @@ function getScenario(traceId: string): MockScenario {
 }
 
 function buildAggregates(spans: GenAiSpanRecord[], traceStart: Date, includeAgents: boolean) {
+  if (spans.length === 0) throw new Error('buildAggregates requires non-empty spans');
   const totalIn = spans.reduce((a, s) => a + (s.input_tokens ?? 0), 0);
   const totalOut = spans.reduce((a, s) => a + (s.output_tokens ?? 0), 0);
   const totalCacheCreate = spans.reduce((a, s) => a + (s.cache_creation_input_tokens ?? 0), 0);

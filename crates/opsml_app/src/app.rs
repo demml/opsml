@@ -556,6 +556,9 @@ impl AppState {
         instrument_kwargs.set_item("propagate_baggage", propagate_baggage)?;
         instrument_kwargs.set_item("service_name", self.service_info.namespace())?;
 
+        // debug log all kwargs being passed to instrumentor
+        debug!("Instrumenting with kwargs: {:?}", instrument_kwargs);
+
         // call instrumentor with provided arguments and kwargs
         let _instrumented = instrumentor.call_method("instrument", (), Some(&instrument_kwargs))?;
         Ok(())

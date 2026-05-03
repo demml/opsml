@@ -138,7 +138,7 @@ describe("SpanGenAiPanel", () => {
     await fireEvent.click(screen.getByRole("button", { name: "Eval" }));
     expect(container.textContent).toContain("groundedness");
     expect(container.textContent).toContain("well-grounded");
-    expect(container.textContent).toContain("0.8");
+    expect(container.textContent).toContain("80.00%");
   });
 
   it("params tab shows request_model and finish_reasons", async () => {

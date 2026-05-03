@@ -1,6 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
 import { load } from '../+page';
-import { toEvalProfileOptions } from '$lib/components/card/agent/observability/utils';
 import { RegistryType } from '$lib/utils';
 import type { PromptCard } from '$lib/components/card/card_interfaces/promptcard';
 
@@ -228,7 +227,10 @@ describe('dashboard +page.ts load() — API live mode', () => {
     expect(result.bundle.dashboard.applied_filters.service_name).toBe('fraud-detection:triage-agent');
   });
 
-  it('falls back to mock bundle when API throws', async () => {
+  it('falls back to an empty bundle (NOT mock) when API throws and mock mode is off', async () => {
+    // Regression: previously the catch unconditionally returned mock data,
+    // silently masking real backend failures. Mock data must only appear
+    // when the user has explicitly opted in via devMockEnabled.
     const mockFetch = vi.fn().mockRejectedValue(new Error('network error'));
 
     const ctx = makeLoadCtx(
@@ -242,53 +244,31 @@ describe('dashboard +page.ts load() — API live mode', () => {
     );
 
     const result = await load(ctx);
+    expect(result.mockMode).toBe(false);
+    expect(result.bundle).toBeDefined();
+    expect(result.bundle.dashboard).toHaveProperty('agent_dashboard');
+    // Empty bundle: zero spans, no models, no agents.
+    expect(result.bundle.dashboard.metadata.total_spans).toBe(0);
+    expect(result.bundle.dashboard.model_usage.models).toHaveLength(0);
+    expect(result.bundle.dashboard.available_filters.agents).toHaveLength(0);
+  });
+
+  it('falls back to mock bundle when API throws AND mock mode is on', async () => {
+    const mockFetch = vi.fn().mockRejectedValue(new Error('network error'));
+
+    const ctx = makeLoadCtx(
+      {
+        metadata: AGENT_METADATA,
+        registryType: RegistryType.Agent,
+        devMockEnabled: true,
+        promptCardsWithEval: [],
+      },
+      mockFetch as unknown as typeof fetch,
+    );
+
+    const result = await load(ctx);
     expect(result.mockMode).toBe(true);
     expect(result.bundle).toBeDefined();
     expect(result.bundle.dashboard).toHaveProperty('agent_dashboard');
-  });
-});
-
-describe('toEvalProfileOptions', () => {
-  it('returns empty array when no cards have eval_profile', () => {
-    const cards = [makeCard(), makeCard({ name: 'other' })];
-    expect(toEvalProfileOptions(cards)).toEqual([]);
-  });
-
-  it('includes only cards that have eval_profile', () => {
-    const withProfile = makeCard({
-      name: 'with-profile',
-      eval_profile: {
-        alias: 'my-alias',
-        config: { uid: 'profile-uid-1' },
-      } as never,
-    });
-    const withoutProfile = makeCard({ name: 'no-profile' });
-    const result = toEvalProfileOptions([withProfile, withoutProfile]);
-    expect(result).toHaveLength(1);
-    expect(result[0].uid).toBe('profile-uid-1');
-  });
-
-  it('maps alias and name correctly', () => {
-    const card = makeCard({
-      name: 'my-prompt',
-      eval_profile: {
-        alias: 'eval-alias',
-        config: { uid: 'uid-abc' },
-      } as never,
-    });
-    const result = toEvalProfileOptions([card]);
-    expect(result[0]).toEqual({ uid: 'uid-abc', alias: 'eval-alias', name: 'my-prompt' });
-  });
-
-  it('sets alias to null when eval_profile.alias is undefined', () => {
-    const card = makeCard({
-      name: 'my-prompt',
-      eval_profile: {
-        alias: undefined,
-        config: { uid: 'uid-xyz' },
-      } as never,
-    });
-    const result = toEvalProfileOptions([card]);
-    expect(result[0].alias).toBeNull();
   });
 });

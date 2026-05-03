@@ -39,6 +39,7 @@
   );
 
   async function handleTraceClick(trace: TraceListItem) {
+    const requestedId = trace.trace_id;
     isLoadingDetail = true;
     try {
       const spans = await getServerTraceSpans(fetch, {
@@ -62,6 +63,7 @@
       const genai = mockMode
         ? getMockGenAiTraceMetrics(trace.trace_id, selectedTraceSpans?.spans.map((s) => s.span_id) ?? [])
         : await getServerGenAiTraceMetrics(fetch, trace.trace_id);
+      if (selectedTrace?.trace_id !== requestedId) return;
       selectedGenAi = genai;
       selectedGenAiBySpanId = buildGenAiBySpanId(genai);
     } catch {

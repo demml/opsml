@@ -14,7 +14,7 @@
   const roleClasses: Record<MessageRole, string> = {
     system: 'bg-surface-200 text-primary-800',
     user: 'bg-surface-100 text-primary-800',
-    assistant: 'bg-primary-500 text-surface-50',
+    assistant: 'bg-primary-500 text-primary-800',
     tool: 'bg-surface-200 text-primary-700',
     developer: 'bg-surface-200 text-primary-800',
     function: 'bg-surface-200 text-primary-700',

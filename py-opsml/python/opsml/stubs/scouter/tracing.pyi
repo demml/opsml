@@ -87,13 +87,15 @@ class TraceFilters:
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
     limit: Optional[int]
-    cursor_created_at: Optional[datetime.datetime]
+    cursor_start_time: Optional[datetime.datetime]
     cursor_trace_id: Optional[str]
     direction: Optional[str]
     attribute_filters: Optional[List[str]]
     trace_ids: Optional[List[str]]
     entity_uid: Optional[str]
     queue_uid: Optional[str]
+    duration_min_ms: Optional[int]
+    duration_max_ms: Optional[int]
 
     def __init__(
         self,
@@ -103,13 +105,14 @@ class TraceFilters:
         start_time: Optional[datetime.datetime] = None,
         end_time: Optional[datetime.datetime] = None,
         limit: Optional[int] = None,
-        cursor_created_at: Optional[datetime.datetime] = None,
+        cursor_start_time: Optional[datetime.datetime] = None,
         cursor_trace_id: Optional[str] = None,
-        direction: Optional[str] = None,
         attribute_filters: Optional[List[str]] = None,
         trace_ids: Optional[List[str]] = None,
         entity_uid: Optional[str] = None,
         queue_uid: Optional[str] = None,
+        duration_min_ms: Optional[int] = None,
+        duration_max_ms: Optional[int] = None,
     ) -> None:
         """Initialize trace filters.
 
@@ -126,12 +129,10 @@ class TraceFilters:
                 End time boundary (UTC)
             limit:
                 Maximum number of results to return
-            cursor_created_at:
-                Pagination cursor: created at timestamp
+            cursor_start_time:
+                Pagination cursor: trace start timestamp
             cursor_trace_id:
                 Pagination cursor: trace ID
-            direction:
-                Pagination direction ("next" or "prev")
             attribute_filters:
                 List of attribute filters in the format "key=value" or "key!=value"
             trace_ids:
@@ -140,6 +141,10 @@ class TraceFilters:
                 Filter by associated entity UID
             queue_uid:
                 Filter by associated queue UID
+            duration_min_ms:
+                Minimum trace duration (inclusive)
+            duration_max_ms:
+                Maximum trace duration (inclusive)
         """
 
 class TraceMetricBucket:
@@ -252,183 +257,142 @@ class BatchConfig:
                 The maximum batch size for exporting spans. Defaults to 512.
         """
 
-def init_tracer(
-    service_name: str = "scouter_service",
-    scope: str = "scouter.tracer.{version}",
+class ScouterResourceConfig:
+    """Process-wide OpenTelemetry Resource configuration for Scouter tracing.
+
+    Resource attributes describe the process emitting telemetry. They are
+    independent from an individual tracer's instrumentation scope. Scouter
+    resolves service identity using OpenTelemetry precedence:
+    explicit constructor values > OTEL_SERVICE_NAME > OTEL_RESOURCE_ATTRIBUTES >
+    "unknown_service".
+
+    Attributes:
+        service_name:
+            Logical service name for the process, written to the OTel
+            `service.name` Resource attribute.
+        service_version:
+            Optional version for the running service, written to
+            `service.version`.
+        service_namespace:
+            Optional namespace for the running service, written to
+            `service.namespace`.
+        service_instance_id:
+            Optional stable instance identifier. When unset, Scouter generates a
+            UUIDv4 value for `service.instance.id`.
+        extra_attributes:
+            Additional Resource attributes to attach to every exported span.
+            Explicit values override matching keys from OTEL_RESOURCE_ATTRIBUTES.
+    """
+
+    service_name: Optional[str]
+    service_version: Optional[str]
+    service_namespace: Optional[str]
+    service_instance_id: Optional[str]
+    extra_attributes: Dict[str, str]
+
+    def __init__(
+        self,
+        service_name: Optional[str] = None,
+        service_version: Optional[str] = None,
+        service_namespace: Optional[str] = None,
+        service_instance_id: Optional[str] = None,
+        extra_attributes: Optional[Dict[str, str]] = None,
+    ) -> None:
+        """Create a Resource configuration.
+
+        Args:
+            service_name:
+                Explicit `service.name`. If omitted, Scouter checks
+                OTEL_SERVICE_NAME, then OTEL_RESOURCE_ATTRIBUTES, then defaults
+                to "unknown_service".
+            service_version:
+                Explicit `service.version`.
+            service_namespace:
+                Explicit `service.namespace`.
+            service_instance_id:
+                Explicit `service.instance.id`. If omitted, Scouter generates a
+                UUIDv4 instance ID.
+            extra_attributes:
+                Additional Resource attributes. These override matching
+                OTEL_RESOURCE_ATTRIBUTES keys.
+        """
+
+def configure_tracing(
+    resource_config: Optional[ScouterResourceConfig] = None,
     transport_config: Optional[
         HttpConfig | KafkaConfig | RabbitMQConfig | RedisConfig | GrpcConfig | MockConfig
     ] = None,
     exporter: Optional[HttpSpanExporter | GrpcSpanExporter | StdoutSpanExporter | TestSpanExporter] = None,
     batch_config: Optional[BatchConfig] = None,
     sample_ratio: Optional[float] = None,
-    scouter_queue: Optional[ScouterQueue] = None,
-    schema_url: Optional[str] = None,
-    scope_attributes: Optional[SerializedType] = None,
-    default_attributes: Optional[SerializedType] = None,
-    default_entity_uid: Optional[str] = None,
-) -> "BaseTracer":
-    """
-    Initialize the tracer for a service with dual export capability.
-    ```
-    ╔════════════════════════════════════════════╗
-    ║          DUAL EXPORT ARCHITECTURE          ║
-    ╠════════════════════════════════════════════╣
-    ║                                            ║
-    ║  Your Application                          ║
-    ║       │                                    ║
-    ║       │  init_tracer()                     ║
-    ║       │                                    ║
-    ║       ├──────────────────┬                 ║
-    ║       │                  │                 ║
-    ║       ▼                  ▼                 ║
-    ║  ┌─────────────┐   ┌──────────────┐        ║
-    ║  │  Transport  │   │   Optional   │        ║
-    ║  │   to        │   │     OTEL     │        ║
-    ║  │  Scouter    │   │  Exporter    │        ║
-    ║  │  (Required) │   │              │        ║
-    ║  └──────┬──────┘   └──────┬───────┘        ║
-    ║         │                 │                ║
-    ║         │                 │                ║
-    ║    ┌────▼────┐       ┌────▼────┐           ║
-    ║    │ Scouter │       │  OTEL   │           ║
-    ║    │ Server  │       │Collector│           ║
-    ║    └─────────┘       └─────────┘           ║
-    ║                                            ║
-    ╚════════════════════════════════════════════╝
-    ```
-    Configuration Overview:
-        This function sets up a service tracer with **mandatory** export to Scouter
-        and **optional** export to OpenTelemetry-compatible backends.
+) -> None:
+    """Configure the process-wide tracer provider exactly once.
 
-    ```
-    ┌─ REQUIRED: Scouter Export ────────────────────────────────────────────────┐
-    │                                                                           │
-    │  All spans are ALWAYS exported to Scouter via transport_config:           │
-    │    • HttpConfig    → HTTP endpoint (default)                              │
-    │    • GrpcConfig    → gRPC endpoint                                        │
-    │    • KafkaConfig   → Kafka topic                                          │
-    │    • RabbitMQConfig→ RabbitMQ queue                                       │
-    │    • RedisConfig   → Redis stream/channel                                 │
-    │                                                                           │
-    └───────────────────────────────────────────────────────────────────────────┘
+    This builds the Rust `SdkTracerProvider`, attaches the Scouter exporter,
+    optionally attaches a secondary OTEL exporter, and stores the provider in a
+    process-wide singleton. Subsequent calls log a warning and are no-ops,
+    matching OpenTelemetry's `set_tracer_provider` behavior.
 
-    ┌─ OPTIONAL: OTEL Export ───────────────────────────────────────────────────┐
-    │                                                                           │
-    │  Optionally export spans to external OTEL-compatible systems:             │
-    │    • HttpSpanExporter   → OTEL Collector (HTTP)                           │
-    │    • GrpcSpanExporter   → OTEL Collector (gRPC)                           │
-    │    • StdoutSpanExporter → Console output (debugging)                      │
-    │    • TestSpanExporter   → In-memory (testing)                             │
-    │                                                                           │
-    │  If None: Only Scouter export is active (NoOpExporter)                    │
-    │                                                                           │
-    └───────────────────────────────────────────────────────────────────────────┘
-    ```
+    Resource identity is resolved from `resource_config` and the OTEL
+    environment variables. Instrumentation scope identity is not set here; call
+    `get_tracer()` with a `scope_name` and optional `scope_version` for that.
 
     Args:
-        service_name (str):
-            The **required** name of the service this tracer is associated with.
-            This is typically a logical identifier for the application or component.
-            Default: "scouter_service"
+        resource_config:
+            Optional process Resource configuration. If omitted, Scouter builds
+            one from OTEL_SERVICE_NAME, OTEL_RESOURCE_ATTRIBUTES, and defaults.
+        transport_config:
+            Optional Scouter transport configuration. If omitted, Scouter uses
+            gRPC by default, or an offline mock transport when SCOUTER_OFFLINE=1.
+        exporter:
+            Optional secondary OTEL exporter, such as HTTP, gRPC, stdout, or the
+            in-memory test exporter. Scouter export is always configured
+            separately through `transport_config`.
+        batch_config:
+            Optional batch span processor settings.
+        sample_ratio:
+            Optional trace sampling ratio. Values outside [0.0, 1.0] are
+            clamped by the Rust tracer provider.
+    """
 
-        scope (str):
-            The scope for the tracer. Used to differentiate tracers by version
-            or environment.
-            Default: "scouter.tracer.{version}"
+def get_tracer(
+    scope_name: str,
+    scope_version: Optional[str] = None,
+    schema_url: Optional[str] = None,
+    scope_attributes: Optional[Dict[str, Any]] = None,
+    default_attributes: Optional[Dict[str, Any]] = None,
+    default_entity_uid: Optional[str] = None,
+    scouter_queue: Optional[Any] = None,
+) -> "BaseTracer":
+    """Get a tracer for an instrumenting library/module.
 
-        transport_config (HttpConfig | GrpcConfig | KafkaConfig | RabbitMQConfig | RedisConfig | None):
+    `scope_name` and `scope_version` populate the OpenTelemetry
+    InstrumentationScope. They are independent of the process-wide
+    `service.name` Resource configured by `configure_tracing()`.
 
-            Configuration for sending spans to Scouter. If None, defaults to HttpConfig.
+    If `configure_tracing()` has not been called, Scouter lazily configures a
+    provider from environment-derived Resource defaults before returning the
+    tracer.
 
-            Supported transports:
-                • HttpConfig     : Export to Scouter via HTTP
-                • GrpcConfig     : Export to Scouter via gRPC
-                • KafkaConfig    : Export to Scouter via Kafka
-                • RabbitMQConfig : Export to Scouter via RabbitMQ
-                • RedisConfig    : Export to Scouter via Redis
+    Args:
+        scope_name:
+            Name of the instrumenting library or module, for example
+            "httpx", "fastapi", or "opsml.agent".
+        scope_version:
+            Optional version for the instrumenting library or module.
+        schema_url:
+            Optional OpenTelemetry schema URL associated with the scope.
+        scope_attributes:
+            Optional attributes attached to the InstrumentationScope.
+        default_attributes:
+            Optional attributes to apply to every span created by this tracer.
+        default_entity_uid:
+            Optional default Scouter entity UID to materialize on every span.
+        scouter_queue:
+            Optional queue used to correlate queue records with spans.
 
-        exporter (HttpSpanExporter | GrpcSpanExporter | StdoutSpanExporter | TestSpanExporter | None):
-
-            Optional secondary exporter for OpenTelemetry-compatible backends.
-            If None, spans are ONLY sent to Scouter (NoOpExporter used internally).
-
-            Available exporters:
-                • HttpSpanExporter   : Send to OTEL Collector via HTTP
-                • GrpcSpanExporter   : Send to OTEL Collector via gRPC
-                • StdoutSpanExporter : Write to stdout (debugging)
-                • TestSpanExporter   : Collect in-memory (testing)
-
-        batch_config (BatchConfig | None):
-            Configuration for batch span export. If provided, spans are queued
-            and exported in batches. If None and the exporter supports batching,
-            default batch settings apply.
-
-            Batching improves performance for high-throughput applications.
-
-        sample_ratio (float | None):
-            Sampling ratio for tracing. A value between 0.0 and 1.0.
-            All provided values are clamped between 0.0 and 1.0.
-            If None, all spans are sampled (no sampling).
-
-        scouter_queue (ScouterQueue | None):
-            Optional ScouterQueue to associate with the tracer for correlated
-            queue entity export alongside span data.
-
-            This allows queue records (e.g., Features, Metrics, EvalRecord)
-            to be ingested in conjunction with tracing data for enhanced
-            observability.
-
-            If None, no queue is associated with the tracer.
-
-        schema_url (str | None):
-            Optional URL pointing to the schema that describes the structure of the spans.
-            This can be used by backends to validate and process spans according to a defined schema.
-            This will be included with instrumentation scope.
-
-        scope_attributes (SerializedType | None):
-            Optional mapping of attributes to set on the tracer.
-            This will be included with instrumentation scope.
-
-        default_attributes (SerializedType | None):
-            Optional mapping of default attributes to set on all spans created by this tracer.
-            These attributes will be included on every span generated by the tracer
-
-        default_entity_uid (str | None):
-            Optional default profile/entity UID to materialize on every span as
-            `scouter.entity.{uid}={uid}` when no active_profile override is set.
-
-    Examples:
-        Basic setup (Scouter only via HTTP):
-            >>> init_tracer(service_name="my-service")
-
-        Scouter via Kafka + OTEL Collector:
-            >>> init_tracer(
-            ...     service_name="my-service",
-            ...     transport_config=KafkaConfig(brokers="kafka:9092"),
-            ...     exporter=HttpSpanExporter(
-            ...         export_config=OtelExportConfig(
-            ...             endpoint="http://otel-collector:4318"
-            ...         )
-            ...     )
-            ... )
-
-        Scouter via gRPC + stdout debugging:
-            >>> init_tracer(
-            ...     service_name="my-service",
-            ...     transport_config=GrpcConfig(server_uri="grpc://scouter:50051"),
-            ...     exporter=StdoutSpanExporter()
-            ... )
-
-    Notes:
-        • Spans are ALWAYS exported to Scouter via transport_config
-        • OTEL export via exporter is completely optional
-        • Both exports happen in parallel without blocking each other
-        • Use batch_config to optimize performance for high-volume tracing
-
-    See Also:
-        - HttpConfig, GrpcConfig, KafkaConfig, RabbitMQConfig, RedisConfig
-        - HttpSpanExporter, GrpcSpanExporter, StdoutSpanExporter, TestSpanExporter
-        - BatchConfig
+    Returns:
+        A low-level `BaseTracer` bound to the requested instrumentation scope.
     """
 
 class ActiveSpan:
@@ -670,24 +634,30 @@ class ActiveSpan:
 class BaseTracer:
     def __init__(
         self,
-        instrumenting_module_name: str = "scouter_tracer",
-        instrumenting_library_version: str = "{version}",
+        scope_name: str,
+        scope_version: Optional[str] = None,
         schema_url: Optional[str] = None,
-        attributes: Optional[Dict[str, SerializedType]] = None,
-        scouter_queue: Optional[ScouterQueue] = None,
+        scope_attributes: Optional[Dict[str, SerializedType]] = None,
+        default_attributes: Optional[Dict[str, SerializedType]] = None,
+        default_entity_uid: Optional[str] = None,
+        queue: Optional[ScouterQueue] = None,
     ) -> None:
-        """Initialize the BaseTracer with a service name.
+        """Initialize the BaseTracer with an instrumentation scope.
 
         Args:
-            instrumenting_module_name (str):
+            scope_name (str):
                 The name of the instrumenting module.
-            instrumenting_library_version (str):
-                The version of the instrumenting library.
+            scope_version (Optional[str]):
+                The version of the instrumenting module.
             schema_url (Optional[str]):
                 Optional URL pointing to the schema that describes the structure of the spans.
-            attributes (Optional[Dict[str, SerializedType]]):
-                Optional dictionary of attributes to set on the tracer.
-            scouter_queue (Optional[ScouterQueue]):
+            scope_attributes (Optional[Dict[str, SerializedType]]):
+                Optional dictionary of attributes to set on the instrumentation scope.
+            default_attributes (Optional[Dict[str, SerializedType]]):
+                Optional dictionary of attributes to set on every span.
+            default_entity_uid (Optional[str]):
+                Optional default entity UID to materialize on every span.
+            queue (Optional[ScouterQueue]):
                 Optional ScouterQueue to associate with the tracer.
         """
 
@@ -846,19 +816,19 @@ class BaseTracer:
     def shutdown(self) -> None:
         """Shutdown the tracer and flush any remaining spans."""
 
-    def enable_local_capture(self) -> None:
-        """Enable local span capture mode on the ScouterSpanExporter."""
+    def enable_local_capture(self, capture_run_id: str) -> None:
+        """Enable local span capture mode for a capture run."""
 
-    def disable_local_capture(self) -> None:
-        """Disable local span capture mode, discarding any buffered spans."""
+    def disable_local_capture(self, capture_run_id: str) -> None:
+        """Disable local span capture mode for a capture run."""
 
-    def drain_local_spans(self) -> List[TraceSpanRecord]:
-        """Drain and return all locally captured spans, clearing the buffer."""
+    def drain_local_spans(self, capture_run_id: str) -> List[TraceSpanRecord]:
+        """Drain and return locally captured spans for a capture run."""
 
-    def get_local_spans_by_trace_ids(self, trace_ids: List[str]) -> List[TraceSpanRecord]:
-        """Return spans matching the given trace_ids without draining the buffer."""
+    def get_local_spans_by_trace_ids(self, capture_run_id: str, trace_ids: List[str]) -> List[TraceSpanRecord]:
+        """Return spans matching the given trace_ids without draining the run buffer."""
 
-def get_current_active_span(self) -> ActiveSpan:
+def get_current_active_span() -> ActiveSpan:
     """Get the current active span.
 
     Returns:
@@ -1104,14 +1074,17 @@ class TestSpanExporter:
 def shutdown_tracer() -> None:
     """Shutdown the tracer and flush any remaining spans."""
 
-def enable_local_span_capture() -> None:
-    """Enable in-process span capture. Spans are buffered instead of exported."""
+def reset_tracer_provider() -> None:
+    """Reset the process-wide Rust tracer provider."""
 
-def disable_local_span_capture() -> None:
-    """Disable in-process span capture, discarding any buffered spans."""
+def enable_local_span_capture(capture_run_id: str) -> None:
+    """Enable in-process span capture for a capture run."""
 
-def drain_local_span_capture() -> List[TraceSpanRecord]:
-    """Drain and return all locally captured spans, clearing the buffer."""
+def disable_local_span_capture(capture_run_id: str) -> None:
+    """Disable in-process span capture for a capture run."""
+
+def drain_local_span_capture(capture_run_id: str) -> List[TraceSpanRecord]:
+    """Drain and return locally captured spans for a capture run."""
 
 def extract_span_context_from_headers(
     headers: Dict[str, str],
@@ -1122,7 +1095,9 @@ def extract_span_context_from_headers(
     """
 
 __all__ = [
-    "init_tracer",
+    "ScouterResourceConfig",
+    "configure_tracing",
+    "get_tracer",
     "SpanKind",
     "FunctionType",
     "ActiveSpan",
@@ -1139,5 +1114,6 @@ __all__ = [
     "flush_tracer",
     "BatchConfig",
     "shutdown_tracer",
+    "reset_tracer_provider",
     "extract_span_context_from_headers",
 ]

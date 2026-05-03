@@ -1,9 +1,10 @@
 use pyo3::prelude::*;
 use scouter_client::{
-    disable_local_span_capture, drain_local_span_capture, enable_local_span_capture,
-    extract_span_context_from_headers, flush_tracer, get_current_active_span, get_function_type,
-    get_tracing_headers_from_current_span, init_tracer, shutdown_tracer, ActiveSpan, BaseTracer,
-    BatchConfig, FunctionType, GrpcSpanExporter, HttpSpanExporter, OtelExportConfig, OtelProtocol,
+    configure_tracing, disable_local_span_capture, drain_local_span_capture,
+    enable_local_span_capture, extract_span_context_from_headers, flush_tracer,
+    get_current_active_span, get_function_type, get_tracer, get_tracing_headers_from_current_span,
+    reset_tracer_provider, shutdown_tracer, ActiveSpan, BaseTracer, BatchConfig, FunctionType,
+    GrpcSpanExporter, HttpSpanExporter, OtelExportConfig, OtelProtocol, ScouterResourceConfig,
     SpanKind, StdoutSpanExporter, TestSpanExporter, TraceBaggageRecord, TraceRecord,
     TraceSpanRecord,
 };
@@ -11,6 +12,7 @@ use scouter_client::{
 pub fn add_tracing_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<BaseTracer>()?;
     m.add_class::<ActiveSpan>()?;
+    m.add_class::<ScouterResourceConfig>()?;
     m.add_class::<SpanKind>()?;
     m.add_class::<FunctionType>()?;
     m.add_class::<OtelExportConfig>()?;
@@ -23,10 +25,12 @@ pub fn add_tracing_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TraceBaggageRecord>()?;
     m.add_class::<TestSpanExporter>()?;
     m.add_class::<BatchConfig>()?;
-    m.add_function(wrap_pyfunction!(init_tracer, m)?)?;
+    m.add_function(wrap_pyfunction!(configure_tracing, m)?)?;
+    m.add_function(wrap_pyfunction!(get_tracer, m)?)?;
     m.add_function(wrap_pyfunction!(flush_tracer, m)?)?;
     m.add_function(wrap_pyfunction!(get_function_type, m)?)?;
     m.add_function(wrap_pyfunction!(shutdown_tracer, m)?)?;
+    m.add_function(wrap_pyfunction!(reset_tracer_provider, m)?)?;
     m.add_function(wrap_pyfunction!(get_tracing_headers_from_current_span, m)?)?;
     m.add_function(wrap_pyfunction!(get_current_active_span, m)?)?;
     m.add_function(wrap_pyfunction!(enable_local_span_capture, m)?)?;

@@ -16,6 +16,73 @@ import type {
   ToolTimeBucket,
 } from "./types";
 
+export interface EmptyBundleOptions {
+  serviceName?: string | null;
+  entityId?: string | null;
+  selectedRange?: string;
+  bucketInterval?: string;
+  start_time?: string;
+  end_time?: string;
+  evalProfiles?: EvalProfileOption[];
+}
+
+export function buildEmptyGenAiBundle(opts: EmptyBundleOptions = {}): AgentGenAiBundle {
+  const now = new Date().toISOString() as DateTime;
+  const start = (opts.start_time ?? now) as DateTime;
+  const end = (opts.end_time ?? now) as DateTime;
+  const bucket_interval = opts.bucketInterval ?? "1 hour";
+
+  const emptySummary = {
+    total_requests: 0,
+    avg_duration_ms: 0,
+    p50_duration_ms: null,
+    p95_duration_ms: null,
+    p99_duration_ms: null,
+    overall_error_rate: 0,
+    total_input_tokens: 0,
+    total_output_tokens: 0,
+    total_cache_creation_tokens: 0,
+    total_cache_read_tokens: 0,
+    unique_agent_count: 0,
+    unique_conversation_count: 0,
+    cost_by_model: [],
+  };
+
+  const dashboard: GenAiDashboardResponse = {
+    applied_filters: {
+      service_name: opts.serviceName ?? null,
+      entity_id: opts.entityId ?? null,
+      agent_name: null,
+      provider_name: null,
+      operation_name: null,
+      model: null,
+      start_time: start,
+      end_time: end,
+      bucket_interval,
+    },
+    available_filters: { agents: [], providers: [], models: [], operations: [] },
+    metadata: { generated_at: now, schema_version: 1, total_spans: 0 },
+    token_metrics: { buckets: [] },
+    operation_breakdown: { operations: [] },
+    model_usage: { models: [] },
+    agent_dashboard: { summary: emptySummary, buckets: [] },
+    tool_dashboard: { aggregates: [], time_series: [] },
+    error_breakdown: { errors: [] },
+    buckets_truncated: false,
+  };
+
+  return {
+    dashboard,
+    range: {
+      start_time: start,
+      end_time: end,
+      bucket_interval,
+      selected_range: opts.selectedRange ?? "24hours",
+    },
+    eval_profiles: opts.evalProfiles ?? [],
+  };
+}
+
 function mulberry32(seed: number): () => number {
   let s = seed >>> 0;
   return () => {

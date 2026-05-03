@@ -24,14 +24,14 @@
     allSpans,
     slowestSpan,
     resourceAttributes = [],
-    genaiSpan = null,
+    genAiSpan = null,
   }: {
     span: TraceSpan;
     onSpanSelect: (span: TraceSpan) => void;
     allSpans: TraceSpan[];
     slowestSpan?: TraceSpan | null;
     resourceAttributes?: Attribute[];
-    genaiSpan?: GenAiSpanRecord | null;
+    genAiSpan?: GenAiSpanRecord | null;
   } = $props();
 
   // ─── Derived values ────────────────────────────────────────────────────────
@@ -142,7 +142,7 @@
     { id: 'reqres'     as Tab, label: 'Req / Res',   Icon: ArrowLeftRight,  count: reqResEntries.length > 0 ? reqResEntries.length : null as number | null },
     { id: 'events'     as Tab, label: 'Events',      Icon: Activity,        count: span.events.length > 0 ? span.events.length : null as number | null },
     { id: 'resources'  as Tab, label: 'Resources',   Icon: Server,          count: resourceAttributes.length > 0 ? resourceAttributes.length : null as number | null },
-    ...(genaiSpan
+    ...(genAiSpan
       ? [{ id: 'genai' as Tab, label: 'GenAI', Icon: Sparkles, count: null as number | null }]
       : []),
   ]);
@@ -658,8 +658,8 @@
     {/if}
 
     <!-- GENAI TAB -->
-    {#if activeTab === 'genai' && genaiSpan}
-      <SpanGenAiPanel span={genaiSpan} />
+    {#if activeTab === 'genai' && genAiSpan}
+      <SpanGenAiPanel span={genAiSpan} />
     {/if}
 
   </div>

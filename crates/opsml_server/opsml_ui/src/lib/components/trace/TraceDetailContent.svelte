@@ -28,7 +28,7 @@
   let spans = $state<TraceSpan[]>(traceSpans.spans);
   let activeTopTab = $state<'waterfall' | 'map' | 'genai'>('waterfall');
 
-  const showGenAiTab = $derived(genai != null && genai.has_genai_spans);
+  const showGenAiTab = $derived(genai !== null && genai.has_genai_spans);
   const selectedGenAiSpan = $derived(
     selectedSpan ? (genAiBySpanId[selectedSpan.span_id] ?? null) : null,
   );
@@ -232,7 +232,7 @@
           </div>
         {:else}
           <div class="h-full bg-surface-50 p-3 overflow-auto">
-            <div class="bg-surface-50 p-8overflow-y-scroll">
+            <div class="bg-surface-50 p-8 overflow-y-scroll">
               <SpanGraph spans={spans} slowestSpan={slowestSpan()} onSpanSelect={handleSpanSelect} />
             </div>
           </div>
@@ -266,7 +266,7 @@
             allSpans={spans}
             slowestSpan={slowestSpan()}
             resourceAttributes={trace.resource_attributes}
-            genaiSpan={selectedGenAiSpan}
+            genAiSpan={selectedGenAiSpan}
           />
         {:else}
           <div class="flex flex-col items-center justify-center h-full gap-3 text-center p-8">

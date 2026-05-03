@@ -41,6 +41,17 @@
       ? Math.max(...genai.error_breakdown.errors.map((e) => e.count))
       : 1,
   );
+
+  const KPI_ACCENT: Record<string, string> = {
+    'GenAI Spans': 'bg-surface-50',
+    'p50':         'bg-surface-50',
+    'p95':         'bg-surface-50',
+    'In / Out':    'bg-surface-50',
+    'Cache':       'bg-surface-50',
+    'Spend':       'bg-warning-100',
+    'Evals':       'bg-success-100',
+  };
+  const errorAccent = $derived(errorCount > 0 ? 'bg-error-100' : 'bg-surface-50');
 </script>
 
 <div class="p-3 space-y-3">
@@ -48,16 +59,16 @@
   <!-- KPI rail -->
   <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
     {#each [
-      { label: 'GenAI Spans', value: fmtInt(genai.spans.length), icon: Activity, accent: 'bg-surface-50' },
-      { label: 'p50',         value: fmtMs(summary.p50_duration_ms), icon: Clock, accent: 'bg-surface-50' },
-      { label: 'p95',         value: fmtMs(summary.p95_duration_ms), icon: Clock, accent: 'bg-surface-50' },
-      { label: 'In / Out',    value: `${fmtCompact(tokIn)} / ${fmtCompact(tokOut)}`, icon: Cpu, accent: 'bg-surface-50' },
-      { label: 'Cache',       value: `${fmtCompact(tokCC)} / ${fmtCompact(tokCR)}`, icon: Database, accent: 'bg-surface-50' },
-      { label: 'Spend',       value: fmtUsd(traceCost), icon: Coins, accent: 'bg-warning-100' },
-      { label: 'Errors',      value: fmtInt(errorCount), icon: AlertTriangle, accent: errorCount > 0 ? 'bg-error-100' : 'bg-surface-50' },
-      { label: 'Evals',       value: fmtInt(evalCount), icon: BadgeCheck, accent: 'bg-success-100' },
+      { label: 'GenAI Spans', value: fmtInt(genai.spans.length), icon: Activity },
+      { label: 'p50',         value: fmtMs(summary.p50_duration_ms), icon: Clock },
+      { label: 'p95',         value: fmtMs(summary.p95_duration_ms), icon: Clock },
+      { label: 'In / Out',    value: `${fmtCompact(tokIn)} / ${fmtCompact(tokOut)}`, icon: Cpu },
+      { label: 'Cache',       value: `${fmtCompact(tokCC)} / ${fmtCompact(tokCR)}`, icon: Database },
+      { label: 'Spend',       value: fmtUsd(traceCost), icon: Coins },
+      { label: 'Errors',      value: fmtInt(errorCount), icon: AlertTriangle },
+      { label: 'Evals',       value: fmtInt(evalCount), icon: BadgeCheck },
     ] as kpi (kpi.label)}
-      <div class="rounded-base border-2 border-black shadow-small {kpi.accent} px-2 py-1.5">
+      <div class="rounded-base border-2 border-black shadow-small {kpi.label === 'Errors' ? errorAccent : (KPI_ACCENT[kpi.label] ?? 'bg-surface-50')} px-2 py-1.5">
         <div class="flex items-center gap-1 text-xs font-black text-primary-700 uppercase tracking-widest">
           <kpi.icon class="w-2.5 h-2.5" /> {kpi.label}
         </div>
@@ -122,7 +133,7 @@
           </tr>
         </thead>
         <tbody>
-          {#each genai.model_usage.models as m (m.model)}
+          {#each genai.model_usage.models.filter(m => m.model !== 'unknown') as m (m.model)}
             <tr class="border-b border-black/10 hover:bg-primary-100/50">
               <td class="px-2 py-1 font-mono font-bold text-primary-900 truncate max-w-[120px]">{m.model}</td>
               <td class="px-2 py-1 text-right font-mono text-primary-900">{fmtInt(m.span_count)}</td>

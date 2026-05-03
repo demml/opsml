@@ -1,10 +1,6 @@
 <script lang="ts">
   import type { GenAiSpanRecord } from "$lib/components/scouter/genai/types";
-  import {
-    parseMessages,
-    extractMessageRole,
-    extractMessageText,
-  } from "./messageFormat";
+  import { parseMessages, safeParseJson, prettyJson } from "./messageFormat";
   import { fmtInt } from "$lib/components/card/agent/observability/format";
   import {
     BadgeCheck,
@@ -12,8 +8,10 @@
     MessageSquare,
     Server,
     Settings2,
-    Wrench,
   } from "lucide-svelte";
+  import MessageList from "./MessageList.svelte";
+  import EvalResultRow from "./EvalResultRow.svelte";
+  import ToolCallBlock from "./ToolCallBlock.svelte";
 
   let { span }: { span: GenAiSpanRecord } = $props();
 
@@ -38,29 +36,21 @@
     { key: "raw", label: "Raw" },
   ];
 
-  function pretty(s: string | null): string {
-    if (!s) return "—";
-    try {
-      return JSON.stringify(JSON.parse(s), null, 2);
-    } catch {
-      return s;
-    }
-  }
-
   const inputMessages = $derived(parseMessages(span.input_messages));
   const outputMessages = $derived(parseMessages(span.output_messages));
+  const toolDefinitionsParsed = $derived(safeParseJson(span.tool_definitions));
 </script>
 
 <div class="flex flex-col">
   <div
-    class="sticky top-0 z-10 flex border-b border-black/20 bg-surface-100 overflow-x-auto"
+    class="sticky top-0 z-10 flex border-b-2 border-black bg-surface-100 overflow-x-auto"
   >
     {#each genAiSubTabs as t (t.key)}
       <button
         onclick={() => (genAiTab = t.key)}
-        class="px-3 py-1.5 text-xs font-black uppercase tracking-wide border-r border-black/10 transition-colors duration-100
+        class="px-3 py-1.5 text-xs font-black uppercase tracking-wide border-r-2 border-black transition-colors duration-100
           {genAiTab === t.key
-          ? 'bg-primary-200/30 text-primary-900'
+          ? 'bg-primary-200 text-primary-900'
           : 'text-primary-600 hover:text-primary-800 hover:bg-surface-200'}"
       >
         {t.label}
@@ -78,9 +68,9 @@
             >
               system_instructions
             </div>
-            <div class="border border-black/20 rounded-base overflow-hidden">
+            <div class="border border-black rounded-base overflow-hidden">
               <div
-                class="flex items-center gap-1.5 px-2 py-1 border-b border-black/10 bg-surface-200"
+                class="flex items-center gap-1.5 px-2 py-1 border-b border-black bg-surface-200"
               >
                 <span
                   class="text-xs font-black uppercase tracking-widest text-primary-600"
@@ -111,38 +101,10 @@
               {/if}
             </div>
             {#if inputMessages}
-              <div class="space-y-2">
-                {#each inputMessages as msg, i (i)}
-                  {@const role = extractMessageRole(msg)}
-                  {@const text = extractMessageText(msg)}
-                  <div
-                    class="border border-black/20 rounded-base overflow-hidden"
-                  >
-                    <div
-                      class="flex items-center gap-1.5 px-2 py-1 border-b border-black/10 bg-surface-200"
-                    >
-                      <span
-                        class="text-xs font-black uppercase tracking-widest text-primary-700"
-                        >{role}</span
-                      >
-                      <span
-                        class="ml-auto text-xs font-mono text-primary-600"
-                        >#{i + 1}</span
-                      >
-                    </div>
-                    <div class="px-2.5 py-2 bg-surface-50">
-                      <p
-                        class="text-xs font-mono whitespace-pre-wrap text-primary-900 leading-relaxed"
-                      >
-                        {text}
-                      </p>
-                    </div>
-                  </div>
-                {/each}
-              </div>
+              <MessageList messages={inputMessages} />
             {:else}
               <pre
-                class="text-xs bg-surface-100 border border-black/20 rounded-base p-2 overflow-x-auto font-mono text-primary-900">{pretty(
+                class="text-xs bg-surface-100 border border-black rounded-base p-2 overflow-x-auto font-mono text-primary-900">{prettyJson(
                   span.input_messages,
                 )}</pre>
             {/if}
@@ -162,38 +124,10 @@
               {/if}
             </div>
             {#if outputMessages}
-              <div class="space-y-2">
-                {#each outputMessages as msg, i (i)}
-                  {@const role = extractMessageRole(msg)}
-                  {@const text = extractMessageText(msg)}
-                  <div
-                    class="border border-black/20 rounded-base overflow-hidden"
-                  >
-                    <div
-                      class="flex items-center gap-1.5 px-2 py-1 border-b border-black/10 bg-surface-200"
-                    >
-                      <span
-                        class="text-xs font-black uppercase tracking-widest text-primary-700"
-                        >{role}</span
-                      >
-                      <span
-                        class="ml-auto text-xs font-mono text-primary-600"
-                        >#{i + 1}</span
-                      >
-                    </div>
-                    <div class="px-2.5 py-2 bg-surface-50">
-                      <p
-                        class="text-xs font-mono whitespace-pre-wrap text-primary-900 leading-relaxed"
-                      >
-                        {text}
-                      </p>
-                    </div>
-                  </div>
-                {/each}
-              </div>
+              <MessageList messages={outputMessages} />
             {:else}
               <pre
-                class="text-xs bg-surface-100 border border-black/20 rounded-base p-2 overflow-x-auto font-mono text-primary-900">{pretty(
+                class="text-xs bg-surface-100 border border-black rounded-base p-2 overflow-x-auto font-mono text-primary-900">{prettyJson(
                   span.output_messages,
                 )}</pre>
             {/if}
@@ -207,10 +141,7 @@
             >
               <Database class="w-3 h-3" /> tool_definitions
             </div>
-            <pre
-              class="text-xs bg-surface-100 border border-black/20 rounded-base p-2 overflow-x-auto font-mono text-primary-900">{pretty(
-                span.tool_definitions,
-              )}</pre>
+            <ToolCallBlock {span} toolDefinitions={toolDefinitionsParsed} />
           </div>
         {/if}
 
@@ -231,35 +162,7 @@
       {:else}
         <div class="space-y-2">
           {#each span.eval_results as e, i (i)}
-            <div class="border border-black/20 rounded-base bg-surface-100 p-3">
-              <div class="flex items-center justify-between mb-1">
-                <div class="flex items-center gap-2">
-                  <BadgeCheck class="w-3.5 h-3.5 text-primary-700" />
-                  <span class="font-black text-primary-900 text-xs"
-                    >{e.name}</span
-                  >
-                  {#if e.score_label}
-                    <span
-                      class="px-1.5 py-0.5 bg-surface-200 border border-black/20 rounded-base text-xs font-bold text-primary-700"
-                      >{e.score_label}</span
-                    >
-                  {/if}
-                </div>
-                {#if e.score_value != null}
-                  <span class="font-mono font-black text-primary-900 text-sm"
-                    >{e.score_value}</span
-                  >
-                {/if}
-              </div>
-              {#if e.explanation}
-                <p class="text-xs text-primary-800 mt-1">{e.explanation}</p>
-              {/if}
-              {#if e.response_id}
-                <div class="text-xs font-mono text-primary-600 mt-1">
-                  response_id: {e.response_id}
-                </div>
-              {/if}
-            </div>
+            <EvalResultRow ev={e} />
           {/each}
         </div>
       {/if}
@@ -285,7 +188,7 @@
             { k: "cache_read_tok", v: span.cache_read_input_tokens },
           ] as row (row.k)}
             <div
-              class="border border-black/20 rounded-base bg-surface-100 px-2 py-1"
+              class="border border-black rounded-base bg-surface-100 px-2 py-1"
             >
               <div
                 class="text-xs font-black text-primary-700 uppercase tracking-widest flex items-center gap-1"
@@ -301,7 +204,7 @@
         </div>
         {#if span.request_stop_sequences.length > 0}
           <div
-            class="border border-black/20 rounded-base bg-surface-100 px-2 py-1"
+            class="border border-black rounded-base bg-surface-100 px-2 py-1"
           >
             <div class="text-xs font-black text-primary-700 uppercase">
               stop_sequences
@@ -326,7 +229,7 @@
           { k: "provider_name", v: span.provider_name },
         ] as row (row.k)}
           <div
-            class="border border-black/20 rounded-base bg-surface-100 px-2 py-1"
+            class="border border-black rounded-base bg-surface-100 px-2 py-1"
           >
             <div
               class="text-xs font-black text-primary-700 uppercase tracking-widest"
@@ -342,34 +245,13 @@
         {/each}
       </div>
     {:else if genAiTab === "tool"}
-      <div class="space-y-2">
-        <div class="grid grid-cols-3 gap-1.5">
-          {#each [
-            { k: "tool_name", v: span.tool_name },
-            { k: "tool_type", v: span.tool_type },
-            { k: "tool_call_id", v: span.tool_call_id },
-          ] as row (row.k)}
-            <div
-              class="border border-black/20 rounded-base bg-surface-100 px-2 py-1"
-            >
-              <div
-                class="text-xs font-black text-primary-700 uppercase flex items-center gap-1"
-              >
-                <Wrench class="w-2.5 h-2.5" />
-                {row.k}
-              </div>
-              <div class="text-xs font-mono text-primary-900 break-all">
-                {row.v ?? "—"}
-              </div>
-            </div>
-          {/each}
+      {#if !span.tool_name && !span.tool_call_id}
+        <div class="text-center text-primary-600 italic text-xs py-4">
+          no tool data for this span
         </div>
-        {#if !span.tool_name && !span.tool_call_id}
-          <div class="text-center text-primary-600 italic text-xs py-4">
-            no tool data for this span
-          </div>
-        {/if}
-      </div>
+      {:else}
+        <ToolCallBlock {span} />
+      {/if}
     {:else if genAiTab === "server"}
       <div class="grid grid-cols-2 md:grid-cols-3 gap-1.5">
         {#each [
@@ -379,7 +261,7 @@
           { k: "openai_service_tier", v: span.openai_service_tier },
         ] as row (row.k)}
           <div
-            class="border border-black/20 rounded-base bg-surface-100 px-2 py-1"
+            class="border border-black rounded-base bg-surface-100 px-2 py-1"
           >
             <div
               class="text-xs font-black text-primary-700 uppercase flex items-center gap-1"
@@ -395,7 +277,7 @@
       </div>
     {:else if genAiTab === "raw"}
       <pre
-        class="text-xs font-mono bg-surface-100 border border-black/20 rounded-base p-2 overflow-x-auto text-primary-900">{JSON.stringify(
+        class="text-xs font-mono bg-surface-100 border border-black rounded-base p-2 overflow-x-auto text-primary-900">{JSON.stringify(
           span,
           null,
           2,

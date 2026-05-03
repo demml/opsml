@@ -1,19 +1,19 @@
-import type { PageLoad } from './$types';
-import { createInternalApiClient } from '$lib/api/internalClient';
-import { ServerPaths } from '$lib/components/api/routes';
-import { calculateTimeRange, getCookie } from '$lib/components/trace/utils';
-import type { DateTime } from '$lib/types';
-import type { CardMetadata } from '$lib/server/card/layout';
-import { RegistryType } from '$lib/utils';
-import { buildMockGenAiBundle } from '$lib/components/card/agent/observability/mockData';
+import type { PageLoad } from "./$types";
+import { createInternalApiClient } from "$lib/api/internalClient";
+import { ServerPaths } from "$lib/components/api/routes";
+import { calculateTimeRange, getCookie } from "$lib/components/trace/utils";
+import type { DateTime } from "$lib/types";
+import type { CardMetadata } from "$lib/server/card/layout";
+import { RegistryType } from "$lib/utils";
+import { buildMockGenAiBundle, buildEmptyGenAiBundle } from "$lib/components/card/agent/observability/mockData";
 import type {
   AgentGenAiBundle,
   EvalProfileOption,
   GenAiDashboardRequest,
   GenAiDashboardResponse,
-} from '$lib/components/card/agent/observability/types';
-import type { PromptCard } from '$lib/components/card/card_interfaces/promptcard';
-import { toEvalProfileOptions } from '$lib/components/card/agent/observability/utils';
+} from "$lib/components/card/agent/observability/types";
+import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
+import { toEvalProfileOptions, toScouterInterval } from "$lib/components/card/agent/observability/utils";
 
 export const ssr = false;
 
@@ -36,7 +36,7 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 
   const isPrompt = registryType === RegistryType.Prompt;
   const promptUid = isPrompt
-    ? (metadata as PromptCard).eval_profile?.config.uid ?? null
+    ? ((metadata as PromptCard).eval_profile?.config.uid ?? null)
     : null;
   const serviceName = isPrompt ? null : `${metadata.space}:${metadata.name}`;
 
@@ -59,7 +59,7 @@ export const load: PageLoad = async ({ fetch, parent }) => {
       : []
     : toEvalProfileOptions(promptCardsWithEval);
 
-  const selectedRange = getCookie('monitoring_range') ?? '24hours';
+  const selectedRange = getCookie("monitoring_range") ?? "24hours";
   const {
     startTime: start_time,
     endTime: end_time,
@@ -73,7 +73,11 @@ export const load: PageLoad = async ({ fetch, parent }) => {
         bucketInterval: bucket_interval,
         serviceName,
         entityId: promptUid,
-        evalProfiles: isPrompt ? evalProfiles : evalProfiles.length > 0 ? evalProfiles : undefined,
+        evalProfiles: isPrompt
+          ? evalProfiles
+          : evalProfiles.length > 0
+            ? evalProfiles
+            : undefined,
       }),
       mockMode: true,
     };
@@ -84,7 +88,7 @@ export const load: PageLoad = async ({ fetch, parent }) => {
     entity_id: promptUid,
     start_time: start_time as DateTime,
     end_time: end_time as DateTime,
-    bucket_interval,
+    bucket_interval: toScouterInterval(bucket_interval),
     agent_name: null,
     provider_name: null,
     operation_name: null,
@@ -99,21 +103,44 @@ export const load: PageLoad = async ({ fetch, parent }) => {
     const dashboard = (await response.json()) as GenAiDashboardResponse;
     const bundle: AgentGenAiBundle = {
       dashboard,
-      range: { start_time, end_time, bucket_interval, selected_range: selectedRange },
+      range: {
+        start_time,
+        end_time,
+        bucket_interval,
+        selected_range: selectedRange,
+      },
       eval_profiles: evalProfiles,
     };
     return { bundle, mockMode: false };
   } catch (error) {
-    console.error('Failed to load GenAI dashboard:', error);
+    console.error("Failed to load GenAI dashboard:", error);
+    if (useMockFallback) {
+      return {
+        bundle: buildMockGenAiBundle({
+          selectedRange,
+          bucketInterval: bucket_interval,
+          serviceName,
+          entityId: promptUid,
+          evalProfiles: isPrompt
+            ? evalProfiles
+            : evalProfiles.length > 0
+              ? evalProfiles
+              : undefined,
+        }),
+        mockMode: true,
+      };
+    }
     return {
-      bundle: buildMockGenAiBundle({
+      bundle: buildEmptyGenAiBundle({
         selectedRange,
         bucketInterval: bucket_interval,
         serviceName,
         entityId: promptUid,
-        evalProfiles: isPrompt ? evalProfiles : evalProfiles.length > 0 ? evalProfiles : undefined,
+        start_time,
+        end_time,
+        evalProfiles,
       }),
-      mockMode: true,
+      mockMode: false,
     };
   }
 };
