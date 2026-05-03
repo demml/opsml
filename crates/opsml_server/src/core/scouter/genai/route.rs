@@ -14,17 +14,35 @@ use opsml_types::api::RequestType;
 use opsml_types::contracts::{Operation, ResourceType};
 use scouter_client::{
     AgentActivityQuery, AgentDashboardRequest, AgentDashboardResponse, ConversationQuery,
-    GenAiAgentActivityResponse, GenAiErrorBreakdownResponse, GenAiMetricsRequest,
-    GenAiModelUsageResponse, GenAiOperationBreakdownResponse, GenAiSpanFilters, GenAiSpansResponse,
-    GenAiTokenMetricsResponse, GenAiToolActivityResponse, ScouterServerError, ToolDashboardRequest,
-    ToolDashboardResponse,
+    GenAiAgentActivityResponse, GenAiDashboardResponse, GenAiErrorBreakdownResponse,
+    GenAiMetricsRequest, GenAiModelUsageResponse, GenAiOperationBreakdownResponse,
+    GenAiSpanFilters, GenAiSpansResponse, GenAiTokenMetricsResponse, GenAiToolActivityResponse,
+    GenAiTraceMetricsRequest, GenAiTraceMetricsResponse, ModelPricing, ScouterServerError,
+    ToolDashboardRequest, ToolDashboardResponse,
 };
-use serde::Serialize;
 use serde::de::DeserializeOwned;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::{error, instrument};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GenAiDashboardRequest {
+    pub service_name: Option<String>,
+    pub entity_id: Option<String>,
+    pub start_time: String,
+    pub end_time: String,
+    #[serde(default)]
+    pub bucket_interval: String,
+    pub agent_name: Option<String>,
+    pub provider_name: Option<String>,
+    pub operation_name: Option<String>,
+    pub model: Option<String>,
+    #[serde(default)]
+    pub model_pricing: HashMap<String, ModelPricing>,
+}
 
 async fn post_proxy<Req, Res>(
     state: &Arc<AppState>,
@@ -100,12 +118,91 @@ where
     }
 }
 
+async fn post_proxy_with_path<Req, Res>(
+    state: &Arc<AppState>,
+    perms: &UserPermissions,
+    route: scouter::Routes,
+    path_segments: &[&str],
+    body: &Req,
+    error_context: &str,
+) -> Result<Json<Res>, (StatusCode, Json<OpsmlServerError>)>
+where
+    Req: Serialize + ?Sized,
+    Res: DeserializeOwned,
+{
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
+    let exchange_token = state.exchange_token_from_perms(perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter", None)
+    })?;
+
+    let mut response = state
+        .scouter_client
+        .request_with_path(
+            route,
+            path_segments,
+            RequestType::Post,
+            Some(serde_json::to_value(body).map_err(|e| {
+                error!("Failed to serialize request body: {e}");
+                internal_server_error(e, "Failed to serialize request body", None)
+            })?),
+            None,
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to {error_context}: {e}");
+            let message = format!("Failed to {error_context}");
+            internal_server_error(e, &message, None)
+        })?;
+
+    response.extensions_mut().insert(AuditContext {
+        resource_id: error_context.to_string(),
+        resource_type: ResourceType::Drift,
+        metadata: String::new(),
+        registry_type: None,
+        operation: Operation::Read,
+        access_location: None,
+    });
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<Res>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {e}");
+                internal_server_error(e, "Failed to parse scouter response", None)
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse scouter error response", None)
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
 fn is_valid_conversation_id(id: &str) -> bool {
     !id.is_empty()
         && id.len() <= 200
         && id
             .chars()
             .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '_' | ':' | '.' | '/'))
+}
+
+fn is_valid_trace_id(id: &str) -> bool {
+    !id.is_empty() && id.len() <= 128 && id.chars().all(|c| c.is_ascii_hexdigit())
 }
 
 #[utoipa::path(
@@ -374,6 +471,77 @@ pub async fn genai_tool_metrics(
 }
 
 #[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/genai/dashboard",
+    request_body(content = inline(serde_json::Value), description = "GenAI composite dashboard request"),
+    responses(
+        (status = 200, description = "GenAI composite dashboard", body = inline(serde_json::Value)),
+        (status = 400, description = "Invalid request", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
+#[instrument(skip_all)]
+pub async fn genai_dashboard(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Json(body): Json<GenAiDashboardRequest>,
+) -> Result<Json<GenAiDashboardResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    post_proxy(
+        &state,
+        &perms,
+        scouter::Routes::GenAiDashboard,
+        &body,
+        None,
+        "get genai dashboard",
+    )
+    .await
+}
+
+#[utoipa::path(
+    post,
+    path = "/opsml/api/scouter/genai/traces/{id}/metrics",
+    params(
+        ("id" = String, Path, description = "Trace ID (hex-encoded)"),
+    ),
+    request_body(content = inline(serde_json::Value), description = "Trace-scoped GenAI metrics request"),
+    responses(
+        (status = 200, description = "Trace-scoped GenAI metrics", body = inline(serde_json::Value)),
+        (status = 400, description = "Invalid trace id", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "scouter"
+)]
+#[instrument(skip_all)]
+pub async fn genai_trace_metrics(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Path(id): Path<String>,
+    Json(body): Json<GenAiTraceMetricsRequest>,
+) -> Result<Json<GenAiTraceMetricsResponse>, (StatusCode, Json<OpsmlServerError>)> {
+    if !is_valid_trace_id(&id) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(OpsmlServerError::new(
+                "Invalid trace id format (expected hex string)".to_string(),
+            )),
+        ));
+    }
+
+    post_proxy_with_path(
+        &state,
+        &perms,
+        scouter::Routes::GenAiTraceMetrics,
+        &[id.as_str(), "metrics"],
+        &body,
+        "get genai trace metrics",
+    )
+    .await
+}
+
+#[utoipa::path(
     get,
     path = "/opsml/api/scouter/genai/conversation/{id}",
     params(
@@ -512,6 +680,14 @@ pub async fn get_scouter_genai_router(prefix: &str) -> Result<Router<Arc<AppStat
             .route(
                 &format!("{prefix}/scouter/genai/tool/metrics"),
                 post(genai_tool_metrics),
+            )
+            .route(
+                &format!("{prefix}/scouter/genai/dashboard"),
+                post(genai_dashboard),
+            )
+            .route(
+                &format!("{prefix}/scouter/genai/traces/{{id}}/metrics"),
+                post(genai_trace_metrics),
             )
     }));
 

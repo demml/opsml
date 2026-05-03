@@ -121,6 +121,9 @@ pub struct AppState {
 
     // State for managing reload tasks
     pub reload_state: ReloadTaskState,
+
+    // Information about the service
+    service_info: ServiceInfo,
 }
 
 #[pymethods]
@@ -171,7 +174,7 @@ impl AppState {
 
         // Create the service reloader
         let reloader = create_service_reloader(
-            service_info,
+            service_info.clone(),
             reload_config,
             service_path,
             reload_state.clone(),
@@ -185,6 +188,7 @@ impl AppState {
             reloader,
             load_kwargs: kwargs.map(|kw| Arc::new(RwLock::new(kw))),
             reload_state,
+            service_info,
         })
     }
 
@@ -550,6 +554,7 @@ impl AppState {
         instrument_kwargs.set_item("attributes", attributes.clone())?;
         instrument_kwargs.set_item("eval_profiles", eval_profiles)?;
         instrument_kwargs.set_item("propagate_baggage", propagate_baggage)?;
+        instrument_kwargs.set_item("service_name", self.service_info.namespace())?;
 
         // call instrumentor with provided arguments and kwargs
         let _instrumented = instrumentor.call_method("instrument", (), Some(&instrument_kwargs))?;
