@@ -22,10 +22,8 @@ import {
   getMockTraceMetrics,
   getMockTracePage,
 } from "$lib/components/trace/mockData";
-import { getEvalProfileOrUid } from "$lib/components/card/card_interfaces/enum";
 import type { CardMetadata } from "$lib/server/card/layout";
 import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
-import type { ServiceCard } from "$lib/components/card/card_interfaces/servicecard";
 import { RegistryType } from "$lib/utils";
 
 export const ssr = false;
@@ -49,8 +47,13 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
         `Observability is not supported for ${metadata.registry_type} cards`,
       );
     }
-    const card = metadata as PromptCard | ServiceCard;
-    const entity_uid = getEvalProfileOrUid(card);
+    const isPrompt = registryTypeLower === RegistryType.Prompt;
+    const entity_uid = isPrompt
+      ? ((metadata as PromptCard).eval_profile?.config.uid ?? "")
+      : undefined;
+    const serviceName = isPrompt ? undefined : metadata.name;
+    const serviceNamespace = isPrompt ? undefined : metadata.space;
+    const serviceVersion = isPrompt ? undefined : metadata.version;
 
     // Fetch trace spans first so we can derive the time window from the trace's timestamp
     let initialTrace: TraceListItem | undefined;
@@ -88,11 +91,13 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
     }
 
     const metricsRequest: TraceMetricsRequest = {
-      service_name: undefined,
+      service_name: serviceName,
+      service_namespace: serviceNamespace,
+      service_version: serviceVersion,
       start_time: startTime,
       end_time: endTime,
       bucket_interval: bucketInterval,
-      entity_uid: entity_uid,
+      entity_uid,
     };
 
     const traceMetrics = useMockFallback
@@ -103,17 +108,26 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
           start_time: startTime,
           end_time: endTime,
           limit: 50,
-          entity_uid: entity_uid,
+          service_name: serviceName,
+          service_namespace: serviceNamespace,
+          service_version: serviceVersion,
+          entity_uid,
         })
       : await getServerTracePage(fetch, {
           start_time: startTime,
           end_time: endTime,
           limit: 50,
+          service_name: serviceName,
+          service_namespace: serviceNamespace,
+          service_version: serviceVersion,
           entity_uid,
         });
 
     let traceFacets: TraceFacetsResponse = {
       services: [],
+      namespaces: [],
+      versions: [],
+      instance_ids: [],
       status_codes: [],
       total_count: 0,
     };
@@ -121,6 +135,9 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
       traceFacets = await getServerTraceFacets(fetch, {
         start_time: startTime,
         end_time: endTime,
+        service_name: serviceName,
+        service_namespace: serviceNamespace,
+        service_version: serviceVersion,
         entity_uid,
       });
     } catch (facetError) {
@@ -128,7 +145,14 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
     }
 
     const initialFilters: TracePageFilter = {
-      filters: { start_time: startTime, end_time: endTime, entity_uid },
+      filters: {
+        start_time: startTime,
+        end_time: endTime,
+        service_name: serviceName,
+        service_namespace: serviceNamespace,
+        service_version: serviceVersion,
+        entity_uid,
+      },
       bucket_interval: bucketInterval,
       selected_range: selectedRange,
     };
@@ -209,7 +233,14 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
       status: "error" as const,
       errorMessage,
       initialFilters,
-      trace_facets: { services: [], status_codes: [], total_count: 0 },
+      trace_facets: {
+        services: [],
+        namespaces: [],
+        versions: [],
+        instance_ids: [],
+        status_codes: [],
+        total_count: 0,
+      },
       mockMode: false,
     };
   }

@@ -29,6 +29,9 @@ export interface TraceMetricBucket {
 
 export interface TraceFilters {
   service_name?: string;
+  service_namespace?: string;
+  service_version?: string;
+  service_instance_id?: string;
   has_errors?: boolean;
   status_code?: number;
   start_time?: DateTime;
@@ -161,6 +164,9 @@ export interface TraceRequest {
 
 export interface TraceMetricsRequest {
   service_name?: string;
+  service_namespace?: string;
+  service_version?: string;
+  service_instance_id?: string;
   has_errors?: boolean;
   status_code?: number;
   start_time?: DateTime;
@@ -180,6 +186,9 @@ export interface TraceMetricsResponse {
 
 export type ActiveFilterKey =
   | "service_name"
+  | "service_namespace"
+  | "service_version"
+  | "service_instance_id"
   | "status_code"
   | "has_errors"
   | "duration_min_ms"
@@ -211,6 +220,9 @@ export interface TraceFacetDimension {
 
 export interface TraceFacetsResponse {
   services: TraceFacetDimension[];
+  namespaces?: TraceFacetDimension[];
+  versions?: TraceFacetDimension[];
+  instance_ids?: TraceFacetDimension[];
   status_codes: TraceFacetDimension[];
   total_count: number;
 }

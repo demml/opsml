@@ -80,6 +80,19 @@ pub fn create_scouter_queue(
     Ok(queue)
 }
 
+fn resolve_instance_id() -> Option<String> {
+    if let Ok(hostname) = std::env::var("HOSTNAME")
+        && !hostname.is_empty()
+    {
+        return Some(hostname);
+    }
+
+    hostname::get()
+        .ok()
+        .and_then(|hostname| hostname.into_string().ok())
+        .filter(|hostname| !hostname.is_empty())
+}
+
 /// Creates a  ServiceReloader from a ServiceCard and optional ReloadConfig.
 /// # Arguments
 /// * `service_info` - The ServiceCard to use for the reloader
@@ -554,7 +567,12 @@ impl AppState {
         instrument_kwargs.set_item("attributes", attributes.clone())?;
         instrument_kwargs.set_item("eval_profiles", eval_profiles)?;
         instrument_kwargs.set_item("propagate_baggage", propagate_baggage)?;
-        instrument_kwargs.set_item("service_name", self.service_info.namespace())?;
+        instrument_kwargs.set_item("service_name", self.service_info.name.clone())?;
+        instrument_kwargs.set_item("service_namespace", self.service_info.space.clone())?;
+        instrument_kwargs.set_item("service_version", self.service_info.version.clone())?;
+        if let Some(instance_id) = resolve_instance_id() {
+            instrument_kwargs.set_item("service_instance_id", instance_id)?;
+        }
 
         // debug log all kwargs being passed to instrumentor
         debug!("Instrumenting with kwargs: {:?}", instrument_kwargs);

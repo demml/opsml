@@ -18,6 +18,9 @@ import type {
 
 export interface EmptyBundleOptions {
   serviceName?: string | null;
+  serviceNamespace?: string | null;
+  serviceVersion?: string | null;
+  serviceInstanceId?: string | null;
   entityId?: string | null;
   selectedRange?: string;
   bucketInterval?: string;
@@ -51,6 +54,9 @@ export function buildEmptyGenAiBundle(opts: EmptyBundleOptions = {}): AgentGenAi
   const dashboard: GenAiDashboardResponse = {
     applied_filters: {
       service_name: opts.serviceName ?? null,
+      service_namespace: opts.serviceNamespace ?? null,
+      service_version: opts.serviceVersion ?? null,
+      service_instance_id: opts.serviceInstanceId ?? null,
       entity_id: opts.entityId ?? null,
       agent_name: null,
       provider_name: null,
@@ -60,7 +66,15 @@ export function buildEmptyGenAiBundle(opts: EmptyBundleOptions = {}): AgentGenAi
       end_time: end,
       bucket_interval,
     },
-    available_filters: { agents: [], providers: [], models: [], operations: [] },
+    available_filters: {
+      agents: [],
+      providers: [],
+      models: [],
+      operations: [],
+      service_namespaces: [],
+      service_versions: [],
+      service_instance_ids: [],
+    },
     metadata: { generated_at: now, schema_version: 1, total_spans: 0 },
     token_metrics: { buckets: [] },
     operation_breakdown: { operations: [] },
@@ -104,6 +118,12 @@ export interface MockOptions {
   bucketInterval?: string;
   /** Service name to surface in `applied_filters`. Set for AgentCard scope. */
   serviceName?: string | null;
+  /** Service namespace to surface in `applied_filters`. Set for AgentCard scope. */
+  serviceNamespace?: string | null;
+  /** Service version to surface in `applied_filters`. Set for AgentCard scope. */
+  serviceVersion?: string | null;
+  /** Service instance id to surface in `applied_filters`. Null aggregates all instances. */
+  serviceInstanceId?: string | null;
   /** Entity uid to surface in `applied_filters`. Set for PromptCard scope. */
   entityId?: string | null;
   /**
@@ -275,6 +295,9 @@ export function buildMockGenAiBundle(opts: MockOptions = {}): AgentGenAiBundle {
   const dashboard: GenAiDashboardResponse = {
     applied_filters: {
       service_name: opts.serviceName ?? null,
+      service_namespace: opts.serviceNamespace ?? null,
+      service_version: opts.serviceVersion ?? null,
+      service_instance_id: opts.serviceInstanceId ?? null,
       entity_id: opts.entityId ?? null,
       agent_name: null,
       provider_name: null,
@@ -289,6 +312,9 @@ export function buildMockGenAiBundle(opts: MockOptions = {}): AgentGenAiBundle {
       providers: Array.from(new Set(modelMix.map((m) => m.provider))),
       models: modelMix.map((m) => m.model),
       operations: operation_breakdown.map((o) => o.operation_name),
+      service_namespaces: [],
+      service_versions: [],
+      service_instance_ids: [],
     },
     metadata: {
       generated_at: end.toISOString() as DateTime,

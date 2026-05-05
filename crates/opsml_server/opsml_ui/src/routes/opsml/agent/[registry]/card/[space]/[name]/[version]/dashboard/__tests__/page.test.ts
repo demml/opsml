@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { load } from '../+page';
 import { RegistryType } from '$lib/utils';
 import type { PromptCard } from '$lib/components/card/card_interfaces/promptcard';
+import type { AgentGenAiBundle } from '$lib/components/card/agent/observability/types';
 
 function makeCard(overrides: Partial<PromptCard> = {}): PromptCard {
   return {
@@ -71,6 +72,12 @@ function makeLoadCtx(
   } as unknown as Parameters<typeof load>[0];
 }
 
+async function runLoad(
+  ctx: Parameters<typeof load>[0],
+): Promise<{ bundle: AgentGenAiBundle; mockMode: boolean }> {
+  return (await load(ctx)) as { bundle: AgentGenAiBundle; mockMode: boolean };
+}
+
 describe('dashboard +page.ts load() — agent mock mode', () => {
   it('returns bundle without throwing (no fetch call)', async () => {
     const ctx = makeLoadCtx({
@@ -79,7 +86,7 @@ describe('dashboard +page.ts load() — agent mock mode', () => {
       devMockEnabled: true,
       promptCardsWithEval: [],
     });
-    const result = await load(ctx);
+    const result = await runLoad(ctx);
     expect(result.bundle).toBeDefined();
     expect(result.mockMode).toBe(true);
   });
@@ -91,22 +98,25 @@ describe('dashboard +page.ts load() — agent mock mode', () => {
       devMockEnabled: true,
       promptCardsWithEval: [],
     });
-    const { bundle } = await load(ctx);
+    const { bundle } = await runLoad(ctx);
     expect(bundle.dashboard).toHaveProperty('applied_filters');
     expect(bundle.dashboard).toHaveProperty('available_filters');
     expect(bundle.dashboard).toHaveProperty('agent_dashboard');
     expect(bundle.range).toHaveProperty('selected_range');
   });
 
-  it('service_name uses colon-joined space:name format', async () => {
+  it('service identity uses OTel split fields', async () => {
     const ctx = makeLoadCtx({
       metadata: AGENT_METADATA,
       registryType: RegistryType.Agent,
       devMockEnabled: true,
       promptCardsWithEval: [],
     });
-    const { bundle } = await load(ctx);
-    expect(bundle.dashboard.applied_filters.service_name).toBe('fraud-detection:triage-agent');
+    const { bundle } = await runLoad(ctx);
+    expect(bundle.dashboard.applied_filters.service_name).toBe('triage-agent');
+    expect(bundle.dashboard.applied_filters.service_namespace).toBe('fraud-detection');
+    expect(bundle.dashboard.applied_filters.service_version).toBe('1.0.0');
+    expect(bundle.dashboard.applied_filters.service_instance_id).toBeNull();
     expect(bundle.dashboard.applied_filters.entity_id).toBeNull();
   });
 
@@ -121,7 +131,7 @@ describe('dashboard +page.ts load() — agent mock mode', () => {
       devMockEnabled: true,
       promptCardsWithEval: [promptCard],
     });
-    const { bundle } = await load(ctx);
+    const { bundle } = await runLoad(ctx);
     expect(bundle.eval_profiles).toHaveLength(1);
     expect(bundle.eval_profiles[0].uid).toBe('ep-uid-1');
     expect(bundle.eval_profiles[0].alias).toBe('my-alias');
@@ -138,7 +148,7 @@ describe('dashboard +page.ts load() — agent mock mode', () => {
       },
       mockFetch as unknown as typeof fetch,
     );
-    await load(ctx);
+    await runLoad(ctx);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
@@ -151,9 +161,12 @@ describe('dashboard +page.ts load() — prompt mock mode', () => {
       devMockEnabled: true,
       promptCardsWithEval: [],
     });
-    const result = await load(ctx);
+    const result = await runLoad(ctx);
     expect(result.bundle.dashboard.applied_filters.entity_id).toBe('eval-uid-abc');
     expect(result.bundle.dashboard.applied_filters.service_name).toBeNull();
+    expect(result.bundle.dashboard.applied_filters.service_namespace).toBeNull();
+    expect(result.bundle.dashboard.applied_filters.service_version).toBeNull();
+    expect(result.bundle.dashboard.applied_filters.service_instance_id).toBeNull();
     expect(result.mockMode).toBe(true);
   });
 
@@ -164,7 +177,7 @@ describe('dashboard +page.ts load() — prompt mock mode', () => {
       devMockEnabled: true,
       promptCardsWithEval: [],
     });
-    const { bundle } = await load(ctx);
+    const { bundle } = await runLoad(ctx);
     expect(bundle.eval_profiles).toHaveLength(1);
     expect(bundle.eval_profiles[0].uid).toBe('eval-uid-abc');
     expect(bundle.eval_profiles[0].alias).toBe('v1');
@@ -175,7 +188,10 @@ describe('dashboard +page.ts load() — API live mode', () => {
   it('calls fetch and returns mockMode: false on success', async () => {
     const dashboardResponse = {
       applied_filters: {
-        service_name: 'fraud-detection:triage-agent',
+        service_name: 'triage-agent',
+        service_namespace: 'fraud-detection',
+        service_version: '1.0.0',
+        service_instance_id: null,
         entity_id: null,
         agent_name: null,
         provider_name: null,
@@ -185,7 +201,15 @@ describe('dashboard +page.ts load() — API live mode', () => {
         end_time: '2026-01-02T00:00:00Z',
         bucket_interval: 'hour',
       },
-      available_filters: { agents: [], providers: [], models: [], operations: [] },
+      available_filters: {
+        agents: [],
+        providers: [],
+        models: [],
+        operations: [],
+        service_namespaces: [],
+        service_versions: [],
+        service_instance_ids: [],
+      },
       metadata: { generated_at: '2026-01-02T00:00:00Z', schema_version: 1, total_spans: 0 },
       token_metrics: { buckets: [] },
       operation_breakdown: { operations: [] },
@@ -221,10 +245,12 @@ describe('dashboard +page.ts load() — API live mode', () => {
       mockFetch as unknown as typeof fetch,
     );
 
-    const result = await load(ctx);
+    const result = await runLoad(ctx);
     expect(mockFetch).toHaveBeenCalledOnce();
     expect(result.mockMode).toBe(false);
-    expect(result.bundle.dashboard.applied_filters.service_name).toBe('fraud-detection:triage-agent');
+    expect(result.bundle.dashboard.applied_filters.service_name).toBe('triage-agent');
+    expect(result.bundle.dashboard.applied_filters.service_namespace).toBe('fraud-detection');
+    expect(result.bundle.dashboard.applied_filters.service_version).toBe('1.0.0');
   });
 
   it('falls back to an empty bundle (NOT mock) when API throws and mock mode is off', async () => {
@@ -243,7 +269,7 @@ describe('dashboard +page.ts load() — API live mode', () => {
       mockFetch as unknown as typeof fetch,
     );
 
-    const result = await load(ctx);
+    const result = await runLoad(ctx);
     expect(result.mockMode).toBe(false);
     expect(result.bundle).toBeDefined();
     expect(result.bundle.dashboard).toHaveProperty('agent_dashboard');
@@ -266,7 +292,7 @@ describe('dashboard +page.ts load() — API live mode', () => {
       mockFetch as unknown as typeof fetch,
     );
 
-    const result = await load(ctx);
+    const result = await runLoad(ctx);
     expect(result.mockMode).toBe(true);
     expect(result.bundle).toBeDefined();
     expect(result.bundle.dashboard).toHaveProperty('agent_dashboard');

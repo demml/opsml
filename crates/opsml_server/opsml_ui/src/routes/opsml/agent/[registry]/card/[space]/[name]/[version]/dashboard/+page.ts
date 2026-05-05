@@ -20,9 +20,9 @@ export const ssr = false;
 /**
  * Loads the composite GenAI dashboard for the current card.
  *
- * - Agent registry: scopes by `service_name = "{space}:{name}"` (matches the
- *   Rust `ServiceInfo::namespace()`, which is what the tracer stamps onto every
- *   span via `service.name`).
+ * - Agent registry: scopes by the OTel service triple:
+ *   `service_name = name`, `service_namespace = space`, and
+ *   `service_version = version`.
  * - Prompt registry: scopes by `entity_id = eval_profile.config.uid`.
  *
  * The two scopes are mutually exclusive in practice — only one is non-null per
@@ -38,7 +38,10 @@ export const load: PageLoad = async ({ fetch, parent }) => {
   const promptUid = isPrompt
     ? ((metadata as PromptCard).eval_profile?.config.uid ?? null)
     : null;
-  const serviceName = isPrompt ? null : `${metadata.space}:${metadata.name}`;
+  const serviceName = isPrompt ? null : metadata.name;
+  const serviceNamespace = isPrompt ? null : metadata.space;
+  const serviceVersion = isPrompt ? null : metadata.version;
+  const serviceInstanceId = null;
 
   // FilterBar Profile dropdown sourcing.
   // - Agent registry: every associated prompt card with an eval profile
@@ -72,6 +75,9 @@ export const load: PageLoad = async ({ fetch, parent }) => {
         selectedRange,
         bucketInterval: bucket_interval,
         serviceName,
+        serviceNamespace,
+        serviceVersion,
+        serviceInstanceId,
         entityId: promptUid,
         evalProfiles: isPrompt
           ? evalProfiles
@@ -85,6 +91,9 @@ export const load: PageLoad = async ({ fetch, parent }) => {
 
   const body: GenAiDashboardRequest = {
     service_name: serviceName,
+    service_namespace: serviceNamespace,
+    service_version: serviceVersion,
+    service_instance_id: serviceInstanceId,
     entity_id: promptUid,
     start_time: start_time as DateTime,
     end_time: end_time as DateTime,
@@ -120,6 +129,9 @@ export const load: PageLoad = async ({ fetch, parent }) => {
           selectedRange,
           bucketInterval: bucket_interval,
           serviceName,
+          serviceNamespace,
+          serviceVersion,
+          serviceInstanceId,
           entityId: promptUid,
           evalProfiles: isPrompt
             ? evalProfiles
@@ -135,6 +147,9 @@ export const load: PageLoad = async ({ fetch, parent }) => {
         selectedRange,
         bucketInterval: bucket_interval,
         serviceName,
+        serviceNamespace,
+        serviceVersion,
+        serviceInstanceId,
         entityId: promptUid,
         start_time,
         end_time,

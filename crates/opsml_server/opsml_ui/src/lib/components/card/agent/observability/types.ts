@@ -12,12 +12,16 @@ export interface ModelPricing {
 /**
  * Request body for `POST /opsml/api/scouter/genai/dashboard`.
  *
- * Scope by setting EITHER `service_name` (service-wide view, e.g. an AgentCard)
- * OR `entity_id` (a single Scouter entity such as an `AgentEvalProfile`).
+ * Scope by setting EITHER the service identity fields (service-wide view,
+ * e.g. an AgentCard) OR `entity_id` (a single Scouter entity such as an
+ * `AgentEvalProfile`).
  * Sending both is allowed but unusual; the backend treats them as AND.
  */
 export interface GenAiDashboardRequest {
   service_name: string | null;
+  service_namespace: string | null;
+  service_version: string | null;
+  service_instance_id: string | null;
   entity_id: string | null;
   start_time: DateTime;
   end_time: DateTime;
@@ -33,6 +37,9 @@ export interface GenAiDashboardRequest {
 
 export interface AgentDashboardRequest {
   service_name: string | null;
+  service_namespace: string | null;
+  service_version: string | null;
+  service_instance_id: string | null;
   start_time: DateTime;
   end_time: DateTime;
   bucket_interval: string;
@@ -89,6 +96,9 @@ export interface AgentDashboardResponse {
 
 export interface ToolDashboardRequest {
   service_name: string | null;
+  service_namespace: string | null;
+  service_version: string | null;
+  service_instance_id: string | null;
   start_time: DateTime;
   end_time: DateTime;
   bucket_interval: string;
@@ -118,6 +128,9 @@ export interface ToolDashboardResponse {
 
 export interface GenAiMetricsRequest {
   service_name: string | null;
+  service_namespace: string | null;
+  service_version: string | null;
+  service_instance_id: string | null;
   start_time: DateTime;
   end_time: DateTime;
   bucket_interval: string;
@@ -200,6 +213,9 @@ export interface GenAiAgentActivityResponse {
  */
 export interface AppliedFilters {
   service_name: string | null;
+  service_namespace: string | null;
+  service_version: string | null;
+  service_instance_id: string | null;
   entity_id: string | null;
   agent_name: string | null;
   provider_name: string | null;
@@ -219,6 +235,9 @@ export interface AvailableFilters {
   providers: string[];
   models: string[];
   operations: string[];
+  service_namespaces: string[];
+  service_versions: string[];
+  service_instance_ids: string[];
 }
 
 export interface DashboardMetadata {

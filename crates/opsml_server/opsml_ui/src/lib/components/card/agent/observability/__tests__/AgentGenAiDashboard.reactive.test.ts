@@ -10,7 +10,10 @@ import type { AgentGenAiBundle, GenAiDashboardResponse } from '../types';
 function makeDashboard(overrides: Partial<GenAiDashboardResponse> = {}): GenAiDashboardResponse {
   return {
     applied_filters: {
-      service_name: 'space:name',
+      service_name: 'agent-service',
+      service_namespace: null,
+      service_version: null,
+      service_instance_id: null,
       entity_id: null,
       agent_name: null,
       provider_name: null,
@@ -25,6 +28,9 @@ function makeDashboard(overrides: Partial<GenAiDashboardResponse> = {}): GenAiDa
       providers: ['openai'],
       models: ['gpt-4o', 'claude-3-5-sonnet'],
       operations: ['chat.completions'],
+      service_namespaces: [],
+      service_versions: [],
+      service_instance_ids: [],
     },
     metadata: {
       generated_at: '2026-01-02T00:00:00Z' as unknown as GenAiDashboardResponse['metadata']['generated_at'],

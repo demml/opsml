@@ -16,6 +16,9 @@ export interface ModelPricing {
 
 export interface GenAiMetricsRequest {
   service_name: string | null;
+  service_namespace?: string | null;
+  service_version?: string | null;
+  service_instance_id?: string | null;
   start_time: string;
   end_time: string;
   bucket_interval: BucketInterval;
@@ -27,6 +30,9 @@ export interface GenAiMetricsRequest {
 
 export interface GenAiSpanFilters {
   service_name: string | null;
+  service_namespace?: string | null;
+  service_version?: string | null;
+  service_instance_id?: string | null;
   start_time: string | null;
   end_time: string | null;
   operation_name: string | null;
@@ -50,6 +56,9 @@ export interface GenAiTraceMetricsRequest {
 
 export interface AgentDashboardRequest {
   service_name: string | null;
+  service_namespace?: string | null;
+  service_version?: string | null;
+  service_instance_id?: string | null;
   entity_id: string | null;
   start_time: string;
   end_time: string;
@@ -61,6 +70,9 @@ export interface AgentDashboardRequest {
 
 export interface ToolDashboardRequest {
   service_name: string | null;
+  service_namespace?: string | null;
+  service_version?: string | null;
+  service_instance_id?: string | null;
   start_time: string;
   end_time: string;
   bucket_interval: BucketInterval;
@@ -71,6 +83,9 @@ export interface ToolDashboardRequest {
 
 export interface GenAiDashboardRequest {
   service_name: string | null;
+  service_namespace?: string | null;
+  service_version?: string | null;
+  service_instance_id?: string | null;
   entity_id: string | null;
   start_time: string;
   end_time: string;
@@ -103,6 +118,9 @@ export interface GenAiSpanRecord {
   trace_id: string;
   span_id: string;
   service_name: string;
+  service_namespace?: string | null;
+  service_version?: string | null;
+  service_instance_id?: string | null;
   start_time: string;
   end_time: string | null;
   duration_ms: number;
@@ -293,6 +311,9 @@ export interface ToolDashboardResponse {
 
 export interface AppliedFilters {
   service_name: string | null;
+  service_namespace?: string | null;
+  service_version?: string | null;
+  service_instance_id?: string | null;
   entity_id: string | null;
   agent_name: string | null;
   provider_name: string | null;
@@ -308,6 +329,9 @@ export interface AvailableFilters {
   providers: string[];
   models: string[];
   operations: string[];
+  service_namespaces?: string[];
+  service_versions?: string[];
+  service_instance_ids?: string[];
 }
 
 export interface DashboardMetadata {

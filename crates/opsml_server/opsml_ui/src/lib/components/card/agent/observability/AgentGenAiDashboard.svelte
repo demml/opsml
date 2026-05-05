@@ -31,10 +31,13 @@
 
   // ── Input state ────────────────────────────────────────────────────────────
   // The filters that drive the fetch. Mutating any field re-fires the effect.
-  // service_name is route-locked (set on mount, never changes via the UI).
+  // Service identity fields are route-locked (set on mount, never change via the UI).
   // entity_id is route-locked when isPromptScope; otherwise user-selectable.
   let filters = $state({
     service_name: initialBundle.dashboard.applied_filters.service_name,
+    service_namespace: initialBundle.dashboard.applied_filters.service_namespace,
+    service_version: initialBundle.dashboard.applied_filters.service_version,
+    service_instance_id: initialBundle.dashboard.applied_filters.service_instance_id,
     entity_id: initialBundle.dashboard.applied_filters.entity_id,
     agent_name: initialBundle.dashboard.applied_filters.agent_name,
     provider_name: initialBundle.dashboard.applied_filters.provider_name,
@@ -69,6 +72,9 @@
     void timeRangeState.refreshSignal;
     const snapshot = {
       service_name: filters.service_name,
+      service_namespace: filters.service_namespace,
+      service_version: filters.service_version,
+      service_instance_id: filters.service_instance_id,
       entity_id: filters.entity_id,
       agent_name: filters.agent_name,
       provider_name: filters.provider_name,
@@ -124,6 +130,9 @@
   }) {
     filters = {
       service_name: filters.service_name,
+      service_namespace: filters.service_namespace,
+      service_version: filters.service_version,
+      service_instance_id: filters.service_instance_id,
       entity_id: isPromptScope ? filters.entity_id : next.entity_id,
       agent_name: next.agent_name,
       provider_name: next.provider_name,

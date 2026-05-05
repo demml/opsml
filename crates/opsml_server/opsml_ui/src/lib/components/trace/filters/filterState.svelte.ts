@@ -13,6 +13,15 @@ export function derivedActiveFilters(
   if (f.service_name) {
     out.push({ key: "service_name", label: "Service", value: f.service_name });
   }
+  if (f.service_namespace) {
+    out.push({ key: "service_namespace", label: "Namespace", value: f.service_namespace });
+  }
+  if (f.service_version) {
+    out.push({ key: "service_version", label: "Version", value: f.service_version });
+  }
+  if (f.service_instance_id) {
+    out.push({ key: "service_instance_id", label: "Instance", value: f.service_instance_id });
+  }
   if (typeof f.status_code === "number") {
     out.push({
       key: "status_code",
@@ -58,6 +67,15 @@ export function removeActiveFilter(
   switch (filter.key) {
     case "service_name":
       delete nextFilters.service_name;
+      break;
+    case "service_namespace":
+      delete nextFilters.service_namespace;
+      break;
+    case "service_version":
+      delete nextFilters.service_version;
+      break;
+    case "service_instance_id":
+      delete nextFilters.service_instance_id;
       break;
     case "status_code":
       delete nextFilters.status_code;
