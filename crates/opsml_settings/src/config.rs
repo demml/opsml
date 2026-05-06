@@ -128,6 +128,7 @@ pub struct OpsmlConfig {
     pub mode: OpsmlMode,
     pub base_path: PathBuf,
     pub agent_settings: AgentSettings,
+    pub is_offline: bool,
 }
 
 impl Default for OpsmlConfig {
@@ -230,13 +231,14 @@ impl Default for OpsmlConfig {
             Err(_) => std::env::current_dir().expect("Failed to get current directory"),
         };
 
+        let is_offline = env::var("OPSML_OFFLINE").is_ok_and(|v| v == "1");
+
         OpsmlConfig {
             app_name: "opsml".to_string(),
             app_env: env::var("APP_ENV").unwrap_or_else(|_| "development".to_string()),
             app_version: opsml_version::version(),
             opsml_storage_uri: OpsmlConfig::set_opsml_storage_uri(opsml_storage_uri, &mode),
             opsml_tracking_uri,
-
             opsml_proxy_root: "opsml-root:/".to_string(),
             opsml_registry_path: env::var("OPSML_REGISTRY_PATH")
                 .unwrap_or_else(|_| "opsml_registry".to_string()),
@@ -248,6 +250,7 @@ impl Default for OpsmlConfig {
             logging_config,
             base_path,
             agent_settings: AgentSettings::new(),
+            is_offline,
         }
     }
 }

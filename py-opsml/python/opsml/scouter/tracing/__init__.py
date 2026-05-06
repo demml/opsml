@@ -93,28 +93,16 @@ else:
             """Stub base class when OpenTelemetry is not available."""
 
             def instrument(self, **kwargs):
-                raise ImportError(
-                    "OpenTelemetry is not installed. Install with: "
-                    "pip install opsml[opentelemetry]"
-                )
+                raise ImportError("OpenTelemetry is not installed. Install with: " "pip install opsml[opentelemetry]")
 
             def uninstrument(self, **kwargs):
-                raise ImportError(
-                    "OpenTelemetry is not installed. Install with: "
-                    "pip install opsml[opentelemetry]"
-                )
+                raise ImportError("OpenTelemetry is not installed. Install with: " "pip install opsml[opentelemetry]")
 
         def get_tracer_provider():
-            raise ImportError(
-                "OpenTelemetry is not installed. Install with: "
-                "pip install opsml[opentelemetry]"
-            )
+            raise ImportError("OpenTelemetry is not installed. Install with: " "pip install opsml[opentelemetry]")
 
         def set_tracer_provider(provider):
-            raise ImportError(
-                "OpenTelemetry is not installed. Install with: "
-                "pip install opsml[opentelemetry]"
-            )
+            raise ImportError("OpenTelemetry is not installed. Install with: " "pip install opsml[opentelemetry]")
 
         _agnosticcontextmanager = contextmanager
 
@@ -266,9 +254,7 @@ class ScouterSpan(_OtelSpan):
         context: Any,
         attributes: Optional[Mapping[str, Any]] = None,
     ) -> None:
-        active_attributes = (
-            dict(attributes) if isinstance(attributes, Mapping) else attributes
-        )
+        active_attributes = dict(attributes) if isinstance(attributes, Mapping) else attributes
         self._active.add_link(context, active_attributes)
 
     def update_name(self, name: str) -> None:
@@ -285,15 +271,9 @@ class ScouterSpan(_OtelSpan):
         timestamp: Optional[int] = None,
         escaped: bool = False,
     ) -> None:
-        active_exception = (
-            exception if isinstance(exception, Exception) else Exception(str(exception))
-        )
-        active_attributes = (
-            dict(attributes) if isinstance(attributes, Mapping) else attributes
-        )
-        self._active.record_exception(
-            active_exception, active_attributes, timestamp, escaped
-        )
+        active_exception = exception if isinstance(exception, Exception) else Exception(str(exception))
+        active_attributes = dict(attributes) if isinstance(attributes, Mapping) else attributes
+        self._active.record_exception(active_exception, active_attributes, timestamp, escaped)
 
     # Scouter-specific extensions
     def set_input(self, value: Any, max_length: int = 1000) -> None:
@@ -389,9 +369,7 @@ class ScouterTracer(_OtelTracer):
         current_context = self._current_context(context)
         if baggage:
             current_context = self._apply_baggage_to_context(baggage, current_context)
-        resolved_parent_context_id = (
-            parent_context_id or self._resolve_parent_context_id(current_context)
-        )
+        resolved_parent_context_id = parent_context_id or self._resolve_parent_context_id(current_context)
 
         active = self._base.start_span(
             name=name,
@@ -464,11 +442,7 @@ class ScouterTracer(_OtelTracer):
 
             # Attach baggage-enriched context so use_span derives from it,
             # making baggage visible to all child spans in Python contextvars.
-            baggage_token = (
-                otel_ctx_api.attach(enriched_ctx)
-                if baggage and enriched_ctx is not None
-                else None
-            )
+            baggage_token = otel_ctx_api.attach(enriched_ctx) if baggage and enriched_ctx is not None else None
             try:
                 with trace.use_span(  # pylint: disable=not-context-manager
                     span,
@@ -504,17 +478,13 @@ class ScouterTracer(_OtelTracer):
         **_kwargs,
     ) -> Callable[[Callable[P, R]], Callable[P, R]]:
         def decorator(func: Callable[P, R]) -> Callable[P, R]:
-            span_name = (
-                name or f"{func.__module__}.{getattr(func, '__qualname__', repr(func))}"
-            )
+            span_name = name or f"{func.__module__}.{getattr(func, '__qualname__', repr(func))}"
             function_type = get_function_type(func)
 
             if function_type == FunctionType.AsyncGenerator:
 
                 @functools.wraps(func)
-                async def async_generator_wrapper(
-                    *args: P.args, **kwargs: P.kwargs
-                ) -> Any:
+                async def async_generator_wrapper(*args: P.args, **kwargs: P.kwargs) -> Any:
                     with self.start_as_current_span(
                         name=span_name,
                         kind=kind,
@@ -525,12 +495,8 @@ class ScouterTracer(_OtelTracer):
                         parent_context_id=parent_context_id,
                         trace_id=trace_id,
                     ) as span:
-                        span.set_input(
-                            _capture_arguments(func, args, kwargs), max_length
-                        )
-                        async_gen_func = cast(
-                            Callable[P, AsyncGenerator[Any, None]], func
-                        )
+                        span.set_input(_capture_arguments(func, args, kwargs), max_length)
+                        async_gen_func = cast(Callable[P, AsyncGenerator[Any, None]], func)
                         generator = async_gen_func(*args, **kwargs)
 
                         outputs = []
@@ -562,9 +528,7 @@ class ScouterTracer(_OtelTracer):
                         parent_context_id=parent_context_id,
                         trace_id=trace_id,
                     ) as span:
-                        span.set_input(
-                            _capture_arguments(func, args, kwargs), max_length
-                        )
+                        span.set_input(_capture_arguments(func, args, kwargs), max_length)
                         gen_func = cast(Callable[P, Generator[Any, None, None]], func)
                         generator = gen_func(*args, **kwargs)
                         outputs = []
@@ -597,9 +561,7 @@ class ScouterTracer(_OtelTracer):
                         parent_context_id=parent_context_id,
                         trace_id=trace_id,
                     ) as span:
-                        span.set_input(
-                            _capture_arguments(func, args, kwargs), max_length
-                        )
+                        span.set_input(_capture_arguments(func, args, kwargs), max_length)
                         async_func = cast(Callable[P, Awaitable[Any]], func)
                         result = await async_func(*args, **kwargs)
                         span.set_output(result, max_length)
@@ -651,9 +613,7 @@ class ScouterTracer(_OtelTracer):
     def drain_local_spans(self, capture_run_id: str) -> List[TraceSpanRecord]:
         return self._base.drain_local_spans(capture_run_id)
 
-    def get_local_spans_by_trace_ids(
-        self, capture_run_id: str, trace_ids: List[str]
-    ) -> List[TraceSpanRecord]:
+    def get_local_spans_by_trace_ids(self, capture_run_id: str, trace_ids: List[str]) -> List[TraceSpanRecord]:
         return self._base.get_local_spans_by_trace_ids(capture_run_id, trace_ids)
 
 
@@ -698,15 +658,9 @@ def get_tracer(
         A `ScouterTracer` wrapper for the requested instrumentation scope.
     """
     if not HAS_OPENTELEMETRY:
-        raise ImportError(
-            "OpenTelemetry is not installed. Install with: pip install opsml[opentelemetry]"
-        )
+        raise ImportError("OpenTelemetry is not installed. Install with: pip install opsml[opentelemetry]")
 
-    if (
-        default_attributes is not None
-        or default_entity_uid is not None
-        or scouter_queue is not None
-    ):
+    if default_attributes is not None or default_entity_uid is not None or scouter_queue is not None:
         return ScouterTracer(
             _get_tracer(
                 scope_name=name,
@@ -734,9 +688,7 @@ def get_tracer(
             )
         )
     except Exception as exc:  # noqa: BLE001 pylint: disable=broad-except
-        raise RuntimeError(
-            "ScouterInstrumentor.instrument() must be called before get_tracer()"
-        ) from exc
+        raise RuntimeError("ScouterInstrumentor.instrument() must be called before get_tracer()") from exc
 
 
 class ScouterTracerProvider(_OtelTracerProvider):
@@ -903,8 +855,7 @@ class ScouterInstrumentor(BaseInstrumentor):
         """Initialize Scouter tracing and set as global provider."""
         if not HAS_OPENTELEMETRY:
             raise ImportError(
-                "OpenTelemetry is required for instrumentation. "
-                "Install with: pip install opsml[opentelemetry]"
+                "OpenTelemetry is required for instrumentation. " "Install with: pip install opsml[opentelemetry]"
             )
 
         if self._provider is not None:
@@ -917,9 +868,7 @@ class ScouterInstrumentor(BaseInstrumentor):
             )
             return
 
-        eval_profiles: Optional[List["AgentEvalProfile"]] = kwargs.pop(
-            "eval_profiles", None
-        )
+        eval_profiles: Optional[List["AgentEvalProfile"]] = kwargs.pop("eval_profiles", None)
         scouter_queue = kwargs.get("scouter_queue", None)
         if eval_profiles:
             kwargs["default_entity_uid"] = eval_profiles[0].config.uid
@@ -1065,13 +1014,9 @@ class ScouterInstrumentor(BaseInstrumentor):
         """Drain and return locally captured spans for a capture run."""
         return get_tracer("scouter").drain_local_spans(capture_run_id)
 
-    def get_local_spans_by_trace_ids(
-        self, capture_run_id: str, trace_ids: List[str]
-    ) -> List[TraceSpanRecord]:
+    def get_local_spans_by_trace_ids(self, capture_run_id: str, trace_ids: List[str]) -> List[TraceSpanRecord]:
         """Return captured spans matching the given trace IDs without draining the run buffer."""
-        return get_tracer("scouter").get_local_spans_by_trace_ids(
-            capture_run_id, trace_ids
-        )
+        return get_tracer("scouter").get_local_spans_by_trace_ids(capture_run_id, trace_ids)
 
     def _uninstrument(self, **kwargs) -> None:
         """Shutdown Scouter tracing and reset global provider."""
@@ -1102,9 +1047,7 @@ class ScouterInstrumentor(BaseInstrumentor):
         # Reset the singleton
         ScouterInstrumentor._instance = None
 
-        assert self._provider is None, (
-            "Expected provider to be None after uninstrument()"
-        )
+        assert self._provider is None, "Expected provider to be None after uninstrument()"
 
     @property
     def is_instrumented(self) -> bool:
