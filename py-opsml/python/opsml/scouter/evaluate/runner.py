@@ -1,6 +1,7 @@
 # mypy: disable-error-code="attr-defined"
 
 from typing import Any, Callable, Dict, List, Optional
+from uuid import uuid4
 
 from ..._opsml import (
     EvalRecord,
@@ -24,6 +25,7 @@ SCENARIO_TAG_BAGGAGE_KEY = "scouter.eval.scenario_id"
 # scouter.entity* attribute (non-string) suppresses default entity auto-tagging
 # so per-agent active_profile selection remains authoritative.
 SCENARIO_WRAPPER_ENTITY_SUPPRESS_ATTR = {"scouter.entity.suppressed": True}
+SCENARIO_RUN_ID_ATTR = "scouter.eval.run_id"
 
 AgentFn = Callable[[str], Any]
 # (initial_query, agent_response, history) -> next user message or termination signal
@@ -93,9 +95,11 @@ class EvalOrchestrator:
         self._scenarios = scenarios
         self._agent_fn = agent_fn
         self._simulated_user_fn = simulated_user_fn
+        self._capture_run_id = f"opsml-eval-{uuid4().hex}"
         self._engine = EvalRunner(
             scenarios=scenarios,
             profiles=queue.agent_profiles(),
+            capture_run_id=self._capture_run_id,
         )
 
     def execute_agent(self, scenario: EvalScenario) -> Any:
@@ -211,16 +215,22 @@ class EvalOrchestrator:
     def _setup_capture(self) -> None:
         self._queue.enable_capture()
         try:
-            enable_local_span_capture()
+            enable_local_span_capture(self._capture_run_id)
         except Exception:  # noqa: BLE001 pylint: disable=broad-except
             pass
 
     def _teardown_capture(self) -> None:
         self._queue.disable_capture()
         try:
-            disable_local_span_capture()
+            disable_local_span_capture(self._capture_run_id)
         except Exception:  # noqa: BLE001 pylint: disable=broad-except
             pass
+
+    def _span_attributes(self) -> Dict[str, Any]:
+        return {
+            **SCENARIO_WRAPPER_ENTITY_SUPPRESS_ATTR,
+            SCENARIO_RUN_ID_ATTR: self._capture_run_id,
+        }
 
     def _execute_with_baggage(self, scenario: EvalScenario) -> Any:
         """Run execute_agent inside a span with scenario_id baggage (if tracer available)."""
@@ -229,7 +239,7 @@ class EvalOrchestrator:
             span_ctx = eval_tracer.start_as_current_span(
                 f"scouter.eval.scenario.{scenario.id}",
                 baggage=[{SCENARIO_TAG_BAGGAGE_KEY: scenario.id}],
-                attributes=SCENARIO_WRAPPER_ENTITY_SUPPRESS_ATTR,
+                attributes=self._span_attributes(),
             )
         except Exception:  # noqa: BLE001 pylint: disable=broad-except
             return self.execute_agent(scenario)
@@ -243,7 +253,7 @@ class EvalOrchestrator:
             span_ctx = eval_tracer.start_as_current_span(
                 f"scouter.eval.scenario.{scenario.id}",
                 baggage=[{SCENARIO_TAG_BAGGAGE_KEY: scenario.id}],
-                attributes=SCENARIO_WRAPPER_ENTITY_SUPPRESS_ATTR,
+                attributes=self._span_attributes(),
             )
         except Exception:  # noqa: BLE001 pylint: disable=broad-except
             return self.execute_agent_turn(scenario, message)

@@ -163,46 +163,51 @@ impl AppState {
         reload_config: Option<ReloadConfig>,
         load_kwargs: Option<&Bound<'_, PyDict>>,
     ) -> Result<Self, AppError> {
-        let service_path = path.unwrap_or_else(|| PathBuf::from(SaveName::ServiceCard));
-
-        // Load the service card from path
-        let service = Py::new(
-            py,
-            ServiceCard::from_path_rs(py, &service_path, load_kwargs)?,
-        )?;
-
-        let service_info = service
-            .bind(py)
-            .call_method0("service_info")?
-            .extract::<ServiceInfo>()?;
-
-        // Get the drift map in cap of drift profiles
-        let card_map = load_card_map(&service_path).inspect_err(|e| {
-            error!("Failed to load card map from: {:?}", e);
-        })?;
-
-        let reload_state = ReloadTaskState::new();
-        let queue = create_scouter_queue(py, card_map, transport_config, true)?
-            .map(|q| Arc::new(RwLock::new(q)));
-
-        // Create the service reloader
-        let reloader = create_service_reloader(
-            service_info.clone(),
-            reload_config,
-            service_path,
-            reload_state.clone(),
-        )?;
-
-        let kwargs = load_kwargs.map(|kw| kw.clone().unbind());
-
-        Ok(AppState {
-            service: Arc::new(RwLock::new(service)),
-            queue,
-            reloader,
-            load_kwargs: kwargs.map(|kw| Arc::new(RwLock::new(kw))),
-            reload_state,
-            service_info,
-        })
+        match path {
+            Some(service_path) => match Self::from_path_inner(
+                py,
+                service_path.clone(),
+                transport_config,
+                reload_config.clone(),
+                load_kwargs,
+            ) {
+                Ok(app_state) => Ok(app_state),
+                Err(err) if app_state().is_offline() => {
+                    let spec_dir = service_path
+                        .parent()
+                        .unwrap_or_else(|| Path::new("."))
+                        .to_path_buf();
+                    debug!(
+                        "OPSML_OFFLINE=1 and provided service path failed to load: {}. Falling back to from_spec at {:?} without registration",
+                        err, spec_dir
+                    );
+                    Self::from_spec(
+                        py,
+                        Some(spec_dir),
+                        transport_config,
+                        reload_config,
+                        load_kwargs,
+                        Some(false),
+                    )
+                }
+                Err(err) => Err(err),
+            },
+            None if app_state().is_offline() => Self::from_spec(
+                py,
+                None,
+                transport_config,
+                reload_config,
+                load_kwargs,
+                Some(false),
+            ),
+            None => Self::from_path_inner(
+                py,
+                PathBuf::from(SaveName::ServiceCard),
+                transport_config,
+                reload_config,
+                load_kwargs,
+            ),
+        }
     }
 
     /// Loads an `AppState` from an `opsmlspec.yaml` file.
@@ -241,10 +246,15 @@ impl AppState {
             None => std::env::current_dir()?,
         };
 
-        if register.unwrap_or(true) {
+        let register_service = register.unwrap_or(true) && !app_state().is_offline();
+
+        if register_service {
             install_service_from_spec(spec_dir.clone(), Some(spec_dir.clone()))
                 .map_err(|e| AppError::Error(e.to_string()))?;
         } else {
+            if app_state().is_offline() {
+                debug!("OPSML_OFFLINE=1, installing service locally without registration");
+            }
             install_service_locally(spec_dir.clone(), Some(spec_dir.clone()))
                 .map_err(|e| AppError::Error(e.to_string()))?;
         }
@@ -257,9 +267,9 @@ impl AppState {
             .map(|a| a.write_dir.clone())
             .ok_or_else(|| AppError::Error("Lock file contains no artifacts".to_string()))?;
 
-        Self::from_path(
+        Self::from_path_inner(
             py,
-            Some(spec_dir.join(write_dir)),
+            spec_dir.join(write_dir),
             transport_config,
             reload_config,
             load_kwargs,
@@ -608,6 +618,53 @@ fn add_uid_to_attributes<'py>(
 }
 
 impl AppState {
+    fn from_path_inner(
+        py: Python,
+        service_path: PathBuf,
+        transport_config: Option<&Bound<'_, PyAny>>,
+        reload_config: Option<ReloadConfig>,
+        load_kwargs: Option<&Bound<'_, PyDict>>,
+    ) -> Result<Self, AppError> {
+        // Load the service card from path
+        let service = Py::new(
+            py,
+            ServiceCard::from_path_rs(py, &service_path, load_kwargs)?,
+        )?;
+
+        let service_info = service
+            .bind(py)
+            .call_method0("service_info")?
+            .extract::<ServiceInfo>()?;
+
+        // Get the drift map in cap of drift profiles
+        let card_map = load_card_map(&service_path).inspect_err(|e| {
+            error!("Failed to load card map from: {:?}", e);
+        })?;
+
+        let reload_state = ReloadTaskState::new();
+        let queue = create_scouter_queue(py, card_map, transport_config, true)?
+            .map(|q| Arc::new(RwLock::new(q)));
+
+        // Create the service reloader
+        let reloader = create_service_reloader(
+            service_info.clone(),
+            reload_config,
+            service_path,
+            reload_state.clone(),
+        )?;
+
+        let kwargs = load_kwargs.map(|kw| kw.clone().unbind());
+
+        Ok(AppState {
+            service: Arc::new(RwLock::new(service)),
+            queue,
+            reloader,
+            load_kwargs: kwargs.map(|kw| Arc::new(RwLock::new(kw))),
+            reload_state,
+            service_info,
+        })
+    }
+
     fn reload_queue(
         queue_state: &Arc<RwLock<QueueState>>,
         reload_path: &Path,

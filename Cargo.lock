@@ -6029,7 +6029,6 @@ dependencies = [
  "opsml-cli",
  "opsml-registry",
  "opsml-semver",
- "opsml-settings",
  "opsml-state",
  "opsml-storage",
  "opsml-toml",

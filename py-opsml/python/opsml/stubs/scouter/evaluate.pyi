@@ -2868,6 +2868,7 @@ class EvalRunner:
         self,
         scenarios: "EvalScenarios",
         profiles: Dict[str, "AgentEvalProfile"],
+        capture_run_id: Optional[str] = None,
     ) -> None: ...
     def collect_scenario_data(
         self,

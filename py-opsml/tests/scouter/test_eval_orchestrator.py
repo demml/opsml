@@ -52,16 +52,20 @@ class FakeQueue:
 
 
 class FakeEvalRunner:
-    def __init__(self, scenarios: FakeScenarios, profiles: list[Any]) -> None:
+    def __init__(
+        self,
+        scenarios: FakeScenarios,
+        profiles: list[Any],
+        capture_run_id: str | None = None,
+    ) -> None:
         self.scenarios = scenarios
         self.profiles = profiles
+        self.capture_run_id = capture_run_id
         self.collect_calls: list[dict[str, Any]] = []
         self.evaluate_calls = 0
 
     def collect_scenario_data(self, records: dict[str, list[Any]], response: Any, scenario: FakeScenario) -> None:
-        self.collect_calls.append(
-            {"records": records, "response": response, "scenario_id": scenario.id}
-        )
+        self.collect_calls.append({"records": records, "response": response, "scenario_id": scenario.id})
 
     def evaluate(self, _config: Any) -> dict[str, Any]:
         self.evaluate_calls += 1
@@ -70,8 +74,8 @@ class FakeEvalRunner:
 
 def test_eval_orchestrator_non_interactive_capture_lifecycle(monkeypatch):
     monkeypatch.setattr(runner_module, "EvalRunner", FakeEvalRunner)
-    monkeypatch.setattr(runner_module, "enable_local_span_capture", lambda: None)
-    monkeypatch.setattr(runner_module, "disable_local_span_capture", lambda: None)
+    monkeypatch.setattr(runner_module, "enable_local_span_capture", lambda _capture_run_id: None)
+    monkeypatch.setattr(runner_module, "disable_local_span_capture", lambda _capture_run_id: None)
     monkeypatch.setattr(runner_module, "flush_tracer", lambda: None)
     monkeypatch.setattr(runner_module, "_get_tracer", lambda _: (_ for _ in ()).throw(RuntimeError("no tracer")))
 
@@ -103,12 +107,13 @@ def test_eval_orchestrator_non_interactive_capture_lifecycle(monkeypatch):
     assert queue.drain_calls == 1
     assert calls == ["hello", "next"]
     assert orchestrator._engine.collect_calls[0]["scenario_id"] == "scenario-1"  # pylint: disable=protected-access
+    assert orchestrator._engine.capture_run_id == orchestrator._capture_run_id  # pylint: disable=protected-access
 
 
 def test_eval_orchestrator_interactive_turns_and_history(monkeypatch):
     monkeypatch.setattr(runner_module, "EvalRunner", FakeEvalRunner)
-    monkeypatch.setattr(runner_module, "enable_local_span_capture", lambda: None)
-    monkeypatch.setattr(runner_module, "disable_local_span_capture", lambda: None)
+    monkeypatch.setattr(runner_module, "enable_local_span_capture", lambda _capture_run_id: None)
+    monkeypatch.setattr(runner_module, "disable_local_span_capture", lambda _capture_run_id: None)
     monkeypatch.setattr(runner_module, "flush_tracer", lambda: None)
     monkeypatch.setattr(runner_module, "_get_tracer", lambda _: (_ for _ in ()).throw(RuntimeError("no tracer")))
 
