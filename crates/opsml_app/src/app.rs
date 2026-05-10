@@ -17,7 +17,7 @@ use pyo3::types::PyDict;
 use scouter_client::BatchConfig;
 use scouter_client::ScouterQueue;
 use scouter_client::is_pydantic_basemodel;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tokio::sync::mpsc::{self, UnboundedReceiver};
@@ -46,6 +46,70 @@ fn load_card_map(path: &Path) -> Result<ServiceCardMapping, AppError> {
     debug!("Loading card mapping from: {:?}", card_mapping_path);
     let mapping = ServiceCardMapping::from_path(&card_mapping_path)?;
     Ok(mapping)
+}
+
+/// Normalizes service-local drift profile paths before Scouter queue creation.
+///
+/// Runtime loading is anchored by the caller-provided service path:
+/// `service_path/card.json` is the service card, `service_path/<alias>/card.json`
+/// is each sub-card, and `service_path/card_map.json` is the mapping. The
+/// mapping's `card_paths` are historical metadata and are not used for service
+/// card loading. Only `drift_paths` feed `ScouterQueue::from_path_rs`, so relative
+/// drift paths are resolved here before Scouter reads the profile files.
+fn normalize_drift_paths(
+    service_path: &Path,
+    mut card_map: ServiceCardMapping,
+) -> ServiceCardMapping {
+    card_map.drift_paths = card_map
+        .drift_paths
+        .into_iter()
+        .map(|(alias, path)| (alias, resolve_service_artifact_path(service_path, path)))
+        .collect();
+
+    card_map
+}
+
+fn resolve_service_artifact_path(service_path: &Path, path: PathBuf) -> PathBuf {
+    if path.is_absolute() {
+        return path;
+    }
+
+    if let Some(path_in_service) = strip_through_component(&path, service_path.file_name()) {
+        return service_path.join(path_in_service);
+    }
+
+    let service_relative_path = service_path.join(&path);
+    if service_relative_path.exists() {
+        return service_relative_path;
+    }
+
+    if let Some(parent) = service_path.parent() {
+        let parent_relative_path = parent.join(&path);
+        if parent_relative_path.exists() {
+            return parent_relative_path;
+        }
+    }
+
+    service_relative_path
+}
+
+fn strip_through_component(
+    path: &Path,
+    component_name: Option<&std::ffi::OsStr>,
+) -> Option<PathBuf> {
+    let component_name = component_name?;
+    let mut matched = false;
+    let mut stripped = PathBuf::new();
+
+    for component in path.components() {
+        if matched {
+            stripped.push(component.as_os_str());
+        } else if matches!(component, Component::Normal(name) if name == component_name) {
+            matched = true;
+        }
+    }
+
+    matched.then_some(stripped)
 }
 
 /// Creates the optional Scouter queue for a loaded service.
@@ -779,6 +843,65 @@ impl AppState {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+    use std::fs;
+    use tempfile::TempDir;
+
+    #[test]
+    fn normalize_drift_paths_resolves_service_relative_paths_without_using_card_paths() {
+        let temp_dir = TempDir::new().expect("temp dir should be created");
+        let service_path = temp_dir.path().join("app/agent/opsml_service");
+        let profile_path = service_path.join("triage_prompt/evaluation/triage_evaluation.json");
+        fs::create_dir_all(profile_path.parent().expect("profile should have parent"))
+            .expect("profile directory should be created");
+        fs::write(&profile_path, "{}").expect("profile file should be written");
+
+        let absolute_path = temp_dir.path().join("absolute/profile.json");
+        fs::create_dir_all(
+            absolute_path
+                .parent()
+                .expect("absolute path should have parent"),
+        )
+        .expect("absolute profile directory should be created");
+        fs::write(&absolute_path, "{}").expect("absolute profile file should be written");
+
+        let mut card_paths = HashMap::new();
+        card_paths.insert(
+            "triage_prompt".to_string(),
+            PathBuf::from("ignored/card/path"),
+        );
+
+        let mut drift_paths = HashMap::new();
+        drift_paths.insert(
+            "parent_relative".to_string(),
+            PathBuf::from("opsml_service/triage_prompt/evaluation/triage_evaluation.json"),
+        );
+        drift_paths.insert(
+            "service_relative".to_string(),
+            PathBuf::from("triage_prompt/evaluation/triage_evaluation.json"),
+        );
+        drift_paths.insert("absolute".to_string(), absolute_path.clone());
+
+        let card_map = ServiceCardMapping {
+            card_paths,
+            drift_paths,
+        };
+
+        let normalized = normalize_drift_paths(&service_path, card_map);
+
+        assert_eq!(
+            normalized.card_paths["triage_prompt"],
+            PathBuf::from("ignored/card/path")
+        );
+        assert_eq!(normalized.drift_paths["parent_relative"], profile_path);
+        assert_eq!(normalized.drift_paths["service_relative"], profile_path);
+        assert_eq!(normalized.drift_paths["absolute"], absolute_path);
+    }
+}
+
 /// Adds a service identifier to an OpenTelemetry attribute mapping.
 ///
 /// `attributes` may be `None`, a Python `dict`, or a Pydantic BaseModel. The
@@ -954,9 +1077,11 @@ impl AppStateBuilder {
     /// # Errors
     /// Returns [`AppError`] when the card mapping cannot be read or parsed.
     fn load_card_mapping(&self) -> Result<ServiceCardMapping, AppError> {
-        load_card_map(&self.service_path).inspect_err(|e| {
-            error!("Failed to load card map from: {:?}", e);
-        })
+        load_card_map(&self.service_path)
+            .map(|card_map| normalize_drift_paths(&self.service_path, card_map))
+            .inspect_err(|e| {
+                error!("Failed to load card map from: {:?}", e);
+            })
     }
 
     /// Creates a fresh reload task state for a new app state instance.
@@ -1086,7 +1211,7 @@ impl AppState {
         queue_state: &Arc<RwLock<QueueState>>,
         reload_path: &Path,
     ) -> Result<(), AppError> {
-        let card_map = load_card_map(reload_path)?;
+        let card_map = normalize_drift_paths(reload_path, load_card_map(reload_path)?);
 
         let mut queue_guard = queue_state.as_ref().write().unwrap();
         queue_guard.shutdown()?;

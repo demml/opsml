@@ -7,6 +7,7 @@ from opsml.cli import (
     install_service,  # type: ignore
 )
 from opsml.mock import MockConfig
+import json
 import pandas as pd
 import os
 from pathlib import Path
@@ -118,6 +119,62 @@ def test_pyproject_app(
         ## delete the opsml_service and lock file
         shutil.rmtree(opsml_service)
         os.remove(lock_file)
+
+
+@pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
+def test_from_path_resolves_espresso_style_drift_paths_from_project_root(
+    mock_environment,
+    random_forest_classifier: SklearnModel,
+    chat_prompt: Prompt,
+    example_dataframe: pd.DataFrame,
+    tmp_path,
+    monkeypatch,
+):
+    with OpsmlTestServer(True, CURRENT_DIRECTORY):
+        run_experiment(random_forest_classifier, chat_prompt, example_dataframe)
+
+        lock_service(CURRENT_DIRECTORY)
+        install_service(CURRENT_DIRECTORY, CURRENT_DIRECTORY)
+
+        source_service = CURRENT_DIRECTORY / "opsml_service"
+        lock_file = CURRENT_DIRECTORY / "opsml.lock"
+        service_path = tmp_path / "app" / "agent" / "opsml_service"
+        app = None
+
+        try:
+            shutil.copytree(source_service, service_path)
+
+            def service_relative_path(path: str) -> Path:
+                drift_path = Path(path)
+                if drift_path.is_absolute():
+                    return drift_path.relative_to(source_service)
+
+                parts = drift_path.parts
+                return Path(*parts[parts.index("opsml_service") + 1 :])
+
+            card_map_path = service_path / "card_map.json"
+            card_map = json.loads(card_map_path.read_text())
+            card_map["card_paths"] = {alias: f"ignored/{alias}" for alias in card_map["card_paths"]}
+            card_map["drift_paths"] = {
+                alias: f"opsml_service/{service_relative_path(path)}" for alias, path in card_map["drift_paths"].items()
+            }
+            card_map_path.write_text(json.dumps(card_map))
+
+            monkeypatch.chdir(tmp_path)
+
+            app = AppState.from_path(
+                path=service_path,
+                transport_config=opsml.scouter.HttpConfig(),
+            )
+
+            assert app.queue is not None
+            assert isinstance(app.queue.transport_config, MockConfig)
+        finally:
+            if app is not None:
+                app.shutdown()
+            shutil.rmtree(source_service, ignore_errors=True)
+            if lock_file.exists():
+                os.remove(lock_file)
 
 
 @pytest.mark.skipif(WINDOWS_EXCLUDE, reason="skipping")
