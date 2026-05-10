@@ -843,65 +843,6 @@ impl AppState {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::collections::HashMap;
-    use std::fs;
-    use tempfile::TempDir;
-
-    #[test]
-    fn normalize_drift_paths_resolves_service_relative_paths_without_using_card_paths() {
-        let temp_dir = TempDir::new().expect("temp dir should be created");
-        let service_path = temp_dir.path().join("app/agent/opsml_service");
-        let profile_path = service_path.join("triage_prompt/evaluation/triage_evaluation.json");
-        fs::create_dir_all(profile_path.parent().expect("profile should have parent"))
-            .expect("profile directory should be created");
-        fs::write(&profile_path, "{}").expect("profile file should be written");
-
-        let absolute_path = temp_dir.path().join("absolute/profile.json");
-        fs::create_dir_all(
-            absolute_path
-                .parent()
-                .expect("absolute path should have parent"),
-        )
-        .expect("absolute profile directory should be created");
-        fs::write(&absolute_path, "{}").expect("absolute profile file should be written");
-
-        let mut card_paths = HashMap::new();
-        card_paths.insert(
-            "triage_prompt".to_string(),
-            PathBuf::from("ignored/card/path"),
-        );
-
-        let mut drift_paths = HashMap::new();
-        drift_paths.insert(
-            "parent_relative".to_string(),
-            PathBuf::from("opsml_service/triage_prompt/evaluation/triage_evaluation.json"),
-        );
-        drift_paths.insert(
-            "service_relative".to_string(),
-            PathBuf::from("triage_prompt/evaluation/triage_evaluation.json"),
-        );
-        drift_paths.insert("absolute".to_string(), absolute_path.clone());
-
-        let card_map = ServiceCardMapping {
-            card_paths,
-            drift_paths,
-        };
-
-        let normalized = normalize_drift_paths(&service_path, card_map);
-
-        assert_eq!(
-            normalized.card_paths["triage_prompt"],
-            PathBuf::from("ignored/card/path")
-        );
-        assert_eq!(normalized.drift_paths["parent_relative"], profile_path);
-        assert_eq!(normalized.drift_paths["service_relative"], profile_path);
-        assert_eq!(normalized.drift_paths["absolute"], absolute_path);
-    }
-}
-
 /// Adds a service identifier to an OpenTelemetry attribute mapping.
 ///
 /// `attributes` may be `None`, a Python `dict`, or a Pydantic BaseModel. The
@@ -1368,5 +1309,64 @@ impl AppState {
         state.add_download_abort_handle(handle);
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+    use std::fs;
+    use tempfile::TempDir;
+
+    #[test]
+    fn normalize_drift_paths_resolves_service_relative_paths_without_using_card_paths() {
+        let temp_dir = TempDir::new().expect("temp dir should be created");
+        let service_path = temp_dir.path().join("app/agent/opsml_service");
+        let profile_path = service_path.join("triage_prompt/evaluation/triage_evaluation.json");
+        fs::create_dir_all(profile_path.parent().expect("profile should have parent"))
+            .expect("profile directory should be created");
+        fs::write(&profile_path, "{}").expect("profile file should be written");
+
+        let absolute_path = temp_dir.path().join("absolute/profile.json");
+        fs::create_dir_all(
+            absolute_path
+                .parent()
+                .expect("absolute path should have parent"),
+        )
+        .expect("absolute profile directory should be created");
+        fs::write(&absolute_path, "{}").expect("absolute profile file should be written");
+
+        let mut card_paths = HashMap::new();
+        card_paths.insert(
+            "triage_prompt".to_string(),
+            PathBuf::from("ignored/card/path"),
+        );
+
+        let mut drift_paths = HashMap::new();
+        drift_paths.insert(
+            "parent_relative".to_string(),
+            PathBuf::from("opsml_service/triage_prompt/evaluation/triage_evaluation.json"),
+        );
+        drift_paths.insert(
+            "service_relative".to_string(),
+            PathBuf::from("triage_prompt/evaluation/triage_evaluation.json"),
+        );
+        drift_paths.insert("absolute".to_string(), absolute_path.clone());
+
+        let card_map = ServiceCardMapping {
+            card_paths,
+            drift_paths,
+        };
+
+        let normalized = normalize_drift_paths(&service_path, card_map);
+
+        assert_eq!(
+            normalized.card_paths["triage_prompt"],
+            PathBuf::from("ignored/card/path")
+        );
+        assert_eq!(normalized.drift_paths["parent_relative"], profile_path);
+        assert_eq!(normalized.drift_paths["service_relative"], profile_path);
+        assert_eq!(normalized.drift_paths["absolute"], absolute_path);
     }
 }
