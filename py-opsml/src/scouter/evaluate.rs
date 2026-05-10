@@ -1,9 +1,10 @@
 use pyo3::prelude::*;
 use scouter_client::{
-    AlignedEvalResult, ComparisonResults, EvalDataset, EvalMetrics, EvalResultSet, EvalResults,
-    EvalRunner, EvalScenario, EvalScenarios, EvalSet, EvalTaskResult, EvaluationConfig,
-    EvaluationTaskType, MissingTask, ScenarioComparisonResults, ScenarioDelta, ScenarioEvalResults,
-    ScenarioResult, TaskComparison, TaskSummary, WorkflowComparison,
+    AlignedEvalResult, ComparisonResults, DocumentMedia, EvalDataset, EvalMedia, EvalMediaKind,
+    EvalMetrics, EvalResultSet, EvalResults, EvalRunner, EvalScenario, EvalScenarios, EvalSet,
+    EvalTaskResult, EvaluationConfig, EvaluationTaskType, ImageMedia, MissingTask,
+    ScenarioComparisonResults, ScenarioDelta, ScenarioEvalResults, ScenarioResult, TaskComparison,
+    TaskSummary, WorkflowComparison,
 };
 
 pub fn add_evaluate_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -32,6 +33,10 @@ pub fn add_evaluate_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<EvalScenarios>()?;
     m.add_class::<EvalRunner>()?;
     m.add_class::<TaskSummary>()?;
+    m.add_class::<EvalMediaKind>()?;
+    m.add_class::<EvalMedia>()?;
+    m.add_class::<ImageMedia>()?;
+    m.add_class::<DocumentMedia>()?;
 
     Ok(())
 }

@@ -26,7 +26,8 @@ use opsml_types::contracts::*;
 use opsml_types::*;
 use scouter_client::{
     AgentEvalTaskResponse, AgentEvalWorkflowPaginationResponse, BinnedMetrics,
-    BinnedPsiFeatureMetrics, EvalRecordPaginationResponse, EvalTaskResult, SpcDriftFeatures,
+    BinnedPsiFeatureMetrics, EvalRecordPaginationResponse, EvalTaskResult,
+    RegisteredProfileResponse, ScouterResponse, SpcDriftFeatures,
 };
 use std::sync::Arc;
 use std::time::SystemTime;
@@ -88,6 +89,26 @@ impl ScouterServer {
 
         serde_json::to_string(&response).unwrap()
     }
+
+    fn create_registered_profile_response() -> String {
+        let response = RegisteredProfileResponse {
+            space: "test".to_string(),
+            name: "test".to_string(),
+            version: "0.1.0".to_string(),
+            uid: "test-profile-uid".to_string(),
+            status: "success".to_string(),
+            active: true,
+        };
+
+        serde_json::to_string(&response).unwrap()
+    }
+
+    fn create_scouter_response(message: &str) -> String {
+        let response = ScouterResponse::new("success".to_string(), message.to_string());
+
+        serde_json::to_string(&response).unwrap()
+    }
+
     pub async fn new() -> Self {
         let mut server = mockito::Server::new_async().await;
 
@@ -128,6 +149,7 @@ impl ScouterServer {
             .await;
 
         // insert profile mock
+        let registered_profile_response = Self::create_registered_profile_response();
         server
             .mock("POST", "/scouter/profile")
             .match_header("content-type", mockito::Matcher::Any)
@@ -135,10 +157,11 @@ impl ScouterServer {
             .match_body(mockito::Matcher::Any)
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"status": "success", "message": "Profile created"}"#)
+            .with_body(registered_profile_response)
             .create_async()
             .await;
 
+        let profile_update_response = Self::create_scouter_response("Profile updated");
         server
             .mock("PUT", "/scouter/profile")
             .match_header("content-type", mockito::Matcher::Any)
@@ -146,10 +169,11 @@ impl ScouterServer {
             .match_body(mockito::Matcher::Any)
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"status": "success", "message": "Profile updated"}"#)
+            .with_body(profile_update_response)
             .create_async()
             .await;
 
+        let profile_status_response = Self::create_scouter_response("Profile updated");
         server
             .mock("PUT", "/scouter/profile/status")
             .match_header("content-type", mockito::Matcher::Any)
@@ -157,7 +181,7 @@ impl ScouterServer {
             .match_body(mockito::Matcher::Any)
             .with_status(200)
             .with_header("content-type", "application/json")
-            .with_body(r#"{"status": "success", "message": "Profile updated"}"#)
+            .with_body(profile_status_response)
             .create_async()
             .await;
 

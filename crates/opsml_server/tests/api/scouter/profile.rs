@@ -21,7 +21,7 @@ use scouter_client::{
 };
 use std::path::PathBuf;
 
-fn create_drift_profile(key: ArtifactKey) -> SpcDriftProfile {
+fn create_drift_profile(key: ArtifactKey) -> (SpcDriftProfile, String) {
     let profile = SpcDriftProfile::default();
     let save_path = PathBuf::from(format!(
         "opsml_registries/opsml_model_registry/{}/{}/v{}/{}",
@@ -45,6 +45,10 @@ fn create_drift_profile(key: ArtifactKey) -> SpcDriftProfile {
     );
 
     let profile_save_path = save_path.join(filename).with_extension(Suffix::Json);
+    let profile_uri = PathBuf::from(SaveName::Drift.to_string())
+        .join(profile_save_path.file_name().unwrap())
+        .to_string_lossy()
+        .to_string();
     let encryption_key = key.get_crypt_key().unwrap();
 
     profile
@@ -53,7 +57,7 @@ fn create_drift_profile(key: ArtifactKey) -> SpcDriftProfile {
 
     encrypt_file(&profile_save_path, &encryption_key).unwrap();
 
-    profile
+    (profile, profile_uri)
 }
 
 #[tokio::test]
@@ -102,7 +106,7 @@ async fn test_scouter_routes_update_profile() {
     let mut helper = TestHelper::new(None).await;
     helper.create_modelcard().await;
 
-    let mut profile = create_drift_profile(helper.key.clone());
+    let (mut profile, profile_uri) = create_drift_profile(helper.key.clone());
 
     profile.config.name = "updated_name".to_string();
 
@@ -112,7 +116,7 @@ async fn test_scouter_routes_update_profile() {
     let serialized = profile.model_dump_json();
     let request = UpdateProfileRequest {
         uid: helper.key.uid.clone(),
-        profile_uri: "mocked_uri".to_string(),
+        profile_uri,
         request: ProfileRequest {
             space: helper.space.clone(),
             drift_type: DriftType::Spc,

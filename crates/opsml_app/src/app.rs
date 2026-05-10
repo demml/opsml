@@ -15,7 +15,6 @@ use pyo3::PyVisit;
 use pyo3::prelude::*;
 use pyo3::types::PyDict;
 use scouter_client::BatchConfig;
-use scouter_client::SCOUTER_ENTITY;
 use scouter_client::ScouterQueue;
 use scouter_client::is_pydantic_basemodel;
 use std::path::{Path, PathBuf};
@@ -25,6 +24,8 @@ use tokio::sync::mpsc::{self, UnboundedReceiver};
 use tokio::time::sleep;
 use tokio_util::sync::CancellationToken;
 use tracing::{Instrument, debug, error, info, info_span};
+
+const SCOUTER_ENTITY: &str = "scouter.entity";
 
 /// Loads the service card mapping saved beside a service artifact directory.
 ///

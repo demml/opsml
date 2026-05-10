@@ -10345,48 +10345,30 @@ class TraceBaggageRecord:
 class TraceFilters:
     """A struct for filtering traces, generated from Rust pyclass."""
 
-    service_name: Optional[str]
-    has_errors: Optional[bool]
-    status_code: Optional[int]
+    clause: Optional[Any]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
     limit: Optional[int]
     cursor_start_time: Optional[datetime.datetime]
     cursor_trace_id: Optional[str]
     direction: Optional[str]
-    attribute_filters: Optional[List[str]]
     trace_ids: Optional[List[str]]
     entity_uid: Optional[str]
-    queue_uid: Optional[str]
-    duration_min_ms: Optional[int]
-    duration_max_ms: Optional[int]
 
     def __init__(
         self,
-        service_name: Optional[str] = None,
-        has_errors: Optional[bool] = None,
-        status_code: Optional[int] = None,
         start_time: Optional[datetime.datetime] = None,
         end_time: Optional[datetime.datetime] = None,
         limit: Optional[int] = None,
         cursor_start_time: Optional[datetime.datetime] = None,
         cursor_trace_id: Optional[str] = None,
-        attribute_filters: Optional[List[str]] = None,
+        direction: Optional[str] = None,
         trace_ids: Optional[List[str]] = None,
         entity_uid: Optional[str] = None,
-        queue_uid: Optional[str] = None,
-        duration_min_ms: Optional[int] = None,
-        duration_max_ms: Optional[int] = None,
     ) -> None:
         """Initialize trace filters.
 
         Args:
-            service_name:
-                Service name filter
-            has_errors:
-                Filter by presence of errors
-            status_code:
-                Filter by root span status code
             start_time:
                 Start time boundary (UTC)
             end_time:
@@ -10397,19 +10379,17 @@ class TraceFilters:
                 Pagination cursor: trace start timestamp
             cursor_trace_id:
                 Pagination cursor: trace ID
-            attribute_filters:
-                List of attribute filters in the format "key=value" or "key!=value"
+            direction:
+                Pagination direction
             trace_ids:
                 List of trace IDs to filter by
             entity_uid:
                 Filter by associated entity UID
-            queue_uid:
-                Filter by associated queue UID
-            duration_min_ms:
-                Minimum trace duration (inclusive)
-            duration_max_ms:
-                Maximum trace duration (inclusive)
         """
+
+    @classmethod
+    def from_query(cls, q: str) -> "TraceFilters":
+        """Build TraceFilters from the trace search DSL."""
 
 class TraceMetricBucket:
     """Represents aggregated trace metrics for a specific time bucket."""
@@ -10625,7 +10605,6 @@ def get_tracer(
     schema_url: Optional[str] = None,
     scope_attributes: Optional[Dict[str, Any]] = None,
     default_attributes: Optional[Dict[str, Any]] = None,
-    default_entity_uid: Optional[str] = None,
     scouter_queue: Optional[Any] = None,
 ) -> "BaseTracer":
     """Get a tracer for an instrumenting library/module.
@@ -10650,8 +10629,6 @@ def get_tracer(
             Optional attributes attached to the InstrumentationScope.
         default_attributes:
             Optional attributes to apply to every span created by this tracer.
-        default_entity_uid:
-            Optional default Scouter entity UID to materialize on every span.
         scouter_queue:
             Optional queue used to correlate queue records with spans.
 
@@ -10721,15 +10698,6 @@ class ActiveSpan:
                 The attribute value.
         """
 
-    def set_entity(self, entity_id: str) -> None:
-        """Convenience method to set attributes on the active span for a specific entity.
-        This allows for easy indexing and querying of spans associated with specific entities in the backend.
-
-        Args:
-            entity_id (str):
-                The unique identifier for the entity.
-        """
-
     def set_tag(self, key: str, value: str) -> None:
         """Set a tag on the active span. Tags are similar to attributes
         except they are often used for indexing and searching spans/traces.
@@ -10761,35 +10729,17 @@ class ActiveSpan:
                 Optional timestamp for the event. Defaults to None.
         """
 
-    def add_queue_item(
+    def attach_eval(
         self,
-        alias: str,
-        item: Union[Features, Metrics, EvalRecord],
+        profile_uid: str,
+        context: Any,
+        *,
+        record_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        media: Optional[List[Any]] = None,
+        tags: Optional[List[str]] = None,
     ) -> None:
-        """Helpers to add queue entities into a specified queue associated with the active span.
-        This is an convenience method that abstracts away the details of queue management and
-        leverages tracing's sampling capabilities to control data ingestion. Thus, correlated queue
-        records and spans/traces can be sampled together based on the same sampling decision.
-
-        Args:
-            alias (str):
-                Alias of the queue to add the item into.
-            item (Union[Features, Metrics, EvalRecord]):
-                Item to add into the queue.
-                Can be an instance for Features, Metrics, or EvalRecord.
-
-        Example:
-            ```python
-            features = Features(
-                features=[
-                    Feature("feature_1", 1),
-                    Feature("feature_2", 2.0),
-                    Feature("feature_3", "value"),
-                ]
-            )
-            span.add_queue_item(alias, features)
-            ```
-        """
+        """Build and insert a trace-anchored EvalRecord for this span."""
 
     def set_status(self, status: str, description: Optional[str] = None) -> None:
         """Set the status of the active span.
@@ -10903,7 +10853,6 @@ class BaseTracer:
         schema_url: Optional[str] = None,
         scope_attributes: Optional[Dict[str, SerializedType]] = None,
         default_attributes: Optional[Dict[str, SerializedType]] = None,
-        default_entity_uid: Optional[str] = None,
         queue: Optional[ScouterQueue] = None,
     ) -> None:
         """Initialize the BaseTracer with an instrumentation scope.
@@ -10919,8 +10868,6 @@ class BaseTracer:
                 Optional dictionary of attributes to set on the instrumentation scope.
             default_attributes (Optional[Dict[str, SerializedType]]):
                 Optional dictionary of attributes to set on every span.
-            default_entity_uid (Optional[str]):
-                Optional default entity UID to materialize on every span.
             queue (Optional[ScouterQueue]):
                 Optional ScouterQueue to associate with the tracer.
         """
@@ -13606,6 +13553,10 @@ class ScenarioResult:
     def traces(self) -> List["TraceSpan"]:
         """Trace spans captured during this scenario's execution."""
 
+    @property
+    def dataset_results(self) -> Dict[str, "EvalResults"]:
+        """Per-alias evaluation results for this scenario."""
+
     def traces_as_table(self) -> None:
         """Print a summary table of trace spans to stdout."""
 
@@ -13615,6 +13566,12 @@ class ScenarioResult:
         Values longer than 200 characters are truncated in the table.
         Access ``self.traces[i].attributes`` directly for full values.
         """
+
+    def tasks_as_table(self) -> None:
+        """Print a per-task pass/fail summary table to stdout."""
+
+    def agent_results_as_table(self, show_tasks: bool = False) -> None:
+        """Print per-alias agent evaluation results table to stdout."""
 
     def __str__(self) -> str:
         """Return a pretty-printed JSON string representation."""
@@ -13923,6 +13880,12 @@ class ScenarioEvalResults:
             show_workflow: If True, also print per-dataset workflow summary tables.
         """
 
+    def agent_summary_table(self) -> None:
+        """Print a per-alias agent pass rate summary table to stdout."""
+
+    def as_json(self) -> str:
+        """Serialize the results to a JSON string."""
+
 class EvalScenario:
     """A single test case in an offline agent evaluation run.
 
@@ -14182,9 +14145,9 @@ class EvalRunner:
     """Stateful evaluation engine that orchestrates scenario evaluation.
 
     Owns scenario definitions and profiles (as shared references).
-    Provides ``collect_scenario_data()`` to populate scenario data and
-    ``evaluate()`` to run multi-level evaluation, pulling spans from
-    the global capture buffer automatically.
+    Provides ``collect_scenario_data()`` to populate scenario data,
+    ``evaluate_scenario()`` to run per-scenario evaluation, and
+    ``finalize()`` to aggregate results across all scenarios.
 
     Args:
         scenarios: List of ``EvalScenario`` instances to evaluate.
@@ -14209,13 +14172,43 @@ class EvalRunner:
     ) -> None:
         """Populate scenario data for evaluation."""
 
+    def evaluate_scenario(
+        self,
+        scenario_id: str,
+    ) -> "ScenarioResult":
+        """Run evaluation for a single scenario.
+
+        Drains spans from the capture buffer (idempotent — first call drains,
+        subsequent calls reuse the cached result). Evaluates per-alias datasets
+        and scenario-level tasks for the given scenario.
+
+        Args:
+            scenario_id: The unique identifier of the scenario to evaluate.
+        """
+
+    def finalize(
+        self,
+        scenario_results: List["ScenarioResult"],
+        config: Optional["EvaluationConfig"] = None,
+    ) -> "ScenarioEvalResults":
+        """Aggregate per-scenario results into final evaluation output.
+
+        Merges per-scenario dataset results into a flat alias map for
+        backward-compatible ``compare_to()`` and computes overall metrics.
+
+        Args:
+            scenario_results: List of results from ``evaluate_scenario()`` calls.
+            config: Optional evaluation configuration.
+        """
+
     def evaluate(
         self,
         config: Optional["EvaluationConfig"] = None,
     ) -> "ScenarioEvalResults":
-        """Run multi-level evaluation.
+        """Run multi-level evaluation and return aggregate scenario results.
 
-        Spans are pulled automatically from the global capture buffer.
+        This backward-compatible wrapper evaluates all scenarios and finalizes
+        the aggregate result.
 
         Args:
             config: Optional evaluation configuration.
@@ -15116,21 +15109,20 @@ class TraceBaggageResponse:
 class TraceMetricsRequest:
     """Request payload for fetching trace metrics."""
 
-    space: Optional[str]
-    name: Optional[str]
-    version: Optional[str]
     start_time: datetime.datetime
     end_time: datetime.datetime
     bucket_interval: str
+    clause: Optional[Any]
+    entity_uid: Optional[str]
+    query: Optional[str]
 
     def __init__(
         self,
         start_time: datetime.datetime,
         end_time: datetime.datetime,
         bucket_interval: str,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
+        entity_uid: Optional[str] = None,
+        query: Optional[str] = None,
     ) -> None:
         """Initialize trace metrics request.
 
@@ -15141,18 +15133,39 @@ class TraceMetricsRequest:
                 End time boundary (UTC)
             bucket_interval:
                 The time interval for metric aggregation buckets (e.g., '1 minutes', '30 minutes')
-            space:
-                Model space filter
-            name:
-                Model name filter
-            version:
-                Model version filter
+            entity_uid:
+                Filter by associated entity UID
+            query:
+                Optional trace search DSL query to parse into metrics filters
         """
+
+    @classmethod
+    def from_query(
+        cls,
+        q: str,
+        start_time: datetime.datetime,
+        end_time: datetime.datetime,
+        bucket_interval: str,
+    ) -> "TraceMetricsRequest":
+        """Build TraceMetricsRequest from the trace search DSL."""
 
 class TraceMetricsResponse:
     """Response structure containing aggregated trace metrics."""
 
     metrics: List[TraceMetricBucket]
+
+class TraceFacetDimension:
+    """A single facet dimension value with its trace count."""
+
+    value: str
+    trace_count: int
+
+class TraceFacetsResponse:
+    """Pre-aggregated facet counts over a filtered set of traces."""
+
+    services: List[TraceFacetDimension]
+    status_codes: List[TraceFacetDimension]
+    total_count: int
 
 class TagsResponse:
     """Response structure containing a list of tag records."""
@@ -15374,6 +15387,19 @@ class ScouterClient:
         Returns:
             TracePaginationResponse
         """
+
+    def search_traces(
+        self,
+        q: str,
+        *,
+        start_time: Optional[datetime.datetime] = None,
+        end_time: Optional[datetime.datetime] = None,
+        limit: Optional[int] = None,
+        cursor_start_time: Optional[datetime.datetime] = None,
+        cursor_trace_id: Optional[str] = None,
+        direction: Optional[str] = None,
+    ) -> TracePaginationResponse:
+        """Search traces with the trace search DSL."""
 
     def get_trace_spans(
         self,
@@ -16098,6 +16124,9 @@ class ScouterQueue:
 
         """
 
+    def get_by_entity_uid(self, profile_uid: str) -> Queue:
+        """Get the queue whose entity UID matches an eval profile UID."""
+
     def shutdown(self) -> None:
         """Shutdown the queue. This will close and flush all queues and transports"""
 
@@ -16139,6 +16168,36 @@ class ScouterQueue:
     def agent_profiles(self) -> Dict[str, AgentEvalProfile]:
         """Returns a mapping of alias → AgentEvalProfile for all AgentEvalProfiles registered in the queue."""
 
+class EvalMediaKind:
+    Image: "EvalMediaKind"
+    Document: "EvalMediaKind"
+
+class EvalMedia:
+    id: str
+    kind: EvalMediaKind
+
+class ImageMedia:
+    def __init__(
+        self,
+        id: str,
+        *,
+        url: Optional[str] = None,
+        bytes: Optional[bytes] = None,
+        path: Optional[Union[str, os.PathLike[str]]] = None,
+        mime_type: Optional[str] = None,
+    ) -> None: ...
+
+class DocumentMedia:
+    def __init__(
+        self,
+        id: str,
+        *,
+        url: Optional[str] = None,
+        bytes: Optional[bytes] = None,
+        path: Optional[Union[str, os.PathLike[str]]] = None,
+        mime_type: Optional[str] = None,
+    ) -> None: ...
+
 class EvalRecord:
     """LLM record containing context tied to a Large Language Model interaction
     that is used to evaluate drift in LLM responses.
@@ -16157,9 +16216,13 @@ class EvalRecord:
 
     def __init__(
         self,
-        context: Context,
-        id: Optional[str] = None,
+        context: Optional[Context] = None,
+        record_id: Optional[str] = None,
+        *,
         session_id: Optional[str] = None,
+        media: Optional[List[Union[EvalMedia, ImageMedia, DocumentMedia]]] = None,
+        profile_uid: Optional[str] = None,
+        tags: Optional[List[str]] = None,
         trace_id: Optional[str] = None,
     ) -> None:
         """Creates a new LLM record to associate with an `AgentEvalProfile`.
@@ -16173,10 +16236,20 @@ class EvalRecord:
                 evaluation prompts. So if you're evaluation prompts expect additional context via
                 bound variables (e.g., `${foo}`), you can pass that here as key value pairs.
                 {"foo": "bar"}
-            id (Optional[str], optional):
-                Optional unique identifier for the record.
+            record_id (Optional[str], optional):
+                Optional user-defined scenario, turn, step, or callback identifier.
             session_id (Optional[str], optional):
                 Optional session identifier to group related records.
+            media:
+                Optional media attachments referenced by LLMJudgeTask prompts via
+                `${media:id}` placeholders.
+            profile_uid:
+                Optional AgentEvalProfile UID. Sets the record entity UID for queue insertion.
+            tags:
+                Optional key=value tags for run or scenario metadata.
+            trace_id:
+                Optional legacy/manual trace ID. `span.attach_eval(...)` should be used
+                for trace-attached online eval records.
 
         Raises:
             TypeError: If context is not a dict or a pydantic BaseModel.
@@ -16208,6 +16281,18 @@ class EvalRecord:
         """Get the unique identifier for the record."""
 
     @property
+    def entity_uid(self) -> str:
+        """Get the associated eval profile UID."""
+
+    @property
+    def trace_id(self) -> Optional[str]:
+        """Get the trace ID hex string, if attached."""
+
+    @property
+    def span_id(self) -> Optional[str]:
+        """Get the span ID hex string, if attached."""
+
+    @property
     def context(self) -> Dict[str, Any]:
         """Get the contextual information.
 
@@ -16221,6 +16306,10 @@ class EvalRecord:
     @property
     def tags(self) -> List[str]:
         """Get the tags list (e.g. ``["scenario_id=s1", "env=test"]``)."""
+
+    @property
+    def media(self) -> List[EvalMedia]:
+        """Get media attachments for this eval record."""
 
     def add_tag(self, key: str, value: str) -> None:
         """Append a tag in ``"key=value"`` format.
@@ -25542,12 +25631,14 @@ class AppState:
         batch_config: Optional[BatchConfig] = None,
         sample_ratio: Optional[float] = None,
         attributes: Optional[Attributes] = None,
+        eval_profiles: Optional[List[AgentEvalProfile]] = None,
+        propagate_baggage: Optional[bool] = None,
         **kwargs,
     ) -> None:
         """
         Instrument with Scouter tracing and set as global OpenTelemetry provider.
-        If ScouterQueue is provided, the tracer can also be used to record monitoring
-        and evaluation events via `add_queue_item` method on the tracer.
+        If ScouterQueue is provided, traced spans can attach evaluation records via
+        `span.attach_eval(...)`.
 
         Args:
             transport_config (Optional[Any]):
@@ -25560,6 +25651,10 @@ class AppState:
                 Sampling ratio (0.0 to 1.0)
             attributes (Optional[Attributes]):
                 Optional attributes to set on every span created by this tracer
+            eval_profiles (Optional[List[AgentEvalProfile]]):
+                Deprecated compatibility argument accepted by Scouter instrumentation.
+            propagate_baggage (Optional[bool]):
+                Whether tracing baggage should be propagated.
             **kwargs:
                 Additional kwargs to pass to the exporter or transport configuration
 
@@ -26443,6 +26538,8 @@ __all__ = [
     "TraceAssertionTask",
     "TraceBaggageRecord",
     "TraceBaggageResponse",
+    "TraceFacetDimension",
+    "TraceFacetsResponse",
     "TraceFilters",
     "TraceListItem",
     "TraceMetricBucket",

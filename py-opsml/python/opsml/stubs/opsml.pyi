@@ -2908,12 +2908,14 @@ class AppState:
         batch_config: Optional[BatchConfig] = None,
         sample_ratio: Optional[float] = None,
         attributes: Optional[Attributes] = None,
+        eval_profiles: Optional[List[AgentEvalProfile]] = None,
+        propagate_baggage: Optional[bool] = None,
         **kwargs,
     ) -> None:
         """
         Instrument with Scouter tracing and set as global OpenTelemetry provider.
-        If ScouterQueue is provided, the tracer can also be used to record monitoring
-        and evaluation events via `add_queue_item` method on the tracer.
+        If ScouterQueue is provided, traced spans can attach evaluation records via
+        `span.attach_eval(...)`.
 
         Args:
             transport_config (Optional[Any]):
@@ -2926,6 +2928,10 @@ class AppState:
                 Sampling ratio (0.0 to 1.0)
             attributes (Optional[Attributes]):
                 Optional attributes to set on every span created by this tracer
+            eval_profiles (Optional[List[AgentEvalProfile]]):
+                Deprecated compatibility argument accepted by Scouter instrumentation.
+            propagate_baggage (Optional[bool]):
+                Whether tracing baggage should be propagated.
             **kwargs:
                 Additional kwargs to pass to the exporter or transport configuration
 

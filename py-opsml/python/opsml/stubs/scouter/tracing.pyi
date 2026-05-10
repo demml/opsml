@@ -1,19 +1,17 @@
 #### begin imports ####
+# ty:ignore[unresolved-import]
 
 import datetime
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional
 
 from ..header import SerializedType
 from .mock import MockConfig
 from .scouter import (
     CompressionType,
-    EvalRecord,
-    Features,
     GrpcConfig,
     HttpConfig,
     KafkaConfig,
-    Metrics,
     RabbitMQConfig,
     RedisConfig,
     ScouterQueue,
@@ -81,48 +79,30 @@ class TraceBaggageRecord:
 class TraceFilters:
     """A struct for filtering traces, generated from Rust pyclass."""
 
-    service_name: Optional[str]
-    has_errors: Optional[bool]
-    status_code: Optional[int]
+    clause: Optional[Any]
     start_time: Optional[datetime.datetime]
     end_time: Optional[datetime.datetime]
     limit: Optional[int]
     cursor_start_time: Optional[datetime.datetime]
     cursor_trace_id: Optional[str]
     direction: Optional[str]
-    attribute_filters: Optional[List[str]]
     trace_ids: Optional[List[str]]
     entity_uid: Optional[str]
-    queue_uid: Optional[str]
-    duration_min_ms: Optional[int]
-    duration_max_ms: Optional[int]
 
     def __init__(
         self,
-        service_name: Optional[str] = None,
-        has_errors: Optional[bool] = None,
-        status_code: Optional[int] = None,
         start_time: Optional[datetime.datetime] = None,
         end_time: Optional[datetime.datetime] = None,
         limit: Optional[int] = None,
         cursor_start_time: Optional[datetime.datetime] = None,
         cursor_trace_id: Optional[str] = None,
-        attribute_filters: Optional[List[str]] = None,
+        direction: Optional[str] = None,
         trace_ids: Optional[List[str]] = None,
         entity_uid: Optional[str] = None,
-        queue_uid: Optional[str] = None,
-        duration_min_ms: Optional[int] = None,
-        duration_max_ms: Optional[int] = None,
     ) -> None:
         """Initialize trace filters.
 
         Args:
-            service_name:
-                Service name filter
-            has_errors:
-                Filter by presence of errors
-            status_code:
-                Filter by root span status code
             start_time:
                 Start time boundary (UTC)
             end_time:
@@ -133,19 +113,17 @@ class TraceFilters:
                 Pagination cursor: trace start timestamp
             cursor_trace_id:
                 Pagination cursor: trace ID
-            attribute_filters:
-                List of attribute filters in the format "key=value" or "key!=value"
+            direction:
+                Pagination direction
             trace_ids:
                 List of trace IDs to filter by
             entity_uid:
                 Filter by associated entity UID
-            queue_uid:
-                Filter by associated queue UID
-            duration_min_ms:
-                Minimum trace duration (inclusive)
-            duration_max_ms:
-                Maximum trace duration (inclusive)
         """
+
+    @classmethod
+    def from_query(cls, q: str) -> "TraceFilters":
+        """Build TraceFilters from the trace search DSL."""
 
 class TraceMetricBucket:
     """Represents aggregated trace metrics for a specific time bucket."""
@@ -361,7 +339,6 @@ def get_tracer(
     schema_url: Optional[str] = None,
     scope_attributes: Optional[Dict[str, Any]] = None,
     default_attributes: Optional[Dict[str, Any]] = None,
-    default_entity_uid: Optional[str] = None,
     scouter_queue: Optional[Any] = None,
 ) -> "BaseTracer":
     """Get a tracer for an instrumenting library/module.
@@ -386,8 +363,6 @@ def get_tracer(
             Optional attributes attached to the InstrumentationScope.
         default_attributes:
             Optional attributes to apply to every span created by this tracer.
-        default_entity_uid:
-            Optional default Scouter entity UID to materialize on every span.
         scouter_queue:
             Optional queue used to correlate queue records with spans.
 
@@ -457,15 +432,6 @@ class ActiveSpan:
                 The attribute value.
         """
 
-    def set_entity(self, entity_id: str) -> None:
-        """Convenience method to set attributes on the active span for a specific entity.
-        This allows for easy indexing and querying of spans associated with specific entities in the backend.
-
-        Args:
-            entity_id (str):
-                The unique identifier for the entity.
-        """
-
     def set_tag(self, key: str, value: str) -> None:
         """Set a tag on the active span. Tags are similar to attributes
         except they are often used for indexing and searching spans/traces.
@@ -497,35 +463,17 @@ class ActiveSpan:
                 Optional timestamp for the event. Defaults to None.
         """
 
-    def add_queue_item(
+    def attach_eval(
         self,
-        alias: str,
-        item: Union[Features, Metrics, EvalRecord],
+        profile_uid: str,
+        context: Any,
+        *,
+        record_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        media: Optional[List[Any]] = None,
+        tags: Optional[List[str]] = None,
     ) -> None:
-        """Helpers to add queue entities into a specified queue associated with the active span.
-        This is an convenience method that abstracts away the details of queue management and
-        leverages tracing's sampling capabilities to control data ingestion. Thus, correlated queue
-        records and spans/traces can be sampled together based on the same sampling decision.
-
-        Args:
-            alias (str):
-                Alias of the queue to add the item into.
-            item (Union[Features, Metrics, EvalRecord]):
-                Item to add into the queue.
-                Can be an instance for Features, Metrics, or EvalRecord.
-
-        Example:
-            ```python
-            features = Features(
-                features=[
-                    Feature("feature_1", 1),
-                    Feature("feature_2", 2.0),
-                    Feature("feature_3", "value"),
-                ]
-            )
-            span.add_queue_item(alias, features)
-            ```
-        """
+        """Build and insert a trace-anchored EvalRecord for this span."""
 
     def set_status(self, status: str, description: Optional[str] = None) -> None:
         """Set the status of the active span.
@@ -639,7 +587,6 @@ class BaseTracer:
         schema_url: Optional[str] = None,
         scope_attributes: Optional[Dict[str, SerializedType]] = None,
         default_attributes: Optional[Dict[str, SerializedType]] = None,
-        default_entity_uid: Optional[str] = None,
         queue: Optional[ScouterQueue] = None,
     ) -> None:
         """Initialize the BaseTracer with an instrumentation scope.
@@ -655,8 +602,6 @@ class BaseTracer:
                 Optional dictionary of attributes to set on the instrumentation scope.
             default_attributes (Optional[Dict[str, SerializedType]]):
                 Optional dictionary of attributes to set on every span.
-            default_entity_uid (Optional[str]):
-                Optional default entity UID to materialize on every span.
             queue (Optional[ScouterQueue]):
                 Optional ScouterQueue to associate with the tracer.
         """

@@ -5,6 +5,7 @@ import importlib
 from .._opsml import (
     AgentEvalConfig,
     AgentEvalProfile,
+    AggregationType,
     AlertThreshold,
     AssertionTask,
     CommonCrons,
@@ -48,6 +49,8 @@ from .._opsml import (
     Scott,
     ScouterClient,
     ScouterQueue,
+    SpanFilter,
+    SpanStatus,
     SpcAlertConfig,
     SpcDriftConfig,
     SpcDriftMap,
@@ -58,6 +61,8 @@ from .._opsml import (
     Sturges,
     TableConfig,
     TerrellScott,
+    TraceAssertion,
+    TraceAssertionTask,
     WriteConfig,
 )
 from . import (
@@ -159,4 +164,9 @@ __all__ = [
     "AssertionTask",
     "ComparisonOperator",
     "EvalResults",
+    "TraceAssertion",
+    "TraceAssertionTask",
+    "SpanStatus",
+    "AggregationType",
+    "SpanFilter",
 ]

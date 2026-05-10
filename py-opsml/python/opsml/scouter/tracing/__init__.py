@@ -39,6 +39,7 @@ from ..._opsml import (
     StdoutSpanExporter,
     TestSpanExporter,
     TraceBaggageRecord,
+    TraceFilters,
     TraceRecord,
     TraceSpanRecord,
     configure_tracing,
@@ -61,7 +62,7 @@ from .middleware import ScouterTracingMiddleware
 SerializedType: TypeAlias = Union[str, int, float, dict, list]
 P = ParamSpec("P")
 R = TypeVar("R")
-SCOUTER_ACTIVE_ENTITY_UID_BAGGAGE_KEY = "scouter.active.entity_uid"
+_OTEL_PROVIDER_RESET_LOCK = threading.Lock()
 HAS_OPENTELEMETRY = True
 if TYPE_CHECKING:
     from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
@@ -282,14 +283,35 @@ class ScouterSpan(_OtelSpan):
     def set_output(self, value: Any, max_length: int = 1000) -> None:
         self._active.set_output(value, max_length)
 
-    def set_entity(self, entity_id: str) -> None:
-        self._active.set_entity(entity_id)
-
     def set_tag(self, key: str, value: Any) -> None:
         self._active.set_tag(key, value)
 
-    def add_queue_item(self, alias: str, item: Any) -> None:
-        self._active.add_queue_item(alias, item)
+    def attach_eval(
+        self,
+        profile_uid: str,
+        context: Any,
+        *,
+        record_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        media: Optional[list[Any]] = None,
+        tags: Optional[list[str]] = None,
+    ) -> None:
+        """Attach an eval record to this span's trace.
+
+        `profile_uid` is the target AgentEvalProfile UID. `context` accepts the
+        same dict or Pydantic model payloads as EvalRecord. `record_id` is a
+        caller-defined scenario, turn, step, or callback ID, not the database
+        row ID. `session_id`, `media`, and `tags` are preserved on the created
+        EvalRecord. If this trace is not sampled, no eval record is inserted.
+        """
+        self._active.attach_eval(
+            profile_uid,
+            context,
+            record_id=record_id,
+            session_id=session_id,
+            media=media,
+            tags=tags,
+        )
 
     @property
     def active_span(self) -> ActiveSpan:
@@ -309,16 +331,6 @@ class ScouterTracer(_OtelTracer):
         if isinstance(attributes, Mapping):
             return dict(attributes)
         return attributes
-
-    @staticmethod
-    def _current_context(context: Optional[Any]) -> Optional[Any]:
-        if context is not None:
-            return context
-        if not HAS_OPENTELEMETRY:
-            return None
-        from opentelemetry import context as context_api
-
-        return context_api.get_current()
 
     @staticmethod
     def _apply_baggage_to_context(
@@ -366,7 +378,7 @@ class ScouterTracer(_OtelTracer):
         remote_sampled: Optional[bool] = None,
         headers: Optional[dict[str, str]] = None,
     ) -> ScouterSpan:
-        current_context = self._current_context(context)
+        current_context = context
         if baggage:
             current_context = self._apply_baggage_to_context(baggage, current_context)
         resolved_parent_context_id = parent_context_id or self._resolve_parent_context_id(current_context)
@@ -413,7 +425,7 @@ class ScouterTracer(_OtelTracer):
         headers: Optional[dict[str, str]] = None,
     ) -> Generator[ScouterSpan, None, None]:
         # Build enriched context with baggage before creating span
-        enriched_ctx = self._current_context(context)
+        enriched_ctx = context
         if baggage:
             enriched_ctx = self._apply_baggage_to_context(baggage, enriched_ctx)
 
@@ -623,7 +635,6 @@ def get_tracer(
     schema_url: Optional[str] = None,
     attributes: Optional[Attributes] = None,
     default_attributes: Optional[Attributes] = None,
-    default_entity_uid: Optional[str] = None,
     scouter_queue: Optional[Any] = None,
 ) -> ScouterTracer:
     """Return an OTel-compliant Scouter tracer for an instrumentation scope.
@@ -647,12 +658,10 @@ def get_tracer(
             Optional attributes applied to every span created by this tracer.
             Passing this creates a fresh low-level tracer wrapper even when a
             provider-level tracer is cached.
-        default_entity_uid:
-            Optional default Scouter entity UID to materialize on every span.
         scouter_queue:
-            Optional queue used to correlate queue records with spans. Passing
-            this creates a fresh low-level tracer wrapper so queue state is
-            bound to the returned tracer.
+            Optional queue used by ``span.attach_eval(...)``. Passing this
+            creates a fresh low-level tracer wrapper so queue state is bound to
+            the returned tracer.
 
     Returns:
         A `ScouterTracer` wrapper for the requested instrumentation scope.
@@ -660,7 +669,7 @@ def get_tracer(
     if not HAS_OPENTELEMETRY:
         raise ImportError("OpenTelemetry is not installed. Install with: pip install opsml[opentelemetry]")
 
-    if default_attributes is not None or default_entity_uid is not None or scouter_queue is not None:
+    if default_attributes is not None or scouter_queue is not None:
         return ScouterTracer(
             _get_tracer(
                 scope_name=name,
@@ -668,7 +677,6 @@ def get_tracer(
                 schema_url=schema_url,
                 scope_attributes=cast(Optional[dict[str, Any]], attributes),
                 default_attributes=cast(Optional[dict[str, Any]], default_attributes),
-                default_entity_uid=default_entity_uid,
                 scouter_queue=scouter_queue,
             )
         )
@@ -703,7 +711,6 @@ class ScouterTracerProvider(_OtelTracerProvider):
         sample_ratio: Optional[float] = None,
         scouter_queue: Optional[Any] = None,
         default_attributes: Optional[Attributes] = None,
-        default_entity_uid: Optional[str] = None,
     ):
         """Initialize the provider and configure the Rust tracing backend.
 
@@ -725,8 +732,6 @@ class ScouterTracerProvider(_OtelTracerProvider):
             default_attributes:
                 Optional attributes applied to every span created by provider
                 tracers.
-            default_entity_uid:
-                Optional default Scouter entity UID to materialize on every span.
         """
         self.resource_config = resource_config
         self.transport_config = transport_config
@@ -735,7 +740,6 @@ class ScouterTracerProvider(_OtelTracerProvider):
         self.sample_ratio = sample_ratio
         self.scouter_queue = scouter_queue
         self.default_attributes = default_attributes
-        self.default_entity_uid = default_entity_uid
         self._tracer_cache: dict[
             tuple[str, str | None, str | None],
             ScouterTracer,
@@ -791,7 +795,6 @@ class ScouterTracerProvider(_OtelTracerProvider):
                 schema_url=schema_url,
                 scope_attributes=attributes,  # type: ignore
                 default_attributes=self.default_attributes,  # type: ignore
-                default_entity_uid=self.default_entity_uid,
                 scouter_queue=self.scouter_queue,
             )
             tracer = ScouterTracer(base_tracer)
@@ -868,14 +871,7 @@ class ScouterInstrumentor(BaseInstrumentor):
             )
             return
 
-        eval_profiles: Optional[List["AgentEvalProfile"]] = kwargs.pop("eval_profiles", None)
-        scouter_queue = kwargs.get("scouter_queue", None)
-        if eval_profiles:
-            kwargs["default_entity_uid"] = eval_profiles[0].config.uid
-        elif scouter_queue is not None:
-            entity_uid = getattr(scouter_queue, "entity_uid", None)
-            if entity_uid:
-                kwargs["default_entity_uid"] = str(entity_uid)
+        kwargs.pop("eval_profiles", None)
 
         tracer_provider = kwargs.pop("tracer_provider", None)
 
@@ -909,22 +905,22 @@ class ScouterInstrumentor(BaseInstrumentor):
                 sample_ratio=kwargs.pop("sample_ratio", None),
                 scouter_queue=kwargs.pop("scouter_queue", None),
                 default_attributes=kwargs.pop("attributes", None),
-                default_entity_uid=kwargs.pop("default_entity_uid", None),
             )
 
         from opentelemetry import trace
 
-        try:
-            trace._TRACER_PROVIDER_SET_ONCE._done = False  # pylint: disable=protected-access
-            trace._TRACER_PROVIDER_SET_ONCE._lock = __import__("threading").Lock()  # pylint: disable=protected-access
-        except AttributeError:
-            import logging as _logging
+        with _OTEL_PROVIDER_RESET_LOCK:
+            try:
+                trace._TRACER_PROVIDER_SET_ONCE._done = False  # pylint: disable=protected-access
+                trace._TRACER_PROVIDER_SET_ONCE._lock = threading.Lock()  # pylint: disable=protected-access
+            except AttributeError:
+                import logging as _logging
 
-            _logging.getLogger("scouter.tracing").warning(
-                "Could not reset OTel provider guard — opentelemetry-api internals may have "
-                "changed. Proceeding anyway."
-            )
-        set_tracer_provider(self._provider)
+                _logging.getLogger("scouter.tracing").warning(
+                    "Could not reset OTel provider guard — opentelemetry-api internals may have "
+                    "changed. Proceeding anyway."
+                )
+            set_tracer_provider(self._provider)
 
         propagate_baggage = kwargs.pop("propagate_baggage", True)
 
@@ -1105,10 +1101,9 @@ def instrument(
         attributes (Optional[Attributes]):
             Optional attributes to set on every span created by this tracer
         eval_profiles (Optional[List[AgentEvalProfile]]):
-            Optional agent eval profiles. The first profile UID becomes the
-            default entity tag materialized on each span as
-            `scouter.entity.{uid}={uid}` unless overridden by
-            `active_profile(...)`.
+            Deprecated no-op retained for call-site compatibility. Use
+            ``span.attach_eval(profile_uid=...)`` to attach eval records to a
+            trace.
         propagate_baggage (bool):
             Whether W3C baggage propagation should be globally enabled.
 
@@ -1152,40 +1147,6 @@ def uninstrument() -> None:
     ScouterInstrumentor().uninstrument()
 
 
-@contextmanager
-def active_profile(profile: "AgentEvalProfile") -> Generator[None, None, None]:
-    """Set the active agent eval profile UID in OTel baggage context.
-
-    This context manager attaches the profile UID as OTel baggage under the
-    canonical key ``scouter.active.entity_uid``. Rust span creation reads this
-    baggage value and materializes the authoritative span attribute
-    ``scouter.entity.{profile.config.uid}={profile.config.uid}``.
-
-    If ``opentelemetry`` is not installed, the context manager is a no-op.
-
-    Args:
-        profile (AgentEvalProfile):
-            The agent eval profile to activate.
-    """
-    try:
-        from opentelemetry import baggage
-        from opentelemetry import context as context_api
-    except ImportError:
-        yield
-        return
-
-    ctx = baggage.set_baggage(
-        SCOUTER_ACTIVE_ENTITY_UID_BAGGAGE_KEY,
-        profile.config.uid,
-        context=context_api.get_current(),
-    )
-    token = context_api.attach(ctx)
-    try:
-        yield
-    finally:
-        context_api.detach(token)
-
-
 __all__ = [
     "ScouterSpan",
     "ScouterTracer",
@@ -1204,6 +1165,7 @@ __all__ = [
     "TraceRecord",
     "TraceSpanRecord",
     "TraceBaggageRecord",
+    "TraceFilters",
     "TestSpanExporter",
     "flush_tracer",
     "BatchConfig",
@@ -1216,7 +1178,6 @@ __all__ = [
     "ScouterTracingMiddleware",
     "instrument",
     "uninstrument",
-    "active_profile",
     "enable_local_span_capture",
     "disable_local_span_capture",
     "drain_local_span_capture",

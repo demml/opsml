@@ -1,7 +1,9 @@
 # mypy: disable-error-code="attr-defined"
 
-from typing import Any, Callable, Dict, List, Optional
-from uuid import uuid4
+import logging
+import uuid
+from contextlib import contextmanager
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from ..._opsml import (
     EvalRecord,
@@ -19,18 +21,35 @@ from ..tracing import (
 )
 from ..tracing import get_tracer as _get_tracer
 
+logger = logging.getLogger(__name__)
+
+_otel_context: Any = None
+_OTEL_AVAILABLE: bool = False
+
+try:  # opentelemetry is an optional runtime dep
+    from opentelemetry import context as _otel_context
+
+    _OTEL_AVAILABLE = True
+except ImportError:  # pragma: no cover - tracing optional
+    pass
+
 # Baggage key injected into each scenario span so ScouterQueue can tag EvalRecords by scenario.
 SCENARIO_TAG_BAGGAGE_KEY = "scouter.eval.scenario_id"
-# Scenario wrapper spans carry infrastructure metadata only. Setting an explicit
-# scouter.entity* attribute (non-string) suppresses default entity auto-tagging
-# so per-agent active_profile selection remains authoritative.
-SCENARIO_WRAPPER_ENTITY_SUPPRESS_ATTR = {"scouter.entity.suppressed": True}
-SCENARIO_RUN_ID_ATTR = "scouter.eval.run_id"
+RUN_ID_BAGGAGE_KEY = "scouter.eval.run_id"
+# Scenario wrapper spans carry infrastructure metadata only; eval records are
+# emitted explicitly by span.attach_eval(...) inside agent/callback code.
+SCENARIO_WRAPPER_ATTR = {"scouter.eval.wrapper": True}
 
 AgentFn = Callable[[str], Any]
 # (initial_query, agent_response, history) -> next user message or termination signal
 # history is a list of {"user": str, "agent": Any} dicts for all prior exchanges
 SimulatedUserFn = Callable[[str, Any, List[Dict[str, Any]]], str]
+
+
+def _fresh_otel_context() -> Optional[Any]:
+    if not _OTEL_AVAILABLE or _otel_context is None:
+        return None
+    return _otel_context.Context()
 
 
 class EvalOrchestrator:
@@ -95,7 +114,7 @@ class EvalOrchestrator:
         self._scenarios = scenarios
         self._agent_fn = agent_fn
         self._simulated_user_fn = simulated_user_fn
-        self._capture_run_id = f"opsml-eval-{uuid4().hex}"
+        self._capture_run_id = uuid.uuid4().hex
         self._engine = EvalRunner(
             scenarios=scenarios,
             profiles=queue.agent_profiles(),
@@ -184,7 +203,7 @@ class EvalOrchestrator:
     def on_scenario_start(self, scenario: EvalScenario) -> None:
         """Hook called before a scenario is executed. Override to add custom logic."""
 
-    def on_scenario_complete(self, scenario: EvalScenario, response: Any) -> None:
+    def on_scenario_complete(self, scenario: EvalScenario, response: Any, result: Any = None) -> None:
         """Hook called after a scenario is executed. Override to add custom logic."""
 
     def on_evaluation_complete(self, results: ScenarioEvalResults) -> ScenarioEvalResults:
@@ -217,48 +236,69 @@ class EvalOrchestrator:
         try:
             enable_local_span_capture(self._capture_run_id)
         except Exception:  # noqa: BLE001 pylint: disable=broad-except
-            pass
+            logger.warning(
+                "scouter tracer unavailable for eval run %s, spans will not be captured",
+                self._capture_run_id,
+                exc_info=True,
+            )
+        if _OTEL_AVAILABLE:
+            try:
+                from opentelemetry import (
+                    trace as _otel_trace,  # pylint: disable=import-outside-toplevel
+                )
+                from opentelemetry.trace import (  # pylint: disable=import-outside-toplevel
+                    NoOpTracerProvider,
+                    ProxyTracerProvider,
+                )
+
+                provider = _otel_trace.get_tracer_provider()
+                if isinstance(provider, (ProxyTracerProvider, NoOpTracerProvider)):
+                    logger.warning(
+                        "ScouterInstrumentor is not active — third-party spans will not be "
+                        "captured for eval run %s. Call ScouterInstrumentor().instrument() "
+                        "before EvalOrchestrator.",
+                        self._capture_run_id,
+                    )
+            except Exception:  # noqa: BLE001 pylint: disable=broad-except
+                pass
 
     def _teardown_capture(self) -> None:
         self._queue.disable_capture()
         try:
             disable_local_span_capture(self._capture_run_id)
         except Exception:  # noqa: BLE001 pylint: disable=broad-except
-            pass
+            logger.warning(
+                "failed to disable scouter span capture for eval run %s",
+                self._capture_run_id,
+                exc_info=True,
+            )
 
-    def _span_attributes(self) -> Dict[str, Any]:
-        return {
-            **SCENARIO_WRAPPER_ENTITY_SUPPRESS_ATTR,
-            SCENARIO_RUN_ID_ATTR: self._capture_run_id,
-        }
-
-    def _execute_with_baggage(self, scenario: EvalScenario) -> Any:
-        """Run execute_agent inside a span with scenario_id baggage (if tracer available)."""
+    @contextmanager
+    def _scenario_span(self, scenario: EvalScenario):  # type: ignore[return]
+        """Context manager: opens one wrapper span with eval baggage for the full scenario duration."""
+        span_ctx = None
         try:
             eval_tracer = _get_tracer("scouter.eval")
             span_ctx = eval_tracer.start_as_current_span(
                 f"scouter.eval.scenario.{scenario.id}",
-                baggage=[{SCENARIO_TAG_BAGGAGE_KEY: scenario.id}],
-                attributes=self._span_attributes(),
+                context=_fresh_otel_context(),
+                baggage=[
+                    {RUN_ID_BAGGAGE_KEY: self._capture_run_id},
+                    {SCENARIO_TAG_BAGGAGE_KEY: scenario.id},
+                ],
+                attributes=SCENARIO_WRAPPER_ATTR,
             )
         except Exception:  # noqa: BLE001 pylint: disable=broad-except
-            return self.execute_agent(scenario)
-        with span_ctx:
-            return self.execute_agent(scenario)
-
-    def _run_agent_turn(self, scenario: EvalScenario, message: str) -> Any:
-        """Run execute_agent_turn inside a scenario span if a tracer is available."""
-        try:
-            eval_tracer = _get_tracer("scouter.eval")
-            span_ctx = eval_tracer.start_as_current_span(
-                f"scouter.eval.scenario.{scenario.id}",
-                baggage=[{SCENARIO_TAG_BAGGAGE_KEY: scenario.id}],
-                attributes=self._span_attributes(),
+            logger.warning(
+                "scouter tracer unavailable for scenario %s, spans will not be captured",
+                scenario.id,
+                exc_info=True,
             )
-        except Exception:  # noqa: BLE001 pylint: disable=broad-except
-            return self.execute_agent_turn(scenario, message)
-        with span_ctx:
-            return self.execute_agent_turn(scenario, message)
+        if span_ctx is not None:
+            with span_ctx:
+                yield
+        else:
+            yield
 
     def _check_termination(self, scenario: EvalScenario, user_message: str) -> bool:
         if scenario.termination_signal is None:
@@ -273,21 +313,17 @@ class EvalOrchestrator:
             scenario=scenario,
         )
 
-    def _execute_interactive(self, scenario: EvalScenario) -> Any:
+    def _execute_interactive(self, scenario: EvalScenario) -> Tuple[Any, List[Dict[str, Any]]]:
         """Run an interactive agent↔simulated-user loop.
 
-        The agent is a black box: it receives a message and returns a response,
-        managing its own session state internally. The simulated user drives
-        continuation based on the original intent, the latest response, and the
-        full prior exchange history — enabling cumulative satisfaction decisions.
-        All records emitted across all turns are drained once at the end.
+        Returns (final_response, history) so the caller owns data collection.
         """
         message = scenario.initial_query
         response: Any = ""
         history: List[Dict[str, Any]] = []
 
         for _ in range(scenario.max_turns):
-            response = self._run_agent_turn(scenario, message)
+            response = self.execute_agent_turn(scenario, message)
 
             next_message = self.execute_simulated_user_turn(
                 scenario,
@@ -303,9 +339,7 @@ class EvalOrchestrator:
 
             message = next_message
 
-        scenario_response = self.build_scenario_response(scenario, response, history)
-        self._collect_scenario_data(scenario, scenario_response)
-        return response
+        return response, history
 
     def run(self, config: Optional[EvaluationConfig] = None) -> ScenarioEvalResults:
         """Execute all scenarios and return evaluation results.
@@ -320,25 +354,27 @@ class EvalOrchestrator:
         Returns:
             ScenarioEvalResults with metrics across all scenarios.
         """
+        scenario_results = []
         self._setup_capture()
         try:
             for scenario in self._scenarios.scenarios:
                 self.on_scenario_start(scenario)
-
-                if scenario.is_interactive():
-                    response = self._execute_interactive(scenario)
-                else:
-                    response = self._execute_with_baggage(scenario)
-                    scenario_response = self.build_scenario_response(scenario, response, [])
+                with self._scenario_span(scenario):
+                    if scenario.is_interactive():
+                        response, history = self._execute_interactive(scenario)
+                    else:
+                        response = self.execute_agent(scenario)
+                        history = []
+                    scenario_response = self.build_scenario_response(scenario, response, history)
                     self._collect_scenario_data(scenario, scenario_response)
-
-                self.on_scenario_complete(scenario, response)
-
-            try:
-                flush_tracer()
-            except Exception:  # noqa: BLE001 pylint: disable=broad-except
-                pass
-            results = self._engine.evaluate(config)
+                try:
+                    flush_tracer()
+                except Exception:  # noqa: BLE001 pylint: disable=broad-except
+                    pass
+                sr = self._engine.evaluate_scenario(scenario.id)
+                scenario_results.append(sr)
+                self.on_scenario_complete(scenario, response, sr)
+            results = self._engine.finalize(scenario_results, config)
             return self.on_evaluation_complete(results)
         finally:
             self._teardown_capture()
