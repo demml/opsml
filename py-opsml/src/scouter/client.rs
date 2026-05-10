@@ -35,6 +35,8 @@ pub fn add_client_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<TraceSpansResponse>()?;
     m.add_class::<TraceMetricsRequest>()?;
     m.add_class::<TraceMetricsResponse>()?;
+    m.add_class::<TraceFacetDimension>()?;
+    m.add_class::<TraceFacetsResponse>()?;
     m.add_class::<TagRecord>()?;
     m.add_class::<TagsResponse>()?;
 

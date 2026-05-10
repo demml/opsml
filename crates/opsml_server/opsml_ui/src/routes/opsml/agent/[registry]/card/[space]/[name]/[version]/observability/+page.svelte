@@ -25,6 +25,7 @@
       initialFilters={data.initialFilters}
       initialTrace={"initialTrace" in data ? data.initialTrace : undefined}
       initialTraceSpans={"initialTraceSpans" in data ? data.initialTraceSpans : undefined}
+      mockMode={data.mockMode}
     />
   {/if}
 {:else}

@@ -2,14 +2,19 @@
   import { onMount, onDestroy } from 'svelte';
   import { type TraceListItem, type TraceSpansResponse } from './types';
   import TraceDetailContent from './TraceDetailContent.svelte';
+  import type { GenAiTraceMetricsResponse, GenAiSpanRecord } from '$lib/components/scouter/genai/types';
 
   let {
     trace,
     traceSpans,
+    genai = null,
+    genAiBySpanId = {},
     onClose,
   }: {
     trace: TraceListItem;
     traceSpans: TraceSpansResponse;
+    genai?: GenAiTraceMetricsResponse | null;
+    genAiBySpanId?: Record<string, GenAiSpanRecord>;
     onClose: () => void;
   } = $props();
 
@@ -58,6 +63,6 @@
     onclick={(e) => e.stopPropagation()}
     onmousedown={(e) => e.stopPropagation()}
   >
-    <TraceDetailContent {trace} {traceSpans} onClose={handleClose} showCloseButton={true} />
+    <TraceDetailContent {trace} {traceSpans} {genai} {genAiBySpanId} onClose={handleClose} showCloseButton={true} />
   </div>
 </div>

@@ -16,6 +16,87 @@ import type {
   ToolTimeBucket,
 } from "./types";
 
+export interface EmptyBundleOptions {
+  serviceName?: string | null;
+  serviceNamespace?: string | null;
+  serviceVersion?: string | null;
+  serviceInstanceId?: string | null;
+  entityId?: string | null;
+  selectedRange?: string;
+  bucketInterval?: string;
+  start_time?: string;
+  end_time?: string;
+  evalProfiles?: EvalProfileOption[];
+}
+
+export function buildEmptyGenAiBundle(opts: EmptyBundleOptions = {}): AgentGenAiBundle {
+  const now = new Date().toISOString() as DateTime;
+  const start = (opts.start_time ?? now) as DateTime;
+  const end = (opts.end_time ?? now) as DateTime;
+  const bucket_interval = opts.bucketInterval ?? "1 hour";
+
+  const emptySummary = {
+    total_requests: 0,
+    avg_duration_ms: 0,
+    p50_duration_ms: null,
+    p95_duration_ms: null,
+    p99_duration_ms: null,
+    overall_error_rate: 0,
+    total_input_tokens: 0,
+    total_output_tokens: 0,
+    total_cache_creation_tokens: 0,
+    total_cache_read_tokens: 0,
+    unique_agent_count: 0,
+    unique_conversation_count: 0,
+    cost_by_model: [],
+  };
+
+  const dashboard: GenAiDashboardResponse = {
+    applied_filters: {
+      service_name: opts.serviceName ?? null,
+      service_namespace: opts.serviceNamespace ?? null,
+      service_version: opts.serviceVersion ?? null,
+      service_instance_id: opts.serviceInstanceId ?? null,
+      entity_id: opts.entityId ?? null,
+      agent_name: null,
+      provider_name: null,
+      operation_name: null,
+      model: null,
+      start_time: start,
+      end_time: end,
+      bucket_interval,
+    },
+    available_filters: {
+      agents: [],
+      providers: [],
+      models: [],
+      operations: [],
+      service_namespaces: [],
+      service_versions: [],
+      service_instance_ids: [],
+    },
+    metadata: { generated_at: now, schema_version: 1, total_spans: 0 },
+    token_metrics: { buckets: [] },
+    operation_breakdown: { operations: [] },
+    model_usage: { models: [] },
+    agent_dashboard: { summary: emptySummary, buckets: [] },
+    tool_dashboard: { aggregates: [], time_series: [] },
+    error_breakdown: { errors: [] },
+    buckets_truncated: false,
+  };
+
+  return {
+    dashboard,
+    range: {
+      start_time: start,
+      end_time: end,
+      bucket_interval,
+      selected_range: opts.selectedRange ?? "24hours",
+    },
+    eval_profiles: opts.evalProfiles ?? [],
+  };
+}
+
 function mulberry32(seed: number): () => number {
   let s = seed >>> 0;
   return () => {
@@ -37,6 +118,12 @@ export interface MockOptions {
   bucketInterval?: string;
   /** Service name to surface in `applied_filters`. Set for AgentCard scope. */
   serviceName?: string | null;
+  /** Service namespace to surface in `applied_filters`. Set for AgentCard scope. */
+  serviceNamespace?: string | null;
+  /** Service version to surface in `applied_filters`. Set for AgentCard scope. */
+  serviceVersion?: string | null;
+  /** Service instance id to surface in `applied_filters`. Null aggregates all instances. */
+  serviceInstanceId?: string | null;
   /** Entity uid to surface in `applied_filters`. Set for PromptCard scope. */
   entityId?: string | null;
   /**
@@ -208,6 +295,9 @@ export function buildMockGenAiBundle(opts: MockOptions = {}): AgentGenAiBundle {
   const dashboard: GenAiDashboardResponse = {
     applied_filters: {
       service_name: opts.serviceName ?? null,
+      service_namespace: opts.serviceNamespace ?? null,
+      service_version: opts.serviceVersion ?? null,
+      service_instance_id: opts.serviceInstanceId ?? null,
       entity_id: opts.entityId ?? null,
       agent_name: null,
       provider_name: null,
@@ -222,6 +312,9 @@ export function buildMockGenAiBundle(opts: MockOptions = {}): AgentGenAiBundle {
       providers: Array.from(new Set(modelMix.map((m) => m.provider))),
       models: modelMix.map((m) => m.model),
       operations: operation_breakdown.map((o) => o.operation_name),
+      service_namespaces: [],
+      service_versions: [],
+      service_instance_ids: [],
     },
     metadata: {
       generated_at: end.toISOString() as DateTime,

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { buildVolumeChart, buildLatencyChart, buildTokenChart, buildCostChart, buildErrorRateChart, buildToolStackChart } from '../charts';
+import { buildVolumeChart, buildLatencyChart, buildTokenChart, buildCostChart, buildErrorRateChart, buildToolStackChart, buildOperationBarChart, buildSpanDurationBar } from '../charts';
 import type { AgentMetricBucket, ModelCostBreakdown, ToolTimeBucket } from '../types';
+import type { GenAiOperationBreakdown, GenAiSpanRecord } from '$lib/components/scouter/genai/types';
 import type { ChartDataset } from 'chart.js';
 
 vi.mock('$lib/components/viz/utils', () => ({
@@ -167,5 +168,224 @@ describe('buildToolStackChart', () => {
     const datasets = config.data.datasets as ChartDataset[];
     const labels = datasets.map((d) => d.label);
     expect(labels).toContain('unknown');
+  });
+});
+
+describe('buildOperationBarChart', () => {
+  it('returns bar type', () => {
+    const operations: GenAiOperationBreakdown[] = [
+      {
+        operation_name: 'llm.call',
+        provider_name: 'openai',
+        span_count: 10,
+        avg_duration_ms: 100,
+        total_input_tokens: 500,
+        total_output_tokens: 200,
+        error_rate: 0.1,
+      },
+    ];
+    const config = buildOperationBarChart(operations);
+    expect(config.type).toBe('bar');
+  });
+
+  it('sorts labels by span_count descending', () => {
+    const operations: GenAiOperationBreakdown[] = [
+      {
+        operation_name: 'retrieval',
+        provider_name: null,
+        span_count: 5,
+        avg_duration_ms: 50,
+        total_input_tokens: 0,
+        total_output_tokens: 0,
+        error_rate: 0,
+      },
+      {
+        operation_name: 'llm.call',
+        provider_name: 'openai',
+        span_count: 20,
+        avg_duration_ms: 100,
+        total_input_tokens: 500,
+        total_output_tokens: 200,
+        error_rate: 0.1,
+      },
+      {
+        operation_name: 'embedding',
+        provider_name: null,
+        span_count: 12,
+        avg_duration_ms: 75,
+        total_input_tokens: 300,
+        total_output_tokens: 0,
+        error_rate: 0.05,
+      },
+    ];
+    const config = buildOperationBarChart(operations);
+    const labels = config.data.labels as string[];
+    expect(labels).toEqual(['llm.call', 'embedding', 'retrieval']);
+  });
+});
+
+describe('buildSpanDurationBar', () => {
+  it('uses errorSoft color for spans with error_type', () => {
+    const spans: GenAiSpanRecord[] = [
+      {
+        trace_id: 'trace1',
+        span_id: 'span_000001',
+        service_name: 'test-svc',
+        start_time: '2026-01-01T00:00:00Z',
+        end_time: '2026-01-01T00:00:01Z',
+        duration_ms: 100,
+        status_code: 500,
+        operation_name: 'llm.call',
+        provider_name: 'openai',
+        request_model: 'gpt-4',
+        response_model: null,
+        response_id: null,
+        input_tokens: 100,
+        output_tokens: 50,
+        cache_creation_input_tokens: null,
+        cache_read_input_tokens: null,
+        finish_reasons: [],
+        output_type: null,
+        conversation_id: null,
+        agent_name: null,
+        agent_id: null,
+        agent_description: null,
+        agent_version: null,
+        data_source_id: null,
+        tool_name: null,
+        tool_type: null,
+        tool_call_id: null,
+        request_temperature: null,
+        request_max_tokens: null,
+        request_top_p: null,
+        request_choice_count: null,
+        request_seed: null,
+        request_frequency_penalty: null,
+        request_presence_penalty: null,
+        request_stop_sequences: [],
+        server_address: null,
+        server_port: null,
+        error_type: 'timeout',
+        openai_api_type: null,
+        openai_service_tier: null,
+        label: 'my_operation',
+        entity_id: null,
+        input_messages: null,
+        output_messages: null,
+        system_instructions: null,
+        tool_definitions: null,
+        eval_results: [],
+      },
+      {
+        trace_id: 'trace1',
+        span_id: 'span_000002',
+        service_name: 'test-svc',
+        start_time: '2026-01-01T00:00:00Z',
+        end_time: '2026-01-01T00:00:01Z',
+        duration_ms: 50,
+        status_code: 200,
+        operation_name: 'embedding',
+        provider_name: null,
+        request_model: null,
+        response_model: null,
+        response_id: null,
+        input_tokens: null,
+        output_tokens: null,
+        cache_creation_input_tokens: null,
+        cache_read_input_tokens: null,
+        finish_reasons: [],
+        output_type: null,
+        conversation_id: null,
+        agent_name: null,
+        agent_id: null,
+        agent_description: null,
+        agent_version: null,
+        data_source_id: null,
+        tool_name: null,
+        tool_type: null,
+        tool_call_id: null,
+        request_temperature: null,
+        request_max_tokens: null,
+        request_top_p: null,
+        request_choice_count: null,
+        request_seed: null,
+        request_frequency_penalty: null,
+        request_presence_penalty: null,
+        request_stop_sequences: [],
+        server_address: null,
+        server_port: null,
+        error_type: null,
+        openai_api_type: null,
+        openai_service_tier: null,
+        label: 'embed_call',
+        entity_id: null,
+        input_messages: null,
+        output_messages: null,
+        system_instructions: null,
+        tool_definitions: null,
+        eval_results: [],
+      },
+    ];
+    const config = buildSpanDurationBar(spans);
+    const colors = (config.data.datasets[0].backgroundColor as string[]);
+    expect(colors[0]).toContain('254, 108, 107, 0.55'); // errorSoft
+    expect(colors[1]).toContain('135, 170, 240, 0.55'); // tertiarySoft (no error)
+  });
+
+  it('falls back to span_id slice when label is null', () => {
+    const spans: GenAiSpanRecord[] = [
+      {
+        trace_id: 'trace1',
+        span_id: 'abc123456789',
+        service_name: 'test-svc',
+        start_time: '2026-01-01T00:00:00Z',
+        end_time: '2026-01-01T00:00:01Z',
+        duration_ms: 100,
+        status_code: 200,
+        operation_name: null,
+        provider_name: null,
+        request_model: null,
+        response_model: null,
+        response_id: null,
+        input_tokens: null,
+        output_tokens: null,
+        cache_creation_input_tokens: null,
+        cache_read_input_tokens: null,
+        finish_reasons: [],
+        output_type: null,
+        conversation_id: null,
+        agent_name: null,
+        agent_id: null,
+        agent_description: null,
+        agent_version: null,
+        data_source_id: null,
+        tool_name: null,
+        tool_type: null,
+        tool_call_id: null,
+        request_temperature: null,
+        request_max_tokens: null,
+        request_top_p: null,
+        request_choice_count: null,
+        request_seed: null,
+        request_frequency_penalty: null,
+        request_presence_penalty: null,
+        request_stop_sequences: [],
+        server_address: null,
+        server_port: null,
+        error_type: null,
+        openai_api_type: null,
+        openai_service_tier: null,
+        label: null,
+        entity_id: null,
+        input_messages: null,
+        output_messages: null,
+        system_instructions: null,
+        tool_definitions: null,
+        eval_results: [],
+      },
+    ];
+    const config = buildSpanDurationBar(spans);
+    const labels = config.data.labels as string[];
+    expect(labels[0]).toBe('abc12345');
   });
 });

@@ -8,6 +8,9 @@ function makeFilterState(): TracePageFilter {
     selected_range: "15min",
     filters: {
       service_name: "svc-a",
+      service_namespace: "prod",
+      service_version: "1.2.3",
+      service_instance_id: "pod-a",
       status_code: 2,
       has_errors: true,
       duration_min_ms: 100,
@@ -22,6 +25,9 @@ describe("derivedActiveFilters", () => {
     const chips = derivedActiveFilters(makeFilterState());
     expect(chips).toEqual([
       { key: "service_name", label: "Service", value: "svc-a" },
+      { key: "service_namespace", label: "Namespace", value: "prod" },
+      { key: "service_version", label: "Version", value: "1.2.3" },
+      { key: "service_instance_id", label: "Instance", value: "pod-a" },
       { key: "status_code", label: "Status", value: "2" },
       { key: "has_errors", label: "Has errors", value: "true" },
       { key: "duration_min_ms", label: "Min duration", value: "100ms" },
@@ -78,11 +84,26 @@ describe("removeActiveFilter", () => {
     expect(allRemoved.filters.attribute_filters).toBeUndefined();
   });
 
-  it("removes service/status/error chips from the main filter object", () => {
+  it("removes service identity/status/error chips from the main filter object", () => {
     let next = removeActiveFilter(makeFilterState(), {
       key: "service_name",
       label: "Service",
       value: "svc-a",
+    });
+    next = removeActiveFilter(next, {
+      key: "service_namespace",
+      label: "Namespace",
+      value: "prod",
+    });
+    next = removeActiveFilter(next, {
+      key: "service_version",
+      label: "Version",
+      value: "1.2.3",
+    });
+    next = removeActiveFilter(next, {
+      key: "service_instance_id",
+      label: "Instance",
+      value: "pod-a",
     });
     next = removeActiveFilter(next, {
       key: "status_code",
@@ -95,6 +116,9 @@ describe("removeActiveFilter", () => {
       value: "true",
     });
     expect(next.filters.service_name).toBeUndefined();
+    expect(next.filters.service_namespace).toBeUndefined();
+    expect(next.filters.service_version).toBeUndefined();
+    expect(next.filters.service_instance_id).toBeUndefined();
     expect(next.filters.status_code).toBeUndefined();
     expect(next.filters.has_errors).toBeUndefined();
   });

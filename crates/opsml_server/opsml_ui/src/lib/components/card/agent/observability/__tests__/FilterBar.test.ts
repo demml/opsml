@@ -29,10 +29,16 @@ const AVAILABLE: AvailableFilters = {
   providers: ["openai", "anthropic"],
   models: ["gpt-4o", "claude-3-5-sonnet"],
   operations: ["chat.completions", "embeddings"],
+  service_namespaces: [],
+  service_versions: [],
+  service_instance_ids: [],
 };
 
 const BASE_APPLIED: AppliedFilters = {
-  service_name: "space:name",
+  service_name: "agent-service",
+  service_namespace: null,
+  service_version: null,
+  service_instance_id: null,
   entity_id: null,
   agent_name: null,
   model: null,

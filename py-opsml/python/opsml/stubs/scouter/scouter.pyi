@@ -1,7 +1,9 @@
 #### begin imports ####
+# ty:ignore[unresolved-import]
 
 import builtins
 import datetime
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Literal, Optional, Sequence, Union, overload
 
@@ -813,21 +815,20 @@ class TraceBaggageResponse:
 class TraceMetricsRequest:
     """Request payload for fetching trace metrics."""
 
-    space: Optional[str]
-    name: Optional[str]
-    version: Optional[str]
     start_time: datetime.datetime
     end_time: datetime.datetime
     bucket_interval: str
+    clause: Optional[Any]
+    entity_uid: Optional[str]
+    query: Optional[str]
 
     def __init__(
         self,
         start_time: datetime.datetime,
         end_time: datetime.datetime,
         bucket_interval: str,
-        space: Optional[str] = None,
-        name: Optional[str] = None,
-        version: Optional[str] = None,
+        entity_uid: Optional[str] = None,
+        query: Optional[str] = None,
     ) -> None:
         """Initialize trace metrics request.
 
@@ -838,18 +839,39 @@ class TraceMetricsRequest:
                 End time boundary (UTC)
             bucket_interval:
                 The time interval for metric aggregation buckets (e.g., '1 minutes', '30 minutes')
-            space:
-                Model space filter
-            name:
-                Model name filter
-            version:
-                Model version filter
+            entity_uid:
+                Filter by associated entity UID
+            query:
+                Optional trace search DSL query to parse into metrics filters
         """
+
+    @classmethod
+    def from_query(
+        cls,
+        q: str,
+        start_time: datetime.datetime,
+        end_time: datetime.datetime,
+        bucket_interval: str,
+    ) -> "TraceMetricsRequest":
+        """Build TraceMetricsRequest from the trace search DSL."""
 
 class TraceMetricsResponse:
     """Response structure containing aggregated trace metrics."""
 
     metrics: List[TraceMetricBucket]
+
+class TraceFacetDimension:
+    """A single facet dimension value with its trace count."""
+
+    value: str
+    trace_count: int
+
+class TraceFacetsResponse:
+    """Pre-aggregated facet counts over a filtered set of traces."""
+
+    services: List[TraceFacetDimension]
+    status_codes: List[TraceFacetDimension]
+    total_count: int
 
 class TagsResponse:
     """Response structure containing a list of tag records."""
@@ -1071,6 +1093,19 @@ class ScouterClient:
         Returns:
             TracePaginationResponse
         """
+
+    def search_traces(
+        self,
+        q: str,
+        *,
+        start_time: Optional[datetime.datetime] = None,
+        end_time: Optional[datetime.datetime] = None,
+        limit: Optional[int] = None,
+        cursor_start_time: Optional[datetime.datetime] = None,
+        cursor_trace_id: Optional[str] = None,
+        direction: Optional[str] = None,
+    ) -> TracePaginationResponse:
+        """Search traces with the trace search DSL."""
 
     def get_trace_spans(
         self,
@@ -1795,6 +1830,9 @@ class ScouterQueue:
 
         """
 
+    def get_by_entity_uid(self, profile_uid: str) -> Queue:
+        """Get the queue whose entity UID matches an eval profile UID."""
+
     def shutdown(self) -> None:
         """Shutdown the queue. This will close and flush all queues and transports"""
 
@@ -1836,6 +1874,36 @@ class ScouterQueue:
     def agent_profiles(self) -> Dict[str, AgentEvalProfile]:
         """Returns a mapping of alias → AgentEvalProfile for all AgentEvalProfiles registered in the queue."""
 
+class EvalMediaKind:
+    Image: "EvalMediaKind"
+    Document: "EvalMediaKind"
+
+class EvalMedia:
+    id: str
+    kind: EvalMediaKind
+
+class ImageMedia:
+    def __init__(
+        self,
+        id: str,
+        *,
+        url: Optional[str] = None,
+        bytes: Optional[bytes] = None,
+        path: Optional[Union[str, os.PathLike[str]]] = None,
+        mime_type: Optional[str] = None,
+    ) -> None: ...
+
+class DocumentMedia:
+    def __init__(
+        self,
+        id: str,
+        *,
+        url: Optional[str] = None,
+        bytes: Optional[bytes] = None,
+        path: Optional[Union[str, os.PathLike[str]]] = None,
+        mime_type: Optional[str] = None,
+    ) -> None: ...
+
 class EvalRecord:
     """LLM record containing context tied to a Large Language Model interaction
     that is used to evaluate drift in LLM responses.
@@ -1854,9 +1922,13 @@ class EvalRecord:
 
     def __init__(
         self,
-        context: Context,
-        id: Optional[str] = None,
+        context: Optional[Context] = None,
+        record_id: Optional[str] = None,
+        *,
         session_id: Optional[str] = None,
+        media: Optional[List[Union[EvalMedia, ImageMedia, DocumentMedia]]] = None,
+        profile_uid: Optional[str] = None,
+        tags: Optional[List[str]] = None,
         trace_id: Optional[str] = None,
     ) -> None:
         """Creates a new LLM record to associate with an `AgentEvalProfile`.
@@ -1870,10 +1942,20 @@ class EvalRecord:
                 evaluation prompts. So if you're evaluation prompts expect additional context via
                 bound variables (e.g., `${foo}`), you can pass that here as key value pairs.
                 {"foo": "bar"}
-            id (Optional[str], optional):
-                Optional unique identifier for the record.
+            record_id (Optional[str], optional):
+                Optional user-defined scenario, turn, step, or callback identifier.
             session_id (Optional[str], optional):
                 Optional session identifier to group related records.
+            media:
+                Optional media attachments referenced by LLMJudgeTask prompts via
+                `${media:id}` placeholders.
+            profile_uid:
+                Optional AgentEvalProfile UID. Sets the record entity UID for queue insertion.
+            tags:
+                Optional key=value tags for run or scenario metadata.
+            trace_id:
+                Optional legacy/manual trace ID. `span.attach_eval(...)` should be used
+                for trace-attached online eval records.
 
         Raises:
             TypeError: If context is not a dict or a pydantic BaseModel.
@@ -1905,6 +1987,18 @@ class EvalRecord:
         """Get the unique identifier for the record."""
 
     @property
+    def entity_uid(self) -> str:
+        """Get the associated eval profile UID."""
+
+    @property
+    def trace_id(self) -> Optional[str]:
+        """Get the trace ID hex string, if attached."""
+
+    @property
+    def span_id(self) -> Optional[str]:
+        """Get the span ID hex string, if attached."""
+
+    @property
     def context(self) -> Dict[str, Any]:
         """Get the contextual information.
 
@@ -1918,6 +2012,10 @@ class EvalRecord:
     @property
     def tags(self) -> List[str]:
         """Get the tags list (e.g. ``["scenario_id=s1", "env=test"]``)."""
+
+    @property
+    def media(self) -> List[EvalMedia]:
+        """Get media attachments for this eval record."""
 
     def add_tag(self, key: str, value: str) -> None:
         """Append a tag in ``"key=value"`` format.
@@ -4813,6 +4911,8 @@ __all__ = [
     "DriftAlertPaginationResponse",
     "GetProfileRequest",
     "TraceBaggageRecord",
+    "TraceFacetDimension",
+    "TraceFacetsResponse",
     "TraceFilters",
     "TraceMetricBucket",
     "TraceListItem",

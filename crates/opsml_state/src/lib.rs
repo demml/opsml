@@ -114,6 +114,12 @@ impl OpsmlState {
         Ok(())
     }
 
+    pub fn is_offline(&self) -> bool {
+        self.config()
+            .map(|config| config.is_offline)
+            .unwrap_or(false) // Default to false if we can't read the config
+    }
+
     pub fn handle(&self) -> Handle {
         self.runtime.handle().clone()
     }

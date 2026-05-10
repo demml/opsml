@@ -31,13 +31,10 @@ def test_scouter_submodule_import_smoke():
     assert hasattr(transport, "GrpcConfig")
 
 
-def test_get_tracer_falls_back_when_opentelemetry_missing(monkeypatch):
-    class FakeBaseTracer:
-        def __init__(self, name: str):
-            self.name = name
+def test_get_tracer_uses_opentelemetry_extra():
+    import opentelemetry.sdk  # pylint: disable=import-outside-toplevel,unused-import
 
-    monkeypatch.setattr(tracing_module, "HAS_OPENTELEMETRY", False)
-    monkeypatch.setattr(tracing_module, "BaseTracer", FakeBaseTracer)
+    assert tracing_module.HAS_OPENTELEMETRY is True
 
     tracer = tracing_module.get_tracer("fallback-service")
     assert isinstance(tracer, tracing_module.ScouterTracer)

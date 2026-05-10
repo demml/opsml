@@ -8,7 +8,7 @@ import type { PromptCard } from '$lib/components/card/card_interfaces/promptcard
 /**
  * Dashboard route serves both AgentCard and PromptCard registries.
  *
- * - Agent: scoped by `service_name = "{space}:{name}"` (matches `ServiceInfo::namespace()`).
+ * - Agent: scoped by the OTel service triple (`name`, `space`, `version`).
  * - Prompt: scoped by `entity_id = eval_profile.config.uid`. Redirects back to
  *   the card overview when the prompt has no eval profile (nothing to scope by).
  */

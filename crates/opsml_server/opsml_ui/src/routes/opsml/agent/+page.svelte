@@ -19,7 +19,7 @@
     },
     {
       title: "Agents",
-      description: "Coming soon: Manage agents",
+      description: "Central registry for all your agents and versions",
       path: "/opsml/agent/agent",
       icon: Bot,
       color: "gradient-success"

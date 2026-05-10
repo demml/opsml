@@ -39,6 +39,7 @@
     initialFilters,
     initialTrace,
     initialTraceSpans,
+    mockMode = false,
   }: {
     trace_page: TracePaginationResponse;
     trace_metrics: TraceMetricBucket[];
@@ -46,6 +47,7 @@
     initialFilters: TracePageFilter;
     initialTrace?: TraceListItem;
     initialTraceSpans?: TraceSpansResponse;
+    mockMode?: boolean;
   } = $props();
 
   let isUpdating = $state(false);
@@ -86,12 +88,18 @@
   }
 
   async function getTraceFacetsForRange(): Promise<TraceFacetsResponse> {
-    const [serviceFacets, statusFacets] = await Promise.all([
+    const [serviceFacets, namespaceFacets, versionFacets, instanceFacets, statusFacets] = await Promise.all([
       getServerTraceFacets(fetch, { ...filters.filters, service_name: undefined }),
+      getServerTraceFacets(fetch, { ...filters.filters, service_namespace: undefined }),
+      getServerTraceFacets(fetch, { ...filters.filters, service_version: undefined }),
+      getServerTraceFacets(fetch, { ...filters.filters, service_instance_id: undefined }),
       getServerTraceFacets(fetch, { ...filters.filters, status_code: undefined }),
     ]);
     return {
       services: serviceFacets.services,
+      namespaces: namespaceFacets.namespaces ?? [],
+      versions: versionFacets.versions ?? [],
+      instance_ids: instanceFacets.instance_ids ?? [],
       status_codes: statusFacets.status_codes,
       total_count: serviceFacets.total_count,
     };
@@ -289,6 +297,48 @@
     void handleFiltersChange({ ...filters, filters: nextFilters });
   }
 
+  function setNamespace(namespace: string) {
+    const next = {
+      ...filters,
+      filters: { ...filters.filters, service_namespace: namespace },
+    };
+    void handleFiltersChange(next);
+  }
+
+  function clearNamespace() {
+    const nextFilters = { ...filters.filters };
+    delete nextFilters.service_namespace;
+    void handleFiltersChange({ ...filters, filters: nextFilters });
+  }
+
+  function setVersion(version: string) {
+    const next = {
+      ...filters,
+      filters: { ...filters.filters, service_version: version },
+    };
+    void handleFiltersChange(next);
+  }
+
+  function clearVersion() {
+    const nextFilters = { ...filters.filters };
+    delete nextFilters.service_version;
+    void handleFiltersChange({ ...filters, filters: nextFilters });
+  }
+
+  function setInstance(instanceId: string) {
+    const next = {
+      ...filters,
+      filters: { ...filters.filters, service_instance_id: instanceId },
+    };
+    void handleFiltersChange(next);
+  }
+
+  function clearInstance() {
+    const nextFilters = { ...filters.filters };
+    delete nextFilters.service_instance_id;
+    void handleFiltersChange({ ...filters, filters: nextFilters });
+  }
+
   function setStatus(status: number) {
     const next = {
       ...filters,
@@ -435,9 +485,18 @@
       <FacetSidebar
         {filters}
         services={traceFacets.services.map((d: TraceFacetDimension) => ({ value: d.value, count: d.trace_count }))}
+        namespaces={(traceFacets.namespaces ?? []).map((d: TraceFacetDimension) => ({ value: d.value, count: d.trace_count }))}
+        versions={(traceFacets.versions ?? []).map((d: TraceFacetDimension) => ({ value: d.value, count: d.trace_count }))}
+        instances={(traceFacets.instance_ids ?? []).map((d: TraceFacetDimension) => ({ value: d.value, count: d.trace_count }))}
         statuses={traceFacets.status_codes.map((d: TraceFacetDimension) => ({ value: d.value, count: d.trace_count }))}
         onSetService={setService}
         onClearService={clearService}
+        onSetNamespace={setNamespace}
+        onClearNamespace={clearNamespace}
+        onSetVersion={setVersion}
+        onClearVersion={clearVersion}
+        onSetInstance={setInstance}
+        onClearInstance={clearInstance}
         onSetStatus={setStatus}
         onClearStatus={clearStatus}
         onToggleErrors={toggleErrors}
@@ -458,6 +517,7 @@
         {filters}
         {initialTrace}
         {initialTraceSpans}
+        {mockMode}
       />
       </div>
     </div>

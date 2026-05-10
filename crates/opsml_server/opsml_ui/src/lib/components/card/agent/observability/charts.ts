@@ -6,6 +6,10 @@ import type {
   ModelCostBreakdown,
   ToolTimeBucket,
 } from "./types";
+import type {
+  GenAiOperationBreakdown,
+  GenAiSpanRecord,
+} from "$lib/components/scouter/genai/types";
 
 const PALETTE = {
   primary: "rgba(163, 135, 239, 1)",
@@ -320,6 +324,113 @@ export function buildErrorRateChart(
       scales: {
         x: timeAxis(theme),
         y: { ...valueAxis(theme, "% errors"), beginAtZero: true },
+      },
+    },
+  } as ChartConfiguration;
+}
+
+export function buildOperationBarChart(
+  operations: GenAiOperationBreakdown[],
+): ChartConfiguration {
+  const theme = getChartTheme();
+  const sorted = [...operations].sort((a, b) => b.span_count - a.span_count);
+  return {
+    type: "bar",
+    data: {
+      labels: sorted.map((o) => o.operation_name),
+      datasets: [
+        {
+          label: "spans",
+          data: sorted.map((o) => o.span_count),
+          backgroundColor: PALETTE.primarySoft,
+          borderColor: PALETTE.primary,
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y" as const,
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        tooltip: getTooltip(),
+        legend: { display: false },
+      },
+      scales: {
+        x: {
+          border: { display: true, width: 2, color: theme.axisColor },
+          grid: { display: true, color: theme.gridColor },
+          ticks: {
+            maxTicksLimit: 5,
+            color: theme.textColor,
+            font: { size: 10 },
+          },
+        },
+        y: {
+          border: { display: true, width: 2, color: theme.axisColor },
+          grid: { display: false },
+          ticks: { color: theme.textColor, font: { size: 10 } },
+        },
+      },
+    },
+  } as ChartConfiguration;
+}
+
+export function buildSpanDurationBar(
+  spans: GenAiSpanRecord[],
+): ChartConfiguration {
+  const theme = getChartTheme();
+  const sorted = [...spans].sort((a, b) => b.duration_ms - a.duration_ms);
+  const labels = sorted.map(
+    (s) => s.label ?? s.operation_name ?? s.span_id.slice(0, 8),
+  );
+  return {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "ms",
+          data: sorted.map((s) => s.duration_ms),
+          backgroundColor: sorted.map((s) =>
+            s.error_type ? PALETTE.errorSoft : PALETTE.tertiarySoft,
+          ),
+          borderColor: sorted.map((s) =>
+            s.error_type ? PALETTE.error : PALETTE.tertiary,
+          ),
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y" as const,
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        tooltip: getTooltip(),
+        legend: { display: false },
+      },
+      scales: {
+        x: {
+          border: { display: true, width: 2, color: theme.axisColor },
+          grid: { display: true, color: theme.gridColor },
+          ticks: {
+            maxTicksLimit: 5,
+            color: theme.textColor,
+            font: { size: 10 },
+          },
+          title: {
+            display: true,
+            text: "ms",
+            color: theme.textColor,
+            font: { size: 10, weight: "bold" as const },
+          },
+        },
+        y: {
+          border: { display: true, width: 2, color: theme.axisColor },
+          grid: { display: false },
+          ticks: { color: theme.textColor, font: { size: 10 } },
+        },
       },
     },
   } as ChartConfiguration;

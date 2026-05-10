@@ -74,6 +74,7 @@ gcloud-storage = { version = "1.*", features = ["auth"] }
 gcloud-auth = { version = "1.*" }
 headers = { version = "0.*" }
 hkdf = "0.12.*"
+hostname = "0.4"
 jsonwebtoken = "9.*"
 metrics = { version = "0.*", default-features = false }
 metrics-exporter-prometheus = { version = "0.*", default-features = false }
@@ -97,7 +98,7 @@ rpassword = "7.*"
 rusty-logging = "0.*"
 pythonize = { version = "0.*" }
 # we cant use crates.io because scouter relies on a fork of linfa at the moment
-scouter-client = { git = "https://github.com/demml/scouter", branch = "agents-by-service" }
+scouter-client = { git = "https://github.com/demml/scouter", branch = "main" }
 sha2 = "0.10.*"
 hex = "0.4.*"
 semver = "1.*"

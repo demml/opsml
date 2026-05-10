@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import type { AgentGenAiBundle } from '../types';
 
 const summary = {
@@ -20,7 +20,10 @@ const summary = {
 const bundle: AgentGenAiBundle = {
   dashboard: {
     applied_filters: {
-      service_name: 'space:name',
+      service_name: 'agent-service',
+      service_namespace: null,
+      service_version: null,
+      service_instance_id: null,
       entity_id: null,
       agent_name: null,
       provider_name: null,
@@ -30,7 +33,15 @@ const bundle: AgentGenAiBundle = {
       end_time: '2026-01-02T00:00:00Z' as unknown as AgentGenAiBundle['dashboard']['applied_filters']['end_time'],
       bucket_interval: 'hour',
     },
-    available_filters: { agents: [], providers: [], models: [], operations: [] },
+    available_filters: {
+      agents: [],
+      providers: [],
+      models: [],
+      operations: [],
+      service_namespaces: [],
+      service_versions: [],
+      service_instance_ids: [],
+    },
     metadata: {
       generated_at: '2026-01-02T00:00:00Z' as unknown as AgentGenAiBundle['dashboard']['metadata']['generated_at'],
       schema_version: 1,
@@ -240,7 +251,7 @@ describe('AgentGenAiBundle shape', () => {
   });
 
   it('applied_filters preserves the requested service scope', () => {
-    expect(bundle.dashboard.applied_filters.service_name).toBe('space:name');
+    expect(bundle.dashboard.applied_filters.service_name).toBe('agent-service');
     expect(bundle.dashboard.applied_filters.entity_id).toBeNull();
   });
 });

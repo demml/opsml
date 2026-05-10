@@ -35,24 +35,24 @@
 
     <div class="flex flex-wrap gap-1">
       {#each config.location as loc}
-        <div class="inline-flex items-center overflow-hidden rounded-lg bg-primary-100 border border-primary-800 text-sm w-fit px-2 text-primary-900">
+        <div class="inline-flex items-center overflow-hidden rounded-base bg-primary-100 border border-primary-800 text-sm w-fit px-2 text-primary-900">
           {loc}
         </div>
       {/each}
     </div>
   {/if}
 
-  {#if config.endpoints.length > 0}
+  {#if config.urls && config.urls.length > 0}
     <div class="flex flex-col space-y-1 gap-1">
       <div class="flex flex-row items-center pb-1 border-b-2 border-black">
         <EthernetPort color="currentColor" />
-        <header class="pl-2 text-primary-900 text-sm font-bold">Endpoints</header>
+        <header class="pl-2 text-primary-900 text-sm font-bold">URLs</header>
       </div>
     </div>
 
     <div class="flex flex-wrap gap-1">
-      {#each config.endpoints as endpoint}
-        <div class="inline-flex items-center overflow-hidden rounded-lg bg-primary-100 border border-primary-800 text-sm w-fit px-2 text-primary-900">
+      {#each config.urls as endpoint}
+        <div class="inline-flex items-center overflow-hidden rounded-base bg-primary-100 border border-primary-800 text-sm w-fit px-2 text-primary-900">
           {endpoint}
         </div>
       {/each}
@@ -68,7 +68,7 @@
     </div>
 
     <div class="flex flex-wrap gap-1">
-      <div class="flex flex-col space-y-1 gap-1 border-2 border-primary-800 rounded-lg p-2">
+      <div class="flex flex-col space-y-1 gap-1 border-2 border-primary-800 rounded-base p-2">
         <div class="flex flex-row items-center">
             <header class="pl-2 text-primary-900 text-sm font-bold">CPU</header>
         </div>
@@ -80,7 +80,7 @@
       </div>
 
       {#if resources.gpu}
-        <div class="flex flex-col space-y-1 gap-1 border-2 border-primary-800 rounded-lg p-2">
+        <div class="flex flex-col space-y-1 gap-1 border-2 border-primary-800 rounded-base p-2">
           <div class="flex flex-row items-center">
               <header class="pl-2 text-primary-900 text-sm font-bold">GPU</header>
           </div>

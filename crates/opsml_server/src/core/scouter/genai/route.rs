@@ -14,35 +14,18 @@ use opsml_types::api::RequestType;
 use opsml_types::contracts::{Operation, ResourceType};
 use scouter_client::{
     AgentActivityQuery, AgentDashboardRequest, AgentDashboardResponse, ConversationQuery,
-    GenAiAgentActivityResponse, GenAiDashboardResponse, GenAiErrorBreakdownResponse,
-    GenAiMetricsRequest, GenAiModelUsageResponse, GenAiOperationBreakdownResponse,
-    GenAiSpanFilters, GenAiSpansResponse, GenAiTokenMetricsResponse, GenAiToolActivityResponse,
-    GenAiTraceMetricsRequest, GenAiTraceMetricsResponse, ModelPricing, ScouterServerError,
-    ToolDashboardRequest, ToolDashboardResponse,
+    GenAiAgentActivityResponse, GenAiDashboardRequest, GenAiDashboardResponse,
+    GenAiErrorBreakdownResponse, GenAiMetricsRequest, GenAiModelUsageResponse,
+    GenAiOperationBreakdownResponse, GenAiSpanFilters, GenAiSpansResponse,
+    GenAiTokenMetricsResponse, GenAiToolActivityResponse, GenAiTraceMetricsRequest,
+    GenAiTraceMetricsResponse, ScouterServerError, ToolDashboardRequest, ToolDashboardResponse,
 };
+use serde::Serialize;
 use serde::de::DeserializeOwned;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::Arc;
 use tracing::{error, instrument};
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct GenAiDashboardRequest {
-    pub service_name: Option<String>,
-    pub entity_id: Option<String>,
-    pub start_time: String,
-    pub end_time: String,
-    #[serde(default)]
-    pub bucket_interval: String,
-    pub agent_name: Option<String>,
-    pub provider_name: Option<String>,
-    pub operation_name: Option<String>,
-    pub model: Option<String>,
-    #[serde(default)]
-    pub model_pricing: HashMap<String, ModelPricing>,
-}
 
 async fn post_proxy<Req, Res>(
     state: &Arc<AppState>,
@@ -202,7 +185,8 @@ fn is_valid_conversation_id(id: &str) -> bool {
 }
 
 fn is_valid_trace_id(id: &str) -> bool {
-    !id.is_empty() && id.len() <= 128 && id.chars().all(|c| c.is_ascii_hexdigit())
+    let stripped = id.replace('-', "");
+    !stripped.is_empty() && stripped.len() <= 128 && stripped.chars().all(|c| c.is_ascii_hexdigit())
 }
 
 #[utoipa::path(
@@ -698,5 +682,20 @@ pub async fn get_scouter_genai_router(prefix: &str) -> Result<Router<Arc<AppStat
             Err(anyhow::anyhow!("Failed to create scouter genai router"))
                 .context("Panic occurred while creating the genai router")
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_valid_trace_id_length_boundary() {
+        let at_limit = "a".repeat(128);
+        let over = "a".repeat(129);
+        assert!(is_valid_trace_id(&at_limit));
+        assert!(!is_valid_trace_id(&over));
+        assert!(is_valid_trace_id("550e8400-e29b-41d4-a716-446655440000")); // UUID format
+        assert!(is_valid_trace_id("ABCDEF1234567890ABCDEF1234567890")); // uppercase
     }
 }

@@ -2275,6 +2275,10 @@ class ScenarioResult:
     def traces(self) -> List["TraceSpan"]:
         """Trace spans captured during this scenario's execution."""
 
+    @property
+    def dataset_results(self) -> Dict[str, "EvalResults"]:
+        """Per-alias evaluation results for this scenario."""
+
     def traces_as_table(self) -> None:
         """Print a summary table of trace spans to stdout."""
 
@@ -2284,6 +2288,12 @@ class ScenarioResult:
         Values longer than 200 characters are truncated in the table.
         Access ``self.traces[i].attributes`` directly for full values.
         """
+
+    def tasks_as_table(self) -> None:
+        """Print a per-task pass/fail summary table to stdout."""
+
+    def agent_results_as_table(self, show_tasks: bool = False) -> None:
+        """Print per-alias agent evaluation results table to stdout."""
 
     def __str__(self) -> str:
         """Return a pretty-printed JSON string representation."""
@@ -2592,6 +2602,12 @@ class ScenarioEvalResults:
             show_workflow: If True, also print per-dataset workflow summary tables.
         """
 
+    def agent_summary_table(self) -> None:
+        """Print a per-alias agent pass rate summary table to stdout."""
+
+    def as_json(self) -> str:
+        """Serialize the results to a JSON string."""
+
 class EvalScenario:
     """A single test case in an offline agent evaluation run.
 
@@ -2851,9 +2867,9 @@ class EvalRunner:
     """Stateful evaluation engine that orchestrates scenario evaluation.
 
     Owns scenario definitions and profiles (as shared references).
-    Provides ``collect_scenario_data()`` to populate scenario data and
-    ``evaluate()`` to run multi-level evaluation, pulling spans from
-    the global capture buffer automatically.
+    Provides ``collect_scenario_data()`` to populate scenario data,
+    ``evaluate_scenario()`` to run per-scenario evaluation, and
+    ``finalize()`` to aggregate results across all scenarios.
 
     Args:
         scenarios: List of ``EvalScenario`` instances to evaluate.
@@ -2868,6 +2884,7 @@ class EvalRunner:
         self,
         scenarios: "EvalScenarios",
         profiles: Dict[str, "AgentEvalProfile"],
+        capture_run_id: Optional[str] = None,
     ) -> None: ...
     def collect_scenario_data(
         self,
@@ -2877,13 +2894,43 @@ class EvalRunner:
     ) -> None:
         """Populate scenario data for evaluation."""
 
+    def evaluate_scenario(
+        self,
+        scenario_id: str,
+    ) -> "ScenarioResult":
+        """Run evaluation for a single scenario.
+
+        Drains spans from the capture buffer (idempotent — first call drains,
+        subsequent calls reuse the cached result). Evaluates per-alias datasets
+        and scenario-level tasks for the given scenario.
+
+        Args:
+            scenario_id: The unique identifier of the scenario to evaluate.
+        """
+
+    def finalize(
+        self,
+        scenario_results: List["ScenarioResult"],
+        config: Optional["EvaluationConfig"] = None,
+    ) -> "ScenarioEvalResults":
+        """Aggregate per-scenario results into final evaluation output.
+
+        Merges per-scenario dataset results into a flat alias map for
+        backward-compatible ``compare_to()`` and computes overall metrics.
+
+        Args:
+            scenario_results: List of results from ``evaluate_scenario()`` calls.
+            config: Optional evaluation configuration.
+        """
+
     def evaluate(
         self,
         config: Optional["EvaluationConfig"] = None,
     ) -> "ScenarioEvalResults":
-        """Run multi-level evaluation.
+        """Run multi-level evaluation and return aggregate scenario results.
 
-        Spans are pulled automatically from the global capture buffer.
+        This backward-compatible wrapper evaluates all scenarios and finalizes
+        the aggregate result.
 
         Args:
             config: Optional evaluation configuration.

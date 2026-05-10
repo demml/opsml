@@ -4,12 +4,11 @@ use axum::{
     http::{Request, StatusCode},
 };
 use chrono::{Duration, Utc};
-use opsml_server::core::scouter::genai::route::GenAiDashboardRequest;
 use reqwest::header;
 use scouter_client::{
-    AgentDashboardRequest, GenAiAgentActivityResponse, GenAiDashboardResponse,
-    GenAiErrorBreakdownResponse, GenAiMetricsRequest, GenAiModelUsageResponse,
-    GenAiOperationBreakdownResponse, GenAiSpanFilters, GenAiSpansResponse,
+    AgentDashboardRequest, GenAiAgentActivityResponse, GenAiDashboardRequest,
+    GenAiDashboardResponse, GenAiErrorBreakdownResponse, GenAiMetricsRequest,
+    GenAiModelUsageResponse, GenAiOperationBreakdownResponse, GenAiSpanFilters, GenAiSpansResponse,
     GenAiTokenMetricsResponse, GenAiToolActivityResponse, GenAiTraceMetricsRequest,
     GenAiTraceMetricsResponse, ToolDashboardRequest,
 };
@@ -18,6 +17,9 @@ fn metrics_request() -> GenAiMetricsRequest {
     let end_time = Utc::now();
     GenAiMetricsRequest {
         service_name: Some("opsml-service".to_string()),
+        service_namespace: None,
+        service_version: None,
+        service_instance_id: None,
         agent_name: None,
         start_time: end_time - Duration::minutes(15),
         end_time,
@@ -32,6 +34,9 @@ fn agent_dashboard_request() -> AgentDashboardRequest {
     let end_time = Utc::now();
     AgentDashboardRequest {
         service_name: Some("opsml-service".to_string()),
+        service_namespace: None,
+        service_version: None,
+        service_instance_id: None,
         entity_id: None,
         start_time: end_time - Duration::minutes(15),
         end_time,
@@ -46,6 +51,9 @@ fn tool_dashboard_request() -> ToolDashboardRequest {
     let end_time = Utc::now();
     ToolDashboardRequest {
         service_name: Some("opsml-service".to_string()),
+        service_namespace: None,
+        service_version: None,
+        service_instance_id: None,
         agent_name: None,
         start_time: end_time - Duration::minutes(15),
         end_time,
@@ -268,9 +276,12 @@ fn genai_dashboard_request() -> GenAiDashboardRequest {
     let end_time = Utc::now();
     GenAiDashboardRequest {
         service_name: Some("test-space:test-service".to_string()),
+        service_namespace: None,
+        service_version: None,
+        service_instance_id: None,
         entity_id: None,
-        start_time: (end_time - Duration::minutes(15)).to_rfc3339(),
-        end_time: end_time.to_rfc3339(),
+        start_time: (end_time - Duration::minutes(15)),
+        end_time,
         bucket_interval: "hour".to_string(),
         agent_name: None,
         provider_name: None,
