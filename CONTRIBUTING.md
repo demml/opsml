@@ -39,28 +39,27 @@ Depending on what area you're interested in contributing to, you may need to set
 From the root directory of the project, run the following commands to ensure everything is working correctly:
 
 ```console
-$ make start.server
+$ mise run start:server
 ```
 
 This should start the OpsML server, after which you should be able to access the UI on your localhost. The following will shutdown the server:
 
 ```console
-$ make stop.server
+$ mise run stop:server
 ```
 
 To make sure the python client is working, run the following commands:
 
 ```console
-$ cd py-opsml
-$ make setup.project
-$ make test.unit
+$ mise run py:setup
+$ mise run py:test:unit
 ```
 
-The above will cd into the py-opsml directory, setup the python environment, build the python wheel and run the unit tests.
+The above will setup the python environment, build the python wheel and run the unit tests.
 
 ** You're now ready to start contributing! **
 
-Feel free to explore more of the makefile and codebase to get a better sense of how we run some of our tests and lints, but the above commands should be enough to get you started.
+Feel free to explore `mise.toml` and the codebase to get a better sense of how we run some of our tests and lints, but the above commands should be enough to get you started.
 
 ### Contributing Changes
 1. Create a new branch for your addition
@@ -70,15 +69,15 @@ Feel free to explore more of the makefile and codebase to get a better sense of 
 2. Test your changes:
    - Testing Rust changes:
      - make sure you are in the `opsml` directory
-     - run `make format` to format the code
-     - run `make lints` to run the linter
-     - run `make test.unit` to run util, sql, and server-side storage tests
+     - run `mise run format` to format the code
+     - run `mise run lints` to run the linter
+     - run `mise run test:unit` to run util, sql, and server-side storage tests
    - Testing Python changes:
-     - make sure you are in the `py-opsml` directory
-     - run `make setup.project` to setup the python environment and build the python wheel
-     - run `make format` to format the code
-     - run `make lints` to run the linter
-     - run `make test.unit` to run the python unit tests
+     - make sure you are in the `opsml` directory
+     - run `mise run py:setup` to setup the python environment and build the python wheel
+     - run `mise run py:format` to format the code
+     - run `mise run py:lints` to run the linter
+     - run `mise run py:test:unit` to run the python unit tests
 3. Submit a Draft Pull Request. Do it early and mark it `WIP` so a maintainer knows it's not ready for review just yet. You can also add a label to it if you feel like it.
 4. Move the `pull_request` out of draft state.
    * Make sure you fill out the `pull_request` template (included with every `pull_request`)

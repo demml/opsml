@@ -27,15 +27,21 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: "poetry"
 
+      - name: Set up mise
+        uses: jdx/mise-action@v3.4.1
+        with:
+          install: true
+          cache: true
+
       - run: |
           sudo swapoff -a
           sudo rm -f /swapfile
           sudo apt clean
-          make setup.install
+          mise run py:setup
           pip install -U twine
-          make lints.ci
-          make test.unit
-          make setup.install
+          mise run py:lints:ci
+          mise run py:test:unit
+          mise run py:setup
           if [[ "v$(poetry version --short)" == *"rc"* ]];
           then
             poetry build

@@ -22,6 +22,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up mise
+        uses: jdx/mise-action@v3.4.1
+        with:
+          install: true
+          cache: true
+
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
@@ -56,16 +62,22 @@ jobs:
         run: rustc --version && cargo --version && cargo clippy --version && rustup --version
 
       - name: Run format
-        run: make format
+        run: mise run format
 
       - name: Run lints
-        run: make lints
+        run: mise run lints
 
   test-Sql-Storage-Utils:
     runs-on: ubuntu-24.04
     needs: format-and-lint
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up mise
+        uses: jdx/mise-action@v3.4.1
+        with:
+          install: true
+          cache: true
 
       - name: "Create env file"
         run: |
@@ -103,7 +115,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
 
       - name: Run Unit Tests
-        run: make test.unit
+        run: mise run test:unit
 
   test-py-build-linux:
     name: build - ${{ matrix.runner-type }} - ${{ matrix.manylinux }} - ${{ matrix.target }}
@@ -288,6 +300,12 @@ jobs:
           docker-images: true
           swap-storage: true
 
+      - name: Set up mise
+        uses: jdx/mise-action@v3.4.1
+        with:
+          install: true
+          cache: true
+
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
@@ -324,18 +342,19 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Create virtual environment
-        working-directory: ./py-opsml
-        run: |
-          make setup.project
+        run: mise run py:setup
+        env:
+          UV_PYTHON: ${{ matrix.python-version }}
 
       - name: Lints
-        working-directory: ./py-opsml
-        run: make lints.ci
+        run: mise run py:lints:ci
+        env:
+          UV_PYTHON: ${{ matrix.python-version }}
 
       - name: Run tests and report coverage
-        working-directory: ./py-opsml
-        run: |
-          make test.unit
+        run: mise run py:test:unit
+        env:
+          UV_PYTHON: ${{ matrix.python-version }}
 
       # only upload coverage reports from ubuntu runners and python 3.12
       - name: Upload coverage reports to Codecov
@@ -347,14 +366,15 @@ jobs:
       # if 3.12 and ubuntu, run tensorflow tests
       - name: Run TensorFlow tests
         if: ${{ runner.os == 'Linux' && matrix.python-version == '3.12' }}
-        working-directory: ./py-opsml
-        run: make test.unit.tensorflow
+        run: mise run py:test:unit:tensorflow
+        env:
+          UV_PYTHON: ${{ matrix.python-version }}
 
       - name: Run service tests
         if: ${{ runner.os == 'Linux' && matrix.python-version == '3.12' }}
-        working-directory: ./py-opsml
-        run: |
-          make test.service
+        run: mise run py:test:service
+        env:
+          UV_PYTHON: ${{ matrix.python-version }}
 
   # this will run local client and server storage tests.
   # Intergration tests will be run when prs are merged to main
@@ -363,6 +383,12 @@ jobs:
     needs: format-and-lint
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up mise
+        uses: jdx/mise-action@v3.4.1
+        with:
+          install: true
+          cache: true
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
@@ -393,7 +419,7 @@ jobs:
           run_install: false
 
       - name: Install UI dependencies
-        run: make install.ui.deps
+        run: mise run ui:install:deps
 
       - name: Run UI tests
         run: |
@@ -401,10 +427,10 @@ jobs:
           pnpm test
 
       - name: Setup Server
-        run: make start.server.background
+        run: mise run start:server:background
 
       - name: Run storage client tests
-        run: make test.storage.client
+        run: mise run test:storage:client
 
       - name: Shutdown Server
-        run: make stop.server
+        run: mise run stop:server

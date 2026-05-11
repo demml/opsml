@@ -18260,6 +18260,7 @@ class Drifter:
     def create_drift_profile(
         self,
         data: Any,
+        config: None = None,
         data_type: Optional[ScouterDataType] = None,
     ) -> SpcDriftProfile:
         """Create a SPC (Statistical process control) drift profile from the provided data.
@@ -24787,6 +24788,7 @@ class ModelInterface:
         self,
         alias: str,
         data: Any,
+        config: None = None,
         data_type: Optional[DataType] = None,
     ) -> SpcDriftProfile: ...
     def create_drift_profile(  # type: ignore

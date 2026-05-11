@@ -1,0 +1,494 @@
+[tools]
+python = "3.10"
+rust = "stable"
+cmake = "3.26.4"
+protoc = "33.2"
+uv = "0.11.0"
+"npm:pnpm" = "latest"
+node = "24.15.0"
+
+[env]
+UI_DIR = "crates/opsml_server/opsml_ui"
+PY_DIR = "py-opsml"
+SOURCE_OBJECTS = "python/opsml"
+FORMAT_OBJECT = "python/opsml examples"
+
+# Rust / workspace
+
+[tasks.format]
+description = "Format all Rust code"
+run = "cargo fmt --all"
+
+[tasks.lints]
+description = "Run Clippy with -D warnings"
+run = "cargo clippy --workspace --all-targets -- -D warnings"
+
+[tasks."lints:pedantic"]
+description = "Run Clippy with pedantic warnings"
+run = "cargo clippy --workspace --all-targets -- -D warnings -W clippy::pedantic -A clippy::must_use_candidate -A clippy::missing_errors_doc"
+
+[tasks."test:toml"]
+description = "Run opsml-toml tests"
+run = "cargo test -p opsml-toml -- --nocapture --test-threads=1"
+
+[tasks."test:cli"]
+description = "Run opsml-cli tests"
+run = "cargo test -p opsml-cli -- --nocapture --test-threads=1"
+
+[tasks."test:sql:sqlite"]
+description = "Run SQLite SQL tests"
+run = "cargo test -p opsml-sql test_sqlite -- --nocapture --test-threads=1"
+
+[tasks."test:sql:enum"]
+description = "Run SQL enum tests"
+run = "cargo test -p opsml-sql test_enum -- --nocapture --test-threads=1"
+
+[tasks."build:postgres"]
+description = "Start Postgres via Docker Compose"
+run = ["docker compose down --volumes", "docker compose up -d --build postgres --wait"]
+
+[tasks."test:sql:postgres"]
+description = "Run Postgres SQL tests"
+depends = ["build:postgres"]
+run = "cargo test -p opsml-sql test_postgres -- --nocapture --test-threads=1"
+
+[tasks."build:mysql"]
+description = "Start MySQL via Docker Compose"
+run = ["docker compose down --volumes", "docker compose up -d --build mysql --wait"]
+
+[tasks."test:sql:mysql"]
+description = "Run MySQL SQL tests"
+depends = ["build:mysql"]
+run = ["cargo test -p opsml-sql test_mysql -- --nocapture --test-threads=1", "docker compose down --volumes"]
+
+[tasks."test:sql"]
+description = "Run all SQL tests"
+depends = ["test:sql:sqlite", "test:sql:enum", "test:sql:postgres", "test:sql:mysql"]
+
+[tasks."test:service"]
+description = "Run opsml-service tests"
+run = "cargo test -p opsml-service -- --nocapture --test-threads=1"
+
+[tasks."test:storage:local:server"]
+description = "Run local storage server tests"
+run = "cargo test -p opsml-storage test_local_storage_server -- --nocapture --test-threads 1"
+
+[tasks."test:storage:client"]
+description = "Run local storage client tests"
+run = "cargo test -p opsml-storage test_local_storage_client -- --nocapture"
+
+[tasks."test:storage:server"]
+description = "Run local storage server tests"
+run = "cargo test -p opsml-storage test_local_storage_server -- --nocapture --test-threads 1"
+
+[tasks."test:storage:aws:client"]
+description = "Run AWS storage client tests"
+run = "cargo test -p opsml-storage test_aws_storage_client -- --nocapture --test-threads 1"
+
+[tasks."test:storage:gcs:client"]
+description = "Run GCS storage client tests"
+run = "cargo test -p opsml-storage test_gcs_storage_client -- --nocapture"
+
+[tasks."test:storage:azure:client"]
+description = "Run Azure storage client tests"
+run = "cargo test -p opsml-storage test_azure_storage_client -- --nocapture"
+
+[tasks."test:storage:aws:server"]
+description = "Run AWS storage server tests"
+run = "cargo test -p opsml-storage test_aws_storage_server -- --nocapture --test-threads 1"
+
+[tasks."test:storage:gcs:server"]
+description = "Run GCS storage server tests"
+run = "cargo test -p opsml-storage test_gcs_storage_server -- --nocapture --test-threads 1"
+
+[tasks."test:storage:azure:server"]
+description = "Run Azure storage server tests"
+run = "cargo test -p opsml-storage test_azure_storage_server -- --nocapture --test-threads 1"
+
+[tasks."test:utils"]
+description = "Run opsml-utils tests"
+run = "cargo test -p opsml-utils -- --nocapture"
+
+[tasks."test:server"]
+description = "Run opsml-server tests"
+env = { OPSML_TESTING = "1" }
+run = "cargo test -p opsml-server test_opsml_server -- --nocapture --test-threads=1"
+
+[tasks."test:registry:client"]
+description = "Run registry client tests"
+run = "cargo test --features server -p opsml-registry test_registry_client -- --nocapture --test-threads=1"
+
+[tasks."test:version"]
+description = "Run opsml-version tests"
+run = "cargo test -p opsml-version -- --nocapture --test-threads=1"
+
+[tasks."test:unit"]
+description = "Run all Rust unit tests"
+env = { OPSML_TESTING = "1" }
+depends = ["test:toml", "test:cli", "test:sql", "test:storage:server", "test:server", "test:utils", "test:version"]
+
+# Server lifecycle
+
+[tasks."stop:server"]
+description = "Kill any process on port 3000"
+run = "lsof -ti:3000 | xargs kill -9 2>/dev/null || true"
+
+[tasks."start:server"]
+description = "Build UI and start opsml-server on :3000"
+depends = ["stop:server", "ui:build"]
+run = ["cargo build -p opsml-server", "./target/debug/opsml-server"]
+
+[tasks."start:server:background"]
+description = "Build UI and start opsml-server in the background on :3000"
+depends = ["stop:server", "ui:build"]
+run = ["cargo build -p opsml-server", "./target/debug/opsml-server &"]
+
+[tasks."dev:backend"]
+description = "Build and run opsml-server in dev mode on :8080"
+run = ["cargo build -p opsml-server", "OPSML_SERVER_PORT=8080 ./target/debug/opsml-server"]
+
+[tasks."dev:frontend"]
+description = "Run the SvelteKit dev server"
+dir = "crates/opsml_server/opsml_ui"
+run = "pnpm run dev"
+
+[tasks."build:backend"]
+description = "Build opsml-server release binary"
+run = "cargo build -p opsml-server --release"
+
+[tasks."start:backend"]
+description = "Run release opsml-server on :8080"
+depends = ["build:backend"]
+run = "OPSML_SERVER_PORT=8080 ./target/release/opsml-server"
+
+[tasks."start:frontend"]
+description = "Run built SvelteKit frontend"
+depends = ["ui:build"]
+dir = "crates/opsml_server/opsml_ui"
+run = "node build/index.js"
+
+[tasks."dev:both"]
+description = "Run backend (:8080) and frontend (:3000) in parallel"
+run = """
+echo "Starting both servers in development mode..."
+echo "Backend API: http://localhost:8080"
+echo "Frontend SSR: http://localhost:3000"
+cargo build -p opsml-server
+OPSML_SERVER_PORT=8080 ./target/debug/opsml-server &
+BACKEND_PID=$!
+cd crates/opsml_server/opsml_ui && pnpm run dev &
+FRONTEND_PID=$!
+trap 'kill $BACKEND_PID $FRONTEND_PID 2>/dev/null' EXIT INT TERM
+wait $BACKEND_PID $FRONTEND_PID
+"""
+
+[tasks."start:both"]
+description = "Run backend (:8080) and built frontend (:3000) in parallel"
+run = """
+echo "Starting both servers in production mode..."
+echo "Backend API: http://localhost:8080"
+echo "Frontend SSR: http://localhost:3000"
+cargo build -p opsml-server
+OPSML_SERVER_PORT=8080 ./target/debug/opsml-server &
+BACKEND_PID=$!
+cd crates/opsml_server/opsml_ui && node build/index.js &
+FRONTEND_PID=$!
+trap 'kill $BACKEND_PID $FRONTEND_PID 2>/dev/null' EXIT INT TERM
+wait $BACKEND_PID $FRONTEND_PID
+"""
+
+[tasks."stop:both"]
+description = "Kill processes on ports 3000 and 8080"
+run = ["lsof -ti:3000 | xargs kill -9 2>/dev/null || true", "lsof -ti:8080 | xargs kill -9 2>/dev/null || true"]
+
+[tasks."dev:backend:scouter"]
+description = "Build and run opsml-server on :8090 with Scouter integration"
+run = ["cargo build -p opsml-server", "OPSML_SERVER_PORT=8090 SCOUTER_SERVER_URI=http://localhost:8000 ./target/debug/opsml-server"]
+
+[tasks."dev:both:scouter"]
+description = "Run backend (:8090, Scouter) detached and frontend (:3000) in foreground"
+depends = ["stop:both:scouter"]
+run = """
+echo "Building opsml backend..."
+cargo build -p opsml-server
+echo "Starting backend on port 8090 (Scouter integration: http://localhost:8000)"
+echo "Starting frontend on port 3000"
+OPSML_SERVER_PORT=8090 SCOUTER_SERVER_URI=http://localhost:8000 \
+  nohup ./target/debug/opsml-server > /tmp/opsml-backend.log 2>&1 &
+echo $! > /tmp/opsml-backend.pid
+echo "Backend PID: $(cat /tmp/opsml-backend.pid) - logs: /tmp/opsml-backend.log"
+cd crates/opsml_server/opsml_ui && OPSML_SERVER_PORT=8090 pnpm run dev
+"""
+
+[tasks."stop:both:scouter"]
+description = "Kill scouter-mode backend and frontend processes"
+run = """
+[ -f /tmp/opsml-backend.pid ] && kill $(cat /tmp/opsml-backend.pid) 2>/dev/null || true
+rm -f /tmp/opsml-backend.pid
+lsof -ti:8090 | xargs kill -9 2>/dev/null || true
+lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+"""
+
+[tasks."logs:backend:scouter"]
+description = "Tail scouter-mode backend logs"
+run = "tail -f /tmp/opsml-backend.log"
+
+[tasks."populate:cards"]
+description = "Run dev populate_cards script"
+dir = "py-opsml"
+run = "uv run python -m dev.populate_cards"
+
+[tasks."prepend:changelog"]
+description = "Prepend unreleased changes to CHANGELOG.md using git-cliff"
+run = """
+VERSION=$(grep '^version =' Cargo.toml | cut -d '"' -f 2)
+git cliff --unreleased --tag $VERSION --prepend CHANGELOG.md
+"""
+
+# UI tasks
+
+[tasks."ui:install:deps"]
+description = "Install UI dependencies with pnpm"
+dir = "crates/opsml_server/opsml_ui"
+run = "pnpm install"
+
+[tasks."ui:install:deps:prod"]
+description = "Install UI production dependencies only"
+dir = "crates/opsml_server/opsml_ui"
+run = ["rm -rf node_modules", "pnpm install --prod"]
+
+[tasks."ui:build"]
+description = "Install and build the SvelteKit UI"
+dir = "crates/opsml_server/opsml_ui"
+run = ["pnpm install", "pnpm build"]
+
+[tasks."ui:dev"]
+description = "Run the SvelteKit dev server"
+dir = "crates/opsml_server/opsml_ui"
+run = "pnpm run dev"
+
+[tasks."ui:update:deps"]
+description = "Update UI dependencies"
+dir = "crates/opsml_server/opsml_ui"
+run = "pnpm update"
+
+# Python tasks
+
+[tasks."py:format"]
+description = "Format Python code (isort + ruff + black)"
+dir = "py-opsml"
+run = [
+  "uv run isort python/opsml",
+  "uv run ruff check --silent --exit-zero python/opsml examples",
+  "uv run black python/opsml examples",
+]
+
+[tasks."py:lints:ruff"]
+description = "Run Ruff"
+dir = "py-opsml"
+run = "uv run ruff check python/opsml"
+
+[tasks."py:lints:pylint"]
+description = "Run pylint"
+dir = "py-opsml"
+run = "uv run pylint python/opsml"
+
+[tasks."py:lints:ty"]
+description = "Run ty"
+dir = "py-opsml"
+run = "uv run ty check python/opsml"
+
+[tasks."py:lints"]
+description = "Run all Python linters"
+depends = ["py:lints:ruff", "py:lints:pylint", "py:lints:ty"]
+
+[tasks."py:lints:ci"]
+description = "Run CI Python linters"
+dir = "py-opsml"
+run = [
+  "uv run black --check python/opsml",
+  "uv run ruff check python/opsml",
+  "uv run pylint python/opsml",
+  "uv run ty check python/opsml",
+]
+
+[tasks."py:build:stubs"]
+description = "Regenerate Python type stubs from Rust bindings"
+dir = "py-opsml"
+run = [
+  "uv run python scripts/assemble_stubs.py",
+  "uv run isort python/opsml",
+  "uv run black python/opsml examples",
+  "uv run ruff check --silent --exit-zero python/opsml examples",
+]
+
+[tasks."py:setup"]
+description = "Build stubs, sync deps, and build Rust extension"
+dir = "py-opsml"
+depends = ["py:build:stubs"]
+run = ["uv sync --all-extras --group dev --group docs", "uv run maturin develop --features server"]
+
+[tasks."py:setup:release"]
+description = "Sync deps and build Rust extension release artifact"
+dir = "py-opsml"
+run = ["uv sync --all-extras --group dev --group docs", "uv run maturin build --release --out dist"]
+
+[tasks."py:setup:adk"]
+description = "Setup ADK environment"
+dir = "py-opsml"
+run = [
+  "uv sync --group dev --group docs",
+  "uv pip install -r requirements/requirements.adk.txt",
+  "uv run maturin develop --features server",
+]
+
+[tasks."py:test:unit"]
+description = "Run Python unit tests"
+dir = "py-opsml"
+env = { OPSML_TESTING = "1" }
+run = """
+uv run pytest \
+  --ignore="tests/agent/integration/*" \
+  --ignore="tests/interfaces/model/test_tensorflow.py" \
+  --ignore="tests/service" \
+  -m "not tensorflow" \
+  --cov \
+  --cov-fail-under=0 \
+  --cov-report xml:./coverage.xml \
+  --cov-report term
+"""
+
+[tasks."py:test:unit:tensorflow"]
+description = "Run TensorFlow tests"
+dir = "py-opsml"
+depends = ["py:setup"]
+run = [
+  "uv pip install -r requirements/requirements.tf.txt",
+  "uv run pytest --ignore='tests/interfaces/model/test_tensorflow.py' -m 'tensorflow' --cov --cov-fail-under=0 --cov-report xml:./coverage.xml --cov-report term",
+  "uv run python tests/interfaces/model/test_tensorflow.py",
+]
+
+[tasks."py:setup:integration"]
+description = "Sync deps for integration tests"
+dir = "py-opsml"
+run = ["uv sync --all-extras --group dev,docs", "uv run maturin develop --release"]
+
+[tasks."py:test:integration"]
+description = "Run Python integration tests"
+dir = "py-opsml"
+run = "uv run pytest -s tests/integration"
+
+[tasks."py:test:service"]
+description = "Run Python service tests"
+dir = "py-opsml"
+run = "uv run pytest -s tests/service"
+
+[tasks."py:test:examples:data"]
+description = "Run data example scripts"
+dir = "py-opsml"
+run = [
+  "uv run python examples/data/arrow_data.py",
+  "uv run python examples/data/numpy_data.py",
+  "uv run python examples/data/pandas_data.py",
+  "uv run python examples/data/polars_data.py",
+  "uv run python examples/data/custom_data.py",
+]
+
+[tasks."py:test:examples:model"]
+description = "Run model example scripts"
+dir = "py-opsml"
+run = [
+  "uv pip install -r requirements/requirements.examples.txt",
+  "uv run python examples/model/catboost_model.py",
+  "uv run python examples/model/custom_model.py",
+  "uv run python examples/model/hf_model.py",
+  "uv run python examples/model/lightgbm_booster.py",
+  "uv run python examples/model/lightning_model.py",
+  "uv run python examples/model/onnx_model.py",
+  "uv run python examples/model/sklearn_model.py",
+  "uv run python examples/model/torch_model.py",
+  "uv run python examples/model/xgb_booster.py",
+]
+
+[tasks."py:test:examples"]
+description = "Run all example scripts"
+depends = ["py:test:examples:data", "py:test:examples:model"]
+
+[tasks."py:example:agent:openai"]
+description = "Run OpenAI agent example"
+dir = "py-opsml"
+run = 'uv run python -m examples.genai.agent.openai.agent "${AGENT_QUERY:-Help me plan a weeknight dinner with ingredients and steps.}"'
+
+[tasks."py:example:agent:google"]
+description = "Run Google agent example"
+dir = "py-opsml"
+run = 'uv run python -m examples.genai.agent.google.agent "${AGENT_QUERY:-Help me plan a weeknight dinner with ingredients and steps.}"'
+
+[tasks."py:example:agent:crewai"]
+description = "Run CrewAI agent example"
+dir = "py-opsml"
+run = 'uv run python -m examples.genai.agent.crewai.agent "${AGENT_QUERY:-Help me plan a weeknight dinner with ingredients and steps.}"'
+
+[tasks."py:example:eval:openai"]
+description = "Run OpenAI eval example"
+dir = "py-opsml"
+run = "uv run python -m examples.genai.agent.openai.evaluate"
+
+[tasks."py:example:eval:google"]
+description = "Run Google eval example"
+dir = "py-opsml"
+run = "uv run python -m examples.genai.agent.google.evaluate"
+
+[tasks."py:example:eval:crewai"]
+description = "Run CrewAI eval example"
+dir = "py-opsml"
+run = "uv run python -m examples.genai.agent.crewai.evaluate"
+
+[tasks."py:version:prepatch"]
+description = "Bump Python package to next pre-patch version"
+dir = "py-opsml"
+run = "uv version prepatch"
+
+[tasks."py:version:sub:pre:tag"]
+description = "Transform a0 pre-release version to rc.<timestamp> in pyproject.toml"
+dir = "py-opsml"
+run = """
+VER=$(grep '^version =' pyproject.toml | tr -d '"' | sed 's/^version = //')
+TS=$(date +%s)
+REL=$(echo "$VER" | sed "s/a0/rc.$TS/")
+sed -i.bak "s/$VER/$REL/" pyproject.toml
+rm -f pyproject.toml.bak
+"""
+
+[tasks."py:prep:pre:patch"]
+description = "Bump pre-patch version and transform to rc candidate"
+depends = ["py:version:prepatch", "py:version:sub:pre:tag"]
+
+[tasks."py:setup:docs"]
+description = "Sync docs dependencies"
+dir = "py-opsml"
+run = "uv sync --group docs"
+
+[tasks."py:docs:build"]
+description = "Build mkdocs documentation"
+dir = "py-opsml"
+run = ["uv run python scripts/create_mkdocs_stubs.py", "uv run mkdocs build"]
+
+[tasks."py:docs:serve"]
+description = "Serve mkdocs documentation locally"
+dir = "py-opsml"
+run = ["uv run python scripts/create_mkdocs_stubs.py", "uv run mkdocs serve"]
+
+[tasks."py:docs:publish"]
+description = "Deploy mkdocs to GitHub Pages"
+dir = "py-opsml"
+run = [
+  "uv run python scripts/assemble_stubs.py",
+  "uv run python scripts/create_mkdocs_stubs.py",
+  "uv run mkdocs gh-deploy --force",
+]
+
+[tasks."py:upgrade:deps"]
+description = "Upgrade all Python dependencies"
+dir = "py-opsml"
+run = "uv sync --upgrade --all-extras"

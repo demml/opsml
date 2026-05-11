@@ -39,6 +39,12 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           ignore-nothing-to-cache: true
 
+      - name: Set up mise
+        uses: jdx/mise-action@v3.4.1
+        with:
+          install: true
+          cache: true
+
       - name: Install Protocol Buffers Compiler
         uses: arduino/setup-protoc@v3
         with:
@@ -51,7 +57,6 @@ jobs:
           sudo apt-get install -y libcurl4-openssl-dev pkg-config
 
       - name: Build Docs
-        working-directory: ./py-opsml
         run: |
-          make setup.docs
-          make publish.docs
+          mise run py:setup:docs
+          mise run py:docs:publish
