@@ -63,7 +63,12 @@ run = ["cargo test -p opsml-sql test_mysql -- --nocapture --test-threads=1", "do
 
 [tasks."test:sql"]
 description = "Run all SQL tests"
-depends = ["test:sql:sqlite", "test:sql:enum", "test:sql:postgres", "test:sql:mysql"]
+run = [
+  "mise run test:sql:sqlite",
+  "mise run test:sql:enum",
+  "mise run test:sql:postgres",
+  "mise run test:sql:mysql",
+]
 
 [tasks."test:service"]
 description = "Run opsml-service tests"
@@ -125,7 +130,15 @@ run = "cargo test -p opsml-version -- --nocapture --test-threads=1"
 [tasks."test:unit"]
 description = "Run all Rust unit tests"
 env = { OPSML_TESTING = "1" }
-depends = ["test:toml", "test:cli", "test:sql", "test:storage:server", "test:server", "test:utils", "test:version"]
+run = [
+  "mise run test:toml",
+  "mise run test:cli",
+  "mise run test:sql",
+  "mise run test:storage:server",
+  "mise run test:server",
+  "mise run test:utils",
+  "mise run test:version",
+]
 
 # Server lifecycle
 
@@ -412,7 +425,7 @@ run = [
 
 [tasks."py:test:examples"]
 description = "Run all example scripts"
-depends = ["py:test:examples:data", "py:test:examples:model"]
+run = ["mise run py:test:examples:data", "mise run py:test:examples:model"]
 
 [tasks."py:example:agent:openai"]
 description = "Run OpenAI agent example"
@@ -462,7 +475,7 @@ rm -f pyproject.toml.bak
 
 [tasks."py:prep:pre:patch"]
 description = "Bump pre-patch version and transform to rc candidate"
-depends = ["py:version:prepatch", "py:version:sub:pre:tag"]
+run = ["mise run py:version:prepatch", "mise run py:version:sub:pre:tag"]
 
 [tasks."py:setup:docs"]
 description = "Sync docs dependencies"
