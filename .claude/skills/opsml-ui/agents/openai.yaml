@@ -1,0 +1,7 @@
+interface:
+  display_name: "OpsML UI"
+  short_description: "Work on the OpsML SvelteKit UI."
+  default_prompt: "Use $opsml-ui to edit, debug, style, or extend the OpsML UI in crates/opsml_server/opsml_ui."
+
+policy:
+  allow_implicit_invocation: true
