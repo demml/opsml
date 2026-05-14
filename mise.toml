@@ -4,7 +4,7 @@ rust = "stable"
 cmake = "3.26.4"
 protoc = "33.2"
 uv = "0.11.0"
-"npm:pnpm" = "latest"
+"npm:pnpm" = "10"
 node = "24.15.0"
 
 [env]
@@ -23,7 +23,7 @@ run = "cargo fmt --all"
 description = "Run Clippy with -D warnings"
 run = "cargo clippy --workspace --all-targets -- -D warnings"
 
-[tasks."lints:pedantic"]
+[tasks."lints-pedantic"]
 description = "Run Clippy with pedantic warnings"
 run = "cargo clippy --workspace --all-targets -- -D warnings -W clippy::pedantic -A clippy::must_use_candidate -A clippy::missing_errors_doc"
 
@@ -35,11 +35,11 @@ run = "cargo test -p opsml-toml -- --nocapture --test-threads=1"
 description = "Run opsml-cli tests"
 run = "cargo test -p opsml-cli -- --nocapture --test-threads=1"
 
-[tasks."test:sql:sqlite"]
+[tasks."test:sql-sqlite"]
 description = "Run SQLite SQL tests"
 run = "cargo test -p opsml-sql test_sqlite -- --nocapture --test-threads=1"
 
-[tasks."test:sql:enum"]
+[tasks."test:sql-enum"]
 description = "Run SQL enum tests"
 run = "cargo test -p opsml-sql test_enum -- --nocapture --test-threads=1"
 
@@ -47,7 +47,7 @@ run = "cargo test -p opsml-sql test_enum -- --nocapture --test-threads=1"
 description = "Start Postgres via Docker Compose"
 run = ["docker compose down --volumes", "docker compose up -d --build postgres --wait"]
 
-[tasks."test:sql:postgres"]
+[tasks."test:sql-postgres"]
 description = "Run Postgres SQL tests"
 depends = ["build:postgres"]
 run = "cargo test -p opsml-sql test_postgres -- --nocapture --test-threads=1"
@@ -56,18 +56,21 @@ run = "cargo test -p opsml-sql test_postgres -- --nocapture --test-threads=1"
 description = "Start MySQL via Docker Compose"
 run = ["docker compose down --volumes", "docker compose up -d --build mysql --wait"]
 
-[tasks."test:sql:mysql"]
+[tasks."test:sql-mysql"]
 description = "Run MySQL SQL tests"
 depends = ["build:mysql"]
-run = ["cargo test -p opsml-sql test_mysql -- --nocapture --test-threads=1", "docker compose down --volumes"]
+run = [
+  "cargo test -p opsml-sql test_mysql -- --nocapture --test-threads=1",
+  "docker compose down --volumes",
+]
 
 [tasks."test:sql"]
 description = "Run all SQL tests"
 run = [
-  "mise run test:sql:sqlite",
-  "mise run test:sql:enum",
-  "mise run test:sql:postgres",
-  "mise run test:sql:mysql",
+  "mise run test:sql-sqlite",
+  "mise run test:sql-enum",
+  "mise run test:sql-postgres",
+  "mise run test:sql-mysql",
 ]
 
 [tasks."test:service"]
@@ -143,18 +146,36 @@ run = [
 # Server lifecycle
 
 [tasks."stop:server"]
-description = "Kill any process on port 3000"
-run = "lsof -ti:3000 | xargs kill -9 2>/dev/null || true"
+description = "Kill any opsml-server process started by mise"
+run = """
+[ -f /tmp/opsml-server.pid ] && kill $(cat /tmp/opsml-server.pid) 2>/dev/null || true
+rm -f /tmp/opsml-server.pid
+lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+"""
 
 [tasks."start:server"]
-description = "Build UI and start opsml-server on :3000"
+description = "Build UI and start opsml-server on :8080"
 depends = ["stop:server", "ui:build"]
-run = ["cargo build -p opsml-server", "./target/debug/opsml-server"]
+run = ["cargo build -p opsml-server", "OPSML_SERVER_PORT=8080 ./target/debug/opsml-server"]
 
-[tasks."start:server:background"]
-description = "Build UI and start opsml-server in the background on :3000"
+[tasks."start:server-background"]
+description = "Build UI and start opsml-server in the background on :8080"
 depends = ["stop:server", "ui:build"]
-run = ["cargo build -p opsml-server", "./target/debug/opsml-server &"]
+run = """
+cargo build -p opsml-server
+OPSML_SERVER_PORT=8080 nohup ./target/debug/opsml-server > /tmp/opsml-server.log 2>&1 &
+echo $! > /tmp/opsml-server.pid
+for i in $(seq 1 30); do
+  if curl -fsS http://localhost:8080/opsml/api/healthcheck >/dev/null; then
+    exit 0
+  fi
+  sleep 1
+done
+echo "opsml-server did not become healthy on :8080" >&2
+cat /tmp/opsml-server.log >&2 || true
+exit 1
+"""
 
 [tasks."dev:backend"]
 description = "Build and run opsml-server in dev mode on :8080"
@@ -214,13 +235,13 @@ wait $BACKEND_PID $FRONTEND_PID
 description = "Kill processes on ports 3000 and 8080"
 run = ["lsof -ti:3000 | xargs kill -9 2>/dev/null || true", "lsof -ti:8080 | xargs kill -9 2>/dev/null || true"]
 
-[tasks."dev:backend:scouter"]
+[tasks."dev:backend-scouter"]
 description = "Build and run opsml-server on :8090 with Scouter integration"
 run = ["cargo build -p opsml-server", "OPSML_SERVER_PORT=8090 SCOUTER_SERVER_URI=http://localhost:8000 ./target/debug/opsml-server"]
 
-[tasks."dev:both:scouter"]
+[tasks."dev:both-scouter"]
 description = "Run backend (:8090, Scouter) detached and frontend (:3000) in foreground"
-depends = ["stop:both:scouter"]
+depends = ["stop:both-scouter"]
 run = """
 echo "Building opsml backend..."
 cargo build -p opsml-server
@@ -233,7 +254,7 @@ echo "Backend PID: $(cat /tmp/opsml-backend.pid) - logs: /tmp/opsml-backend.log"
 cd crates/opsml_server/opsml_ui && OPSML_SERVER_PORT=8090 pnpm run dev
 """
 
-[tasks."stop:both:scouter"]
+[tasks."stop:both-scouter"]
 description = "Kill scouter-mode backend and frontend processes"
 run = """
 [ -f /tmp/opsml-backend.pid ] && kill $(cat /tmp/opsml-backend.pid) 2>/dev/null || true
@@ -265,7 +286,7 @@ description = "Install UI dependencies with pnpm"
 dir = "crates/opsml_server/opsml_ui"
 run = "pnpm install"
 
-[tasks."ui:install:deps:prod"]
+[tasks."ui:install:deps-prod"]
 description = "Install UI production dependencies only"
 dir = "crates/opsml_server/opsml_ui"
 run = ["rm -rf node_modules", "pnpm install --prod"]
@@ -296,26 +317,26 @@ run = [
   "uv run black python/opsml examples",
 ]
 
-[tasks."py:lints:ruff"]
+[tasks."py:lints-ruff"]
 description = "Run Ruff"
 dir = "py-opsml"
 run = "uv run ruff check python/opsml"
 
-[tasks."py:lints:pylint"]
+[tasks."py:lints-pylint"]
 description = "Run pylint"
 dir = "py-opsml"
 run = "uv run pylint python/opsml"
 
-[tasks."py:lints:ty"]
+[tasks."py:lints-ty"]
 description = "Run ty"
 dir = "py-opsml"
 run = "uv run ty check python/opsml"
 
 [tasks."py:lints"]
 description = "Run all Python linters"
-depends = ["py:lints:ruff", "py:lints:pylint", "py:lints:ty"]
+depends = ["py:lints-ruff", "py:lints-pylint", "py:lints-ty"]
 
-[tasks."py:lints:ci"]
+[tasks."py:lints-ci"]
 description = "Run CI Python linters"
 dir = "py-opsml"
 run = [
@@ -341,12 +362,12 @@ dir = "py-opsml"
 depends = ["py:build:stubs"]
 run = ["uv sync --all-extras --group dev --group docs", "uv run maturin develop --features server"]
 
-[tasks."py:setup:release"]
+[tasks."py:setup-release"]
 description = "Sync deps and build Rust extension release artifact"
 dir = "py-opsml"
 run = ["uv sync --all-extras --group dev --group docs", "uv run maturin build --release --out dist"]
 
-[tasks."py:setup:adk"]
+[tasks."py:setup-adk"]
 description = "Setup ADK environment"
 dir = "py-opsml"
 run = [
@@ -359,19 +380,9 @@ run = [
 description = "Run Python unit tests"
 dir = "py-opsml"
 env = { OPSML_TESTING = "1" }
-run = """
-uv run pytest \
-  --ignore="tests/agent/integration/*" \
-  --ignore="tests/interfaces/model/test_tensorflow.py" \
-  --ignore="tests/service" \
-  -m "not tensorflow" \
-  --cov \
-  --cov-fail-under=0 \
-  --cov-report xml:./coverage.xml \
-  --cov-report term
-"""
+run = 'uv run pytest --ignore="tests/agent/integration/*" --ignore="tests/interfaces/model/test_tensorflow.py" --ignore="tests/service" -m "not tensorflow" --cov --cov-fail-under=0 --cov-report xml:./coverage.xml --cov-report term'
 
-[tasks."py:test:unit:tensorflow"]
+[tasks."py:test:unit-tensorflow"]
 description = "Run TensorFlow tests"
 dir = "py-opsml"
 depends = ["py:setup"]
@@ -381,7 +392,7 @@ run = [
   "uv run python tests/interfaces/model/test_tensorflow.py",
 ]
 
-[tasks."py:setup:integration"]
+[tasks."py:setup-integration"]
 description = "Sync deps for integration tests"
 dir = "py-opsml"
 run = ["uv sync --all-extras --group dev,docs", "uv run maturin develop --release"]
@@ -396,7 +407,7 @@ description = "Run Python service tests"
 dir = "py-opsml"
 run = "uv run pytest -s tests/service"
 
-[tasks."py:test:examples:data"]
+[tasks."py:test:examples-data"]
 description = "Run data example scripts"
 dir = "py-opsml"
 run = [
@@ -407,7 +418,7 @@ run = [
   "uv run python examples/data/custom_data.py",
 ]
 
-[tasks."py:test:examples:model"]
+[tasks."py:test:examples-model"]
 description = "Run model example scripts"
 dir = "py-opsml"
 run = [
@@ -425,7 +436,7 @@ run = [
 
 [tasks."py:test:examples"]
 description = "Run all example scripts"
-run = ["mise run py:test:examples:data", "mise run py:test:examples:model"]
+run = ["mise run py:test:examples-data", "mise run py:test:examples-model"]
 
 [tasks."py:example:agent:openai"]
 description = "Run OpenAI agent example"
@@ -477,7 +488,7 @@ rm -f pyproject.toml.bak
 description = "Bump pre-patch version and transform to rc candidate"
 run = ["mise run py:version:prepatch", "mise run py:version:sub:pre:tag"]
 
-[tasks."py:setup:docs"]
+[tasks."py:setup-docs"]
 description = "Sync docs dependencies"
 dir = "py-opsml"
 run = "uv sync --group docs"

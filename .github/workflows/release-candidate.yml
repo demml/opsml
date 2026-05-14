@@ -39,7 +39,7 @@ jobs:
           sudo apt clean
           mise run py:setup
           pip install -U twine
-          mise run py:lints:ci
+          mise run py:lints-ci
           mise run py:test:unit
           mise run py:setup
           if [[ "v$(poetry version --short)" == *"rc"* ]];

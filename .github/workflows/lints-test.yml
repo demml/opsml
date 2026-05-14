@@ -347,7 +347,7 @@ jobs:
           UV_PYTHON: ${{ matrix.python-version }}
 
       - name: Lints
-        run: mise run py:lints:ci
+        run: mise run py:lints-ci
         env:
           UV_PYTHON: ${{ matrix.python-version }}
 
@@ -366,7 +366,7 @@ jobs:
       # if 3.12 and ubuntu, run tensorflow tests
       - name: Run TensorFlow tests
         if: ${{ runner.os == 'Linux' && matrix.python-version == '3.12' }}
-        run: mise run py:test:unit:tensorflow
+        run: mise run py:test:unit-tensorflow
         env:
           UV_PYTHON: ${{ matrix.python-version }}
 
@@ -427,7 +427,7 @@ jobs:
           pnpm test
 
       - name: Setup Server
-        run: mise run start:server:background
+        run: mise run start:server-background
 
       - name: Run storage client tests
         run: mise run test:storage:client

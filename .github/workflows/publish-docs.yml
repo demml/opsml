@@ -58,5 +58,5 @@ jobs:
 
       - name: Build Docs
         run: |
-          mise run py:setup:docs
+          mise run py:setup-docs
           mise run py:docs:publish

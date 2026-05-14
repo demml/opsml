@@ -190,7 +190,7 @@ jobs:
           mise run ui:build
 
           # remove node_modules and rebuild prod version to reduce size
-          mise run ui:install:deps:prod
+          mise run ui:install:deps-prod
 
       - name: Build Binaries
         run: |

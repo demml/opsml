@@ -24,8 +24,8 @@ To discover tasks: `mise tasks`.
 mise run format                   # cargo fmt --all
 mise run lints                    # cargo clippy --workspace --all-targets -- -D warnings
 mise run test:unit                # toml + cli + sql + storage + server + utils + version tests
-mise run start:server             # build UI + Rust server -> serves at http://localhost:3000
-mise run stop:server              # kill port 3000
+mise run start:server             # build UI + Rust server -> serves at http://localhost:8080
+mise run stop:server              # kill server processes on ports 8080 / 3000
 ```
 
 ### Individual Rust crate tests
@@ -50,11 +50,11 @@ mise run test:sql        # sqlite + enum + postgres + mysql, in sequence
 mise run py:setup                 # build stubs + uv sync + maturin develop --features server
 mise run py:format                # isort + ruff + black
 mise run py:lints                 # ruff + pylint + ty
-mise run py:lints:ci              # black --check + ruff + pylint + ty (CI gate)
+mise run py:lints-ci              # black --check + ruff + pylint + ty (CI gate)
 mise run py:test:unit             # pytest, excluding genai integration / tensorflow / service tests
 mise run py:test:service          # pytest tests/service
 mise run py:test:integration      # pytest tests/integration
-mise run py:test:unit:tensorflow  # install TF deps + run TF-specific tests
+mise run py:test:unit-tensorflow  # install TF deps + run TF-specific tests
 ```
 
 After any Rust change that touches PyO3-exposed code, re-run `mise run py:setup` before running Python tests.
@@ -74,7 +74,7 @@ mise run dev:backend   # backend only on :8080
 mise run dev:frontend  # frontend only on :3000 (proxies API to :8080)
 
 # With Scouter drift/monitoring integration (Scouter runs separately on :8000)
-mise run dev:both:scouter  # backend :8090, frontend :3000
+mise run dev:both-scouter  # backend :8090, frontend :3000
 ```
 
 ---
@@ -417,7 +417,7 @@ def test_datacard_creation(mock_db, pandas_data):
     registry.register_card(card)
     assert card.version is not None
 
-# Service tests require a running server (mise run start:server:background first)
+# Service tests require a running server (mise run start:server-background first)
 # Run with: mise run py:test:service
 ```
 
