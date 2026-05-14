@@ -1,3 +1,7 @@
+[settings]
+disable_tools = ["python", "gitleaks"]
+legacy_version_file = false
+
 [tools]
 # Python and Rust are intentionally supplied by uv/setup-python and rustup in CI.
 # Pinning them here shadows matrix/toolchain selections when mise-action updates PATH.
