@@ -1,6 +1,6 @@
 [tools]
-python = "3.10"
-rust = "stable"
+# Python and Rust are intentionally supplied by uv/setup-python and rustup in CI.
+# Pinning them here shadows matrix/toolchain selections when mise-action updates PATH.
 cmake = "3.26.4"
 protoc = "33.2"
 uv = "0.11.0"
@@ -380,15 +380,35 @@ run = [
 description = "Run Python unit tests"
 dir = "py-opsml"
 env = { OPSML_TESTING = "1" }
-run = 'uv run pytest --ignore="tests/agent/integration/*" --ignore="tests/interfaces/model/test_tensorflow.py" --ignore="tests/service" -m "not tensorflow" --cov --cov-fail-under=0 --cov-report xml:./coverage.xml --cov-report term'
+shell = "bash -c"
+run = """
+uv run pytest \
+  --ignore="tests/agent/integration/*" \
+  --ignore="tests/interfaces/model/test_tensorflow.py" \
+  --ignore="tests/service" \
+  -m "not tensorflow" \
+  --cov \
+  --cov-fail-under=0 \
+  --cov-report xml:./coverage.xml \
+  --cov-report term
+"""
 
 [tasks."py:test:unit-tensorflow"]
 description = "Run TensorFlow tests"
 dir = "py-opsml"
 depends = ["py:setup"]
+shell = "bash -c"
 run = [
   "uv pip install -r requirements/requirements.tf.txt",
-  "uv run pytest --ignore='tests/interfaces/model/test_tensorflow.py' -m 'tensorflow' --cov --cov-fail-under=0 --cov-report xml:./coverage.xml --cov-report term",
+  """
+  uv run pytest \
+    --ignore="tests/interfaces/model/test_tensorflow.py" \
+    -m "tensorflow" \
+    --cov \
+    --cov-fail-under=0 \
+    --cov-report xml:./coverage.xml \
+    --cov-report term
+  """,
   "uv run python tests/interfaces/model/test_tensorflow.py",
 ]
 
