@@ -13,13 +13,19 @@ The codebase is a polyglot monorepo:
 
 ## Common Commands
 
-### Rust (root `Makefile`)
+### Task runner
+
+This repo uses [mise](https://mise.jdx.dev/) to run all dev tasks. Install with `curl https://mise.run | sh`, then `mise install` once to fetch pinned tool versions. All commands documented below are `mise run <task>`.
+
+To discover tasks: `mise tasks`.
+
+### Rust
 ```bash
-make format          # cargo fmt --all
-make lints           # cargo clippy --workspace --all-targets -- -D warnings
-make test.unit       # toml + cli + sql + storage + server + utils + version tests
-make start.server    # build UI + Rust server → serves at http://localhost:3000
-make stop.server     # kill port 3000
+mise run format                   # cargo fmt --all
+mise run lints                    # cargo clippy --workspace --all-targets -- -D warnings
+mise run test:unit                # toml + cli + sql + storage + server + utils + version tests
+mise run start:server             # build UI + Rust server -> serves at http://localhost:8080
+mise run stop:server              # kill server processes on ports 8080 / 3000
 ```
 
 ### Individual Rust crate tests
@@ -34,24 +40,24 @@ cargo test -p opsml-version -- --nocapture --test-threads=1
 
 ### SQL tests with Docker-backed databases
 ```bash
-make build.postgres  # docker-compose up postgres
-make build.mysql     # docker-compose up mysql
-make test.sql        # sqlite + enum + postgres + mysql, in sequence
+mise run build:postgres  # docker-compose up postgres
+mise run build:mysql     # docker-compose up mysql
+mise run test:sql        # sqlite + enum + postgres + mysql, in sequence
 ```
 
-### Python (`py-opsml/` — run from that directory)
+### Python
 ```bash
-make setup.project           # build stubs + uv sync + maturin develop --features server
-make format                  # isort + ruff + black
-make lints                   # ruff + pylint + mypy
-make lints.ci                # black --check + ruff + pylint + mypy (CI gate)
-make test.unit               # pytest, excluding genai integration / tensorflow / service tests
-make test.service            # pytest tests/service
-make test.integration        # pytest tests/integration
-make test.unit.tensorflow    # install TF deps + run TF-specific tests
+mise run py:setup                 # build stubs + uv sync + maturin develop --features server
+mise run py:format                # isort + ruff + black
+mise run py:lints                 # ruff + pylint + ty
+mise run py:lints-ci              # black --check + ruff + pylint + ty (CI gate)
+mise run py:test:unit             # pytest, excluding genai integration / tensorflow / service tests
+mise run py:test:service          # pytest tests/service
+mise run py:test:integration      # pytest tests/integration
+mise run py:test:unit-tensorflow  # install TF deps + run TF-specific tests
 ```
 
-After any Rust change that touches PyO3-exposed code, re-run `make setup.project` before running Python tests.
+After any Rust change that touches PyO3-exposed code, re-run `mise run py:setup` before running Python tests.
 
 ### Frontend (`crates/opsml_server/opsml_ui/`)
 ```bash
@@ -59,16 +65,16 @@ pnpm install
 pnpm run dev    # hot-reload dev server on :3000 (requires backend on :8080)
 pnpm build      # production build, outputs to site/
 ```
-Via root Makefile: `make build.ui`, `make ui.dev`
+Via mise: `mise run ui:build`, `mise run ui:dev`
 
 ### Development servers
 ```bash
-make dev.both          # backend :8080 + frontend :3000 in parallel
-make dev.backend       # backend only on :8080
-make dev.frontend      # frontend only on :3000 (proxies API to :8080)
+mise run dev:both      # backend :8080 + frontend :3000 in parallel
+mise run dev:backend   # backend only on :8080
+mise run dev:frontend  # frontend only on :3000 (proxies API to :8080)
 
 # With Scouter drift/monitoring integration (Scouter runs separately on :8000)
-make dev.both.scouter  # backend :8090, frontend :3000
+mise run dev:both-scouter  # backend :8090, frontend :3000
 ```
 
 ---
@@ -411,8 +417,8 @@ def test_datacard_creation(mock_db, pandas_data):
     registry.register_card(card)
     assert card.version is not None
 
-# Service tests require a running server (make start.server.background first)
-# Run with: make test.service
+# Service tests require a running server (mise run start:server-background first)
+# Run with: mise run py:test:service
 ```
 
 Fixtures in `tests/conftest.py`:
@@ -420,7 +426,7 @@ Fixtures in `tests/conftest.py`:
 - `pandas_data`, `example_dataframe`, `random_forest_classifier` — standard ML test data.
 - `chat_prompt` — a `Prompt` instance for GenAI tests.
 
-Test markers: `@pytest.mark.tensorflow` gates TF-specific tests; `make test.unit` excludes them by default.
+Test markers: `@pytest.mark.tensorflow` gates TF-specific tests; `mise run py:test:unit` excludes them by default.
 
 ---
 

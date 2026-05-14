@@ -22,6 +22,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up mise
+        uses: jdx/mise-action@v3.4.1
+        with:
+          install: true
+          cache: true
+
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
@@ -73,9 +79,7 @@ jobs:
           OPSML_STORAGE_URI: ${{ env.OPSML_STORAGE_URI }}
 
       - name: Tests
-        working-directory: ./crates
-        run: |
-          make test.storage.aws.client
+        run: mise run test:storage:aws:client
         env:
           RUST_BACKTRACE: 1
           OPSML_TRACKING_URI: http://0.0.0.0:8080
@@ -96,6 +100,12 @@ jobs:
     needs: aws-lints-client-test
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up mise
+        uses: jdx/mise-action@v3.4.1
+        with:
+          install: true
+          cache: true
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
@@ -134,9 +144,7 @@ jobs:
           OPSML_STORAGE_URI: ${{ env.OPSML_STORAGE_URI }}
 
       - name: Tests
-        working-directory: ./crates
-        run: |
-          make test.storage.gcs.client
+        run: mise run test:storage:gcs:client
         env:
           RUST_BACKTRACE: 1
           OPSML_TRACKING_URI: http://0.0.0.0:8080
@@ -157,6 +165,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up mise
+        uses: jdx/mise-action@v3.4.1
+        with:
+          install: true
+          cache: true
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
@@ -202,9 +216,7 @@ jobs:
           OPSML_STORAGE_URI: ${{ env.OPSML_STORAGE_URI }}
 
       - name: Tests
-        working-directory: ./crates
-        run: |
-          make test.storage.azure.client
+        run: mise run test:storage:azure:client
         env:
           RUST_BACKTRACE: 1
           OPSML_TRACKING_URI: http://0.0.0.0:8080
@@ -221,6 +233,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up mise
+        uses: jdx/mise-action@v3.4.1
+        with:
+          install: true
+          cache: true
 
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
@@ -257,9 +275,7 @@ jobs:
         run: target/debug/opsml-server &
 
       - name: Tests
-        working-directory: ./crates
-        run: |
-          make test.storage.local.client
+        run: mise run test:storage:client
         env:
           RUST_BACKTRACE: 1
           OPSML_TRACKING_URI: http://0.0.0.0:8080

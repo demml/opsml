@@ -2063,6 +2063,7 @@ class ModelInterface:
         self,
         alias: str,
         data: Any,
+        config: None = None,
         data_type: Optional[DataType] = None,
     ) -> SpcDriftProfile: ...
     def create_drift_profile(  # type: ignore

@@ -15,12 +15,12 @@ lints.format_check:
 	uv run black --check ${SOURCE_OBJECTS}
 lints.ruff:
 	uv run ruff check ${SOURCE_OBJECTS}
-lints.mypy:
-	uv run mypy ${SOURCE_OBJECTS}
+lints.ty:
+	uv run ty check ${SOURCE_OBJECTS}
 lints.pylint:
 	uv run pylint ${SOURCE_OBJECTS}
-lints: lints.ruff lints.pylint lints.mypy
-lints.ci: lints.format_check lints.ruff lints.pylint lints.mypy
+lints: lints.ruff lints.pylint lints.ty
+lints.ci: lints.format_check lints.ruff lints.pylint lints.ty
 
 build.stubs:
 	uv run python scripts/assemble_stubs.py

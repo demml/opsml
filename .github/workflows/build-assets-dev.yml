@@ -94,13 +94,19 @@ jobs:
           version: 10
           run_install: false
 
+      - name: Set up mise
+        uses: jdx/mise-action@v3.4.1
+        with:
+          install: true
+          cache: true
+
       - name: Install UI dependencies
         run: |
           # install all deps and build UI
-          make build.ui
+          mise run ui:build
 
           # remove node_modules and rebuild prod version to reduce size
-          make install.ui.deps.prod
+          mise run ui:install:deps-prod
 
       - name: Build Binaries
         run: |

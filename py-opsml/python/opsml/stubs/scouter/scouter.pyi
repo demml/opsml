@@ -3965,6 +3965,7 @@ class Drifter:
     def create_drift_profile(
         self,
         data: Any,
+        config: None = None,
         data_type: Optional[ScouterDataType] = None,
     ) -> SpcDriftProfile:
         """Create a SPC (Statistical process control) drift profile from the provided data.

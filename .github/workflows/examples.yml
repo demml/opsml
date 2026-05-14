@@ -39,6 +39,12 @@ jobs:
           docker-images: true
           swap-storage: true
 
+      - name: Set up mise
+        uses: jdx/mise-action@v3.4.1
+        with:
+          install: true
+          cache: true
+
       - name: Setup cmake
         uses: jwlawson/actions-setup-cmake@v2
         with:
@@ -69,9 +75,7 @@ jobs:
           enable-cache: true
 
       - name: Create virtual environment
-        working-directory: ./py-opsml
-        run: make setup.project
+        run: mise run py:setup
 
       - name: Test all examples
-        working-directory: ./py-opsml
-        run: make test.examples
+        run: mise run py:test:examples
