@@ -40,6 +40,35 @@ Cards are one of the primary data structures of opsml. All cards store specific 
   - Includes built-in UI: playground, evaluation dashboard, and trace waterfall
   - Registered in the `AgentRegistry`
 
+## Three Ways to Register a Model
+
+Use the explicit interface path when you need full control over interfaces,
+metadata, drift profiles, or save kwargs:
+
+```python
+iface = SklearnModel(model=clf, sample_data=X[:10], task_type=TaskType.Classification)
+card = ModelCard(space="examples", name="rf", interface=iface)
+exp.register_card(card)
+```
+
+Use typed flavor sugar for the common path:
+
+```python
+import opsml.sklearn
+
+with start_experiment(space="examples", name="run"):
+    card = opsml.sklearn.log_model(clf, name="rf", sample_data=X[:10])
+```
+
+Use stateless fluent logging inside an active experiment when you prefer an
+MLflow-style shape:
+
+```python
+with start_experiment(space="examples", name="run"):
+    opsml.log_metric("accuracy", 0.91)
+    opsml.log_param("n_estimators", 100)
+```
+
 ### Card Arguments
 
 All cards require a set of arguments in order to be registered. This is to ensure the card is properly assigned ownership and can be tracked. The arguments are:
@@ -267,4 +296,3 @@ model_registry.delete_card(card)
 - [PromptCard](/opsml/docs/cards/promptcard/)
 - [ServiceCard](/opsml/docs/cards/servicecard/)
 - [AgentCard](/opsml/docs/cards/agentcard/)
-

@@ -27,7 +27,6 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       calculateTimeRange(selectedRange);
 
     const metricsRequest: TraceMetricsRequest = {
-      service_name: undefined,
       start_time: startTime,
       end_time: endTime,
       bucket_interval: bucketInterval,
@@ -51,7 +50,6 @@ export const load: PageLoad = async ({ fetch, depends, parent }) => {
       traceFacets = await getServerTraceFacets(fetch, {
         start_time: startTime,
         end_time: endTime,
-        service_name: undefined,
       });
     } catch (facetError) {
       console.warn("Failed to load trace facets:", facetError);

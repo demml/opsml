@@ -20974,6 +20974,8 @@ class ExperimentCard:
                 The experiment card uid to add
         """
 
+    def add_tag(self, tag: str) -> None: ...
+    def set_tags(self, val: List[str]) -> None: ...
     def list_artifacts(self, path: Optional[Path | str] = None) -> List[str]:
         """List the artifacts associated with the experiment card
 
@@ -22564,6 +22566,17 @@ class Experiment:
                 Value of the parameter
         """
 
+    def log_param(
+        self,
+        name: str,
+        value: Union[int, float, str],
+    ) -> None:
+        """
+        Log a parameter.
+
+        Alias for log_parameter.
+        """
+
     def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
         """
         Log multiple parameters
@@ -22571,6 +22584,13 @@ class Experiment:
         Args:
             parameters (list[Parameter] | Dict[str, Union[int, float, str]]):
                 Parameters to log
+        """
+
+    def log_params(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
+        """
+        Log multiple parameters.
+
+        Alias for log_parameters.
         """
 
     def log_artifact(
@@ -22635,6 +22655,16 @@ class Experiment:
                 All files in the directory will be logged.
         """
 
+    def set_tag(self, tag: str) -> None:
+        """
+        Append one tag to the experiment.
+        """
+
+    def set_tags(self, tags: list[str]) -> None:
+        """
+        Replace the experiment tags.
+        """
+
     @property
     def card(self) -> "ExperimentCard":
         """
@@ -22691,6 +22721,24 @@ def start_experiment(
     Returns:
         Experiment
     """
+
+def log_metric(
+    name: str,
+    value: float,
+    step: Optional[int] = None,
+    timestamp: Optional[int] = None,
+    created_at: Optional[datetime.datetime] = None,
+) -> None: ...
+def log_metrics(metrics: list[ExperimentMetric]) -> None: ...
+def log_param(name: str, value: Any) -> None: ...
+def log_params(params: dict[str, Any] | list[Parameter]) -> None: ...
+def log_artifact(lpath: str, rpath: str | None = None) -> None: ...
+def log_artifacts(path: str) -> None: ...
+def log_figure(name: str, figure: Any, kwargs: dict[str, Any] | None = None) -> None: ...
+def log_figure_from_path(lpath: str, rpath: str | None = None) -> None: ...
+def set_tag(tag: str) -> None: ...
+def set_tags(tags: list[str]) -> None: ...
+def active_experiment() -> Experiment: ...
 
 class ExperimentEvalMetrics:
     """
@@ -24682,12 +24730,15 @@ class ModelInterfaceMetadata:
         """Validate the model interface metadata json"""
 
 class ModelInterface:
+    def __new__(cls, *args: Any, **kwargs: Any) -> "ModelInterface": ...
     def __init__(
         self,
         model: Any = None,
         sample_data: Any = None,
         task_type: Optional[TaskType] = None,
         drift_profile: Optional[DriftProfileType] = None,
+        version: Optional[str] = None,
+        **kwargs: Any,
     ) -> None:
         """Base class for ModelInterface
 
@@ -24701,6 +24752,13 @@ class ModelInterface:
             drift_profile:
                 Drift profile(s) to associate with the model. Must be a dictionary of
                 alias and drift profile.
+            version:
+                Package version of the model being used.
+
+        Note:
+            ``**kwargs`` is present for PyO3 subclass initialization
+            compatibility. Direct ``ModelInterface(...)`` construction rejects
+            unknown keyword arguments.
         """
 
     @property
@@ -25428,6 +25486,108 @@ class OnnxModel(ModelInterface):
     @property
     def session(self) -> OnnxSession:
         """Returns the onnx session. This will error if the OnnxSession is not set"""
+
+def sklearn_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def xgboost_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def lightgbm_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def catboost_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def torch_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def lightning_log_model(
+    trainer: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def tensorflow_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def huggingface_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    tokenizer: Any = None,
+    feature_extractor: Any = None,
+    image_processor: Any = None,
+    hf_task: Optional[HuggingFaceTask] = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def onnx_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
 
 ########################################################################################
 #  This section contains the type definitions for opsml.app module
@@ -26583,6 +26743,8 @@ __all__ = [
     "WriteConfig",
     "WriteLevel",
     "XGBoostModel",
+    "active_experiment",
+    "catboost_log_model",
     "configure_tracing",
     "download_artifact",
     "download_service",
@@ -26594,9 +26756,27 @@ __all__ = [
     "get_experiment_metrics",
     "get_experiment_parameters",
     "get_tracer",
+    "huggingface_log_model",
     "infer_schema",
+    "lightgbm_log_model",
+    "lightning_log_model",
+    "log_artifact",
+    "log_artifacts",
+    "log_figure",
+    "log_figure_from_path",
+    "log_metric",
+    "log_metrics",
+    "log_param",
+    "log_params",
     "normalize_endpoint",
+    "onnx_log_model",
     "reset_tracer_provider",
+    "set_tag",
+    "set_tags",
     "shutdown_tracer",
+    "sklearn_log_model",
     "start_experiment",
+    "tensorflow_log_model",
+    "torch_log_model",
+    "xgboost_log_model",
 ]

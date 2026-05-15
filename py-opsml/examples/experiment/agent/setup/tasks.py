@@ -1,14 +1,15 @@
+from typing import List
+
 from opsml.agent import Prompt
 from opsml.scouter.evaluate import (
-    LLMJudgeTask,
-    ComparisonOperator,
     AssertionTask,
-    TraceAssertionTask,
-    TraceAssertion,
+    ComparisonOperator,
+    LLMJudgeTask,
     SpanFilter,
+    TraceAssertion,
+    TraceAssertionTask,
 )
 from pydantic import BaseModel
-from typing import List
 
 
 class VegetarianValidation(BaseModel):

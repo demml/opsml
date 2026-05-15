@@ -387,6 +387,16 @@ impl OpsmlTestServer {
         // unset env vars
         self.remove_env_vars_for_client()?;
 
+        #[cfg(feature = "server")]
+        {
+            app_state().reset_app_state().map_err(|e| {
+                TestServerError::CustomError(format!("Failed to reset app state: {e}"))
+            })?;
+            reset_storage_client().map_err(|e| {
+                TestServerError::CustomError(format!("Failed to reset storage client: {e}"))
+            })?;
+        }
+
         if self.root_dir.exists() {
             let max_attempts = 5;
             let mut attempt = 0;

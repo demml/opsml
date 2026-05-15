@@ -1,67 +1,31 @@
-import torch
-from opsml import (
-    CardRegistry,
-    ModelCard,
-    ModelLoadKwargs,
-    ModelSaveKwargs,
-    RegistryType,
-    TorchModel,
-)
+"""PyTorch model registration with OpsML."""
 
-registry = CardRegistry(RegistryType.Model)
+import opsml
+import opsml.torch
+import torch  # type: ignore
+from opsml import TaskType, start_experiment
 
+model = torch.nn.Linear(4, 1)
+sample = torch.rand(10, 4)
 
-class Polynomial3(torch.nn.Module):
-    def __init__(self):
-        """
-        In the constructor we instantiate four parameters and assign them as
-        member parameters.
-        """
-        super().__init__()
-        self.x1 = torch.nn.Parameter(torch.randn(()))
-        self.x2 = torch.nn.Parameter(torch.randn(()))
+with start_experiment(space="examples", name="torch-quickstart"):
+    card = opsml.torch.log_model(
+        model,
+        name="torch-linear",
+        sample_data=sample,
+        task_type=TaskType.Regression,
+    )
+    opsml.log_metric("loss", 0.12)
+    opsml.log_param("in_features", 4)
 
-    def forward(self, x1: torch.Tensor, x2: torch.Tensor):
-        """
-        In the forward function we accept a Tensor of input data and we must return
-        a Tensor of output data. We can use Modules defined in the constructor as
-        well as arbitrary operators on Tensors.
-        """
-        return self.x1 + self.x2 * x1 * x2
+print(f"Registered ModelCard v{card.version} uid={card.uid}")
 
-
-model = Polynomial3()
-inputs = {"x1": torch.randn((1, 1)), "x2": torch.randn((1, 1))}
-
-interface = TorchModel(model=model, sample_data=inputs)
-
-modelcard = ModelCard(
-    interface=interface,
-    space="opsml",
-    name="my_model",
-)
-
-# Register the model card
-registry.register_card(
-    card=modelcard,
-    save_kwargs=ModelSaveKwargs(save_onnx=True),
-)
-
-# List the model card
-modelcard_list = registry.list_cards(uid=modelcard.uid).as_table()
-
-
-# Load the model card
-loaded_modelcard: ModelCard = registry.load_card(modelcard.uid)
-
-# Load the model card artifacts
-loaded_modelcard.load(
-    None,
-    load_kwargs=ModelLoadKwargs(
-        model={"model": model},
-        load_onnx=True,
-    ),
-)
-
-assert loaded_modelcard.model is not None
-assert loaded_modelcard.onnx_session is not None
+# --- equivalent explicit form (full control) ---
+# from opsml import ModelCard, TorchModel
+# with start_experiment(space="examples", name="torch-quickstart") as exp:
+#     card = ModelCard(
+#         space="examples",
+#         name="torch-linear",
+#         interface=TorchModel(model=model, sample_data=sample, task_type=TaskType.Regression),
+#     )
+#     exp.register_card(card)

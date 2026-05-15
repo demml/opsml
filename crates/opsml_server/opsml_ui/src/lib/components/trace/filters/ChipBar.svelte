@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Plus, X } from "lucide-svelte";
-  import type { ActiveFilter, FacetCount } from "../types";
+  import type { FacetCount } from "../types";
+  import type { ActiveFilter } from "../clause";
   import AddFilterMenu from "./AddFilterMenu.svelte";
 
   let {
@@ -33,15 +34,14 @@
     <span class="text-xs font-mono text-gray-400">No filters · click + Add filter</span>
   {/if}
 
-  {#each chips as chip (`${chip.key}:${chip.value}`)}
+  {#each chips as chip (chip.id)}
     <span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-bold border-2 border-black bg-white text-primary-800 rounded-base shadow-small">
-      <span class="text-primary-600 font-mono uppercase tracking-wide text-[10px]">{chip.label}:</span>
-      <span class="font-mono">{chip.value}</span>
+      <span class="font-mono">{chip.label}</span>
       <button
         type="button"
         onclick={() => onRemove(chip)}
         class="ml-1 p-0.5 rounded-base hover:bg-error-100 transition-colors duration-100"
-        aria-label={`Remove ${chip.label}:${chip.value}`}
+        aria-label={`Remove ${chip.label}`}
       >
         <X class="w-3 h-3" />
       </button>

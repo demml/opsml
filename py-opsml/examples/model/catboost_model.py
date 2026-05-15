@@ -1,34 +1,35 @@
+"""CatBoost model registration with OpsML."""
+
 from typing import Tuple, cast
 
+import catboost  # type: ignore
+import opsml
+import opsml.catboost
 import pandas as pd
-from catboost import CatBoostRegressor  # type: ignore
-from opsml import CardRegistries, CatBoostModel, ModelCard, TaskType
+from opsml import TaskType, start_experiment
 from opsml.helpers.data import create_fake_data
 
-# start registries
-registry = CardRegistries()
+X, y = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1000))
+model = catboost.CatBoostClassifier(iterations=5, verbose=False).fit(X.to_numpy(), y.to_numpy().ravel())
 
-# create data
-X_train, y_train = cast(Tuple[pd.DataFrame, pd.DataFrame], create_fake_data(n_samples=1200))
+with start_experiment(space="examples", name="catboost-quickstart"):
+    card = opsml.catboost.log_model(
+        model,
+        name="catboost-classifier",
+        sample_data=X[:10],
+        task_type=TaskType.Classification,
+    )
+    opsml.log_metric("accuracy", 0.9)
+    opsml.log_param("iterations", 5)
 
-model = CatBoostRegressor(n_estimators=5, max_depth=3)
-model.fit(X_train.to_numpy(), y_train)
+print(f"Registered ModelCard v{card.version} uid={card.uid}")
 
-model_interface = CatBoostModel(
-    model=model,
-    sample_data=X_train[0:10],
-    task_type=TaskType.Regression,
-)
-
-model_interface.create_drift_profile("drift", X_train)
-modelcard = ModelCard(interface=model_interface, space="opsml", name="my_model")
-
-# register model
-registry.model.register_card(modelcard)
-
-
-# load model
-loaded_modelcard: ModelCard = registry.model.load_card(uid=modelcard.uid)
-loaded_modelcard.load()
-
-assert loaded_modelcard.model is not None
+# --- equivalent explicit form (full control) ---
+# from opsml import CatBoostModel, ModelCard
+# with start_experiment(space="examples", name="catboost-quickstart") as exp:
+#     card = ModelCard(
+#         space="examples",
+#         name="catboost-classifier",
+#         interface=CatBoostModel(model=model, sample_data=X[:10], task_type=TaskType.Classification),
+#     )
+#     exp.register_card(card)

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { replaceState } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import TraceDetailSidebar from "./TraceDetailSidebar.svelte";
   import TraceInfiniteScroll from "./TraceInfiniteScroll.svelte";
   import { getServerTraceSpans, getServerGenAiTraceMetrics, buildGenAiBySpanId } from "./utils";
@@ -80,7 +82,7 @@
     const url = new URL(window.location.href);
     if (url.searchParams.has("trace_id")) {
       url.searchParams.delete("trace_id");
-      history.replaceState(history.state, "", url.pathname + url.search);
+      replaceState(resolve((url.pathname + url.search) as `/opsml/${string}`), history.state);
     }
   }
 

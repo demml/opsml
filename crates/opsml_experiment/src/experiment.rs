@@ -191,6 +191,10 @@ pub struct Experiment {
 }
 
 impl Experiment {
+    pub fn uid(&self) -> &str {
+        &self.uid
+    }
+
     #[allow(clippy::too_many_arguments)]
     #[instrument(skip_all)]
     pub fn new(
@@ -478,8 +482,9 @@ impl Experiment {
         Ok(Py::new(py, experiment)?.bind(py).clone())
     }
 
-    fn __enter__(slf: PyRef<'_, Self>) -> Result<PyRef<'_, Self>, ExperimentError> {
+    fn __enter__(slf: Py<Self>, py: Python<'_>) -> Result<Py<Self>, ExperimentError> {
         debug!("Starting experiment");
+        crate::active::push(slf.clone_ref(py), py)?;
         Ok(slf)
     }
 
@@ -491,6 +496,9 @@ impl Experiment {
         exc_value: Option<Py<PyAny>>,
         traceback: Option<Py<PyAny>>,
     ) -> Result<bool, ExperimentError> {
+        let uid = slf.uid().to_string();
+        let _ = crate::active::pop(py, &uid)?;
+
         let card_status = if let (Some(exc_type), Some(exc_value), Some(traceback)) =
             (&exc_type, &exc_value, &traceback)
         {
@@ -608,6 +616,15 @@ impl Experiment {
         Ok(())
     }
 
+    #[pyo3(name = "log_param", signature = (name, value))]
+    pub fn log_param_alias(
+        &self,
+        name: String,
+        value: Bound<'_, PyAny>,
+    ) -> Result<(), ExperimentError> {
+        self.log_parameter(name, value)
+    }
+
     /// Logs multiple parameters
     /// Accepts either a dictionary of parameters or a list of parameters.
     /// # Arguments
@@ -641,6 +658,11 @@ impl Experiment {
             .map_err(ExperimentError::InsertParameterError)?;
 
         Ok(())
+    }
+
+    #[pyo3(name = "log_params")]
+    pub fn log_params_alias(&self, parameters: &Bound<'_, PyAny>) -> Result<(), ExperimentError> {
+        self.log_parameters(parameters)
     }
 
     /// Logs an artifact from a path
@@ -776,7 +798,7 @@ impl Experiment {
         Ok(())
     }
 
-    fn log_artifacts(&self, path: PathBuf) -> Result<(), ExperimentError> {
+    pub fn log_artifacts(&self, path: PathBuf) -> Result<(), ExperimentError> {
         let encryption_key = self.artifact_key.get_crypt_key()?;
 
         for entry in WalkDir::new(&path) {
@@ -823,6 +845,16 @@ impl Experiment {
     #[getter]
     pub fn card<'py>(&self, py: Python<'py>) -> Result<Bound<'py, PyAny>, ExperimentError> {
         Ok(self.experiment.bind(py).clone())
+    }
+
+    pub fn set_tag(&mut self, py: Python<'_>, tag: String) -> Result<(), ExperimentError> {
+        self.experiment.bind(py).call_method1("add_tag", (tag,))?;
+        Ok(())
+    }
+
+    pub fn set_tags(&mut self, py: Python<'_>, tags: Vec<String>) -> Result<(), ExperimentError> {
+        self.experiment.bind(py).call_method1("set_tags", (tags,))?;
+        Ok(())
     }
 
     #[pyo3(signature = (card, version_type = VersionType::Minor, pre_tag = None, build_tag = None, save_kwargs = None))]

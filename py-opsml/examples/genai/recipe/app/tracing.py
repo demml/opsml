@@ -1,5 +1,5 @@
-from opsml.scouter.tracing import init_tracer, get_tracer
 from opsml.scouter import GrpcConfig
+from opsml.scouter.tracing import get_tracer, init_tracer
 
 init_tracer(
     service_name="agent-recipe-service",

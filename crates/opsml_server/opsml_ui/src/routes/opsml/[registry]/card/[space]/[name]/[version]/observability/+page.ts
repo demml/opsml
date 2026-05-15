@@ -77,6 +77,15 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
 
     const card = metadata as PromptCard | ServiceCard;
     const entity_uid = getEvalProfileOrUid(card);
+    if (registryTypeLower === RegistryType.Prompt && !entity_uid) {
+      return {
+        status: "not_found" as const,
+        errorMessage: "Prompt observability requires an attached evaluation profile.",
+        initialFilters: fallbackFilters,
+        trace_facets: { services: [], status_codes: [], total_count: 0 },
+        mockMode: useMockFallback,
+      };
+    }
 
     let initialTrace: TraceListItem | undefined;
     let initialTraceSpans: TraceSpansResponse | undefined;
@@ -112,7 +121,6 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
     }
 
     const metricsRequest: TraceMetricsRequest = {
-      service_name: undefined,
       start_time: startTime,
       end_time: endTime,
       bucket_interval: bucketInterval,

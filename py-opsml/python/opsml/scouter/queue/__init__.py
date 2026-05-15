@@ -9,9 +9,13 @@ from ..._opsml import (
     Metrics,
     PsiRecord,
     Queue,
+    RecordType,
+    ScouterQueue,
+    ServerRecord,
+    ServerRecords,
+    SpcRecord,
 )
 from ..._opsml import QueueFeature as Feature
-from ..._opsml import RecordType, ScouterQueue, ServerRecord, ServerRecords, SpcRecord
 
 __all__ = [
     "ScouterQueue",

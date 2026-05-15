@@ -31,6 +31,11 @@ Follow these repo-specific rules:
 - Prefer server-backed pagination, filtering, sorting, and aggregation for large remote datasets.
 - Use `VirtualScroller.svelte` or `@tanstack/svelte-virtual` for large scrollable views.
 - Do not add new UI libraries unless the user explicitly asks.
+- All functions, classes, methods, and components must have JSDoc comments. Use TSDoc tags like `@param`, `@returns`, `@throws`, and `@example` where relevant.
+
+When debugging, use the browser devtools, Svelte devtools, and Rust logging as your primary tools. Add temporary logging or breakpoints in the Svelte code or Rust backend as needed, but remove them before submitting the PR.
+
+When testing, prefer automated tests with Vitest and Svelte Testing Library. Add tests for new features and bug fixes, and consider adding tests for complex existing features that lack coverage. Use manual testing and build checks for visual polish, accessibility, performance, and exploratory testing of complex interactions.
 
 When making changes, inspect in this order:
 1. The route entrypoint (`+page.svelte`, `+page.ts`, `+page.server.ts`, `+layout.*`)

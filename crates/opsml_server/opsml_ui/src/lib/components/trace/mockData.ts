@@ -13,8 +13,9 @@ import type {
   TraceFilters,
   TraceMetricsRequest,
   TraceRequest,
-  Attribute,
 } from "$lib/components/trace/types";
+import { evaluateClause } from "./clauseEvaluator";
+import { removeClauseDimension } from "./clause";
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -29,6 +30,40 @@ function tid(): string {
 }
 function ts(baseMs: number, offsetMs: number = 0): string {
   return new Date(baseMs + offsetMs).toISOString();
+}
+
+/** Returns true when a mock trace carries the requested entity UID in resource attributes. */
+function matchesEntityUid(item: TraceListItem, entityUid: string): boolean {
+  return item.resource_attributes.some((attr) => String(attr.value) === entityUid);
+}
+
+/** Applies the same mock trace filters to pages, metrics, and facets. */
+function applyTraceFilters(
+  items: TraceListItem[],
+  filters: Pick<TraceFilters, "clause" | "start_time" | "end_time" | "trace_ids" | "entity_uid">,
+): TraceListItem[] {
+  let filtered = items;
+
+  if (filters.clause) {
+    filtered = filtered.filter((item) => evaluateClause(item, filters.clause!));
+  }
+  if (filters.start_time) {
+    const start = new Date(filters.start_time).getTime();
+    filtered = filtered.filter((item) => new Date(item.start_time).getTime() >= start);
+  }
+  if (filters.end_time) {
+    const end = new Date(filters.end_time).getTime();
+    filtered = filtered.filter((item) => new Date(item.start_time).getTime() <= end);
+  }
+  if (filters.trace_ids && filters.trace_ids.length > 0) {
+    const traceIds = new Set(filters.trace_ids);
+    filtered = filtered.filter((item) => traceIds.has(item.trace_id));
+  }
+  if (filters.entity_uid) {
+    filtered = filtered.filter((item) => matchesEntityUid(item, filters.entity_uid!));
+  }
+
+  return filtered;
 }
 
 function span(
@@ -456,19 +491,26 @@ const ALL_BUILDERS = [
 ];
 
 // Service/scope metadata for each trace (used for TraceListItem)
-const TRACE_META: { service: string; scope: string }[] = [
-  { service: "inference-api", scope: "http" },
-  { service: "inference-api", scope: "http" },
-  { service: "llm-gateway", scope: "genai" },
-  { service: "data-pipeline", scope: "batch" },
-  { service: "llm-gateway", scope: "genai" },
-  { service: "inference-api", scope: "http" },
-  { service: "monitoring-agent", scope: "drift" },
-  { service: "inference-api", scope: "http" },
-  { service: "llm-gateway", scope: "genai" },
-  { service: "data-pipeline", scope: "batch" },
-  { service: "inference-api", scope: "http" },
-  { service: "monitoring-agent", scope: "drift" },
+const TRACE_META: {
+  service: string;
+  scope: string;
+  namespace: string;
+  version: string;
+  instance: string;
+  entityUid: string;
+}[] = [
+  { service: "inference-api", scope: "http", namespace: "models", version: "3.2.1", instance: "pod-a", entityUid: "service-uid-1" },
+  { service: "inference-api", scope: "http", namespace: "models", version: "3.2.1", instance: "pod-b", entityUid: "service-uid-1" },
+  { service: "llm-gateway", scope: "genai", namespace: "agents", version: "1.0.0", instance: "pod-c", entityUid: "eval-uid-abc" },
+  { service: "data-pipeline", scope: "batch", namespace: "features", version: "2.4.0", instance: "worker-a", entityUid: "data-eval-1" },
+  { service: "llm-gateway", scope: "genai", namespace: "agents", version: "1.0.0", instance: "pod-d", entityUid: "eval-uid-abc" },
+  { service: "inference-api", scope: "http", namespace: "models", version: "2.1.0", instance: "pod-e", entityUid: "model-eval-1" },
+  { service: "monitoring-agent", scope: "drift", namespace: "monitoring", version: "0.9.0", instance: "pod-f", entityUid: "monitor-eval-1" },
+  { service: "inference-api", scope: "http", namespace: "models", version: "3.2.1", instance: "pod-g", entityUid: "model-eval-2" },
+  { service: "llm-gateway", scope: "genai", namespace: "agents", version: "1.0.0", instance: "pod-h", entityUid: "eval-uid-abc" },
+  { service: "data-pipeline", scope: "batch", namespace: "features", version: "2.4.0", instance: "worker-b", entityUid: "data-eval-2" },
+  { service: "inference-api", scope: "http", namespace: "models", version: "1.5.0", instance: "pod-i", entityUid: "model-eval-3" },
+  { service: "monitoring-agent", scope: "drift", namespace: "monitoring", version: "0.9.0", instance: "pod-j", entityUid: "monitor-eval-2" },
 ];
 
 // Build all spans once at module load
@@ -498,7 +540,13 @@ function buildTraceListItems(): TraceListItem[] {
       has_errors: errorSpans.length > 0,
       error_count: errorSpans.length,
       created_at: new Date(startMs).toISOString(),
-      resource_attributes: root.attributes,
+      resource_attributes: [
+        ...root.attributes,
+        { key: "service.namespace", value: TRACE_META[i].namespace },
+        { key: "service.version", value: TRACE_META[i].version },
+        { key: "service.instance.id", value: TRACE_META[i].instance },
+        { key: "scouter.entity.uid", value: TRACE_META[i].entityUid },
+      ],
     };
   });
 }
@@ -559,14 +607,7 @@ function buildMetricBuckets(
 // ── Public API ───────────────────────────────────────────────────────────
 
 export function getMockTracePage(filters: TraceFilters): TracePaginationResponse {
-  let items = buildTraceListItems();
-
-  if (filters.service_name) {
-    items = items.filter((t) => t.service_name === filters.service_name);
-  }
-  if (filters.has_errors !== undefined) {
-    items = items.filter((t) => t.has_errors === filters.has_errors);
-  }
+  const items = applyTraceFilters(buildTraceListItems(), filters);
 
   const limit = filters.limit || 50;
 
@@ -598,8 +639,45 @@ export function getMockTraceMetrics(
   const startTime = request.start_time || new Date(Date.now() - 15 * 60_000).toISOString();
   const endTime = request.end_time || new Date().toISOString();
   const bucketInterval = request.bucket_interval || "1 minutes";
+  const matchingItems = applyTraceFilters(buildTraceListItems(), {
+    clause: request.clause,
+    start_time: startTime,
+    end_time: endTime,
+    entity_uid: request.entity_uid,
+  });
+  const buckets = buildMetricBuckets(startTime, endTime, bucketInterval);
 
   return {
-    metrics: buildMetricBuckets(startTime, endTime, bucketInterval),
+    metrics: buckets.map((bucket) => ({
+      ...bucket,
+      trace_count: Math.min(bucket.trace_count, matchingItems.length),
+    })),
   };
+}
+
+export function getMockTraceFacets(filters: TraceFilters) {
+  const items = buildTraceListItems();
+  const filterItems = (dimension: "service" | "status_code") => {
+    const clause = removeClauseDimension(filters.clause, dimension);
+    return applyTraceFilters(items, { ...filters, clause });
+  };
+  const serviceItems = filterItems("service");
+  const statusItems = filterItems("status_code");
+  const totalItems = applyTraceFilters(items, filters);
+
+  return {
+    services: toFacetDimensions(serviceItems.map((item) => item.service_name)),
+    status_codes: toFacetDimensions(statusItems.map((item) => String(item.status_code))),
+    total_count: totalItems.length,
+  };
+}
+
+function toFacetDimensions(values: string[]) {
+  const counts = new Map<string, number>();
+  for (const value of values) {
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .map(([value, trace_count]) => ({ value, trace_count }))
+    .sort((a, b) => b.trace_count - a.trace_count || a.value.localeCompare(b.value));
 }

@@ -1,11 +1,10 @@
 # mypy: disable-error-code="attr-defined"
 # pylint: disable=no-name-in-module
 
-from .._opsml import Agent  # PyAgent
-from .._opsml import AgentResponse  # PyAgentResponse
-from .._opsml import Embedder  # PyEmbedder
-from .._opsml import Workflow  # PyWorkflow
 from .._opsml import (  # Prompt interface types; Workflow types; Agent types; Python-exposed classes (Py prefix in Rust)
+    Agent,  # PyAgent
+    AgentResponse,  # PyAgentResponse
+    Embedder,  # PyEmbedder
     EventDetails,
     ModelSettings,
     Prompt,
@@ -17,6 +16,7 @@ from .._opsml import (  # Prompt interface types; Workflow types; Agent types; P
     TaskEvent,
     TaskList,
     TaskStatus,
+    Workflow,  # PyWorkflow
     WorkflowResult,
     WorkflowTask,
     list_mcp_servers,

@@ -77,6 +77,7 @@ describe("getServerGenAiTraceMetrics", () => {
     await getServerGenAiTraceMetrics(fetch, "trace/with space");
     const url: string = mockPost.mock.calls[0][0];
     expect(url).toContain("trace%2Fwith%20space");
+    expect(url).toContain("/api/scouter/genai/traces/");
   });
 
   it("sends correct default body shape", async () => {

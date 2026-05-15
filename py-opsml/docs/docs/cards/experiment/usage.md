@@ -40,6 +40,7 @@ Every experiment can log parameters, metrics, artifacts and figures. This is don
 - **Figures** are visualizations that you want to track. This could include things like confusion matrices, ROC curves, or any other plots that help you understand your experiment.
 
 ```python
+import opsml
 from opsml import start_experiment
 
 with start_experiment("opsml") as exp:
@@ -47,7 +48,21 @@ with start_experiment("opsml") as exp:
     exp.log_metric("accuracy", 0.95)
     exp.log_figure("confusion_matrix.png", confusion_matrix)
     exp.log_artifact("my_local_artifact.txt")
+
+with start_experiment("opsml"):
+    opsml.log_param("learning_rate", 0.001)
+    opsml.log_metric("accuracy", 0.95)
+    opsml.log_figure("confusion_matrix.png", confusion_matrix)
+    opsml.log_artifact("my_local_artifact.txt")
 ```
+
+Both forms call the same Rust methods. Pick whichever reads better for the
+workflow.
+
+!!! note
+    `opsml.set_tag(tag)` accepts one string label. OpsML tags are free-form
+    labels, not key/value metadata. Use `opsml.log_param(key, value)` for
+    key/value experiment metadata.
 
 ### Artifacts
 

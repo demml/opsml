@@ -6,9 +6,9 @@ from typing import Any, Callable
 from fastapi import FastAPI
 from openinference.instrumentation.crewai import CrewAIInstrumentor
 from opentelemetry.trace import get_tracer_provider
-from pydantic import BaseModel
 from opsml.scouter import trace
 from opsml.scouter.evaluate import EvalRecord
+from pydantic import BaseModel
 
 from ..shared import get_shared_config, teardown
 
@@ -40,7 +40,7 @@ def _emit_eval_record(query: str, response: str) -> None:
 
 
 def _build_crew(query: str, callback: AgentCallback):
-    from crewai import Agent, Crew, LLM, Task
+    from crewai import LLM, Agent, Crew, Task
     from crewai.tasks.task_output import TaskOutput
 
     llm = LLM(

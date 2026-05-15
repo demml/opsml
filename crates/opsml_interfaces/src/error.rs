@@ -166,6 +166,9 @@ pub enum ModelInterfaceError {
     #[error("{0}")]
     Error(String),
 
+    #[error("Unexpected ModelInterface.__init__ keyword argument(s): {0}")]
+    UnexpectedKwargs(String),
+
     #[error("No ONNX session detected in interface for loading")]
     OnnxSessionMissing,
 

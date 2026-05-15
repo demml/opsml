@@ -5,9 +5,9 @@ from typing import Any, Callable
 
 from agents import Agent, RunHooks, Runner
 from fastapi import FastAPI
-from pydantic import BaseModel
 from opsml.scouter import trace
 from opsml.scouter.evaluate import EvalRecord
+from pydantic import BaseModel
 
 from ..shared import get_shared_config, teardown
 

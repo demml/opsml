@@ -40,9 +40,6 @@ from .._opsml import (
     QuantileBinning,
     QueryResult,
     Queue,
-)
-from .._opsml import QueueFeature as Feature
-from .._opsml import (
     RabbitMQConfig,
     RedisConfig,
     Rice,
@@ -65,6 +62,7 @@ from .._opsml import (
     TraceAssertionTask,
     WriteConfig,
 )
+from .._opsml import QueueFeature as Feature
 from . import (
     alert,
     bifrost,

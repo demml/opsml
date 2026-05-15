@@ -394,9 +394,24 @@ impl ExperimentCard {
     pub fn tags(&self) -> Vec<String> {
         self.tags.clone()
     }
+
+    pub fn add_tag(&mut self, tag: String) {
+        self.tags.push(tag);
+    }
+
+    #[pyo3(name = "set_tags")]
+    pub fn set_tags_method(&mut self, val: Vec<String>) {
+        self.tags = val;
+    }
+
     #[setter]
     pub fn set_tags(&mut self, val: Vec<String>) {
         self.tags = val;
+    }
+
+    #[pyo3(name = "add_subexperiment_experiment")]
+    pub fn add_subexperiment_experiment_py(&mut self, uid: &str) {
+        self.uids.experimentcard_uids.push(uid.to_string());
     }
 
     #[getter]

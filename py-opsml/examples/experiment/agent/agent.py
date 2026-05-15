@@ -1,26 +1,26 @@
+from typing import Optional, cast
+
+from google.adk.agents.callback_context import CallbackContext
+from google.adk.agents.llm_agent import Agent
+from google.adk.agents.sequential_agent import SequentialAgent
+from google.genai import types  # For types.Content
+from opentelemetry import trace
+from opsml.scouter.queue import EvalRecord, ScouterQueue
 from opsml.scouter.tracing import (
+    ActiveSpan,
+    BatchConfig,
     ScouterInstrumentor,
     TracerProvider,
-    BatchConfig,
-    ActiveSpan,
 )
 from opsml.scouter.transport import GrpcConfig
-from opsml.scouter.queue import ScouterQueue, EvalRecord
-from google.adk.agents.llm_agent import Agent
+
+from .setup.models import Recipe
 from .setup.prompt import (
     recipe_card,
-    recipe_response_card,
     recipe_generation_eval_profile,
+    recipe_response_card,
     recipe_response_eval_profile,
 )
-from .setup.models import Recipe
-from google.adk.agents.callback_context import CallbackContext
-from google.genai import types  # For types.Content
-from typing import Optional
-from opentelemetry import trace
-from typing import cast
-from google.adk.agents.sequential_agent import SequentialAgent
-
 
 queue = ScouterQueue.from_profile(
     profile=[recipe_generation_eval_profile, recipe_response_eval_profile],

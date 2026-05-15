@@ -5,17 +5,19 @@ use axum::{
 };
 use chrono::{Duration, Utc};
 use reqwest::header;
-use scouter_client::TraceMetricsRequest;
 
-fn trace_metrics_request() -> TraceMetricsRequest {
-    let end_time = Utc::now();
-    TraceMetricsRequest::new(
-        end_time - Duration::minutes(15),
-        end_time,
-        "hour".to_string(),
-        Some("entity-1".to_string()),
-        None,
-    )
+/// Representative clause-shaped trace filter body used to verify that the Rust
+/// proxy accepts and forwards the same JSON shape emitted by the OpsML UI.
+fn clause_filter_body() -> serde_json::Value {
+    serde_json::json!({
+        "clause": {
+            "op": "and",
+            "value": [
+                { "op": "service", "value": "checkout" },
+                { "op": "status_code", "value": 500 }
+            ]
+        }
+    })
 }
 
 fn scouter_error_body() -> &'static str {
@@ -25,7 +27,11 @@ fn scouter_error_body() -> &'static str {
 #[tokio::test]
 async fn test_scouter_routes_trace_paginated() {
     let mut helper = TestHelper::new(None).await;
-    let body = r#"{"limit":25}"#;
+    let body = serde_json::json!({
+        "limit": 25,
+        "clause": clause_filter_body()["clause"].clone(),
+    });
+    let body = serde_json::to_string(&body).unwrap();
 
     let _mock = helper
         .server
@@ -33,6 +39,13 @@ async fn test_scouter_routes_trace_paginated() {
         .mock("POST", "/scouter/trace/paginated")
         .match_body(mockito::Matcher::PartialJson(serde_json::json!({
             "limit": 25,
+            "clause": {
+                "op": "and",
+                "value": [
+                    { "op": "service", "value": "checkout" },
+                    { "op": "status_code", "value": 500 }
+                ]
+            }
         })))
         .with_status(200)
         .with_body(
@@ -82,7 +95,16 @@ async fn test_scouter_routes_trace_spans_query_forwarding() {
 #[tokio::test]
 async fn test_scouter_routes_trace_metrics() {
     let mut helper = TestHelper::new(None).await;
-    let body = serde_json::to_string(&trace_metrics_request()).unwrap();
+    let end_time = Utc::now();
+    let start_time = end_time - Duration::minutes(15);
+    let body = serde_json::json!({
+        "clause": clause_filter_body()["clause"].clone(),
+        "start_time": start_time.to_rfc3339(),
+        "end_time": end_time.to_rfc3339(),
+        "bucket_interval": "hour",
+        "entity_uid": "entity-1",
+    });
+    let body = serde_json::to_string(&body).unwrap();
 
     let _mock = helper
         .server
@@ -91,6 +113,13 @@ async fn test_scouter_routes_trace_metrics() {
         .match_body(mockito::Matcher::PartialJson(serde_json::json!({
             "bucket_interval": "hour",
             "entity_uid": "entity-1",
+            "clause": {
+                "op": "and",
+                "value": [
+                    { "op": "service", "value": "checkout" },
+                    { "op": "status_code", "value": 500 }
+                ]
+            }
         })))
         .with_status(200)
         .with_body(r#"{"metrics":[]}"#)
@@ -135,13 +164,21 @@ async fn test_scouter_routes_trace_spans_filters() {
 #[tokio::test]
 async fn test_scouter_routes_trace_facets() {
     let mut helper = TestHelper::new(None).await;
-    let body = r#"{"service_name":"svc-a"}"#;
+    let body = serde_json::to_string(&clause_filter_body()).unwrap();
 
     let _mock = helper
         .server
         .server
         .mock("POST", "/scouter/trace/facets")
-        .match_body(body)
+        .match_body(mockito::Matcher::PartialJson(serde_json::json!({
+            "clause": {
+                "op": "and",
+                "value": [
+                    { "op": "service", "value": "checkout" },
+                    { "op": "status_code", "value": 500 }
+                ]
+            }
+        })))
         .with_status(200)
         .with_body(r#"{"services":[],"status_codes":[],"total_count":0}"#)
         .create_async()

@@ -22,6 +22,12 @@ import {
   getMockTraceMetrics,
   getMockTracePage,
 } from "$lib/components/trace/mockData";
+import {
+  andClause,
+  serviceClause,
+  serviceNamespaceClause,
+  serviceVersionClause,
+} from "$lib/components/trace/clause";
 import type { CardMetadata } from "$lib/server/card/layout";
 import type { PromptCard } from "$lib/components/card/card_interfaces/promptcard";
 import { RegistryType } from "$lib/utils";
@@ -34,6 +40,14 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
   const useMockFallback = Boolean(parentData.devMockEnabled);
 
   const initialTraceId = url.searchParams.get("trace_id") ?? undefined;
+  const fallbackFilters: TracePageFilter = {
+    filters: {
+      start_time: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+      end_time: new Date().toISOString(),
+    },
+    bucket_interval: "1 minutes",
+    selected_range: "15min",
+  };
 
   try {
     depends("trace:data");
@@ -51,9 +65,37 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
     const entity_uid = isPrompt
       ? ((metadata as PromptCard).eval_profile?.config.uid ?? "")
       : undefined;
+    if (isPrompt && !entity_uid) {
+      return {
+        status: "not_found" as const,
+        errorMessage: "Prompt observability requires an attached evaluation profile.",
+        initialFilters: fallbackFilters,
+        trace_facets: {
+          services: [],
+          namespaces: [],
+          versions: [],
+          instance_ids: [],
+          status_codes: [],
+          total_count: 0,
+        },
+        mockMode: useMockFallback,
+      };
+    }
+
     const serviceName = isPrompt ? undefined : metadata.name;
     const serviceNamespace = isPrompt ? undefined : metadata.space;
     const serviceVersion = isPrompt ? undefined : metadata.version;
+    const clause = andClause(
+      serviceName ? serviceClause(serviceName) : undefined,
+      serviceNamespace ? serviceNamespaceClause(serviceNamespace) : undefined,
+      serviceVersion ? serviceVersionClause(serviceVersion) : undefined,
+    );
+    /**
+     * Agent cards are scoped by OpenTelemetry service identity. Prompt cards are
+     * scoped by Scouter entity UID. Keeping these shapes exclusive prevents
+     * undefined fields from leaking into tests or internal BFF requests.
+     */
+    const scopeFilters = isPrompt ? { entity_uid } : { clause };
 
     // Fetch trace spans first so we can derive the time window from the trace's timestamp
     let initialTrace: TraceListItem | undefined;
@@ -91,13 +133,10 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
     }
 
     const metricsRequest: TraceMetricsRequest = {
-      service_name: serviceName,
-      service_namespace: serviceNamespace,
-      service_version: serviceVersion,
       start_time: startTime,
       end_time: endTime,
       bucket_interval: bucketInterval,
-      entity_uid,
+      ...scopeFilters,
     };
 
     const traceMetrics = useMockFallback
@@ -108,19 +147,13 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
           start_time: startTime,
           end_time: endTime,
           limit: 50,
-          service_name: serviceName,
-          service_namespace: serviceNamespace,
-          service_version: serviceVersion,
-          entity_uid,
+          ...scopeFilters,
         })
       : await getServerTracePage(fetch, {
           start_time: startTime,
           end_time: endTime,
           limit: 50,
-          service_name: serviceName,
-          service_namespace: serviceNamespace,
-          service_version: serviceVersion,
-          entity_uid,
+          ...scopeFilters,
         });
 
     let traceFacets: TraceFacetsResponse = {
@@ -135,10 +168,7 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
       traceFacets = await getServerTraceFacets(fetch, {
         start_time: startTime,
         end_time: endTime,
-        service_name: serviceName,
-        service_namespace: serviceNamespace,
-        service_version: serviceVersion,
-        entity_uid,
+        ...scopeFilters,
       });
     } catch (facetError) {
       console.warn("Failed to load trace facets:", facetError);
@@ -148,10 +178,7 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
       filters: {
         start_time: startTime,
         end_time: endTime,
-        service_name: serviceName,
-        service_namespace: serviceNamespace,
-        service_version: serviceVersion,
-        entity_uid,
+        ...scopeFilters,
       },
       bucket_interval: bucketInterval,
       selected_range: selectedRange,
@@ -221,18 +248,10 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
       }
     }
 
-    const initialFilters: TracePageFilter = {
-      filters: {
-        start_time: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-        end_time: new Date().toISOString(),
-      },
-      bucket_interval: "1 minutes",
-      selected_range: "15min",
-    };
     return {
       status: "error" as const,
       errorMessage,
-      initialFilters,
+      initialFilters: fallbackFilters,
       trace_facets: {
         services: [],
         namespaces: [],

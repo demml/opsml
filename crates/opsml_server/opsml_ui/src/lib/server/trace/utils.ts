@@ -6,9 +6,24 @@ import type {
   TraceRequest,
   TraceMetricsRequest,
   TraceSpansResponse,
+  TraceFacetsResponse,
 } from "$lib/components/trace/types";
 import { createOpsmlClient } from "../api/opsmlClient";
 import { RoutePaths } from "$lib/components/api/routes";
+
+/**
+ * Error raised by trace server helpers when the backend returns a non-OK
+ * response and the SvelteKit route should preserve that HTTP status.
+ */
+export class TraceServerError extends Error {
+  constructor(
+    message: string,
+    public status = 500,
+  ) {
+    super(message);
+    this.name = "TraceServerError";
+  }
+}
 
 export async function getTracePage(
   fetch: typeof globalThis.fetch,
@@ -41,6 +56,31 @@ export async function getTraceMetrics(
     metricsRequest
   );
   return (await response.json()) as TraceMetricsResponse;
+}
+
+/**
+ * Fetch trace facets through the shared OpsML server client.
+ *
+ * Keeping this transport logic in the server helper layer matches the other
+ * trace BFF calls and keeps `+server.ts` focused on request parsing, mock-mode
+ * branching, and response enveloping.
+ */
+export async function getTraceFacets(
+  fetch: typeof globalThis.fetch,
+  filters: TraceFilters,
+): Promise<TraceFacetsResponse> {
+  const response = await createOpsmlClient(fetch).post(
+    RoutePaths.TRACE_FACETS,
+    filters,
+  );
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new TraceServerError(
+      errorBody || `Facets request failed: ${response.status}`,
+      response.status,
+    );
+  }
+  return (await response.json()) as TraceFacetsResponse;
 }
 
 export async function getTraceSpansFromFilters(

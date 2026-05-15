@@ -40,19 +40,10 @@ class MockInterface(BaseModel):
 
 
 class CustomModel(ModelInterface):
-    def __new__(cls, preprocessor=None, **kwargs):
-        instance = super(CustomModel, cls).__new__(
-            cls,
-            **kwargs,
-        )
-
-        return instance
-
     def __init__(self, preprocessor, **kwargs):
         """Init method for the custom model interface."""
 
-        super().__init__()
-
+        super().__init__(**kwargs)
         self.preprocessor = preprocessor
 
     def save(self, path, save_kwargs=None):

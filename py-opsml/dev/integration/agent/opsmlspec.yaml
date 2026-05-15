@@ -1,0 +1,48 @@
+name: "support-e2e-agent"
+space: "scouter_dev"
+type: Agent
+
+metadata:
+  description: "Local E2E support agent for OpsML and Scouter integration inspection"
+  language: "python"
+  tags: ["e2e", "scouter", "agent", "support"]
+
+service:
+  cards:
+    - alias: triage_prompt
+      path: "prompts/triage.yaml"
+      registry_type: prompt
+    - alias: responder_prompt
+      path: "prompts/responder.yaml"
+      registry_type: prompt
+
+  agent:
+    version: "0.3.0"
+    capabilities:
+      streaming: false
+      push_notifications: false
+      extended_agent_card: false
+    default_output_modes: ["text/plain"]
+    default_input_modes: ["text/plain"]
+    description: "Sequential triage -> responder support pipeline used for E2E integration checks."
+    name: "Support E2E Agent"
+    skills:
+      - format: a2a
+        id: "support_e2e"
+        name: "Support E2E"
+        description: "Routes support requests and composes the final answer."
+        input_modes: ["text/plain"]
+        output_modes: ["text/plain"]
+        tags: ["support", "e2e"]
+        examples:
+          - "Help me plan a weeknight dinner"
+          - "My API call times out intermittently"
+    supported_interfaces:
+      - protocol_binding: "HTTP+JSON"
+        protocol_version: "0.3.0"
+        url: "http://localhost:8888"
+
+deploy:
+  - environment: "development"
+    urls: ["http://localhost:8888"]
+    healthcheck: "/health"

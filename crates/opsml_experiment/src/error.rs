@@ -75,6 +75,14 @@ pub enum ExperimentError {
 
     #[error("{0}")]
     MissingImportError(String),
+
+    #[error(
+        "no active experiment — wrap your code in `with start_experiment(...) as exp:` or call `exp.log_metric(...)` directly"
+    )]
+    NoActiveExperiment,
+
+    #[error("active experiment stack poisoned")]
+    ActiveStackPoisoned,
 }
 
 impl From<std::ffi::OsString> for ExperimentError {

@@ -5,9 +5,21 @@ import type {
 } from "$lib/components/trace/types";
 import { getTracePage } from "$lib/server/trace/utils";
 import { isDevMockEnabled } from "$lib/server/mock/mode";
+import { validateTraceFilters } from "$lib/components/trace/validation";
 
+/**
+ * Proxies trace page requests after validating the shared FilterClause body.
+ *
+ * Dev mocks and Scouter receive the same clause-shaped request contract so the
+ * UI does not keep a legacy scalar-filter translation layer alive.
+ */
 export const POST: RequestHandler = async ({ request, fetch, cookies }) => {
-  const filters: TraceFilters = await request.json();
+  const body = await request.json();
+  const validation = validateTraceFilters(body);
+  if (!validation.ok) {
+    return json({ response: null, error: validation.error }, { status: 400 });
+  }
+  const filters: TraceFilters = validation.value;
 
   if (isDevMockEnabled(cookies)) {
     const { getMockTracePage } = await import("$lib/server/trace/mockData");

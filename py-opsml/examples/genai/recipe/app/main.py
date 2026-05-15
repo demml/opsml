@@ -1,16 +1,18 @@
 # pylint: disable=invalid-name
 from contextlib import asynccontextmanager
 from pathlib import Path
-from opsml.scouter.queue import EvalRecord
-from opsml.card import PromptCard
+
 from fastapi import FastAPI, Request
 from opsml.app import AppState
+from opsml.card import PromptCard
 from opsml.scouter import GrpcConfig
+from opsml.scouter.queue import EvalRecord
 from opsml.scouter.tracing import shutdown_tracer
 from pydantic import BaseModel
-from app.tracing import tracer
-from app.models import Recipe
 from pydantic_ai import Agent
+
+from app.models import Recipe
+from app.tracing import tracer
 
 
 class Question(BaseModel):

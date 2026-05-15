@@ -1,9 +1,9 @@
 from opsml import ModelCard, SklearnModel, TaskType
-from opsml.types import DataType
 from opsml.helpers.data import create_fake_data
+from opsml.scouter import CommonCrons
 from opsml.scouter.alert import PsiAlertConfig
 from opsml.scouter.drift import PsiDriftConfig
-from opsml.scouter import CommonCrons
+from opsml.types import DataType
 from sklearn import ensemble  # type: ignore
 
 
