@@ -11,6 +11,8 @@
   import { ArrowLeft, ArrowRight, ExternalLink } from 'lucide-svelte';
   import AgentEvalWorkflowSideBar from '$lib/components/scouter/agent/workflow/AgentEvalWorkflowSideBar.svelte';
 
+  type PageDirection = 'next' | 'previous';
+
   let {
     workflows,
     hasNext,
@@ -21,7 +23,7 @@
     workflows: WorkflowWithAgent[];
     hasNext: boolean;
     hasPrevious: boolean;
-    onPageChange: (direction: string) => void;
+    onPageChange: (direction: PageDirection) => void | Promise<void>;
     isRefreshing?: boolean;
   } = $props();
 
@@ -61,11 +63,22 @@
     isSelected = false;
   }
 
+  /**
+   * Guards the workflow pagination callback so disabled controls cannot emit
+   * stale page requests while a refresh is already in flight.
+   */
+  async function requestPage(direction: PageDirection) {
+    if (isRefreshing) return;
+    if (direction === 'next' && !hasNext) return;
+    if (direction === 'previous' && !hasPrevious) return;
+    await onPageChange(direction);
+  }
+
   // Prompt + Nav columns added before ID; 1fr on Record UID consumes whitespace
   const gridLayout = "grid-template-columns: 120px 50px 60px 140px 100px 80px 80px 80px 100px 1fr;";
 </script>
 
-<div class="pt-2 h-full flex flex-col min-h-0 transition-opacity duration-200 {isRefreshing ? 'opacity-60 pointer-events-none' : ''}">
+<div class="pt-2 h-full flex flex-col min-h-0 transition-opacity duration-200 {isRefreshing ? 'opacity-60' : ''}">
   <div class="border-2 border-black rounded-lg bg-white flex flex-col h-full max-h-[500px] overflow-hidden">
 
     <div class="overflow-auto flex-1 w-full relative">
@@ -166,16 +179,20 @@
     {#if workflows.length > 0}
       <div class="border-t-2 border-black bg-gray-50 p-2 flex justify-center gap-2 items-center">
         <button
+          type="button"
+          aria-label="Previous workflow results page"
           class="btn bg-surface-50 text-primary-800 disabled:text-primary-400 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
-          onclick={() => onPageChange('previous')}
-          disabled={!hasPrevious}
+          onclick={() => requestPage('previous')}
+          disabled={isRefreshing || !hasPrevious}
         >
           <ArrowLeft class="w-4 h-4" color="currentColor"/>
         </button>
         <button
+          type="button"
+          aria-label="Next workflow results page"
           class="btn bg-surface-50 text-primary-800 disabled:text-primary-400 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
-          onclick={() => onPageChange('next')}
-          disabled={!hasNext}
+          onclick={() => requestPage('next')}
+          disabled={isRefreshing || !hasNext}
         >
           <ArrowRight class="w-4 h-4" color="currentColor"/>
         </button>

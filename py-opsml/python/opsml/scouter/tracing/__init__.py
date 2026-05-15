@@ -50,13 +50,11 @@ from ..._opsml import (
     flush_tracer,
     get_current_active_span,
     get_function_type,
-)
-from ..._opsml import get_tracer as _get_tracer
-from ..._opsml import (
     get_tracing_headers_from_current_span,
     reset_tracer_provider,
     shutdown_tracer,
 )
+from ..._opsml import get_tracer as _get_tracer
 from .middleware import ScouterTracingMiddleware
 
 SerializedType: TypeAlias = Union[str, int, float, dict, list]
@@ -94,16 +92,16 @@ else:
             """Stub base class when OpenTelemetry is not available."""
 
             def instrument(self, **kwargs):
-                raise ImportError("OpenTelemetry is not installed. Install with: " "pip install opsml[opentelemetry]")
+                raise ImportError("OpenTelemetry is not installed. Install with: pip install opsml[opentelemetry]")
 
             def uninstrument(self, **kwargs):
-                raise ImportError("OpenTelemetry is not installed. Install with: " "pip install opsml[opentelemetry]")
+                raise ImportError("OpenTelemetry is not installed. Install with: pip install opsml[opentelemetry]")
 
         def get_tracer_provider():
-            raise ImportError("OpenTelemetry is not installed. Install with: " "pip install opsml[opentelemetry]")
+            raise ImportError("OpenTelemetry is not installed. Install with: pip install opsml[opentelemetry]")
 
         def set_tracer_provider(provider):
-            raise ImportError("OpenTelemetry is not installed. Install with: " "pip install opsml[opentelemetry]")
+            raise ImportError("OpenTelemetry is not installed. Install with: pip install opsml[opentelemetry]")
 
         _agnosticcontextmanager = contextmanager
 
@@ -858,7 +856,7 @@ class ScouterInstrumentor(BaseInstrumentor):
         """Initialize Scouter tracing and set as global provider."""
         if not HAS_OPENTELEMETRY:
             raise ImportError(
-                "OpenTelemetry is required for instrumentation. " "Install with: pip install opsml[opentelemetry]"
+                "OpenTelemetry is required for instrumentation. Install with: pip install opsml[opentelemetry]"
             )
 
         if self._provider is not None:

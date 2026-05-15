@@ -1,9 +1,12 @@
 <script lang="ts">
+  // Scouter currently returns facet counts for services and status codes only.
+  // Namespace/version/instance/error/duration/attribute controls update the clause directly.
   import type { FacetCount, TracePageFilter } from "../types";
   import AttributeFacet from "./AttributeFacet.svelte";
   import DurationFacet from "./DurationFacet.svelte";
   import FacetRow from "./FacetRow.svelte";
   import FacetSection from "./FacetSection.svelte";
+  import { findClauses } from "../clause";
 
   let {
     filters,
@@ -47,14 +50,28 @@
     onSetAttributes: (next: string[]) => void;
   }>();
 
-  let namespaceInput = $state(filters.filters.service_namespace ?? "");
-  let versionInput = $state(filters.filters.service_version ?? "");
-  let instanceInput = $state(filters.filters.service_instance_id ?? "");
+  const selectedService = $derived(findClauses(filters.filters.clause, "service")[0]?.value);
+  const selectedStatusCode = $derived(findClauses(filters.filters.clause, "status_code")[0]?.value);
+  const selectedNamespace = $derived(findClauses(filters.filters.clause, "service_namespace")[0]?.value);
+  const selectedVersion = $derived(findClauses(filters.filters.clause, "service_version")[0]?.value);
+  const selectedInstance = $derived(findClauses(filters.filters.clause, "service_instance_id")[0]?.value);
+  const selectedHasErrors = $derived(findClauses(filters.filters.clause, "has_errors")[0]?.value);
+  const selectedMinDuration = $derived(findClauses(filters.filters.clause, "duration_min_ms")[0]?.value);
+  const selectedMaxDuration = $derived(findClauses(filters.filters.clause, "duration_max_ms")[0]?.value);
+  const selectedAttributes = $derived(
+    findClauses(filters.filters.clause, "attr").map(
+      (clause) => `${clause.value.key}=${clause.value.value}`,
+    ),
+  );
+
+  let namespaceInput = $state("");
+  let versionInput = $state("");
+  let instanceInput = $state("");
 
   $effect(() => {
-    namespaceInput = filters.filters.service_namespace ?? "";
-    versionInput = filters.filters.service_version ?? "";
-    instanceInput = filters.filters.service_instance_id ?? "";
+    namespaceInput = selectedNamespace ?? "";
+    versionInput = selectedVersion ?? "";
+    instanceInput = selectedInstance ?? "";
   });
 
   function applyNamespaceInput() {
@@ -84,14 +101,14 @@
   <FacetSection label="Status">
     <FacetRow
       label="Any"
-      selected={filters.filters.status_code === undefined}
+      selected={selectedStatusCode === undefined}
       onSelect={onClearStatus}
     />
     {#each statuses as s (s.value)}
       <FacetRow
         label={s.value}
         count={s.count}
-        selected={String(filters.filters.status_code) === s.value}
+        selected={String(selectedStatusCode) === s.value}
         onSelect={() => onSetStatus(Number(s.value))}
       />
     {/each}
@@ -100,14 +117,14 @@
   <FacetSection label="Service">
     <FacetRow
       label="Any"
-      selected={filters.filters.service_name === undefined}
+      selected={selectedService === undefined}
       onSelect={onClearService}
     />
     {#each services as service (service.value)}
       <FacetRow
         label={service.value}
         count={service.count}
-        selected={filters.filters.service_name === service.value}
+        selected={selectedService === service.value}
         onSelect={() => onSetService(service.value)}
       />
     {/each}
@@ -116,14 +133,14 @@
   <FacetSection label="Namespace">
     <FacetRow
       label="Any"
-      selected={filters.filters.service_namespace === undefined}
+      selected={selectedNamespace === undefined}
       onSelect={onClearNamespace}
     />
     {#each namespaces as namespace (namespace.value)}
       <FacetRow
         label={namespace.value}
         count={namespace.count}
-        selected={filters.filters.service_namespace === namespace.value}
+        selected={selectedNamespace === namespace.value}
         onSelect={() => onSetNamespace(namespace.value)}
       />
     {/each}
@@ -158,14 +175,14 @@
   <FacetSection label="Version">
     <FacetRow
       label="Any"
-      selected={filters.filters.service_version === undefined}
+      selected={selectedVersion === undefined}
       onSelect={onClearVersion}
     />
     {#each versions as version (version.value)}
       <FacetRow
         label={version.value}
         count={version.count}
-        selected={filters.filters.service_version === version.value}
+        selected={selectedVersion === version.value}
         onSelect={() => onSetVersion(version.value)}
       />
     {/each}
@@ -200,14 +217,14 @@
   <FacetSection label="Instance" defaultOpen={false}>
     <FacetRow
       label="Any"
-      selected={filters.filters.service_instance_id === undefined}
+      selected={selectedInstance === undefined}
       onSelect={onClearInstance}
     />
     {#each instances as instance (instance.value)}
       <FacetRow
         label={instance.value}
         count={instance.count}
-        selected={filters.filters.service_instance_id === instance.value}
+        selected={selectedInstance === instance.value}
         onSelect={() => onSetInstance(instance.value)}
       />
     {/each}
@@ -243,7 +260,7 @@
     <label class="flex items-center gap-2 text-xs text-primary-800 cursor-pointer">
       <input
         type="checkbox"
-        checked={filters.filters.has_errors === true}
+        checked={selectedHasErrors === true}
         onchange={(event) =>
           onToggleErrors((event.currentTarget as HTMLInputElement).checked)}
         class="w-4 h-4 border-2 border-black bg-surface-50 accent-primary-500"
@@ -254,15 +271,15 @@
 
   <FacetSection label="Duration" defaultOpen={false}>
     <DurationFacet
-      min={filters.filters.duration_min_ms}
-      max={filters.filters.duration_max_ms}
+      min={selectedMinDuration}
+      max={selectedMaxDuration}
       onApply={onSetDuration}
     />
   </FacetSection>
 
   <FacetSection label="Attributes" defaultOpen={false}>
     <AttributeFacet
-      items={filters.filters.attribute_filters ?? []}
+      items={selectedAttributes}
       onChange={onSetAttributes}
     />
   </FacetSection>

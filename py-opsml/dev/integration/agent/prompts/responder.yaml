@@ -1,0 +1,100 @@
+space: scouter_dev
+name: responder_prompt
+prompt:
+  model: gemini-3.1-flash-lite-preview
+  provider: Gemini
+  messages:
+    - "You are the responder agent in a multi-agent pipeline. The triage agent already classified the request into route 'dinner' or 'timeout'. If the user asks about dinner, call plan_weeknight_dinner exactly once. If the user asks about API timeout or latency, call debug_api_timeout exactly once. Use the tool result to write a concise final answer."
+evaluation:
+  alias: responder_evaluation
+  config:
+    sample_ratio: 1.0
+    alert_config:
+      dispatch_config:
+        Slack:
+          channel: "#ai-platform"
+      schedule: "0 0 * * * *"
+      alert_condition:
+        baseline_value: 0.8
+        alert_threshold: Below
+        delta: null
+  tasks:
+    - task_type: Assertion
+      id: responder_response_is_string
+      context_path: response
+      operator: IsString
+      expected_value: true
+      description: Validate that the responder produced a string response.
+
+    - task_type: Assertion
+      id: responder_tool_called
+      context_path: tool_call_names
+      operator: ContainsAny
+      expected_value: ["plan_weeknight_dinner", "debug_api_timeout"]
+      description: Validate that the responder invoked exactly one route-specific tool.
+
+    - task_type: Assertion
+      id: responder_tool_path_matches
+      context_path: tool_call_path
+      operator: MatchesRegex
+      expected_value: "^classify_request -> (plan_weeknight_dinner|debug_api_timeout)$"
+      description: Validate the full tool path across triage and responder.
+      depends_on: ["responder_tool_called"]
+
+    - task_type: LLMJudge
+      id: responder_answer_judge
+      context_path: score
+      operator: Equals
+      expected_value: 1
+      description: Judge whether the responder answer is useful for the routed request.
+      max_retries: 3
+      prompt:
+        model: gemini-3.1-flash-lite-preview
+        provider: Google
+        messages:
+          - |
+            Analyze the responder answer and determine if it effectively addresses the user's routed request.
+            Respond with 1 if the response is high quality and effectively addresses the user's question, and 0 if it does not.
+
+            User's question: ${query}
+            Route: ${triage_route}
+            Agent's response: ${response}
+        settings:
+          generation_config:
+            thinking_config:
+              thinking_budget: 0
+        response_format:
+          title: EvaluationResponse
+          type: object
+          properties:
+            score:
+              type: integer
+              minimum: 0
+              maximum: 1
+            reason:
+              type: string
+          required: ["score", "reason"]
+          additionalProperties: false
+
+    - task_type: TraceAssertion
+      id: responder_tool_span_emitted
+      operator: GreaterThanOrEqual
+      expected_value: 1
+      description: Validate that one route-specific responder tool span executed.
+      assertion:
+        SpanCount:
+          filter:
+            Or:
+              filters:
+                - ByName:
+                    name: tool.plan_weeknight_dinner
+                - ByName:
+                    name: tool.debug_api_timeout
+
+    - task_type: TraceAssertion
+      id: responder_latency_budget
+      operator: LessThan
+      expected_value: 7000.0
+      description: Responder should finish under 7 seconds.
+      assertion:
+        TraceDuration: {}

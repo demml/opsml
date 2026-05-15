@@ -112,7 +112,6 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
     }
 
     const metricsRequest: TraceMetricsRequest = {
-      service_name: undefined,
       start_time: startTime,
       end_time: endTime,
       bucket_interval: bucketInterval,

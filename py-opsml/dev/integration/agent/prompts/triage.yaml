@@ -1,0 +1,88 @@
+space: scouter_dev
+name: triage_prompt
+prompt:
+  model: gemini-3.1-flash-lite-preview
+  provider: Gemini
+  messages:
+    - "You are the triage agent in a multi-agent pipeline. Call classify_request exactly once with the user's query. classify_request returns a route field with value 'dinner' or 'timeout'. Do not produce any other tool call. Reply with a single short sentence acknowledging the route; the responder agent will handle the user-facing answer."
+evaluation:
+  alias: triage_evaluation
+  config:
+    sample_ratio: 1.0
+    alert_config:
+      dispatch_config:
+        Slack:
+          channel: "#ai-platform"
+      schedule: "0 0 * * * *"
+      alert_condition:
+        baseline_value: 0.8
+        alert_threshold: Below
+        delta: null
+  tasks:
+    - task_type: Assertion
+      id: classify_request_tool_called
+      context_path: tool_call_names
+      operator: Contains
+      expected_value: classify_request
+      description: Validate that the triage agent invoked classify_request.
+
+    - task_type: Assertion
+      id: triage_route_valid
+      context_path: triage_route
+      operator: ContainsAny
+      expected_value: ["dinner", "timeout"]
+      description: Validate that classify_request produced a recognised route.
+
+    - task_type: LLMJudge
+      id: triage_response_judge
+      context_path: score
+      operator: Equals
+      expected_value: 1
+      description: Judge whether the triage response correctly acknowledges the route.
+      max_retries: 3
+      prompt:
+        model: gemini-3.1-flash-lite-preview
+        provider: Google
+        messages:
+          - |
+            Analyze the triage response and determine if it correctly acknowledges the route without answering the user's request directly.
+            Respond with 1 if the response is high quality and correctly acknowledges the route, and 0 if it does not.
+
+            User's question: ${query}
+            Route: ${triage_route}
+            Triage response: ${response}
+        settings:
+          generation_config:
+            thinking_config:
+              thinking_budget: 0
+        response_format:
+          title: EvaluationResponse
+          type: object
+          properties:
+            score:
+              type: integer
+              minimum: 0
+              maximum: 1
+            reason:
+              type: string
+          required: ["score", "reason"]
+          additionalProperties: false
+
+    - task_type: TraceAssertion
+      id: classify_tool_span_emitted
+      operator: GreaterThanOrEqual
+      expected_value: 1
+      description: Validate that the span-backed classify_request tool executed.
+      assertion:
+        SpanCount:
+          filter:
+            ByName:
+              name: tool.classify_request
+
+    - task_type: TraceAssertion
+      id: triage_latency_budget
+      operator: LessThan
+      expected_value: 10000.0
+      description: Triage should complete within the live integration budget.
+      assertion:
+        TraceDuration: {}

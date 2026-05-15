@@ -12,6 +12,16 @@ UI_DIR = "crates/opsml_server/opsml_ui"
 PY_DIR = "py-opsml"
 SOURCE_OBJECTS = "python/opsml"
 FORMAT_OBJECT = "python/opsml examples"
+SCOUTER_DIR = "../scouter"
+OPSML_E2E_DIR = "/tmp/opsml-e2e"
+OPSML_E2E_BACKEND_PORT = "8090"
+OPSML_E2E_FRONTEND_PORT = "3000"
+SCOUTER_HTTP_PORT = "8000"
+SCOUTER_GRPC_PORT = "50051"
+OPSML_E2E_TRACKING_URI = "http://localhost:8090"
+OPSML_E2E_SCOUTER_URI = "http://localhost:8000"
+OPSML_E2E_SCOUTER_GRPC_URI = "http://localhost:50051"
+OPSML_E2E_QUERY = "Recommend a vegan dinner with chickpeas and a dessert option"
 
 # Rust / workspace
 
@@ -309,41 +319,38 @@ run = "pnpm update"
 # Python tasks
 
 [tasks."py:format"]
-description = "Format Python code (isort + ruff + black)"
+description = "Format Python code with Ruff"
 dir = "py-opsml"
 run = [
-  "uv run isort python/opsml",
-  "uv run ruff check --silent --exit-zero python/opsml examples",
-  "uv run black python/opsml examples",
+  "uv run ruff format python/opsml examples",
+  "uv run ruff check --fix --exit-zero --silent python/opsml examples",
 ]
 
 [tasks."py:lints-ruff"]
-description = "Run Ruff"
+description = "Run Ruff lint checks"
 dir = "py-opsml"
 run = "uv run ruff check python/opsml"
 
-[tasks."py:lints-pylint"]
-description = "Run pylint"
+[tasks."py:typecheck"]
+description = "Run ty type checks"
 dir = "py-opsml"
-run = "uv run pylint python/opsml"
+run = "uv run ty check --ignore unused-type-ignore-comment python/opsml"
 
 [tasks."py:lints-ty"]
-description = "Run ty"
-dir = "py-opsml"
-run = "uv run ty check python/opsml"
+description = "Run ty type checks"
+depends = ["py:typecheck"]
 
 [tasks."py:lints"]
-description = "Run all Python linters"
-depends = ["py:lints-ruff", "py:lints-pylint", "py:lints-ty"]
+description = "Run Python Ruff lint checks and ty type checks"
+depends = ["py:lints-ruff", "py:typecheck"]
 
 [tasks."py:lints-ci"]
-description = "Run CI Python linters"
+description = "Run CI Python Ruff format/lint checks and ty type checks"
 dir = "py-opsml"
 run = [
-  "uv run black --check python/opsml",
+  "uv run ruff format --check python/opsml examples",
   "uv run ruff check python/opsml",
-  "uv run pylint python/opsml",
-  "uv run ty check python/opsml",
+  "uv run ty check --ignore unused-type-ignore-comment python/opsml",
 ]
 
 [tasks."py:build:stubs"]
@@ -351,9 +358,8 @@ description = "Regenerate Python type stubs from Rust bindings"
 dir = "py-opsml"
 run = [
   "uv run python scripts/assemble_stubs.py",
-  "uv run isort python/opsml",
-  "uv run black python/opsml examples",
-  "uv run ruff check --silent --exit-zero python/opsml examples",
+  "uv run ruff format python/opsml examples",
+  "uv run ruff check --fix --exit-zero --silent python/opsml examples",
 ]
 
 [tasks."py:setup"]
@@ -516,3 +522,182 @@ run = [
 description = "Upgrade all Python dependencies"
 dir = "py-opsml"
 run = "uv sync --upgrade --all-extras"
+
+# E2E Integration Harness
+# Scouter defaults to a sibling checkout at ../scouter.
+
+[tasks."dev:e2e:scouter:postgres"]
+description = "Start scouter postgres via docker compose"
+run = """
+mkdir -p $OPSML_E2E_DIR
+[ -f $OPSML_E2E_DIR/scouter-server.pid ] && kill $(cat $OPSML_E2E_DIR/scouter-server.pid) 2>/dev/null || true
+lsof -ti:$SCOUTER_HTTP_PORT | xargs kill -9 2>/dev/null || true
+lsof -ti:$SCOUTER_GRPC_PORT | xargs kill -9 2>/dev/null || true
+cd $SCOUTER_DIR && docker compose down -v
+cd $SCOUTER_DIR && docker compose up -d postgres --wait
+"""
+
+[tasks."dev:e2e:scouter:up"]
+description = "Build and start scouter-server in background"
+depends = ["dev:e2e:scouter:postgres"]
+run = """
+mkdir -p $OPSML_E2E_DIR
+cd $SCOUTER_DIR && cargo build -p scouter-server --all-features
+cd $SCOUTER_DIR
+DATABASE_URI=postgresql://postgres:postgres@localhost:5432/postgres \
+SCOUTER_TRACE_VISIBILITY_BUFFER_SECS=${SCOUTER_TRACE_VISIBILITY_BUFFER_SECS:-10} \
+SCOUTER_SERVER_PORT=$SCOUTER_HTTP_PORT \
+SCOUTER_GRPC_PORT=$SCOUTER_GRPC_PORT \
+nohup ./target/debug/scouter-server > $OPSML_E2E_DIR/scouter-server.log 2>&1 &
+SCOUTER_PID=$!
+disown $SCOUTER_PID
+echo $SCOUTER_PID > $OPSML_E2E_DIR/scouter-server.pid
+echo "Scouter started - PID: $(cat $OPSML_E2E_DIR/scouter-server.pid) - logs: $OPSML_E2E_DIR/scouter-server.log"
+"""
+
+[tasks."dev:e2e:opsml:backend"]
+description = "Build and start opsml-server in background on E2E backend port"
+env = { OPSML_TESTING = "1" }
+run = """
+mkdir -p $OPSML_E2E_DIR
+[ -f $OPSML_E2E_DIR/opsml-backend.pid ] && kill $(cat $OPSML_E2E_DIR/opsml-backend.pid) 2>/dev/null || true
+lsof -ti:$OPSML_E2E_BACKEND_PORT | xargs kill -9 2>/dev/null || true
+rm -f $OPSML_E2E_DIR/opsml.db $OPSML_E2E_DIR/opsml.db-wal $OPSML_E2E_DIR/opsml.db-shm
+rm -f $OPSML_E2E_DIR/opsml.lock
+rm -rf $OPSML_E2E_DIR/opsml_registries
+rm -rf $OPSML_E2E_DIR/opsml_service
+rm -f py-opsml/dev/integration/agent/opsml.lock
+rm -rf py-opsml/dev/integration/agent/opsml_service
+cargo build -p opsml-server
+OPSML_BACKEND_LOG=$OPSML_E2E_DIR/opsml-backend.log
+export OPSML_BACKEND_LOG
+OPSML_BACKEND_PID=$(python -c 'import os, subprocess
+log = open(os.environ["OPSML_BACKEND_LOG"], "ab")
+env = os.environ.copy()
+env.update({
+    "OPSML_SERVER_PORT": os.environ["OPSML_E2E_BACKEND_PORT"],
+    "OPSML_TRACKING_URI": "sqlite://" + os.environ["OPSML_E2E_DIR"] + "/opsml.db",
+    "OPSML_STORAGE_URI": os.environ["OPSML_E2E_DIR"] + "/opsml_registries",
+    "SCOUTER_SERVER_URI": os.environ["OPSML_E2E_SCOUTER_URI"],
+    "SCOUTER_GRPC_URI": os.environ["OPSML_E2E_SCOUTER_GRPC_URI"],
+})
+p = subprocess.Popen(["./target/debug/opsml-server"], stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, env=env, start_new_session=True)
+print(p.pid)')
+echo $OPSML_BACKEND_PID > $OPSML_E2E_DIR/opsml-backend.pid
+
+OPSML_BACKEND_URL=http://localhost:$OPSML_E2E_BACKEND_PORT/opsml/api/healthcheck
+OPSML_BACKEND_ATTEMPT=0
+while [ $OPSML_BACKEND_ATTEMPT -lt 60 ]; do
+  if ! kill -0 $OPSML_BACKEND_PID 2>/dev/null; then
+    echo "OpsML backend exited before readiness - PID: $OPSML_BACKEND_PID - logs: $OPSML_BACKEND_LOG"
+    tail -n 80 "$OPSML_BACKEND_LOG" 2>/dev/null || true
+    exit 1
+  fi
+  if curl -fsS --max-time 2 "$OPSML_BACKEND_URL" >/dev/null 2>&1; then
+    echo "OpsML backend started - PID: $OPSML_BACKEND_PID - logs: $OPSML_BACKEND_LOG"
+    exit 0
+  fi
+  OPSML_BACKEND_ATTEMPT=$((OPSML_BACKEND_ATTEMPT + 1))
+  sleep 1
+done
+
+echo "Timed out waiting for OpsML backend readiness at $OPSML_BACKEND_URL - PID: $OPSML_BACKEND_PID - logs: $OPSML_BACKEND_LOG"
+tail -n 80 "$OPSML_BACKEND_LOG" 2>/dev/null || true
+exit 1
+"""
+
+[tasks."dev:e2e:opsml:frontend"]
+description = "Start opsml frontend SvelteKit dev server in background"
+env = { OPSML_TESTING = "1" }
+run = """
+mkdir -p $OPSML_E2E_DIR
+cd $UI_DIR
+pnpm install
+OPSML_FRONTEND_LOG=$OPSML_E2E_DIR/opsml-frontend.log
+export OPSML_FRONTEND_LOG
+OPSML_FRONTEND_PID=$(python -c 'import os, subprocess
+log = open(os.environ["OPSML_FRONTEND_LOG"], "ab")
+env = os.environ.copy()
+env["OPSML_SERVER_PORT"] = os.environ["OPSML_E2E_BACKEND_PORT"]
+p = subprocess.Popen(["pnpm", "run", "dev"], stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, env=env, start_new_session=True)
+print(p.pid)')
+echo $OPSML_FRONTEND_PID > $OPSML_E2E_DIR/opsml-frontend.pid
+
+OPSML_FRONTEND_URL=http://localhost:$OPSML_E2E_FRONTEND_PORT
+OPSML_FRONTEND_ATTEMPT=0
+while [ $OPSML_FRONTEND_ATTEMPT -lt 60 ]; do
+  if ! kill -0 $OPSML_FRONTEND_PID 2>/dev/null; then
+    echo "OpsML frontend exited before readiness - PID: $OPSML_FRONTEND_PID - logs: $OPSML_FRONTEND_LOG"
+    tail -n 80 "$OPSML_FRONTEND_LOG" 2>/dev/null || true
+    exit 1
+  fi
+  if curl -fsS --max-time 2 "$OPSML_FRONTEND_URL" >/dev/null 2>&1; then
+    echo "OpsML frontend started - PID: $OPSML_FRONTEND_PID - logs: $OPSML_FRONTEND_LOG"
+    exit 0
+  fi
+  OPSML_FRONTEND_ATTEMPT=$((OPSML_FRONTEND_ATTEMPT + 1))
+  sleep 1
+done
+
+echo "Timed out waiting for OpsML frontend readiness at $OPSML_FRONTEND_URL - PID: $OPSML_FRONTEND_PID - logs: $OPSML_FRONTEND_LOG"
+tail -n 80 "$OPSML_FRONTEND_LOG" 2>/dev/null || true
+exit 1
+"""
+
+[tasks."dev:e2e:opsml:up"]
+description = "Start opsml backend + frontend in background"
+depends = ["dev:e2e:opsml:backend", "dev:e2e:opsml:frontend"]
+
+[tasks."dev:e2e:start:servers"]
+description = "Start Scouter and OpsML servers for E2E testing"
+depends = ["dev:e2e:scouter:up", "dev:e2e:opsml:up"]
+
+[tasks."dev:e2e:agent"]
+description = "Run one instrumented agent query"
+dir = "py-opsml"
+env = { OPSML_TESTING = "1" }
+run = """
+OPSML_TRACKING_URI=$OPSML_E2E_TRACKING_URI \
+OPSML_STORAGE_URI=$OPSML_E2E_DIR/opsml_registries \
+SCOUTER_SERVER_URI=$OPSML_E2E_SCOUTER_URI \
+SCOUTER_GRPC_URI=$OPSML_E2E_SCOUTER_GRPC_URI \
+uv run python -m dev.integration.agent.main "$OPSML_E2E_QUERY"
+"""
+
+[tasks."dev:e2e:agent:single"]
+description = "Run one online single-agent query"
+dir = "py-opsml"
+env = { OPSML_TESTING = "1" }
+run = """
+OPSML_TRACKING_URI=$OPSML_E2E_TRACKING_URI \
+OPSML_STORAGE_URI=$OPSML_E2E_DIR/opsml_registries \
+SCOUTER_SERVER_URI=$OPSML_E2E_SCOUTER_URI \
+SCOUTER_GRPC_URI=$OPSML_E2E_SCOUTER_GRPC_URI \
+uv run python -m dev.integration.agent.single "$OPSML_E2E_QUERY"
+"""
+
+[tasks."dev:e2e:smoke:offline"]
+description = "Run offline ADK agent evaluation"
+dir = "py-opsml"
+env = { OPSML_TESTING = "1", SCOUTER_OFFLINE = "1" }
+run = """
+OPSML_TRACKING_URI=$OPSML_E2E_TRACKING_URI \
+OPSML_STORAGE_URI=$OPSML_E2E_DIR/opsml_registries \
+SCOUTER_SERVER_URI=$OPSML_E2E_SCOUTER_URI \
+SCOUTER_GRPC_URI=$OPSML_E2E_SCOUTER_GRPC_URI \
+uv run python -m dev.integration.agent.evaluation.evaluate --check
+"""
+
+[tasks."dev:e2e:down"]
+description = "Teardown all E2E services"
+run = """
+[ -f $OPSML_E2E_DIR/opsml-frontend.pid ] && kill $(cat $OPSML_E2E_DIR/opsml-frontend.pid) 2>/dev/null || true
+[ -f $OPSML_E2E_DIR/opsml-backend.pid ] && kill $(cat $OPSML_E2E_DIR/opsml-backend.pid) 2>/dev/null || true
+[ -f $OPSML_E2E_DIR/scouter-server.pid ] && kill $(cat $OPSML_E2E_DIR/scouter-server.pid) 2>/dev/null || true
+rm -f $OPSML_E2E_DIR/*.pid
+lsof -ti:$OPSML_E2E_FRONTEND_PORT | xargs kill -9 2>/dev/null || true
+lsof -ti:$OPSML_E2E_BACKEND_PORT | xargs kill -9 2>/dev/null || true
+lsof -ti:$SCOUTER_HTTP_PORT | xargs kill -9 2>/dev/null || true
+lsof -ti:$SCOUTER_GRPC_PORT | xargs kill -9 2>/dev/null || true
+cd $SCOUTER_DIR && docker compose down
+"""

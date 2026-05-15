@@ -1,6 +1,6 @@
 if __name__ == "__main__":
     from openai import OpenAI
-    from opsml import PromptCard, Prompt, CardRegistry
+    from opsml import CardRegistry, Prompt, PromptCard
 
     client = OpenAI()
 

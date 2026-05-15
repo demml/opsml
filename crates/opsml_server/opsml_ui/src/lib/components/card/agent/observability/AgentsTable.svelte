@@ -24,6 +24,35 @@
     const cmp = av < bv ? -1 : av > bv ? 1 : 0;
     return sortAsc ? cmp : -cmp;
   }));
+
+  /**
+   * Builds the stable part of a row key from business identifiers only.
+   * Metric counters and sort position are intentionally excluded so refreshed
+   * activity data does not remount the same logical agent row.
+   */
+  function agentRowKeyBase(row: GenAiAgentActivity): string {
+    const key = [
+      row.agent_id ?? "",
+      row.conversation_id ?? "",
+      row.agent_name ?? "",
+    ].join("|");
+    return key.length > 2 ? key : "unknown-agent";
+  }
+
+  /**
+   * Adds a deterministic duplicate suffix only when two rows share the same
+   * business identity. The suffix is not sort-position based, so reordering the
+   * same rows keeps each rendered row attached to the same logical agent.
+   */
+  const keyedRows = $derived.by(() => {
+    const counts: Record<string, number> = {};
+    return sorted.map((row) => {
+      const base = agentRowKeyBase(row);
+      const seen = counts[base] ?? 0;
+      counts[base] = seen + 1;
+      return { row, key: seen === 0 ? base : `${base}#${seen}` };
+    });
+  });
 </script>
 
 <div class="rounded-base border-2 border-black shadow bg-surface-50 overflow-hidden">
@@ -58,12 +87,12 @@
         </tr>
       </thead>
       <tbody>
-        {#if sorted.length === 0}
+        {#if keyedRows.length === 0}
           <tr>
             <td colspan="4" class="px-2 py-3 text-center text-xs text-primary-700">No data</td>
           </tr>
         {:else}
-          {#each sorted as row (row.agent_id ?? row.agent_name)}
+          {#each keyedRows as { row, key } (key)}
             <tr class="border-b border-black hover:bg-primary-100">
               <td class="px-2 py-1 text-xs font-mono text-primary-900 truncate max-w-[120px]">{row.agent_name ?? '—'}</td>
               <td class="px-2 py-1 text-xs font-mono text-primary-900 text-right">{fmtCompact(row.span_count)}</td>

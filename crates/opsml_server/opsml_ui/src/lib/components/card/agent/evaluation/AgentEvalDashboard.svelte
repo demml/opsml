@@ -37,6 +37,8 @@
     Loader2, TrendingUp, KeySquare
   } from 'lucide-svelte';
 
+  type PageDirection = 'next' | 'previous';
+
   interface Props {
     agentName: string;
     agentVersion: string;
@@ -93,55 +95,82 @@
     } catch (err) {
       console.error('[AgentEvalDashboard] Refresh failed:', err);
     } finally {
+      evalData = [...evalData];
       isRefreshing = false;
       resetRecordTraceMap();
       timeRangeState.endRefresh();
     }
   }
 
-  /** Advance the record page for all evals that have a cursor in that direction. */
-  async function handleRecordPageChange(direction: string) {
+  /**
+   * Clone a successful eval entry after refresh so derived merged pages see
+   * fresh object identities instead of relying on nested `selectedData`
+   * mutation inside `refreshAgentMonitoringData`.
+   */
+  function cloneEvalEntry(e: AgentPromptEvalData): AgentPromptEvalData {
+    if (e.monitoringData.status !== 'success') return e;
+    return {
+      ...e,
+      monitoringData: {
+        ...e.monitoringData,
+        selectedData: { ...e.monitoringData.selectedData },
+      },
+    };
+  }
+
+  /**
+   * Advance the record page for every prompt eval with a cursor in the
+   * requested direction. Evals without that cursor remain on their current page.
+   */
+  async function handleRecordPageChange(direction: PageDirection) {
     isRefreshing = true;
     timeRangeState.beginRefresh();
     try {
-      await Promise.all(
+      const nextEvalData = await Promise.all(
         evalData.map(async (e) => {
-          if (e.monitoringData.status !== 'success') return;
+          if (e.monitoringData.status !== 'success') return e;
           const page = e.monitoringData.selectedData.records;
           const canPage = direction === 'next' ? page?.has_next : page?.has_previous;
           const cursor = direction === 'next' ? page?.next_cursor : page?.previous_cursor;
-          if (!canPage || !cursor) return;
+          if (!canPage || !cursor) return e;
           await refreshAgentMonitoringData(fetch, e.monitoringData, {
             recordCursor: { cursor, direction },
           });
+          return cloneEvalEntry(e);
         })
       );
+      evalData = nextEvalData;
     } catch (err) {
       console.error('[AgentEvalDashboard] Record page change failed:', err);
     } finally {
       isRefreshing = false;
-      appendToRecordTraceMap();
+      resetRecordTraceMap();
       timeRangeState.endRefresh();
     }
   }
 
-  /** Advance the workflow page for all evals that have a cursor in that direction. */
-  async function handleWorkflowPageChange(direction: string) {
+  /**
+   * Advance the workflow page for every prompt eval with a cursor in the
+   * requested direction. Record pagination state is intentionally untouched.
+   */
+  async function handleWorkflowPageChange(direction: PageDirection) {
     isRefreshing = true;
     timeRangeState.beginRefresh();
     try {
-      await Promise.all(
+      const nextEvalData = await Promise.all(
         evalData.map(async (e) => {
-          if (e.monitoringData.status !== 'success') return;
+          if (e.monitoringData.status !== 'success') return e;
           const page = e.monitoringData.selectedData.workflows;
           const canPage = direction === 'next' ? page?.has_next : page?.has_previous;
           const cursor = direction === 'next' ? page?.next_cursor : page?.previous_cursor;
-          if (!canPage || !cursor) return;
+          if (!canPage || !cursor) return e;
           await refreshAgentMonitoringData(fetch, e.monitoringData, {
             workflowCursor: { cursor, direction },
           });
+          return cloneEvalEntry(e);
         })
       );
+      evalData = nextEvalData;
     } catch (err) {
       console.error('[AgentEvalDashboard] Workflow page change failed:', err);
     } finally {

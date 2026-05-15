@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { replaceState } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import type {
-    ActiveFilter,
     TimeRange,
     TraceFacetDimension,
     TraceFacetsResponse,
@@ -13,6 +14,22 @@
     TracePaginationResponse,
     TraceSpansResponse,
   } from "./types";
+  import {
+    addToClause,
+    attrClause,
+    durationMaxClause,
+    durationMinClause,
+    hasErrorsClause,
+    removeClauseDimension,
+    replaceClauseDimension,
+    serviceClause,
+    serviceInstanceIdClause,
+    serviceNamespaceClause,
+    serviceVersionClause,
+    statusCodeClause,
+    type ActiveFilter,
+    type FilterClause,
+  } from "./clause";
   import type { DateTime } from "$lib/types";
   import ChipBar from "./filters/ChipBar.svelte";
   import FacetSidebar from "./filters/FacetSidebar.svelte";
@@ -71,6 +88,8 @@
     const metricsRequest: TraceMetricsRequest = {
       bucket_interval: filters.bucket_interval,
       ...filters.filters,
+      start_time: filters.filters.start_time ?? selectedTimeRange.startTime,
+      end_time: filters.filters.end_time ?? selectedTimeRange.endTime,
     };
 
     const metrics: TraceMetricsResponse = await getServerTraceMetrics(
@@ -88,18 +107,21 @@
   }
 
   async function getTraceFacetsForRange(): Promise<TraceFacetsResponse> {
-    const [serviceFacets, namespaceFacets, versionFacets, instanceFacets, statusFacets] = await Promise.all([
-      getServerTraceFacets(fetch, { ...filters.filters, service_name: undefined }),
-      getServerTraceFacets(fetch, { ...filters.filters, service_namespace: undefined }),
-      getServerTraceFacets(fetch, { ...filters.filters, service_version: undefined }),
-      getServerTraceFacets(fetch, { ...filters.filters, service_instance_id: undefined }),
-      getServerTraceFacets(fetch, { ...filters.filters, status_code: undefined }),
+    const [serviceFacets, statusFacets] = await Promise.all([
+      getServerTraceFacets(fetch, {
+        ...filters.filters,
+        clause: removeClauseDimension(filters.filters.clause, "service"),
+      }),
+      getServerTraceFacets(fetch, {
+        ...filters.filters,
+        clause: removeClauseDimension(filters.filters.clause, "status_code"),
+      }),
     ]);
     return {
       services: serviceFacets.services,
-      namespaces: namespaceFacets.namespaces ?? [],
-      versions: versionFacets.versions ?? [],
-      instance_ids: instanceFacets.instance_ids ?? [],
+      namespaces: [],
+      versions: [],
+      instance_ids: [],
       status_codes: statusFacets.status_codes,
       total_count: serviceFacets.total_count,
     };
@@ -109,7 +131,7 @@
     const url = new URL(window.location.href);
     if (url.searchParams.has("trace_id")) {
       url.searchParams.delete("trace_id");
-      history.replaceState(history.state, "", url.pathname + url.search);
+      replaceState(resolve((url.pathname + url.search) as `/opsml/${string}`), history.state);
     }
   }
 
@@ -239,147 +261,126 @@
   }
 
   function addService(service: string) {
-    const next = {
-      ...filters,
-      filters: { ...filters.filters, service_name: service },
-    };
-    void handleFiltersChange(next);
+    updateClause(replaceClauseDimension(filters.filters.clause, "service", serviceClause(service)));
   }
 
   function addStatus(status: number) {
-    const next = {
-      ...filters,
-      filters: { ...filters.filters, status_code: status },
-    };
-    void handleFiltersChange(next);
+    updateClause(replaceClauseDimension(filters.filters.clause, "status_code", statusCodeClause(status)));
   }
 
   function addHasErrors() {
-    const next = {
-      ...filters,
-      filters: { ...filters.filters, has_errors: true },
-    };
-    void handleFiltersChange(next);
+    updateClause(replaceClauseDimension(filters.filters.clause, "has_errors", hasErrorsClause(true)));
   }
 
   function addAttribute(raw: string) {
-    const list = [...(filters.filters.attribute_filters ?? []), raw];
-    const next = {
-      ...filters,
-      filters: { ...filters.filters, attribute_filters: list },
-    };
-    void handleFiltersChange(next);
+    const [key, ...rest] = raw.split("=");
+    const value = rest.join("=");
+    if (!key.trim() || !value.trim()) return;
+    updateClause(addToClause(filters.filters.clause, attrClause(key.trim(), value.trim())));
   }
 
   function addDuration(min?: number, max?: number) {
-    const next = {
-      ...filters,
-      filters: {
-        ...filters.filters,
-        ...(min !== undefined ? { duration_min_ms: min } : { duration_min_ms: undefined }),
-        ...(max !== undefined ? { duration_max_ms: max } : { duration_max_ms: undefined }),
-      },
-    };
-    void handleFiltersChange(next);
+    let clause = removeClauseDimension(filters.filters.clause, "duration");
+    if (min !== undefined) clause = addToClause(clause, durationMinClause(min));
+    if (max !== undefined) clause = addToClause(clause, durationMaxClause(max));
+    updateClause(clause);
   }
 
   function setService(service: string) {
-    const next = {
-      ...filters,
-      filters: { ...filters.filters, service_name: service },
-    };
-    void handleFiltersChange(next);
+    updateClause(replaceClauseDimension(filters.filters.clause, "service", serviceClause(service)));
   }
 
   function clearService() {
-    const nextFilters = { ...filters.filters };
-    delete nextFilters.service_name;
-    void handleFiltersChange({ ...filters, filters: nextFilters });
+    updateClause(removeClauseDimension(filters.filters.clause, "service"));
   }
 
   function setNamespace(namespace: string) {
-    const next = {
-      ...filters,
-      filters: { ...filters.filters, service_namespace: namespace },
-    };
-    void handleFiltersChange(next);
+    updateClause(
+      replaceClauseDimension(
+        filters.filters.clause,
+        "service_namespace",
+        serviceNamespaceClause(namespace),
+      ),
+    );
   }
 
   function clearNamespace() {
-    const nextFilters = { ...filters.filters };
-    delete nextFilters.service_namespace;
-    void handleFiltersChange({ ...filters, filters: nextFilters });
+    updateClause(removeClauseDimension(filters.filters.clause, "service_namespace"));
   }
 
   function setVersion(version: string) {
-    const next = {
-      ...filters,
-      filters: { ...filters.filters, service_version: version },
-    };
-    void handleFiltersChange(next);
+    updateClause(
+      replaceClauseDimension(
+        filters.filters.clause,
+        "service_version",
+        serviceVersionClause(version),
+      ),
+    );
   }
 
   function clearVersion() {
-    const nextFilters = { ...filters.filters };
-    delete nextFilters.service_version;
-    void handleFiltersChange({ ...filters, filters: nextFilters });
+    updateClause(removeClauseDimension(filters.filters.clause, "service_version"));
   }
 
   function setInstance(instanceId: string) {
-    const next = {
-      ...filters,
-      filters: { ...filters.filters, service_instance_id: instanceId },
-    };
-    void handleFiltersChange(next);
+    updateClause(
+      replaceClauseDimension(
+        filters.filters.clause,
+        "service_instance_id",
+        serviceInstanceIdClause(instanceId),
+      ),
+    );
   }
 
   function clearInstance() {
-    const nextFilters = { ...filters.filters };
-    delete nextFilters.service_instance_id;
-    void handleFiltersChange({ ...filters, filters: nextFilters });
+    updateClause(removeClauseDimension(filters.filters.clause, "service_instance_id"));
   }
 
   function setStatus(status: number) {
-    const next = {
-      ...filters,
-      filters: { ...filters.filters, status_code: status },
-    };
-    void handleFiltersChange(next);
+    updateClause(replaceClauseDimension(filters.filters.clause, "status_code", statusCodeClause(status)));
   }
 
   function clearStatus() {
-    const nextFilters = { ...filters.filters };
-    delete nextFilters.status_code;
-    void handleFiltersChange({ ...filters, filters: nextFilters });
+    updateClause(removeClauseDimension(filters.filters.clause, "status_code"));
   }
 
   function toggleErrors(enabled: boolean) {
-    const nextFilters = { ...filters.filters };
-    if (enabled) {
-      nextFilters.has_errors = true;
-    } else {
-      delete nextFilters.has_errors;
-    }
-    void handleFiltersChange({ ...filters, filters: nextFilters });
+    updateClause(
+      replaceClauseDimension(
+        filters.filters.clause,
+        "has_errors",
+        enabled ? hasErrorsClause(true) : undefined,
+      ),
+    );
   }
 
   function setDuration(next: { min?: number; max?: number }) {
+    let clause = removeClauseDimension(filters.filters.clause, "duration");
+    if (next.min !== undefined) clause = addToClause(clause, durationMinClause(next.min));
+    if (next.max !== undefined) clause = addToClause(clause, durationMaxClause(next.max));
+    updateClause(clause);
+  }
+
+  function setAttributes(list: string[]) {
+    let clause = removeClauseDimension(filters.filters.clause, "attr");
+    for (const raw of list) {
+      const [key, ...rest] = raw.split("=");
+      const value = rest.join("=");
+      if (key.trim() && value.trim()) {
+        clause = addToClause(clause, attrClause(key.trim(), value.trim()));
+      }
+    }
+    updateClause(clause);
+  }
+
+  function updateClause(clause: FilterClause | undefined) {
     void handleFiltersChange({
       ...filters,
       filters: {
         ...filters.filters,
-        duration_min_ms: next.min,
-        duration_max_ms: next.max,
+        clause,
       },
     });
-  }
-
-  function setAttributes(list: string[]) {
-    const next = {
-      ...filters,
-      filters: { ...filters.filters, attribute_filters: list },
-    };
-    void handleFiltersChange(next);
   }
 
   $effect(() => {

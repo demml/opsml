@@ -1,4 +1,5 @@
 import type { DateTime } from "$lib/types";
+import type { FilterClause } from "./clause";
 
 export interface TraceListItem {
   trace_id: string;
@@ -28,24 +29,15 @@ export interface TraceMetricBucket {
 }
 
 export interface TraceFilters {
-  service_name?: string;
-  service_namespace?: string;
-  service_version?: string;
-  service_instance_id?: string;
-  has_errors?: boolean;
-  status_code?: number;
+  clause?: FilterClause;
   start_time?: DateTime;
   end_time?: DateTime;
-  duration_min_ms?: number;
-  duration_max_ms?: number;
   limit?: number;
   cursor_start_time?: DateTime;
   cursor_trace_id?: string;
   direction?: "next" | "previous";
-  attribute_filters?: string[];
   trace_ids?: string[];
   entity_uid?: string;
-  queue_uid?: string;
 }
 
 export interface TraceCursor {
@@ -163,43 +155,15 @@ export interface TraceRequest {
 }
 
 export interface TraceMetricsRequest {
-  service_name?: string;
-  service_namespace?: string;
-  service_version?: string;
-  service_instance_id?: string;
-  has_errors?: boolean;
-  status_code?: number;
-  start_time?: DateTime;
-  end_time?: DateTime;
+  clause?: FilterClause;
+  start_time: DateTime;
+  end_time: DateTime;
   bucket_interval?: string;
-  duration_min_ms?: number;
-  duration_max_ms?: number;
-  attribute_filters?: string[];
-  trace_ids?: string[];
   entity_uid?: string;
-  queue_uid?: string;
 }
 
 export interface TraceMetricsResponse {
   metrics: TraceMetricBucket[];
-}
-
-export type ActiveFilterKey =
-  | "service_name"
-  | "service_namespace"
-  | "service_version"
-  | "service_instance_id"
-  | "status_code"
-  | "has_errors"
-  | "duration_min_ms"
-  | "duration_max_ms"
-  | "attribute";
-
-export interface ActiveFilter {
-  key: ActiveFilterKey;
-  label: string;
-  value: string;
-  attributeRaw?: string;
 }
 
 export interface FacetCount {

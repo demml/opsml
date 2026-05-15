@@ -1,9 +1,9 @@
-from opsml.card import PromptCard, RegistryType
 from opsml.agent import Prompt
+from opsml.card import CardRegistry, PromptCard, RegistryType
 from opsml.scouter.drift import AgentEvalProfile
+
 from .models import Recipe
-from .tasks import recipe_tasks, recipe_response_tasks
-from opsml.card import CardRegistry
+from .tasks import recipe_response_tasks, recipe_tasks
 
 
 def create_recipe_generation_prompt() -> Prompt:

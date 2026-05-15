@@ -1,7 +1,7 @@
 if __name__ == "__main__":
     # create_fake_data requires polars and pandas to be installed
+    from opsml import CardRegistry, ModelCard, RegistryType, SklearnModel, TaskType
     from opsml.helpers.data import create_fake_data
-    from opsml import SklearnModel, CardRegistry, TaskType, ModelCard, RegistryType
     from sklearn import ensemble  # type: ignore
 
     # start registries

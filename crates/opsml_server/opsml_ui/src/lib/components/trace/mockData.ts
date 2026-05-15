@@ -13,8 +13,9 @@ import type {
   TraceFilters,
   TraceMetricsRequest,
   TraceRequest,
-  Attribute,
 } from "$lib/components/trace/types";
+import { evaluateClause } from "./clauseEvaluator";
+import { removeClauseDimension } from "./clause";
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -456,19 +457,19 @@ const ALL_BUILDERS = [
 ];
 
 // Service/scope metadata for each trace (used for TraceListItem)
-const TRACE_META: { service: string; scope: string }[] = [
-  { service: "inference-api", scope: "http" },
-  { service: "inference-api", scope: "http" },
-  { service: "llm-gateway", scope: "genai" },
-  { service: "data-pipeline", scope: "batch" },
-  { service: "llm-gateway", scope: "genai" },
-  { service: "inference-api", scope: "http" },
-  { service: "monitoring-agent", scope: "drift" },
-  { service: "inference-api", scope: "http" },
-  { service: "llm-gateway", scope: "genai" },
-  { service: "data-pipeline", scope: "batch" },
-  { service: "inference-api", scope: "http" },
-  { service: "monitoring-agent", scope: "drift" },
+const TRACE_META: { service: string; scope: string; namespace: string; version: string; instance: string }[] = [
+  { service: "inference-api", scope: "http", namespace: "models", version: "3.2.1", instance: "pod-a" },
+  { service: "inference-api", scope: "http", namespace: "models", version: "3.2.1", instance: "pod-b" },
+  { service: "llm-gateway", scope: "genai", namespace: "agents", version: "1.0.0", instance: "pod-c" },
+  { service: "data-pipeline", scope: "batch", namespace: "features", version: "2.4.0", instance: "worker-a" },
+  { service: "llm-gateway", scope: "genai", namespace: "agents", version: "1.0.0", instance: "pod-d" },
+  { service: "inference-api", scope: "http", namespace: "models", version: "2.1.0", instance: "pod-e" },
+  { service: "monitoring-agent", scope: "drift", namespace: "monitoring", version: "0.9.0", instance: "pod-f" },
+  { service: "inference-api", scope: "http", namespace: "models", version: "3.2.1", instance: "pod-g" },
+  { service: "llm-gateway", scope: "genai", namespace: "agents", version: "1.0.0", instance: "pod-h" },
+  { service: "data-pipeline", scope: "batch", namespace: "features", version: "2.4.0", instance: "worker-b" },
+  { service: "inference-api", scope: "http", namespace: "models", version: "1.5.0", instance: "pod-i" },
+  { service: "monitoring-agent", scope: "drift", namespace: "monitoring", version: "0.9.0", instance: "pod-j" },
 ];
 
 // Build all spans once at module load
@@ -498,7 +499,12 @@ function buildTraceListItems(): TraceListItem[] {
       has_errors: errorSpans.length > 0,
       error_count: errorSpans.length,
       created_at: new Date(startMs).toISOString(),
-      resource_attributes: root.attributes,
+      resource_attributes: [
+        ...root.attributes,
+        { key: "service.namespace", value: TRACE_META[i].namespace },
+        { key: "service.version", value: TRACE_META[i].version },
+        { key: "service.instance.id", value: TRACE_META[i].instance },
+      ],
     };
   });
 }
@@ -561,11 +567,14 @@ function buildMetricBuckets(
 export function getMockTracePage(filters: TraceFilters): TracePaginationResponse {
   let items = buildTraceListItems();
 
-  if (filters.service_name) {
-    items = items.filter((t) => t.service_name === filters.service_name);
+  if (filters.clause) items = items.filter((item) => evaluateClause(item, filters.clause!));
+  if (filters.start_time) {
+    const start = new Date(filters.start_time).getTime();
+    items = items.filter((item) => new Date(item.start_time).getTime() >= start);
   }
-  if (filters.has_errors !== undefined) {
-    items = items.filter((t) => t.has_errors === filters.has_errors);
+  if (filters.end_time) {
+    const end = new Date(filters.end_time).getTime();
+    items = items.filter((item) => new Date(item.start_time).getTime() <= end);
   }
 
   const limit = filters.limit || 50;
@@ -598,8 +607,43 @@ export function getMockTraceMetrics(
   const startTime = request.start_time || new Date(Date.now() - 15 * 60_000).toISOString();
   const endTime = request.end_time || new Date().toISOString();
   const bucketInterval = request.bucket_interval || "1 minutes";
+  const matchingItems = request.clause
+    ? buildTraceListItems().filter((item) => evaluateClause(item, request.clause!))
+    : buildTraceListItems();
+  const buckets = buildMetricBuckets(startTime, endTime, bucketInterval);
 
   return {
-    metrics: buildMetricBuckets(startTime, endTime, bucketInterval),
+    metrics: buckets.map((bucket) => ({
+      ...bucket,
+      trace_count: Math.min(bucket.trace_count, matchingItems.length),
+    })),
   };
+}
+
+export function getMockTraceFacets(filters: TraceFilters) {
+  const items = buildTraceListItems();
+  const filterItems = (dimension: "service" | "status_code") => {
+    const clause = removeClauseDimension(filters.clause, dimension);
+    return clause ? items.filter((item) => evaluateClause(item, clause)) : items;
+  };
+  const serviceItems = filterItems("service");
+  const statusItems = filterItems("status_code");
+
+  return {
+    services: toFacetDimensions(serviceItems.map((item) => item.service_name)),
+    status_codes: toFacetDimensions(statusItems.map((item) => String(item.status_code))),
+    total_count: filters.clause
+      ? items.filter((item) => evaluateClause(item, filters.clause!)).length
+      : items.length,
+  };
+}
+
+function toFacetDimensions(values: string[]) {
+  const counts = new Map<string, number>();
+  for (const value of values) {
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .map(([value, trace_count]) => ({ value, trace_count }))
+    .sort((a, b) => b.trace_count - a.trace_count || a.value.localeCompare(b.value));
 }

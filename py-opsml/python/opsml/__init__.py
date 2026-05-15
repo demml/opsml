@@ -2,9 +2,6 @@
 # pylint: disable=no-name-in-module
 # python/opsml/__init__.py
 from . import agent, app, card, data, experiment, logging, mock, model, scouter, types
-from ._opsml import _get_log_level  # type: ignore
-from ._opsml import _log_json  # type: ignore
-from ._opsml import get_opsml_version  # type: ignore
 from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; # model
     AgentSkillStandard,
     AppState,
@@ -47,6 +44,9 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     TensorFlowModel,
     TorchModel,
     XGBoostModel,
+    _get_log_level,  # type: ignore
+    _log_json,  # type: ignore
+    get_opsml_version,  # type: ignore
     start_experiment,
 )
 

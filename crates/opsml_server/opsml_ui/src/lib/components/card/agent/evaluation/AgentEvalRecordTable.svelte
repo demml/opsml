@@ -15,6 +15,8 @@
   import { ArrowLeft, ArrowRight } from 'lucide-svelte';
   import EvalRecordSideBar from '$lib/components/scouter/agent/record/EvalRecordSideBar.svelte';
 
+  type PageDirection = 'next' | 'previous';
+
   let {
     records,
     hasNext,
@@ -25,7 +27,7 @@
     records: RecordWithAgent[];
     hasNext: boolean;
     hasPrevious: boolean;
-    onPageChange: (direction: string) => void;
+    onPageChange: (direction: PageDirection) => void | Promise<void>;
     isRefreshing?: boolean;
   } = $props();
 
@@ -72,12 +74,23 @@
     isSelected = false;
   }
 
+  /**
+   * Guards the record pagination callback so disabled controls cannot emit
+   * stale page requests while a refresh is already in flight.
+   */
+  async function requestPage(direction: PageDirection) {
+    if (isRefreshing) return;
+    if (direction === 'next' && !hasNext) return;
+    if (direction === 'previous' && !hasPrevious) return;
+    await onPageChange(direction);
+  }
+
   // Prompt column prepended before ID; 1fr on Entity Type consumes whitespace.
   // min-w-[1050px] = EvalRecordTable's 900px + ~150px for the Prompt column.
   const gridLayout = "grid-template-columns: 140px 80px 140px 100px 1fr 140px 140px 100px;";
 </script>
 
-<div class="pt-2 h-full flex flex-col min-h-0 transition-opacity duration-200 {isRefreshing ? 'opacity-60 pointer-events-none' : ''}">
+<div class="pt-2 h-full flex flex-col min-h-0 transition-opacity duration-200 {isRefreshing ? 'opacity-60' : ''}">
   <div class="border-2 border-black rounded-base bg-white flex flex-col h-full max-h-[500px] overflow-hidden">
 
     <div class="overflow-auto flex-1 w-full relative">
@@ -176,16 +189,20 @@
     {#if records.length > 0}
       <div class="border-t-2 border-black bg-gray-50 p-2 flex justify-center gap-2 items-center">
         <button
+          type="button"
+          aria-label="Previous evaluation records page"
           class="btn bg-surface-50 text-primary-800 disabled:text-primary-400 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
-          onclick={() => onPageChange('previous')}
-          disabled={!hasPrevious}
+          onclick={() => requestPage('previous')}
+          disabled={isRefreshing || !hasPrevious}
         >
           <ArrowLeft class="w-4 h-4" color="currentColor"/>
         </button>
         <button
+          type="button"
+          aria-label="Next evaluation records page"
           class="btn bg-surface-50 text-primary-800 disabled:text-primary-400 border-black border-2 shadow-small shadow-hover-small h-9 px-3 flex items-center justify-center disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-small"
-          onclick={() => onPageChange('next')}
-          disabled={!hasNext}
+          onclick={() => requestPage('next')}
+          disabled={isRefreshing || !hasNext}
         >
           <ArrowRight class="w-4 h-4" color="currentColor"/>
         </button>

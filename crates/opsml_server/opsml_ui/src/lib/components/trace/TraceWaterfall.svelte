@@ -1,7 +1,9 @@
 <script lang="ts">
   import type { TraceSpan } from './types';
   import { formatDuration, hasSpanError } from './utils';
+  import { prepareWaterfallSpans } from './waterfall';
   import { CircleX, Clock, ChevronRight } from 'lucide-svelte';
+  import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 
   // Scroll-sync refs
   let spanScrollContainer: HTMLDivElement;
@@ -82,7 +84,7 @@
   // ─── Tree helpers ────────────────────────────────────────────────────────
 
   function buildParentChildMap(allSpans: TraceSpan[]): Map<string, TraceSpan[]> {
-    const map = new Map<string, TraceSpan[]>();
+    const map = new SvelteMap<string, TraceSpan[]>();
     for (const span of allSpans) {
       if (span.parent_span_id) {
         const existing = map.get(span.parent_span_id) || [];
@@ -131,32 +133,7 @@
     return false;
   }
 
-  function sortSpansDepthFirst(spans: TraceSpan[]): TraceSpan[] {
-    const childrenMap = new Map<string | null, TraceSpan[]>();
-    for (const span of spans) {
-      const parentId = span.parent_span_id || null;
-      if (!childrenMap.has(parentId)) childrenMap.set(parentId, []);
-      childrenMap.get(parentId)!.push(span);
-    }
-    for (const siblings of childrenMap.values()) {
-      siblings.sort((a, b) => {
-        const tA = new Date(a.start_time).getTime();
-        const tB = new Date(b.start_time).getTime();
-        return tA !== tB ? tA - tB : a.span_order - b.span_order;
-      });
-    }
-    const result: TraceSpan[] = [];
-    function traverse(parentId: string | null) {
-      for (const child of childrenMap.get(parentId) || []) {
-        result.push(child);
-        traverse(child.span_id);
-      }
-    }
-    traverse(null);
-    return result;
-  }
-
-  const sortedSpans = $derived(sortSpansDepthFirst(spans));
+  const sortedSpans = $derived(prepareWaterfallSpans(spans));
   const parentChildMap = $derived(buildParentChildMap(sortedSpans));
 
   // ─── Collapsible spans ─────────────────────────────────────────────────
@@ -170,7 +147,7 @@
   const effectiveCollapsed = $derived(collapsedSpans ?? initialCollapsed);
 
   function toggleCollapse(spanId: string) {
-    const next = new Set(effectiveCollapsed);
+    const next = new SvelteSet(effectiveCollapsed);
     if (next.has(spanId)) next.delete(spanId); else next.add(spanId);
     collapsedSpans = next;
   }
@@ -217,6 +194,10 @@
   function onTimelineMouseLeave() {
     hoverX = null;
   }
+
+  function depthLevels(depth: number): number[] {
+    return Array.from({ length: depth }, (_value, index) => index);
+  }
 </script>
 
 <div class="flex flex-col h-full bg-surface-50 text-sm overflow-hidden">
@@ -232,7 +213,7 @@
 
       <!-- Timeline axis -->
       <div class="flex-1 relative flex items-end px-0 pb-1.5 overflow-hidden">
-        {#each AXIS_MARKS as mark, i}
+        {#each AXIS_MARKS as mark, i (mark)}
           {@const pct = mark * 100}
           <div
             class="absolute bottom-0 flex flex-col items-center pointer-events-none"
@@ -286,7 +267,7 @@
         >
           <!-- Tree connector lines -->
           {#if span.depth > 0}
-            {#each Array.from({ length: span.depth }) as _, depthIndex}
+            {#each depthLevels(span.depth) as depthIndex (depthIndex)}
               {@const shouldDrawLine = shouldDrawVerticalLine(span, depthIndex, visibleSpans, parentChildMap)}
               {@const isCurrentLevel = depthIndex === span.depth - 1}
               {@const lineLeft = depthIndex * INDENT_PX + 8}
@@ -358,7 +339,7 @@
       class="flex-1 overflow-y-auto overflow-x-hidden relative bg-surface-50"
     >
       <!-- Vertical tick grid lines behind rows -->
-      {#each AXIS_MARKS.slice(1) as mark}
+      {#each AXIS_MARKS.slice(1) as mark (mark)}
         <div
           class="absolute top-0 bottom-0 w-px bg-black/6 pointer-events-none z-0"
           style="left: {mark * 100}%;"

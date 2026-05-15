@@ -1,21 +1,22 @@
+from typing import Union
+
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import seaborn as sns  # type: ignore
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-from sklearn.model_selection import train_test_split  # type: ignore
-from sklearn.preprocessing import StandardScaler  # type: ignore
-from sklearn.metrics import mean_squared_error, r2_score  # type: ignore
-from pydantic import BaseModel
-import matplotlib.pyplot as plt
-import seaborn as sns  # type: ignore
-from typing import Union
-import numpy as np
-from scipy import stats  # type: ignore
 from opsml import Card, ModelCard, ServiceCard, TaskType
 from opsml.experiment import Experiment, start_experiment
 from opsml.helpers.data import create_fake_data
 from opsml.model import ModelSaveKwargs, TorchModel
+from pydantic import BaseModel
+from scipy import stats  # type: ignore
+from sklearn.metrics import mean_squared_error, r2_score  # type: ignore
+from sklearn.model_selection import train_test_split  # type: ignore
+from sklearn.preprocessing import StandardScaler  # type: ignore
+from torch.utils.data import DataLoader, TensorDataset
 
 
 def plot_residuals_torch(

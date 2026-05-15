@@ -1,7 +1,8 @@
-import mlflow
-from sklearn.datasets import make_classification
-from sklearn import ensemble  # type: ignore
 import time
+
+import mlflow
+from sklearn import ensemble  # type: ignore
+from sklearn.datasets import make_classification
 
 times = []
 

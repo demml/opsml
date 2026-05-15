@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from typing import Callable, Optional
+
 from fastapi import FastAPI
 from google.adk.agents import Agent
 from google.adk.agents.callback_context import CallbackContext
@@ -10,9 +11,8 @@ from google.adk.runners import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 from opsml.scouter import trace
-from pydantic import BaseModel
-
 from opsml.scouter.evaluate import EvalRecord
+from pydantic import BaseModel
 
 from ..shared import get_shared_config, teardown
 

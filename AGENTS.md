@@ -428,6 +428,20 @@ Fixtures in `tests/conftest.py`:
 
 Test markers: `@pytest.mark.tensorflow` gates TF-specific tests; `mise run py:test:unit` excludes them by default.
 
+### ADK agent harness
+
+The offline Google ADK harness lives under `py-opsml/dev/integration/agent/`.
+Use it to verify agent tracing and attached eval behavior without a live Scouter:
+
+```bash
+mise run py:setup-adk
+mise run dev:e2e:smoke:offline
+```
+
+For live E2E runs, keep a sibling Scouter checkout at `../scouter` or set
+`SCOUTER_DIR=/path/to/scouter`, then run `mise run dev:e2e:start:servers`
+before `mise run dev:e2e:agent`.
+
 ---
 
 ## Feature Flags

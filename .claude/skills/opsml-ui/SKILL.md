@@ -31,6 +31,7 @@ Follow these repo-specific rules:
 - Prefer server-backed pagination, filtering, sorting, and aggregation for large remote datasets.
 - Use `VirtualScroller.svelte` or `@tanstack/svelte-virtual` for large scrollable views.
 - Do not add new UI libraries unless the user explicitly asks.
+- All functions, classes, methods, and components must have JSDoc comments. Use TSDoc tags like `@param`, `@returns`, `@throws`, and `@example` where relevant.
 
 When making changes, inspect in this order:
 1. The route entrypoint (`+page.svelte`, `+page.ts`, `+page.server.ts`, `+layout.*`)
