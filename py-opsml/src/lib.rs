@@ -4,6 +4,7 @@ pub mod card;
 pub mod cli;
 pub mod data;
 pub mod experiment;
+pub mod flavors;
 pub mod logging;
 pub mod mocks;
 pub mod model;
@@ -36,6 +37,16 @@ fn _opsml(m: &Bound<'_, PyModule>) -> PyResult<()> {
     logging::add_logging_module(m)?;
     mocks::add_mocks_module(m)?;
     service::add_service_module(m)?;
+
+    m.add_function(wrap_pyfunction!(flavors::sklearn_log_model, m)?)?;
+    m.add_function(wrap_pyfunction!(flavors::xgboost_log_model, m)?)?;
+    m.add_function(wrap_pyfunction!(flavors::lightgbm_log_model, m)?)?;
+    m.add_function(wrap_pyfunction!(flavors::catboost_log_model, m)?)?;
+    m.add_function(wrap_pyfunction!(flavors::torch_log_model, m)?)?;
+    m.add_function(wrap_pyfunction!(flavors::lightning_log_model, m)?)?;
+    m.add_function(wrap_pyfunction!(flavors::tensorflow_log_model, m)?)?;
+    m.add_function(wrap_pyfunction!(flavors::huggingface_log_model, m)?)?;
+    m.add_function(wrap_pyfunction!(flavors::onnx_log_model, m)?)?;
 
     Ok(())
 }

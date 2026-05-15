@@ -904,6 +904,9 @@ class ExperimentCard:
                 The experiment card uid to add
         """
 
+    def add_tag(self, tag: str) -> None: ...
+    def set_tags(self, val: List[str]) -> None: ...
+
     def list_artifacts(self, path: Optional[Path | str] = None) -> List[str]:
         """List the artifacts associated with the experiment card
 
@@ -2494,6 +2497,17 @@ class Experiment:
                 Value of the parameter
         """
 
+    def log_param(
+        self,
+        name: str,
+        value: Union[int, float, str],
+    ) -> None:
+        """
+        Log a parameter.
+
+        Alias for log_parameter.
+        """
+
     def log_parameters(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
         """
         Log multiple parameters
@@ -2501,6 +2515,13 @@ class Experiment:
         Args:
             parameters (list[Parameter] | Dict[str, Union[int, float, str]]):
                 Parameters to log
+        """
+
+    def log_params(self, parameters: list[Parameter] | Dict[str, Union[int, float, str]]) -> None:
+        """
+        Log multiple parameters.
+
+        Alias for log_parameters.
         """
 
     def log_artifact(
@@ -2565,6 +2586,16 @@ class Experiment:
                 All files in the directory will be logged.
         """
 
+    def set_tag(self, tag: str) -> None:
+        """
+        Append one tag to the experiment.
+        """
+
+    def set_tags(self, tags: list[str]) -> None:
+        """
+        Replace the experiment tags.
+        """
+
     @property
     def card(self) -> "ExperimentCard":
         """
@@ -2621,6 +2652,24 @@ def start_experiment(
     Returns:
         Experiment
     """
+
+def log_metric(
+    name: str,
+    value: float,
+    step: Optional[int] = None,
+    timestamp: Optional[int] = None,
+    created_at: Optional[datetime.datetime] = None,
+) -> None: ...
+def log_metrics(metrics: list[ExperimentMetric]) -> None: ...
+def log_param(name: str, value: Any) -> None: ...
+def log_params(params: dict[str, Any] | list[Parameter]) -> None: ...
+def log_artifact(lpath: str, rpath: str | None = None) -> None: ...
+def log_artifacts(path: str) -> None: ...
+def log_figure(name: str, figure: Any, kwargs: dict[str, Any] | None = None) -> None: ...
+def log_figure_from_path(lpath: str, rpath: str | None = None) -> None: ...
+def set_tag(tag: str) -> None: ...
+def set_tags(tags: list[str]) -> None: ...
+def active_experiment() -> Experiment: ...
 
 class ExperimentEvalMetrics:
     """
@@ -2722,6 +2771,17 @@ __all__ = [
     "Parameters",
     "Experiment",
     "start_experiment",
+    "log_metric",
+    "log_metrics",
+    "log_param",
+    "log_params",
+    "log_artifact",
+    "log_artifacts",
+    "log_figure",
+    "log_figure_from_path",
+    "set_tag",
+    "set_tags",
+    "active_experiment",
     "ExperimentEvalMetrics",
     "get_experiment_metrics",
     "get_experiment_parameters",

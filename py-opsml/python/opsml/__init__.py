@@ -46,7 +46,18 @@ from ._opsml import (  # top-level modules; # App; # Card; # Data; Experiment; #
     XGBoostModel,
     _get_log_level,  # type: ignore
     _log_json,  # type: ignore
+    active_experiment,
     get_opsml_version,  # type: ignore
+    log_artifact,
+    log_artifacts,
+    log_figure,
+    log_figure_from_path,
+    log_metric,
+    log_metrics,
+    log_param,
+    log_params,
+    set_tag,
+    set_tags,
     start_experiment,
 )
 
@@ -99,6 +110,17 @@ __all__ = [
     "ArrowData",
     # Experiment
     "start_experiment",
+    "log_metric",
+    "log_metrics",
+    "log_param",
+    "log_params",
+    "log_artifact",
+    "log_artifacts",
+    "log_figure",
+    "log_figure_from_path",
+    "set_tag",
+    "set_tags",
+    "active_experiment",
     "Experiment",
     ## model
     "ModelInterface",

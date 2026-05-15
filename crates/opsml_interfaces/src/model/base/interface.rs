@@ -22,7 +22,7 @@ use opsml_types::{
 };
 use pyo3::IntoPyObjectExt;
 use pyo3::prelude::*;
-use pyo3::types::PyDict;
+use pyo3::types::{PyDict, PyTuple};
 use scouter_client::{DataType as DriftDataType, drifter::PyDrifter};
 use std::collections::HashMap;
 use std::fs;
@@ -63,11 +63,8 @@ pub struct ModelInterface {
     pub version: String,
 }
 
-#[pymethods]
 impl ModelInterface {
-    #[new]
     #[allow(clippy::too_many_arguments)]
-    #[pyo3(signature = (model=None, sample_data=None, task_type=None, drift_profile=None, version=None))]
     pub fn new<'py>(
         py: Python,
         model: Option<&Bound<'py, PyAny>>,
@@ -116,6 +113,74 @@ impl ModelInterface {
             drift_profile: profiles,
             version: version.unwrap_or(CommonKwargs::Undefined.to_string()),
         })
+    }
+}
+
+impl Default for ModelInterface {
+    fn default() -> Self {
+        Self {
+            model: None,
+            data_type: DataType::NotProvided,
+            task_type: TaskType::Undefined,
+            schema: FeatureSchema::default(),
+            model_type: ModelType::Unknown,
+            interface_type: ModelInterfaceType::Base,
+            onnx_session: None,
+            drift_profile: DriftProfileMap::new(),
+            sample_data: SampleData::default(),
+            version: CommonKwargs::Undefined.to_string(),
+        }
+    }
+}
+
+#[pymethods]
+impl ModelInterface {
+    #[new]
+    #[pyo3(signature = (*_args, **_kwargs))]
+    pub fn __new__(_args: &Bound<'_, PyTuple>, _kwargs: Option<&Bound<'_, PyDict>>) -> Self {
+        Self::default()
+    }
+
+    /// Initialize a ModelInterface.
+    ///
+    /// Extra keyword arguments are accepted in the Python signature only for
+    /// PyO3 subclass initialization compatibility. Direct base construction
+    /// rejects unknown keyword arguments.
+    #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (model=None, sample_data=None, task_type=None, drift_profile=None, version=None, **_kwargs))]
+    pub fn __init__<'py>(
+        &mut self,
+        py: Python<'py>,
+        model: Option<&Bound<'py, PyAny>>,
+        sample_data: Option<&Bound<'py, PyAny>>,
+        task_type: Option<TaskType>,
+        drift_profile: Option<&Bound<'py, PyAny>>,
+        version: Option<String>,
+        _kwargs: Option<&Bound<'py, PyDict>>,
+    ) -> Result<(), ModelInterfaceError> {
+        let already_initialized = self.model.is_some()
+            || self.data_type != DataType::NotProvided
+            || self.task_type != TaskType::Undefined
+            || !self.drift_profile.profiles.is_empty()
+            || self.version != CommonKwargs::Undefined.to_string();
+
+        if already_initialized {
+            return Ok(());
+        }
+
+        if let Some(kwargs) = _kwargs
+            && !kwargs.is_empty()
+        {
+            let unexpected = kwargs
+                .iter()
+                .map(|(key, _)| key.to_string())
+                .collect::<Vec<_>>()
+                .join(", ");
+            return Err(ModelInterfaceError::UnexpectedKwargs(unexpected));
+        }
+
+        *self = Self::new(py, model, sample_data, task_type, drift_profile, version)?;
+        Ok(())
     }
 
     #[getter]

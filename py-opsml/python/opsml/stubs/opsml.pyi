@@ -1957,12 +1957,16 @@ class ModelInterfaceMetadata:
         """Validate the model interface metadata json"""
 
 class ModelInterface:
+    def __new__(cls, *args: Any, **kwargs: Any) -> "ModelInterface": ...
+
     def __init__(
         self,
         model: Any = None,
         sample_data: Any = None,
         task_type: Optional[TaskType] = None,
         drift_profile: Optional[DriftProfileType] = None,
+        version: Optional[str] = None,
+        **kwargs: Any,
     ) -> None:
         """Base class for ModelInterface
 
@@ -1976,6 +1980,8 @@ class ModelInterface:
             drift_profile:
                 Drift profile(s) to associate with the model. Must be a dictionary of
                 alias and drift profile.
+            version:
+                Package version of the model being used.
         """
 
     @property
@@ -2704,6 +2710,108 @@ class OnnxModel(ModelInterface):
     def session(self) -> OnnxSession:
         """Returns the onnx session. This will error if the OnnxSession is not set"""
 
+def sklearn_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def xgboost_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def lightgbm_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def catboost_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def torch_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def lightning_log_model(
+    trainer: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def tensorflow_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    preprocessor: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def huggingface_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    tokenizer: Any = None,
+    feature_extractor: Any = None,
+    image_processor: Any = None,
+    hf_task: Optional[HuggingFaceTask] = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+def onnx_log_model(
+    model: Any,
+    *,
+    name: str,
+    space: Optional[str] = None,
+    sample_data: Any = None,
+    task_type: Optional[TaskType] = None,
+    drift_profile: Any = None,
+    save_kwargs: Optional[ModelSaveKwargs] = None,
+) -> ModelCard: ...
+
 ########################################################################################
 #  This section contains the type definitions for opsml.app module
 # __opsml.app__
@@ -3385,6 +3493,15 @@ __all__ = [
     "CatBoostModel",
     "OnnxSession",
     "TensorFlowModel",
+    "sklearn_log_model",
+    "xgboost_log_model",
+    "lightgbm_log_model",
+    "catboost_log_model",
+    "torch_log_model",
+    "lightning_log_model",
+    "tensorflow_log_model",
+    "huggingface_log_model",
+    "onnx_log_model",
     "PromptSaveKwargs",
     "ModelLoadKwargs",
     "ModelSaveKwargs",

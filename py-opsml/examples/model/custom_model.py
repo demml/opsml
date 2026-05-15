@@ -37,29 +37,16 @@ class ConstantOffsetRegressor(LinearRegression):
 
 
 class CustomSklearnInterface(ModelInterface):
-    def __new__(
-        cls,
-        model: Optional[ConstantOffsetRegressor] = None,
-        binarizer: Optional[Binarizer] = None,
-        task_type: Optional[TaskType] = None,
-    ):
-        instance = super(CustomSklearnInterface, cls).__new__(
-            cls,
-            model=model,
-            task_type=task_type,
-        )
-
-        return instance
-
     def __init__(
         self,
         model: Optional[ConstantOffsetRegressor] = None,
         binarizer: Optional[Binarizer] = None,
         task_type: Optional[TaskType] = None,
+        **kwargs,
     ):
         """Init method for the custom model interface."""
 
-        super().__init__()
+        super().__init__(model=model, task_type=task_type, **kwargs)
 
         # adding new attribute to interface
         self.binarizer = binarizer

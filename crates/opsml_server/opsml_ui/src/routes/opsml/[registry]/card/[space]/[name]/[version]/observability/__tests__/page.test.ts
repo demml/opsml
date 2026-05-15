@@ -201,6 +201,27 @@ describe('observability +page.ts load() — scouter disabled', () => {
   });
 });
 
+describe('observability +page.ts load() — prompt eval profile guard', () => {
+  it('returns not_found for prompt cards without an eval profile UID', async () => {
+    const mockFetch = vi.fn();
+    const ctx = makeLoadCtx(
+      {
+        metadata: { ...PROMPT_METADATA, eval_profile: undefined },
+        devMockEnabled: false,
+        settings: { scouter_enabled: true },
+      },
+      {},
+      mockFetch as unknown as typeof fetch,
+    );
+
+    const result = (await load(ctx)) as Record<string, unknown>;
+
+    expect(result.status).toBe('not_found');
+    expect((result as { errorMessage?: string }).errorMessage).toMatch(/evaluation profile/i);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+});
+
 describe('observability +page.ts load() — mock mode', () => {
   // In mock mode, getMockTraceMetrics / getMockTracePage are used instead of
   // real fetch calls. However getServerTraceFacets is NOT guarded by the mock

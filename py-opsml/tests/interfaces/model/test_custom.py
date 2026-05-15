@@ -1,24 +1,20 @@
+from pathlib import Path
+
+import pytest
 from opsml.model import (
     ModelInterface,
-    TaskType,
     ModelInterfaceMetadata,
     ModelInterfaceSaveMetadata,
-    ModelSaveKwargs,
     ModelLoadKwargs,
+    ModelSaveKwargs,
+    TaskType,
 )
 from sklearn import linear_model  # type: ignore
-from pathlib import Path
 
 
 class CustomInterface(ModelInterface):
-    # must be defined if you want to pass args to ModelInterface
-    def __new__(cls, foo=None, **kwargs):
-        instance = super(CustomInterface, cls).__new__(cls, **kwargs)
-        return instance
-
-    def __init__(self, foo, **kwargs):
-        super().__init__()
-
+    def __init__(self, foo: int, **kwargs):
+        super().__init__(**kwargs)
         self.foo = foo
 
     def save(
@@ -59,4 +55,32 @@ def test_custom_interface(tmp_path: Path, regression_data):
     kwargs = {"model": reg, "task_type": TaskType.Regression, "sample_data": X}
     interface = CustomInterface(foo=2, **kwargs)
 
+    assert interface.foo == 2
+    assert interface.task_type == TaskType.Regression
     interface.save(tmp_path)
+
+
+def test_model_interface_direct_init(regression_data):
+    X, y = regression_data
+    reg = linear_model.LinearRegression().fit(X, y)
+
+    interface = ModelInterface(
+        model=reg,
+        sample_data=X,
+        task_type=TaskType.Regression,
+    )
+
+    assert interface.task_type == TaskType.Regression
+
+
+def test_model_interface_direct_init_rejects_unknown_kwargs(regression_data):
+    X, y = regression_data
+    reg = linear_model.LinearRegression().fit(X, y)
+
+    with pytest.raises(RuntimeError, match="Unexpected ModelInterface.__init__.*typo"):
+        ModelInterface(
+            model=reg,
+            sample_data=X,
+            task_type=TaskType.Regression,
+            typo=True,
+        )

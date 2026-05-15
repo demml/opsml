@@ -264,6 +264,55 @@ async function loadAgentRecordsAndWorkflows(
   return { records, workflows };
 }
 
+/** Loads agent eval pages while preserving the sibling table during single-table pagination. */
+async function loadAgentEvaluationPages(
+  fetch: typeof globalThis.fetch,
+  uid: string,
+  space: string,
+  timeRange: TimeRange,
+  selectedData: SelectedAgentData,
+  recordCursor?: { cursor: RecordCursor; direction: string },
+  workflowCursor?: { cursor: RecordCursor; direction: string },
+): Promise<{
+  records: EvalRecordPaginationResponse;
+  workflows: AgentEvalWorkflowPaginationResponse;
+}> {
+  if (recordCursor && !workflowCursor) {
+    const records = await getServerEvalRecordPage(fetch, {
+      service_info: { uid, space },
+      cursor_id: recordCursor.cursor.id,
+      cursor_created_at: recordCursor.cursor.created_at,
+      direction: recordCursor.direction,
+      start_datetime: timeRange.startTime,
+      end_datetime: timeRange.endTime,
+    });
+
+    return { records, workflows: selectedData.workflows };
+  }
+
+  if (workflowCursor && !recordCursor) {
+    const workflows = await getServerAgentEvalWorkflowPage(fetch, {
+      service_info: { uid, space },
+      cursor_id: workflowCursor.cursor.id,
+      cursor_created_at: workflowCursor.cursor.created_at,
+      direction: workflowCursor.direction,
+      start_datetime: timeRange.startTime,
+      end_datetime: timeRange.endTime,
+    });
+
+    return { records: selectedData.records, workflows };
+  }
+
+  return loadAgentRecordsAndWorkflows(
+    fetch,
+    uid,
+    space,
+    timeRange,
+    recordCursor,
+    workflowCursor,
+  );
+}
+
 /** Loads all data for the agent evaluation dashboard (metrics, alerts, records, workflows) */
 export async function loadAgentData(
   fetch: typeof globalThis.fetch,
@@ -449,7 +498,19 @@ export async function refreshAgentMonitoringData(
       timeRange,
     );
     if (fresh.status === "success") {
-      monitoringData.selectedData = fresh.selectedData;
+      if (options.recordCursor && !options.workflowCursor) {
+        monitoringData.selectedData = {
+          ...fresh.selectedData,
+          workflows: monitoringData.selectedData.workflows,
+        };
+      } else if (options.workflowCursor && !options.recordCursor) {
+        monitoringData.selectedData = {
+          ...fresh.selectedData,
+          records: monitoringData.selectedData.records,
+        };
+      } else {
+        monitoringData.selectedData = fresh.selectedData;
+      }
     }
     return;
   }
@@ -481,11 +542,12 @@ export async function refreshAgentMonitoringData(
   const [metrics, driftAlerts, { records, workflows }] = await Promise.all([
     metricsPromise,
     alertsPromise,
-    loadAgentRecordsAndWorkflows(
+    loadAgentEvaluationPages(
       fetch,
       uid,
       space,
       timeRange,
+      monitoringData.selectedData,
       options.recordCursor,
       options.workflowCursor,
     ),

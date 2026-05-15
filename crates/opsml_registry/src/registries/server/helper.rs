@@ -5,6 +5,9 @@ use opsml_settings::config::DatabaseSettings;
 use opsml_sql::{enums::client::SqlClientEnum, traits::CardLogicTrait};
 
 #[cfg(feature = "server")]
+use opsml_state::app_state;
+
+#[cfg(feature = "server")]
 use opsml_storage::reset_storage_client;
 
 #[cfg(feature = "server")]
@@ -110,6 +113,8 @@ impl RegistryTestHelper {
             std::env::set_var("OPSML_TRACKING_URI", config.connection_uri);
             std::env::set_var("OPSML_STORAGE_URI", storage_uri);
         }
+
+        let _ = app_state().reset_app_state();
     }
 
     #[cfg(not(feature = "server"))]
@@ -138,6 +143,7 @@ impl RegistryTestHelper {
             std::env::remove_var("OPSML_STORAGE_URI");
         }
 
+        let _ = app_state().reset_app_state();
         let _ = reset_storage_client();
     }
 }

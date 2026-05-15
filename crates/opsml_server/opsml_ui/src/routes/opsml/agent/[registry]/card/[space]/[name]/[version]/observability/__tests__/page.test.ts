@@ -112,4 +112,20 @@ describe("agent observability page load", () => {
     expect(traceCalls.facets[0]).toMatchObject({ entity_uid: "eval-profile-1" });
     expect(traceCalls.metrics[0]).not.toHaveProperty("clause");
   });
+
+  it("returns not_found for prompt cards without an eval profile UID", async () => {
+    const result = (await load(makeLoadCtx({
+      registry_type: RegistryType.Prompt,
+      name: "triage-prompt",
+      space: "prod",
+      version: "1.2.3",
+      eval_profile: undefined,
+    }))) as Record<string, unknown>;
+
+    expect(result.status).toBe("not_found");
+    expect((result as { errorMessage?: string }).errorMessage).toMatch(/evaluation profile/i);
+    expect(traceCalls.metrics).toHaveLength(0);
+    expect(traceCalls.page).toHaveLength(0);
+    expect(traceCalls.facets).toHaveLength(0);
+  });
 });

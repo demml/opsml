@@ -40,6 +40,14 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
   const useMockFallback = Boolean(parentData.devMockEnabled);
 
   const initialTraceId = url.searchParams.get("trace_id") ?? undefined;
+  const fallbackFilters: TracePageFilter = {
+    filters: {
+      start_time: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+      end_time: new Date().toISOString(),
+    },
+    bucket_interval: "1 minutes",
+    selected_range: "15min",
+  };
 
   try {
     depends("trace:data");
@@ -57,6 +65,23 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
     const entity_uid = isPrompt
       ? ((metadata as PromptCard).eval_profile?.config.uid ?? "")
       : undefined;
+    if (isPrompt && !entity_uid) {
+      return {
+        status: "not_found" as const,
+        errorMessage: "Prompt observability requires an attached evaluation profile.",
+        initialFilters: fallbackFilters,
+        trace_facets: {
+          services: [],
+          namespaces: [],
+          versions: [],
+          instance_ids: [],
+          status_codes: [],
+          total_count: 0,
+        },
+        mockMode: useMockFallback,
+      };
+    }
+
     const serviceName = isPrompt ? undefined : metadata.name;
     const serviceNamespace = isPrompt ? undefined : metadata.space;
     const serviceVersion = isPrompt ? undefined : metadata.version;
@@ -223,18 +248,10 @@ export const load: PageLoad = async ({ fetch, depends, parent, url }) => {
       }
     }
 
-    const initialFilters: TracePageFilter = {
-      filters: {
-        start_time: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-        end_time: new Date().toISOString(),
-      },
-      bucket_interval: "1 minutes",
-      selected_range: "15min",
-    };
     return {
       status: "error" as const,
       errorMessage,
-      initialFilters,
+      initialFilters: fallbackFilters,
       trace_facets: {
         services: [],
         namespaces: [],

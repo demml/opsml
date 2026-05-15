@@ -11,7 +11,7 @@ import {
   serviceNamespaceClause,
   statusCodeClause,
 } from "../clause";
-import { getMockTracePage } from "../mockData";
+import { getMockTraceFacets, getMockTracePage } from "../mockData";
 
 describe("trace mock FilterClause evaluation", () => {
   it("filters by AND of service and status code", () => {
@@ -80,5 +80,22 @@ describe("trace mock FilterClause evaluation", () => {
     });
     expect(withoutClause.items.length).toBeGreaterThan(withImpossibleClause.items.length);
     expect(withImpossibleClause.items).toHaveLength(0);
+  });
+
+  it("applies time and entity filters consistently to page and facet mocks", () => {
+    const filters = {
+      start_time: "2099-01-01T00:00:00Z",
+      end_time: "2099-01-01T00:15:00Z",
+      entity_uid: "missing-entity",
+      limit: 100,
+    };
+
+    const page = getMockTracePage(filters);
+    const facets = getMockTraceFacets(filters);
+
+    expect(page.items).toHaveLength(0);
+    expect(facets.total_count).toBe(0);
+    expect(facets.services).toHaveLength(0);
+    expect(facets.status_codes).toHaveLength(0);
   });
 });

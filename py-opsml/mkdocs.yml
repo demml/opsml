@@ -68,6 +68,17 @@ nav:
       - Experiment:
           - Card: "docs/cards/experiment/experimentcard.md"
           - Usage: "docs/cards/experiment/usage.md"
+          - Fluent API: "docs/cards/experiment/fluent.md"
+      - Frameworks:
+          - Scikit-learn: "docs/cards/frameworks/sklearn.md"
+          - XGBoost: "docs/cards/frameworks/xgboost.md"
+          - LightGBM: "docs/cards/frameworks/lightgbm.md"
+          - CatBoost: "docs/cards/frameworks/catboost.md"
+          - PyTorch: "docs/cards/frameworks/torch.md"
+          - PyTorch Lightning: "docs/cards/frameworks/lightning.md"
+          - TensorFlow: "docs/cards/frameworks/tensorflow.md"
+          - HuggingFace: "docs/cards/frameworks/huggingface.md"
+          - ONNX: "docs/cards/frameworks/onnx.md"
       - "docs/cards/promptcard.md"
       - "docs/cards/servicecard.md"
       - "docs/cards/agentcard.md"

@@ -1,6 +1,23 @@
 
 ModelCards help you store, version, and track model objects.
 
+OpsML works with any ML framework. The same registration pattern applies whether
+you train with scikit-learn, XGBoost, LightGBM, CatBoost, PyTorch, PyTorch
+Lightning, TensorFlow, HuggingFace Transformers, or ONNX. Pick your framework
+below to see a runnable example.
+
+## Supported frameworks
+
+- [Scikit-learn](frameworks/sklearn.md)
+- [XGBoost](frameworks/xgboost.md)
+- [LightGBM](frameworks/lightgbm.md)
+- [CatBoost](frameworks/catboost.md)
+- [PyTorch](frameworks/torch.md)
+- [PyTorch Lightning](frameworks/lightning.md)
+- [TensorFlow](frameworks/tensorflow.md)
+- [HuggingFace Transformers](frameworks/huggingface.md)
+- [ONNX](frameworks/onnx.md)
+
 ## Features
 - **shareable**: All cards including ModelCards are shareable and searchable.
 - **auto-schema**: Auto-infer data schema.
@@ -1785,34 +1802,18 @@ class CustomInterface(ModelInterface):
 
 ### Changing Init Arguments
 
-If you find in your custom interface that you are changing class/self attributes during instantiation, you will also need to include two extra methods called `from_metadata` (staticmethod) as well as a `__new__` method. The reason for this is (1), pyo3 does not currently support custom `__init__` methods (2) `from_metadata` is called on all interfaces when loading a card from the registry and is used to initialize the class with metadata attributes.
+If you find in your custom interface that you are changing class/self attributes during instantiation, implement a normal Python `__init__` and call `super().__init__(**kwargs)`. `from_metadata` is still useful when loading a card from the registry because it initializes the class from stored metadata.
 
 The below example shows an example of how you can implement this. In the example, we are adding the `preprocessor` attribute
 
 ```python
 class CustomModel(ModelInterface):
-    def __new__( #(1)
-        cls,
-        preprocessor=None, #(2)
-        model: None | Any = None,
-        sample_data: None | Any = None,
-        task_type: None | TaskType = None,
-    ):
-        instance = super(CustomModel, cls).__new__(
-            cls,
-            model=model,
-            sample_data=sample_data,
-            task_type=task_type,
-        )
-
-        return instance
-
-    def __init__(self, preprocessor, model, sample_data, task_type):
+    def __init__(self, preprocessor=None, **kwargs):
         """Init method for the custom model interface."""
 
-        super().__init__()
+        super().__init__(**kwargs) #(1)
 
-        self.preprocessor = preprocessor #(3)
+        self.preprocessor = preprocessor #(2)
 
     def save(self, path, save_kwargs=None):
         ...
@@ -1832,11 +1833,10 @@ class CustomModel(ModelInterface):
         )
 ```
 
-1. Custom __new__ method
-2. Adding preprocessor as a class argument
-3. Assigning preprocessor to the class attribute
+1. Forward base model/sample/task arguments to `ModelInterface`
+2. Assigning preprocessor to the class attribute
 
-**Note**: If you are not changing the default class attributes, you do not need to to implement `__new__` or `from_metadata`.
+**Note**: If you are not changing the default class attributes, you do not need to implement `from_metadata`.
 
 
 ### Method Overriding Checklist
@@ -1844,7 +1844,7 @@ class CustomModel(ModelInterface):
 | Changing Class Attributes? | Methods to Implement |
 | -------------------------- | -------------------- |
 | <span class="text-alert">**No**</span> | `save`, `load`       |
-| <span class="text-alert">**Yes**</span> | `save`, `load`, `__new__`, `from_metadata` |
+| <span class="text-alert">**Yes**</span> | `save`, `load`, `__init__`, `from_metadata` |
 
 ### Loading from a Registry
 

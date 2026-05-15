@@ -33,5 +33,5 @@ walkdir = { workspace = true }
 
 [features]
 default = []
+python = ["opsml-cards/python", "opsml-registry/python", "opsml-types/python"]
 server = ["opsml-storage/server"]
-
