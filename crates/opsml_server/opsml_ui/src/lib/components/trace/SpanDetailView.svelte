@@ -15,6 +15,7 @@
   import CodeBlock from '$lib/components/codeblock/CodeBlock.svelte';
   import SpanEvents from './SpanEvents.svelte';
   import SpanGenAiPanel from './genai/SpanGenAiPanel.svelte';
+  import GenAIMetricsTab from '$lib/components/TraceDetail/GenAIMetricsTab.svelte';
   import type { GenAiSpanRecord } from '$lib/components/scouter/genai/types';
   import { EXCEPTION_TRACEBACK } from './types';
 
@@ -132,8 +133,18 @@
 
   // ─── Tab state ─────────────────────────────────────────────────────────────
 
-  type Tab = 'overview' | 'errors' | 'attributes' | 'reqres' | 'events' | 'resources' | 'genai';
+  type Tab = 'overview' | 'errors' | 'attributes' | 'reqres' | 'events' | 'resources' | 'genai' | 'genai_metrics';
   let activeTab = $state<Tab>('overview');
+
+  const hasGenAiMetrics = $derived(() => {
+    if (!genAiSpan) return false;
+    return (
+      genAiSpan.input_tokens != null ||
+      genAiSpan.output_tokens != null ||
+      Boolean(genAiSpan.request_model) ||
+      Boolean(genAiSpan.response_model)
+    );
+  });
 
   const tabs = $derived([
     { id: 'overview'   as Tab, label: 'Overview',    Icon: Info,            count: null as number | null },
@@ -143,7 +154,12 @@
     { id: 'events'     as Tab, label: 'Events',      Icon: Activity,        count: span.events.length > 0 ? span.events.length : null as number | null },
     { id: 'resources'  as Tab, label: 'Resources',   Icon: Server,          count: resourceAttributes.length > 0 ? resourceAttributes.length : null as number | null },
     ...(genAiSpan
-      ? [{ id: 'genai' as Tab, label: 'GenAI', Icon: Sparkles, count: null as number | null }]
+      ? [
+          { id: 'genai' as Tab, label: 'GenAI', Icon: Sparkles, count: null as number | null },
+        ]
+      : []),
+    ...(hasGenAiMetrics
+      ? [{ id: 'genai_metrics' as Tab, label: 'GenAI Metrics', Icon: Sparkles, count: null as number | null }]
       : []),
   ]);
 
@@ -660,6 +676,11 @@
     <!-- GENAI TAB -->
     {#if activeTab === 'genai' && genAiSpan}
       <SpanGenAiPanel span={genAiSpan} />
+    {/if}
+
+    <!-- GENAI METRICS TAB -->
+    {#if activeTab === 'genai_metrics' && genAiSpan}
+      <GenAIMetricsTab traceId={span.trace_id} spanId={span.span_id} />
     {/if}
 
   </div>

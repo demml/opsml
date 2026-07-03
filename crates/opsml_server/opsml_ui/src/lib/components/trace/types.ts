@@ -1,4 +1,5 @@
 import type { DateTime } from "$lib/types";
+import type { GenAiSpanRecord } from "$lib/components/scouter/genai/types";
 
 export interface TraceListItem {
   trace_id: string;
@@ -149,6 +150,8 @@ export interface TraceSpan {
   input: string | null;
   output: string | null;
   service_name: string;
+  // Optional GenAI metadata attached to the span (if available)
+  genai?: GenAiSpanRecord | null;
 }
 
 export interface TraceSpansResponse {

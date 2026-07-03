@@ -625,9 +625,335 @@ pub async fn genai_conversation(
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// GenAI Aggregate Endpoints — trace, span, and service-level metrics
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Validates span ID format (basic 32-128 char hex string)
+fn is_valid_span_id(id: &str) -> bool {
+    let stripped = id.replace('-', "");
+    !stripped.is_empty() && stripped.len() <= 128 && stripped.chars().all(|c| c.is_ascii_hexdigit())
+}
+
+/// Validates service name format (alphanumeric with hyphens and dots)
+fn is_valid_service_name(name: &str) -> bool {
+    !name.is_empty()
+        && name.len() <= 255
+        && name
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '.' | '_'))
+}
+
+#[utoipa::path(
+    get,
+    path = "/opsml/api/traces/{trace_id}/genai/aggregate",
+    params(
+        ("trace_id" = String, Path, description = "Trace ID (hex-encoded)"),
+        ("include_spans" = Option<bool>, Query, description = "Include per-span breakdown"),
+        ("include_errors" = Option<bool>, Query, description = "Include error analysis"),
+    ),
+    responses(
+        (status = 200, description = "Trace-level GenAI metrics aggregate", body = inline(serde_json::Value)),
+        (status = 400, description = "Invalid trace ID format", body = OpsmlServerError),
+        (status = 404, description = "Trace not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "genai"
+)]
+#[instrument(skip_all)]
+pub async fn get_trace_genai_aggregate(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Path(trace_id): Path<String>,
+    Query(params): Query<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
+    if !is_valid_trace_id(&trace_id) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(OpsmlServerError::new(
+                "Invalid trace ID format (expected 32-128 character hex string)".to_string(),
+            )),
+        ));
+    }
+
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter", None)
+    })?;
+
+    let query_string = serde_qs::to_string(&params).map_err(|e| {
+        error!("Failed to serialize query string: {e}");
+        internal_server_error(e, "Failed to serialize query string", None)
+    })?;
+
+    let mut response = state
+        .scouter_client
+        .request_with_path(
+            scouter::Routes::GenAiTraceAggregate,
+            &[trace_id.as_str(), "aggregate"],
+            RequestType::Get,
+            None,
+            if query_string.is_empty() {
+                None
+            } else {
+                Some(query_string)
+            },
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get trace GenAI aggregate: {e}");
+            internal_server_error(e, "Failed to fetch trace GenAI aggregate metrics", None)
+        })?;
+
+    response.extensions_mut().insert(AuditContext {
+        resource_id: trace_id.to_string(),
+        resource_type: ResourceType::Drift,
+        metadata: "trace_genai_aggregate".to_string(),
+        registry_type: None,
+        operation: Operation::Read,
+        access_location: None,
+    });
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<serde_json::Value>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {e}");
+                internal_server_error(e, "Failed to parse trace GenAI aggregate response", None)
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse error response", None)
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/opsml/api/spans/{span_id}/genai/metrics",
+    params(
+        ("span_id" = String, Path, description = "Span ID (hex-encoded)"),
+        ("include_input" = Option<bool>, Query, description = "Include input messages"),
+        ("include_output" = Option<bool>, Query, description = "Include output messages"),
+        ("include_tool_calls" = Option<bool>, Query, description = "Include tool call details"),
+    ),
+    responses(
+        (status = 200, description = "Span-level GenAI metrics", body = inline(serde_json::Value)),
+        (status = 400, description = "Invalid span ID format", body = OpsmlServerError),
+        (status = 404, description = "Span not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "genai"
+)]
+#[instrument(skip_all)]
+pub async fn get_span_genai_metrics(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Path(span_id): Path<String>,
+    Query(params): Query<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
+    if !is_valid_span_id(&span_id) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(OpsmlServerError::new(
+                "Invalid span ID format (expected 32-128 character hex string)".to_string(),
+            )),
+        ));
+    }
+
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter", None)
+    })?;
+
+    let query_string = serde_qs::to_string(&params).map_err(|e| {
+        error!("Failed to serialize query string: {e}");
+        internal_server_error(e, "Failed to serialize query string", None)
+    })?;
+
+    let mut response = state
+        .scouter_client
+        .request_with_path(
+            scouter::Routes::GenAiSpanMetrics,
+            &[span_id.as_str(), "metrics"],
+            RequestType::Get,
+            None,
+            if query_string.is_empty() {
+                None
+            } else {
+                Some(query_string)
+            },
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get span GenAI metrics: {e}");
+            internal_server_error(e, "Failed to fetch span GenAI metrics", None)
+        })?;
+
+    response.extensions_mut().insert(AuditContext {
+        resource_id: span_id.to_string(),
+        resource_type: ResourceType::Drift,
+        metadata: "span_genai_metrics".to_string(),
+        registry_type: None,
+        operation: Operation::Read,
+        access_location: None,
+    });
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<serde_json::Value>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {e}");
+                internal_server_error(e, "Failed to parse span GenAI metrics response", None)
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse error response", None)
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/opsml/api/services/{service_id}/genai/timeseries",
+    params(
+        ("service_id" = String, Path, description = "Service name or ID"),
+        ("start_time" = Option<String>, Query, description = "Time range start (ISO 8601)"),
+        ("end_time" = Option<String>, Query, description = "Time range end (ISO 8601)"),
+        ("interval" = Option<String>, Query, description = "Aggregation interval (minute, hour, day)"),
+        ("metrics" = Option<Vec<String>>, Query, description = "Comma-separated metric names (tokens, cost, latency, errors)"),
+    ),
+    responses(
+        (status = 200, description = "Service-level GenAI timeseries metrics", body = inline(serde_json::Value)),
+        (status = 400, description = "Invalid service ID or parameters", body = OpsmlServerError),
+        (status = 404, description = "Service not found", body = OpsmlServerError),
+        (status = 500, description = "Internal error", body = OpsmlServerError),
+    ),
+    security(("bearer_token" = [])),
+    tag = "genai"
+)]
+#[instrument(skip_all)]
+pub async fn get_service_genai_timeseries(
+    State(state): State<Arc<AppState>>,
+    Extension(perms): Extension<UserPermissions>,
+    Path(service_id): Path<String>,
+    Query(params): Query<serde_json::Value>,
+) -> Result<Json<serde_json::Value>, (StatusCode, Json<OpsmlServerError>)> {
+    if !state.scouter_client.is_enabled() {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(OpsmlServerError::new(
+                "Scouter service is not available".to_string(),
+            )),
+        ));
+    }
+
+    if !is_valid_service_name(&service_id) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(OpsmlServerError::new(
+                "Invalid service name format (must be alphanumeric with hyphens, dots, or underscores)".to_string(),
+            )),
+        ));
+    }
+
+    let exchange_token = state.exchange_token_from_perms(&perms).await.map_err(|e| {
+        error!("Failed to exchange token for scouter: {e}");
+        internal_server_error(e, "Failed to exchange token for scouter", None)
+    })?;
+
+    let query_string = serde_qs::to_string(&params).map_err(|e| {
+        error!("Failed to serialize query string: {e}");
+        internal_server_error(e, "Failed to serialize query string", None)
+    })?;
+
+    let mut response = state
+        .scouter_client
+        .request_with_path(
+            scouter::Routes::GenAiServiceTimeseries,
+            &[service_id.as_str(), "timeseries"],
+            RequestType::Get,
+            None,
+            if query_string.is_empty() {
+                None
+            } else {
+                Some(query_string)
+            },
+            None,
+            &exchange_token,
+        )
+        .await
+        .map_err(|e| {
+            error!("Failed to get service GenAI timeseries: {e}");
+            internal_server_error(e, "Failed to fetch service GenAI timeseries metrics", None)
+        })?;
+
+    response.extensions_mut().insert(AuditContext {
+        resource_id: service_id.to_string(),
+        resource_type: ResourceType::Drift,
+        metadata: "service_genai_timeseries".to_string(),
+        registry_type: None,
+        operation: Operation::Read,
+        access_location: None,
+    });
+
+    let status_code = response.status();
+    match status_code.is_success() {
+        true => {
+            let body = response.json::<serde_json::Value>().await.map_err(|e| {
+                error!("Failed to parse scouter response: {e}");
+                internal_server_error(e, "Failed to parse service GenAI timeseries response", None)
+            })?;
+            Ok(Json(body))
+        }
+        false => {
+            let body = response.json::<ScouterServerError>().await.map_err(|e| {
+                error!("Failed to parse scouter error response: {e}");
+                internal_server_error(e, "Failed to parse error response", None)
+            })?;
+            Err((status_code, Json(OpsmlServerError::new(body.error))))
+        }
+    }
+}
+
 pub async fn get_scouter_genai_router(prefix: &str) -> Result<Router<Arc<AppState>>> {
     let result = catch_unwind(AssertUnwindSafe(|| {
         Router::new()
+            // Existing endpoints
             .route(
                 &format!("{prefix}/scouter/genai/metrics/tokens"),
                 post(genai_token_metrics),
@@ -672,6 +998,19 @@ pub async fn get_scouter_genai_router(prefix: &str) -> Result<Router<Arc<AppStat
             .route(
                 &format!("{prefix}/scouter/genai/traces/{{id}}/metrics"),
                 post(genai_trace_metrics),
+            )
+            // New aggregate endpoints
+            .route(
+                &format!("{prefix}/traces/{{trace_id}}/genai/aggregate"),
+                get(get_trace_genai_aggregate),
+            )
+            .route(
+                &format!("{prefix}/spans/{{span_id}}/genai/metrics"),
+                get(get_span_genai_metrics),
+            )
+            .route(
+                &format!("{prefix}/services/{{service_id}}/genai/timeseries"),
+                get(get_service_genai_timeseries),
             )
     }));
 
