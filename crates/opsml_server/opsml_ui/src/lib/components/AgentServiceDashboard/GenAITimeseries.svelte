@@ -16,7 +16,7 @@
   } from '$lib/components/card/agent/observability/types';
   import { getChartTheme, getTooltip } from '$lib/components/viz/utils';
 
-  export let serviceId: string;
+  const { serviceId } = $props() as { serviceId: string };
 
   let buckets: AgentMetricBucket[] = [];
   let models: GenAiModelUsage[] = [];

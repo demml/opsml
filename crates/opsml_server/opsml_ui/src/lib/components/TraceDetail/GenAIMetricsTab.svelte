@@ -56,9 +56,9 @@
 
   {#if loading}
     <div class="space-y-2">
-      <div class="h-10 rounded-base bg-primary-100 animate-pulse" />
-      <div class="h-8 rounded-base bg-primary-100 animate-pulse" />
-      <div class="h-8 rounded-base bg-primary-100 animate-pulse" />
+      <div class="h-10 rounded-base bg-primary-100 animate-pulse"></div>
+      <div class="h-8 rounded-base bg-primary-100 animate-pulse"></div>
+      <div class="h-8 rounded-base bg-primary-100 animate-pulse"></div>
     </div>
   {:else if error}
     <div class="p-3 border-2 border-black bg-error-100 text-error-800 rounded-base">

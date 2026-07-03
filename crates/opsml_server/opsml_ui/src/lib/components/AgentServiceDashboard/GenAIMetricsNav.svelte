@@ -82,29 +82,31 @@
   </div>
 
   <div class="space-y-2">
-    <label class="text-xs font-black uppercase text-primary-700">Model</label>
-    <div class="flex gap-2">
+    <label class="text-xs font-black uppercase text-primary-700 flex flex-col">
+      <span class="mb-1">Model filter</span>
       <input
         class="flex-1 px-2 py-1 border-2 border-black rounded-base bg-surface-50 text-sm"
         placeholder="Filter by model"
         bind:value={modelFilter}
         on:input={applyFilters}
       />
-    </div>
+    </label>
   </div>
 
   <div class="space-y-2">
-    <label class="text-xs font-black uppercase text-primary-700">Provider</label>
-    <select
-      class="w-full px-2 py-1 border-2 border-black rounded-base bg-surface-50 text-sm"
-      bind:value={providerFilter}
-      on:change={applyFilters}
-    >
-      <option value={null}>All providers</option>
-      {#each providers as p}
-        <option value={p}>{p}</option>
-      {/each}
-    </select>
+    <label class="text-xs font-black uppercase text-primary-700 flex flex-col">
+      <span class="mb-1">Provider filter</span>
+      <select
+        class="w-full px-2 py-1 border-2 border-black rounded-base bg-surface-50 text-sm"
+        bind:value={providerFilter}
+        on:change={applyFilters}
+      >
+        <option value="">All providers</option>
+        {#each providers as p}
+          <option value={p}>{p} (provider)</option>
+        {/each}
+      </select>
+    </label>
   </div>
 
   <div class="pt-2 border-t-2 border-black flex items-center justify-between">
