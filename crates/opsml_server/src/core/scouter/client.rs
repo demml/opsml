@@ -56,6 +56,10 @@ pub enum Routes {
     GenAiToolMetrics,
     GenAiDashboard,
     GenAiTraceMetrics,
+    // GenAI aggregate endpoints
+    GenAiTraceAggregate,
+    GenAiSpanMetrics,
+    GenAiServiceTimeseries,
 }
 
 impl Routes {
@@ -116,6 +120,10 @@ impl Routes {
             Routes::GenAiToolMetrics => "scouter/genai/tool/metrics",
             Routes::GenAiDashboard => "scouter/genai/dashboard",
             Routes::GenAiTraceMetrics => "scouter/genai/traces",
+            // GenAI aggregate endpoints
+            Routes::GenAiTraceAggregate => "scouter/genai/trace/aggregate",
+            Routes::GenAiSpanMetrics => "scouter/genai/span/metrics",
+            Routes::GenAiServiceTimeseries => "scouter/genai/service/timeseries",
         }
     }
 }

@@ -15,6 +15,7 @@ pub mod middleware;
 pub mod openapi;
 pub mod router;
 pub mod scouter;
+pub mod genai_metrics;
 pub mod settings;
 pub mod setup;
 pub mod shutdown;

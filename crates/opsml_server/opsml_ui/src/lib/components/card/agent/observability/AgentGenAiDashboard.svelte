@@ -21,6 +21,8 @@
   import AgentsTable from './AgentsTable.svelte';
   import FilterBar from './FilterBar.svelte';
   import { toScouterInterval } from './utils';
+  import GenAIMetricsNav from '$lib/components/AgentServiceDashboard/GenAIMetricsNav.svelte';
+  import GenAITimeseries from '$lib/components/AgentServiceDashboard/GenAITimeseries.svelte';
 
   let { bundle: initialBundle }: { bundle: AgentGenAiBundle } = $props();
 
@@ -55,6 +57,9 @@
   // Server response cache. NEVER read inside the fetch effect — doing so
   // would make the effect depend on its own output and self-trigger.
   let dashboard = $state<GenAiDashboardResponse>(initialBundle.dashboard);
+
+  // Which sub-panel of the GenAI dashboard is active (overview vs timeseries)
+  let activePanel = $state<'overview' | 'timeseries'>('overview');
 
   // ── Fetch orchestration ────────────────────────────────────────────────────
   // Skip the fetch on initial mount: the loader-provided bundle already
@@ -150,29 +155,46 @@
     lockEntity={isPromptScope}
     onChange={handleFilterChange}
   />
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+    <div class="lg:col-span-3">
+      <GenAIMetricsNav
+        selected={activePanel}
+        models={dashboard.model_usage.models.map((m) => m.model)}
+        providers={dashboard.available_filters.providers}
+        on:select={(e) => (activePanel = e.detail.key === 'overview' ? 'overview' : 'timeseries')}
+      />
+    </div>
 
-  <KpiRail summary={dashboard.agent_dashboard.summary} />
+    <div class="lg:col-span-9">
+      {#if activePanel === 'overview'}
+        <KpiRail summary={dashboard.agent_dashboard.summary} />
 
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-    <VolumeChart buckets={dashboard.agent_dashboard.buckets} />
-    <LatencyChart buckets={dashboard.agent_dashboard.buckets} />
-    <TokenChart buckets={dashboard.agent_dashboard.buckets} />
-    <CostChart costByModel={dashboard.agent_dashboard.summary.cost_by_model} />
-  </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 mt-3">
+          <VolumeChart buckets={dashboard.agent_dashboard.buckets} />
+          <LatencyChart buckets={dashboard.agent_dashboard.buckets} />
+          <TokenChart buckets={dashboard.agent_dashboard.buckets} />
+          <CostChart costByModel={dashboard.agent_dashboard.summary.cost_by_model} />
+        </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-    <ErrorRateChart buckets={dashboard.agent_dashboard.buckets} />
-    <ToolStackChart series={dashboard.tool_dashboard.time_series} />
-  </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-3">
+          <ErrorRateChart buckets={dashboard.agent_dashboard.buckets} />
+          <ToolStackChart series={dashboard.tool_dashboard.time_series} />
+        </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-    <ModelsTable models={dashboard.model_usage.models} />
-    <ToolsTable tools={dashboard.tool_dashboard.aggregates} />
-    <ErrorsBars errors={dashboard.error_breakdown.errors} />
-  </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mt-3">
+          <ModelsTable models={dashboard.model_usage.models} />
+          <ToolsTable tools={dashboard.tool_dashboard.aggregates} />
+          <ErrorsBars errors={dashboard.error_breakdown.errors} />
+        </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-    <OperationsTable operations={dashboard.operation_breakdown.operations} />
-    <AgentsTable agents={dashboard.available_filters.agents} />
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-3">
+          <OperationsTable operations={dashboard.operation_breakdown.operations} />
+          <AgentsTable agents={dashboard.available_filters.agents} />
+        </div>
+      {:else}
+        <!-- Timeseries panel -->
+        <GenAITimeseries serviceId={dashboard.applied_filters.service_name ?? ''} />
+      {/if}
+    </div>
   </div>
 </div>
